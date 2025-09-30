@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузить трек - xwinner.beats.please</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: #111;
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid #7c3aed;
+        }
+        h1 {
+            color: #7c3aed;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ddd;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 6px;
+            background: #222;
+            color: #fff;
+            font-size: 16px;
+        }
+        input[type="file"] {
+            background: #333;
+            border: 2px dashed #7c3aed;
+            padding: 20px;
+            text-align: center;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #7c3aed, #a855f7);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: linear-gradient(45deg, #6d28d9, #9333ea);
+            transform: translateY(-2px);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success {
+            background: #065f46;
+            border: 1px solid #10b981;
+            color: #d1fae5;
+        }
+        .error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+            color: #fecaca;
+        }
+        .loading {
+            text-align: center;
+            color: #7c3aed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 ЗАГРУЗИТЬ ТРЕК</h1>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="title">Название трека *</label>
+                <input type="text" id="title" name="title" required placeholder="FIRE BEAT">
+            </div>
+            
+            <div class="form-group">
+                <label for="artist">Исполнитель</label>
+                <input type="text" id="artist" name="artist" value="xwinner" placeholder="xwinner">
+            </div>
+            
+            <div class="form-group">
+                <label for="genre">Жанр *</label>
+                <select id="genre" name="genre" required>
+                    <option value="">Выберите жанр</option>
+                    <option value="Trap">Trap</option>
+                    <option value="Hip-Hop">Hip-Hop</option>
+                    <option value="Drill">Drill</option>
+                    <option value="Lo-Fi">Lo-Fi</option>
+                    <option value="R&B">R&B</option>
+                    <option value="Pop">Pop</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="bpm">BPM *</label>
+                <input type="number" id="bpm" name="bpm" required min="60" max="200" placeholder="140">
+            </div>
+            
+            <div class="form-group">
+                <label for="price">Цена (₽) *</label>
+                <input type="number" id="price" name="price" required min="0" step="0.01" placeholder="0 для бесплатного или 1990">
+                <small style="color: #888; font-size: 12px;">Укажите 0 для бесплатного бита</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="key">Тональность</label>
+                <input type="text" id="key" name="key" placeholder="Am, C, Fm и т.д.">
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" rows="3" placeholder="Жесткий трап бит для настоящих рэперов"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="demo_file">Демо файл (MP3) *</label>
+                <input type="file" id="demo_file" name="demo_file" accept=".mp3,.wav" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="full_file">Полный файл (опционально)</label>
+                <input type="file" id="full_file" name="full_file" accept=".mp3,.wav,.flac">
+            </div>
+            
+            <div class="form-group">
+                <label for="cover_file">Обложка (JPG/PNG)</label>
+                <input type="file" id="cover_file" name="cover_file" accept=".jpg,.jpeg,.png,.webp">
+                <small style="color: #888; font-size: 12px;">Опционально - рекомендуется 1:1 (квадрат)</small>
+            </div>
+            
+            <button type="submit">🚀 ЗАГРУЗИТЬ ТРЕК</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            const resultDiv = document.getElementById('result');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            // Показываем загрузку
+            resultDiv.className = 'result loading';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Загружаем трек...';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'ЗАГРУЖАЕМ...';
+            
+            try {
+                const response = await fetch('/create-beat-with-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Трек успешно загружен!</h3>
+                        <p><strong>ID:</strong> ${result.beat_id}</p>
+                        <p><strong>Демо:</strong> ${result.demo_url}</p>
+                        ${result.full_url ? `<p><strong>Полный:</strong> ${result.full_url}</p>` : ''}
+                        <p><a href="http://localhost:5173" style="color: #7c3aed;">👉 Посмотреть на сайте</a></p>
+                    `;
+                    form.reset();
+                } else {
+                    throw new Error(result.detail || 'Ошибка загрузки');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Ошибка загрузки</h3>
+                    <p>${error.message}</p>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 ЗАГРУЗИТЬ ТРЕК';
+            }
+        });
+    </script>
+</body>
+</html>
