@@ -1,8 +1,25 @@
+/**
+ * Компонент мини-плеера
+ * 
+ * Отображается внизу страницы и позволяет управлять воспроизведением
+ * без перехода на страницу бита. Включает:
+ * - Кнопки воспроизведения/паузы
+ * - Перемотку на -10/+10 секунд
+ * - Контроль громкости
+ * - Прогресс-бар
+ * - Кнопку закрытия
+ */
+
 import React, { useRef } from 'react';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { Play, Pause, Volume2, VolumeX, X } from 'lucide-react';
 
+/**
+ * Компонент мини-плеера
+ * @returns {JSX.Element|null} JSX элемент мини-плеера или null если нет активного трека
+ */
 const MiniPlayer = () => {
+  // Получаем состояние и функции из контекста аудио плеера
   const { 
     currentTrack, 
     currentTrackTitle,

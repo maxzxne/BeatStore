@@ -1,13 +1,36 @@
+/**
+ * Компонент шапки сайта
+ * 
+ * Отображает навигацию, логотип и информацию о пользователе.
+ * Поддерживает два режима:
+ * - Обычный режим: для пользователей с навигацией по сайту
+ * - Админ режим: для административной панели
+ * 
+ * Функциональность:
+ * - Отображение счетчиков избранного и корзины
+ * - Кнопки входа/выхода
+ * - Навигация по разделам сайта
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, ShoppingCart, Heart, LogOut, Music } from 'lucide-react';
 import { api } from '../utils/api';
 
+/**
+ * Компонент шапки сайта
+ * @param {Object} props - Свойства компонента
+ * @param {boolean} props.admin - Режим административной панели
+ * @returns {JSX.Element} JSX элемент шапки
+ */
 const Header = ({ admin = false }) => {
+  // Контекст аутентификации
   const { user, adminUser, logout, isAuthenticated, isAdminAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Состояние счетчиков
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
 

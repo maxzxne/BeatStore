@@ -1,3 +1,17 @@
+/**
+ * Страница отдельного бита
+ * 
+ * Отображает детальную информацию о бите и предоставляет функции:
+ * - Прослушивание демо-версии с полным аудио плеером
+ * - Добавление/удаление из избранного
+ * - Добавление/удаление из корзины
+ * - Покупка бита (бесплатные и платные)
+ * - Скачивание купленных битов
+ * - Перемотка на -10/+10 секунд
+ * 
+ * Интегрируется с глобальным аудио плеером и мини-плеером
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,12 +22,21 @@ import MiniPlayer from '../components/MiniPlayer';
 import { api } from '../utils/api';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check } from 'lucide-react';
 
+/**
+ * Компонент страницы бита
+ * @returns {JSX.Element} JSX элемент страницы бита
+ */
 const BeatPage = () => {
+  // Параметры маршрута и навигация
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Контексты
   const { isAuthenticated } = useAuth();
   const { seekTo, currentTime, duration, isCurrentTrack } = useAudioPlayer();
   const { showSuccess, showError } = useNotification();
+  
+  // Состояние компонента
   const [beat, setBeat] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);

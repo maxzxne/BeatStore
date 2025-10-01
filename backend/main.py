@@ -1,3 +1,16 @@
+"""
+Backend API для BeatStore - платформы продажи музыкальных битов
+
+Основные функции:
+- RESTful API для управления битами, пользователями и покупками
+- Аутентификация и авторизация через JWT токены
+- Загрузка и обслуживание аудио файлов и обложек
+- Система корзины и избранного
+- Административные функции
+
+Технологии: FastAPI, SQLAlchemy, SQLite, JWT, bcrypt
+"""
+
 from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Form
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,23 +30,27 @@ import sys
 from database import SessionLocal, engine
 from models import Base, User, Beat, Purchase, cart_table
 
-# Настройка кодировки
+# Настройка кодировки для Windows
 if sys.platform == "win32":
     import codecs
     sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
     sys.stderr = codecs.getwriter("utf-8")(sys.stderr.detach())
 
-# Создаем таблицы
+# Создание таблиц базы данных при запуске
 Base.metadata.create_all(bind=engine)
 
-# Создаем админа при первом запуске
+# Создание администратора при первом запуске приложения
 def create_admin_user():
+    """
+    Создает администратора по умолчанию при первом запуске
+    Логин: admin, Пароль: admin123
+    """
     db = SessionLocal()
     try:
-        # Проверяем, есть ли уже админ
+        # Проверяем, существует ли уже администратор
         admin = db.query(User).filter(User.username == "admin").first()
         if not admin:
-            # Создаем админа
+            # Создаем нового администратора
             admin_password = get_password_hash("admin123")
             admin_user = User(
                 email="admin@beatstore.com",
@@ -49,21 +66,23 @@ def create_admin_user():
     finally:
         db.close()
 
-app = FastAPI(title="xwinner.beats.please API")
+# Создание экземпляра FastAPI приложения
+app = FastAPI(title="BeatStore API", description="API для платформы продажи музыкальных битов")
 
 # Настройка кодировки для JSON ответов
 import json
 from fastapi.responses import JSONResponse
 
 def custom_json_encoder(obj):
+    """Кастомный JSON энкодер для корректной обработки русских символов"""
     if isinstance(obj, str):
         return obj.encode('utf-8').decode('utf-8')
     return obj
 
-# Статические файлы
+# Подключение статических файлов (аудио, обложки)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# CORS
+# Настройка CORS для взаимодействия с frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://frontend:3000"],
@@ -72,29 +91,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Настройки безопасности
-SECRET_KEY = "your-secret-key-change-in-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Настройки безопасности для JWT токенов
+SECRET_KEY = "your-secret-key-change-in-production"  # В продакшене должен быть сложный ключ
+ALGORITHM = "HS256"  # Алгоритм подписи JWT
+ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Время жизни токена
 
+# Контекст для хеширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Схема безопасности для Bearer токенов
 security = HTTPBearer()
 
-# Pydantic схемы
+# Pydantic схемы для валидации данных
+
 class UserCreate(BaseModel):
+    """Схема для создания нового пользователя"""
     email: EmailStr
     username: str
     password: str
 
 class UserLogin(BaseModel):
+    """Схема для входа пользователя в систему"""
     username: str
     password: str
 
 class Token(BaseModel):
+    """Схема JWT токена"""
     access_token: str
     token_type: str
 
 class UserResponse(BaseModel):
+    """Схема ответа с информацией о пользователе"""
     id: int
     email: str
     username: str
@@ -106,6 +132,7 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 class BeatResponse(BaseModel):
+    """Схема ответа с информацией о бите (базовая)"""
     id: int
     title: str
     artist: str
@@ -123,11 +150,17 @@ class BeatResponse(BaseModel):
         from_attributes = True
 
 class BeatDetailResponse(BeatResponse):
+    """Схема ответа с детальной информацией о бите (включая полные файлы)"""
     full_audio_url: Optional[str] = None
     project_files_url: Optional[str] = None
 
-# Вспомогательные функции
+# Вспомогательные функции для работы с базой данных и аутентификацией
+
 def get_db():
+    """
+    Dependency для получения сессии базы данных
+    Автоматически закрывает соединение после использования
+    """
     db = SessionLocal()
     try:
         yield db
@@ -135,6 +168,10 @@ def get_db():
         db.close()
 
 def verify_password(plain_password, hashed_password):
+    """
+    Проверка пароля пользователя
+    Поддерживает bcrypt и SHA256 для совместимости
+    """
     # Обрезаем пароль до 72 байт для bcrypt
     if len(plain_password.encode('utf-8')) > 72:
         plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
@@ -147,6 +184,10 @@ def verify_password(plain_password, hashed_password):
         return sha256_hash == hashed_password
 
 def get_password_hash(password):
+    """
+    Хеширование пароля для безопасного хранения
+    Поддерживает bcrypt и SHA256 для совместимости
+    """
     # Обрезаем пароль до 72 байт для bcrypt  
     if len(password.encode('utf-8')) > 72:
         password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
@@ -157,10 +198,13 @@ def get_password_hash(password):
         import hashlib
         return hashlib.sha256(password.encode()).hexdigest()
 
-# Создаем админа при старте
+# Создание администратора при запуске приложения
 create_admin_user()
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """
+    Создание JWT токена для аутентификации
+    """
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -172,12 +216,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), 
                     db: Session = Depends(get_db)):
+    """
+    Dependency для получения текущего авторизованного пользователя
+    Выбрасывает исключение 401 если токен недействителен
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Не удалось проверить учетные данные",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        # Декодируем JWT токен
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
@@ -185,6 +234,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     except JWTError:
         raise credentials_exception
     
+    # Получаем пользователя из базы данных
     user = db.query(User).filter(User.username == username).first()
     if user is None:
         raise credentials_exception
@@ -193,6 +243,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)), 
                              db: Session = Depends(get_db)):
+    """
+    Dependency для получения текущего пользователя (опционально)
+    Возвращает None если токен отсутствует или недействителен
+    """
     if credentials is None:
         return None
     try:
@@ -205,9 +259,14 @@ def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials
     except JWTError:
         return None
 
-# Аутентификация
+# API эндпоинты для аутентификации
+
 @app.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    Регистрация нового пользователя
+    Проверяет уникальность email и username
+    """
     # Проверяем существующих пользователей
     db_user = db.query(User).filter(
         or_(User.email == user.email, User.username == user.username)
@@ -232,6 +291,10 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/login", response_model=Token)
 def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
+    """
+    Вход пользователя в систему
+    Возвращает JWT токен при успешной аутентификации
+    """
     user = db.query(User).filter(User.username == user_credentials.username).first()
     
     if not user or not verify_password(user_credentials.password, user.password_hash):
@@ -241,6 +304,7 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Создаем JWT токен
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
