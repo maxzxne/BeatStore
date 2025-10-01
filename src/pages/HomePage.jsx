@@ -1,3 +1,15 @@
+/**
+ * Главная страница приложения - каталог битов
+ * 
+ * Функциональность:
+ * - Отображение списка всех доступных битов
+ * - Фильтрация по жанру, тональности, BPM, цене
+ * - Поиск по названию, исполнителю, жанру
+ * - Отображение статуса покупки для авторизованных пользователей
+ * - Интеграция с глобальным аудио плеером
+ * - Мини-плеер внизу страницы
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import BeatCard from '../components/BeatCard';
@@ -6,13 +18,25 @@ import MiniPlayer from '../components/MiniPlayer';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 
+/**
+ * Компонент главной страницы
+ * @returns {JSX.Element} JSX элемент главной страницы
+ */
 const HomePage = () => {
+  // Контекст аутентификации
   const { isAuthenticated } = useAuth();
+  
+  // Состояние списка битов
   const [beats, setBeats] = useState([]);
+  // Состояние списка жанров для фильтров
   const [genres, setGenres] = useState([]);
+  // Состояние купленных битов (для отображения статуса)
   const [purchasedBeats, setPurchasedBeats] = useState([]);
+  // Состояние загрузки
   const [loading, setLoading] = useState(true);
+  // Параметры поиска из URL
   const [searchParams, setSearchParams] = useSearchParams();
+  // Состояние фильтров
   const [filters, setFilters] = useState({});
 
   useEffect(() => {

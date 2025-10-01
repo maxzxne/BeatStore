@@ -35,11 +35,15 @@ const MiniPlayer = () => {
   };
 
   const handleSeek = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!currentTrack || !duration) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const newTime = (clickX / rect.width) * duration;
+    console.log('MiniPlayer handleSeek:', newTime, 'from click position:', clickX, 'width:', rect.width);
     seekTo(newTime);
   };
 
@@ -91,6 +95,48 @@ const MiniPlayer = () => {
             </div>
           </div>
           
+          {/* Seek buttons */}
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('MiniPlayer seek back - currentTime:', currentTime, 'duration:', duration);
+                const newTime = Math.max(0, currentTime - 10);
+                console.log('MiniPlayer seeking back to:', newTime, 'from:', currentTime);
+                seekTo(newTime);
+              }}
+              disabled={!currentTrack}
+              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Назад на 10 секунд"
+            >
+              <span className="text-xs font-medium">-10</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('MiniPlayer seek forward button clicked!');
+                console.log('Button state - currentTrack:', currentTrack, 'disabled:', !currentTrack);
+                console.log('MiniPlayer seek forward - currentTime:', currentTime, 'duration:', duration);
+                console.log('seekTo function:', typeof seekTo);
+                const newTime = currentTime + 10;
+                console.log('MiniPlayer seeking forward to:', newTime, 'from:', currentTime);
+                if (typeof seekTo === 'function') {
+                  seekTo(newTime);
+                  console.log('seekTo called successfully');
+                } else {
+                  console.error('seekTo is not a function!');
+                }
+              }}
+              disabled={!currentTrack}
+              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Вперед на 10 секунд"
+            >
+              <span className="text-xs font-medium">+10</span>
+            </button>
+          </div>
+          
           <div className="flex items-center space-x-2">
             <button onClick={toggleMute} className="text-gray-600 hover:text-black">
               {isMuted ? (
@@ -106,7 +152,7 @@ const MiniPlayer = () => {
               step="0.1"
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+              className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
             />
             <button 
               onClick={handleClose} 

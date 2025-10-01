@@ -1,3 +1,19 @@
+/**
+ * Компонент карточки бита
+ * 
+ * Отображает информацию о бите и предоставляет функции:
+ * - Воспроизведение/пауза демо-версии
+ * - Добавление/удаление из избранного
+ * - Добавление/удаление из корзины
+ * - Переход на страницу бита
+ * - Отображение статуса покупки
+ * 
+ * @param {Object} props - Свойства компонента
+ * @param {Object} props.beat - Объект бита с информацией
+ * @param {Function} props.onUpdate - Функция обновления состояния
+ * @param {boolean} props.isPurchased - Статус покупки бита
+ */
+
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Pause, Heart, ShoppingCart, Check } from 'lucide-react';
@@ -5,10 +21,19 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { api } from '../utils/api';
 
+/**
+ * Компонент карточки бита
+ * @param {Object} props - Свойства компонента
+ * @returns {JSX.Element} JSX элемент карточки бита
+ */
 const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
+  // Контекст аутентификации
   const { isAuthenticated } = useAuth();
+  // Контекст аудио плеера
   const { playTrack, isCurrentTrack, isCurrentTrackPlaying } = useAudioPlayer();
+  // Состояние избранного
   const [isFavorite, setIsFavorite] = React.useState(false);
+  // Состояние корзины
   const [isInCart, setIsInCart] = React.useState(false);
 
   // Проверяем статус избранного при загрузке
@@ -146,7 +171,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
             </span>
             
             <div className="flex items-center space-x-2">
-              {isAuthenticated && !isPurchased && (
+              {isAuthenticated && (
                 <>
                   <button
                     onClick={handleFavorite}
@@ -159,24 +184,26 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
                     <Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
                   </button>
                   
-                  <button
-                    onClick={handleAddToCart}
-                    className={`p-2 rounded-full transition-colors relative ${
-                      isInCart
-                        ? 'text-black hover:text-gray-700'
-                        : 'text-gray-500 hover:text-black'
-                    }`}
-                    title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
-                  >
-                    {isInCart ? (
-                      <div className="relative">
-                        <ShoppingCart className="h-4 w-4" fill="currentColor" />
-                        <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
-                      </div>
-                    ) : (
-                      <ShoppingCart className="h-4 w-4" fill="none" />
-                    )}
-                  </button>
+                  {!isPurchased && (
+                    <button
+                      onClick={handleAddToCart}
+                      className={`p-2 rounded-full transition-colors relative ${
+                        isInCart
+                          ? 'text-black hover:text-gray-700'
+                          : 'text-gray-500 hover:text-black'
+                      }`}
+                      title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
+                    >
+                      {isInCart ? (
+                        <div className="relative">
+                          <ShoppingCart className="h-4 w-4" fill="currentColor" />
+                          <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
+                        </div>
+                      ) : (
+                        <ShoppingCart className="h-4 w-4" fill="none" />
+                      )}
+                    </button>
+                  )}
                 </>
               )}
             </div>

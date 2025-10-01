@@ -11,11 +11,11 @@ const SuccessPage = () => {
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             
             <h1 className="text-2xl font-bold text-white mb-2">
-              Purchase Successful!
+              Покупка успешна!
             </h1>
             
             <p className="text-dark-400 mb-6">
-              Your beat has been added to your purchases. You can now download it anytime.
+              Ваш бит добавлен в ваши покупки. Вы можете скачать его в любое время.
             </p>
             
             <div className="space-y-3">
@@ -24,7 +24,7 @@ const SuccessPage = () => {
                 className="btn btn-primary w-full"
               >
                 <Download className="h-4 w-4 mr-2" />
-                View Purchases
+                Посмотреть покупки
               </Link>
               
               <Link
@@ -32,7 +32,7 @@ const SuccessPage = () => {
                 className="btn btn-outline w-full"
               >
                 <Home className="h-4 w-4 mr-2" />
-                Back to Home
+                Вернуться на главную
               </Link>
             </div>
           </div>

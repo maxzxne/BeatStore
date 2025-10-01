@@ -36,6 +36,9 @@ const AudioPlayer = ({ src, title, trackId }) => {
   };
 
   const handleSeek = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (!isCurrent || !duration) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
@@ -43,6 +46,7 @@ const AudioPlayer = ({ src, title, trackId }) => {
     const width = rect.width;
     const newTime = (clickX / width) * duration;
     
+    console.log('AudioPlayer handleSeek:', newTime, 'from click position:', clickX, 'width:', width);
     seekTo(newTime);
   };
 
@@ -105,7 +109,7 @@ const AudioPlayer = ({ src, title, trackId }) => {
             step="0.1"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+            className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
           />
         </div>
       </div>

@@ -115,7 +115,7 @@ const AdminUpload = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="card">
             <div className="card-header">
-              <h2 className="text-lg font-semibold text-white">Beat Information</h2>
+              <h2 className="text-lg font-semibold text-white">Информация о бите</h2>
             </div>
             
             <div className="card-content space-y-4">
@@ -205,7 +205,7 @@ const AdminUpload = () => {
                   value={formData.key}
                   onChange={handleInputChange}
                   className="input w-full"
-                  placeholder="e.g., C, F#, Am"
+                  placeholder="например, C, F#, Am"
                 />
               </div>
               
@@ -218,7 +218,7 @@ const AdminUpload = () => {
                   value={formData.description}
                   onChange={handleInputChange}
                   className="input w-full h-20 resize-none"
-                  placeholder="Describe your beat..."
+                  placeholder="Опишите ваш бит..."
                 />
               </div>
             </div>

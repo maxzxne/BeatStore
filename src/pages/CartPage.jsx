@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useAudioPlayer } from '../contexts/AudioPlayerContext';
+import { useNotification } from '../contexts/NotificationContext';
 import BeatCard from '../components/BeatCard';
+import MiniPlayer from '../components/MiniPlayer';
 import { api } from '../utils/api';
-import { ShoppingCart, Trash2 } from 'lucide-react';
+import { ShoppingCart, Trash2, Play, Pause } from 'lucide-react';
 
 const CartPage = () => {
   const { isAuthenticated } = useAuth();
+  const { playTrack, isCurrentTrack, isCurrentTrackPlaying } = useAudioPlayer();
+  const { showSuccess, showError } = useNotification();
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -38,7 +46,41 @@ const CartPage = () => {
     }
   };
 
+  const handlePlay = (beat) => {
+    if (!beat.demo_url) return;
+    const trackUrl = `http://localhost:8000${beat.demo_url}`;
+    playTrack(beat.id, trackUrl, beat.title);
+  };
+
+  const handleBulkPurchase = async () => {
+    if (totalPrice > 0) return; // Only allow for free beats
+    
+    setPurchasing(true);
+    try {
+      const freeBeats = cartItems.filter(beat => beat.price === 0);
+      const purchasePromises = freeBeats.map(beat => 
+        api.post(`/beats/${beat.id}/purchase`)
+      );
+      
+      await Promise.all(purchasePromises);
+      
+      // Remove purchased beats from cart
+      setCartItems(cartItems.filter(beat => beat.price > 0));
+      
+      showSuccess(`Успешно приобретено ${freeBeats.length} бесплатных битов!`);
+      setTimeout(() => {
+        navigate('/success');
+      }, 1500);
+    } catch (error) {
+      console.error('Error purchasing beats:', error);
+      showError('Ошибка при покупке битов');
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const freeBeatsCount = cartItems.filter(beat => beat.price === 0).length;
 
   if (!isAuthenticated) {
     return (
@@ -88,7 +130,7 @@ const CartPage = () => {
                 <div key={beat.id} className="card">
                   <div className="card-content py-4">
                     <div className="flex items-center space-x-4 min-h-[80px]">
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center relative group">
                         {beat.cover_url ? (
                           <img
                             src={`http://localhost:8000${beat.cover_url}`}
@@ -103,10 +145,31 @@ const CartPage = () => {
                             </div>
                           </div>
                         )}
+                        
+                        {/* Play button overlay */}
+                        {beat.demo_url && (
+                          <button
+                            onClick={() => handlePlay(beat)}
+                            className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded"
+                          >
+                            <div className="bg-black rounded-full p-1">
+                              {isCurrentTrackPlaying(beat.id) ? (
+                                <Pause className="h-4 w-4 text-white" />
+                              ) : (
+                                <Play className="h-4 w-4 text-white" />
+                              )}
+                            </div>
+                          </button>
+                        )}
                       </div>
                       
                       <div className="flex-1 flex flex-col justify-center">
-                        <h3 className="font-semibold text-black">{beat.title}</h3>
+                        <Link 
+                          to={`/beat/${beat.id}`}
+                          className="font-semibold text-black hover:text-gray-700 transition-colors"
+                        >
+                          {beat.title}
+                        </Link>
                         <p className="text-gray-600 text-sm">{beat.artist}</p>
                         <p className="text-gray-600 text-sm">{beat.genre} • {beat.bpm} BPM</p>
                       </div>
@@ -118,6 +181,7 @@ const CartPage = () => {
                         <button
                           onClick={() => removeFromCart(beat.id)}
                           className="text-dark-400 hover:text-red-500 mt-2"
+                          title="Удалить из корзины"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -158,18 +222,30 @@ const CartPage = () => {
               </div>
               
               <div className="card-footer">
-                <button
-                  className="btn btn-primary w-full"
-                  disabled={cartItems.length === 0 || totalPrice > 0}
-                  title={totalPrice > 0 ? "Оплата онлайн будет доступна позже" : ""}
-                >
-                  {totalPrice > 0 ? "Оплата онлайн будет доступна позже" : "Перейти к оплате"}
-                </button>
+                {freeBeatsCount > 0 && totalPrice === 0 ? (
+                  <button
+                    onClick={handleBulkPurchase}
+                    disabled={purchasing}
+                    className="btn btn-primary w-full"
+                  >
+                    {purchasing ? "Покупка..." : `Получить ${freeBeatsCount} бесплатных битов`}
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-primary w-full"
+                    disabled={cartItems.length === 0 || totalPrice > 0}
+                    title={totalPrice > 0 ? "Оплата онлайн будет доступна позже" : ""}
+                  >
+                    {totalPrice > 0 ? "Оплата онлайн будет доступна позже" : "Перейти к оплате"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+      
+      <MiniPlayer />
       
       {/* Bottom padding to prevent overlap with mini player */}
       <div className="h-20"></div>

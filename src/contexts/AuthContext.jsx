@@ -1,8 +1,24 @@
+/**
+ * Контекст аутентификации для управления пользователями и администраторами
+ * 
+ * Обеспечивает:
+ * - Регистрацию и авторизацию обычных пользователей
+ * - Авторизацию администраторов
+ * - Управление токенами доступа
+ * - Проверку прав доступа
+ * - Автоматическое восстановление сессии
+ */
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
 
+// Создание контекста для аутентификации
 const AuthContext = createContext();
 
+/**
+ * Хук для использования контекста аутентификации
+ * @returns {Object} Объект с функциями и состоянием аутентификации
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -11,9 +27,17 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Провайдер контекста аутентификации
+ * @param {Object} props - Свойства компонента
+ * @param {React.ReactNode} props.children - Дочерние компоненты
+ */
 export const AuthProvider = ({ children }) => {
+  // Состояние текущего пользователя
   const [user, setUser] = useState(null);
+  // Состояние администратора
   const [adminUser, setAdminUser] = useState(null);
+  // Состояние загрузки (проверка токенов при инициализации)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

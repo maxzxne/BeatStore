@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import BeatCard from '../components/BeatCard';
+import MiniPlayer from '../components/MiniPlayer';
 import { api } from '../utils/api';
 import { Heart } from 'lucide-react';
 
@@ -65,9 +66,9 @@ const FavoritesPage = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Your Favorites</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Избранное</h1>
         <p className="text-dark-400">
-          {favorites.length} favorite beats
+          {favorites.length} избранных битов
         </p>
       </div>
 
@@ -94,6 +95,8 @@ const FavoritesPage = () => {
           })}
         </div>
       )}
+      
+      <MiniPlayer />
       
       {/* Bottom padding to prevent overlap with mini player */}
       <div className="h-20"></div>
