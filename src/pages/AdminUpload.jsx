@@ -291,8 +291,11 @@ const AdminUpload = () => {
                     className="input flex-1"
                   />
                 </div>
-                <p className="text-xs text-dark-400 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   Опциональная обложка для вашего бита
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Рекомендуемое разрешение: 500×500px или больше
                 </p>
               </div>
             </div>
