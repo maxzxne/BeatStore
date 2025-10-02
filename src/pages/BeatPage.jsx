@@ -20,7 +20,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import AudioPlayer from '../components/AudioPlayer';
 import MiniPlayer from '../components/MiniPlayer';
 import { api } from '../utils/api';
-import { Heart, ShoppingCart, Download, ArrowLeft, Check } from 'lucide-react';
+import { Heart, ShoppingCart, Download, ArrowLeft, Check, SkipBack, SkipForward } from 'lucide-react';
 
 /**
  * Компонент страницы бита
@@ -181,7 +181,7 @@ const BeatPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
-          <div className="text-dark-400 text-lg">Beat not found</div>
+          <div className="text-dark-400 text-lg">Бит не найден</div>
         </div>
       </div>
     );
@@ -255,34 +255,29 @@ const BeatPage = () => {
                   <>
                     <button
                       onClick={handleFavorite}
-                      className={`btn btn-outline btn-sm ${
-                        isFavorite ? 'text-black border-black' : ''
+                      className={`p-3 rounded-full border transition-colors ${
+                        isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
                       }`}
+                      title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
                     >
-                      <Heart className="h-4 w-4 mr-2" fill={isFavorite ? 'currentColor' : 'none'} />
-                      {isFavorite ? 'В избранном' : 'В избранное'}
+                      <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
                     </button>
                     
                     {!isPurchased && (
                       <button
                         onClick={handleAddToCart}
-                        className={`btn btn-outline btn-sm relative ${
-                          isInCart ? 'text-black border-black' : ''
+                        className={`p-3 rounded-full border transition-colors relative ${
+                          isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
                         }`}
+                        title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
                       >
                         {isInCart ? (
-                          <div className="flex items-center">
-                            <div className="relative mr-2">
-                              <ShoppingCart className="h-4 w-4" fill="currentColor" />
-                              <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
-                            </div>
-                            В корзине
+                          <div className="relative">
+                            <ShoppingCart className="h-5 w-5" fill="currentColor" />
+                            <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
                           </div>
                         ) : (
-                          <>
-                            <ShoppingCart className="h-4 w-4 mr-2" fill="none" />
-                            В корзину
-                          </>
+                          <ShoppingCart className="h-5 w-5" fill="none" />
                         )}
                       </button>
                     )}
@@ -303,7 +298,7 @@ const BeatPage = () => {
                     className="btn btn-primary btn-sm flex-1"
                     disabled={!isAuthenticated}
                   >
-                    {beat.price === 0 ? 'Получить бесплатно' : `Купить за ${beat.price.toFixed(0)} ₽`}
+                    {beat.price === 0 ? 'Получить бесплатно' : `Купить сейчас`}
                   </button>
                 )}
               </div>
@@ -338,7 +333,7 @@ const BeatPage = () => {
                       className="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Назад на 10 секунд"
                     >
-                      <span className="text-sm font-medium">-10</span>
+                      <SkipBack className="h-5 w-5" />
                     </button>
                     
                     <button
@@ -354,7 +349,7 @@ const BeatPage = () => {
                       className="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Вперед на 10 секунд"
                     >
-                      <span className="text-sm font-medium">+10</span>
+                      <SkipForward className="h-5 w-5" />
                     </button>
                   </div>
                 </div>

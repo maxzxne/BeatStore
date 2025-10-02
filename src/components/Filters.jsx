@@ -59,17 +59,25 @@ const Filters = ({ onFilterChange, genres = [] }) => {
         <div className="card p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-black">Фильтры</h3>
-            {hasActiveFilters && (
+            <div className="flex items-center space-x-2">
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-primary-400 hover:text-primary-300"
+                >
+                  Очистить все
+                </button>
+              )}
               <button
-                onClick={clearFilters}
-                className="text-sm text-primary-400 hover:text-primary-300"
+                onClick={() => setIsOpen(false)}
+                className="md:hidden text-gray-500 hover:text-black"
               >
-                Очистить все
+                <X className="h-5 w-5" />
               </button>
-            )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
             {/* Genre */}
             <div>
               <label className="block text-sm font-medium text-black mb-2">
@@ -78,7 +86,7 @@ const Filters = ({ onFilterChange, genres = [] }) => {
               <select
                 value={filters.genre}
                 onChange={(e) => handleFilterChange('genre', e.target.value)}
-                className="input"
+                className="input w-full min-w-0"
               >
                 <option value="">Все жанры</option>
                 {genres.map(genre => (
@@ -95,7 +103,7 @@ const Filters = ({ onFilterChange, genres = [] }) => {
               <select
                 value={filters.key}
                 onChange={(e) => handleFilterChange('key', e.target.value)}
-                className="input"
+                className="input w-full min-w-0"
               >
                 <option value="">Все тональности</option>
                 {keys.map(key => (
@@ -161,7 +169,7 @@ const Filters = ({ onFilterChange, genres = [] }) => {
                 <select
                   value={filters.purchased}
                   onChange={(e) => handleFilterChange('purchased', e.target.value)}
-                  className="input"
+                  className="input w-full min-w-0"
                 >
                   <option value="">Все биты</option>
                   <option value="purchased">Купленные</option>

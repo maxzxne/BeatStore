@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
-import { Play, Pause, Volume2, VolumeX, X } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, X, SkipBack, SkipForward } from 'lucide-react';
 
 /**
  * Компонент мини-плеера
@@ -109,35 +109,35 @@ const MiniPlayer = () => {
             </div>
           </div>
           
-          {/* Seek buttons */}
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const newTime = Math.max(0, currentTime - 10);
-                seekTo(newTime);
-              }}
-              disabled={!currentTrack}
-              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Назад на 10 секунд"
-            >
-              <span className="text-xs font-medium">-10</span>
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const newTime = currentTime + 10;
-                seekTo(newTime);
-              }}
-              disabled={!currentTrack}
-              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Вперед на 10 секунд"
-            >
-              <span className="text-xs font-medium">+10</span>
-            </button>
-          </div>
+                 {/* Seek buttons */}
+                 <div className="flex items-center space-x-1">
+                   <button
+                     onClick={(e) => {
+                       e.preventDefault();
+                       e.stopPropagation();
+                       const newTime = Math.max(0, currentTime - 10);
+                       seekTo(newTime);
+                     }}
+                     disabled={!currentTrack}
+                     className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     title="Назад на 10 секунд"
+                   >
+                     <SkipBack className="h-4 w-4" />
+                   </button>
+                   <button
+                     onClick={(e) => {
+                       e.preventDefault();
+                       e.stopPropagation();
+                       const newTime = currentTime + 10;
+                       seekTo(newTime);
+                     }}
+                     disabled={!currentTrack}
+                     className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     title="Вперед на 10 секунд"
+                   >
+                     <SkipForward className="h-4 w-4" />
+                   </button>
+                 </div>
           
           <div className="flex items-center space-x-2">
             <button onClick={toggleMute} className="text-gray-600 hover:text-black">
