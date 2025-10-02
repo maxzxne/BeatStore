@@ -73,11 +73,11 @@ const AudioPlayer = ({ src, title, trackId }) => {
         </button>
 
         <div className="flex-1">
-          <div className="text-sm font-medium text-black mb-1">{title}</div>
-          <div className="flex items-center space-x-2 text-xs text-gray-600">
-            <span>{formatTime(isCurrent ? currentTime : 0)}</span>
+          <div className="text-sm font-medium text-black mb-2">{title}</div>
+          <div className="space-y-2">
+            {/* Прогресс-бар на отдельной строке */}
             <div
-              className="flex-1 h-2 bg-gray-200 rounded-full cursor-pointer"
+              className="w-full h-3 bg-gray-200 rounded-full cursor-pointer"
               onClick={handleSeek}
             >
               <div
@@ -87,7 +87,11 @@ const AudioPlayer = ({ src, title, trackId }) => {
                 }}
               />
             </div>
-            <span>{formatTime(isCurrent ? duration : 0)}</span>
+            {/* Время на отдельной строке */}
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>{formatTime(isCurrent ? currentTime : 0)}</span>
+              <span>{formatTime(isCurrent ? duration : 0)}</span>
+            </div>
           </div>
         </div>
 

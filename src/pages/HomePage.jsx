@@ -137,7 +137,7 @@ const HomePage = () => {
         </p>
       </div>
 
-      <Filters onFilterChange={handleFilterChange} genres={genres} />
+      <Filters onFilterChange={handleFilterChange} genres={genres} currentFilters={filters} />
 
       {beats.length === 0 ? (
         <div className="text-center py-12">

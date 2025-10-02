@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
-import { Play, Pause, Volume2, VolumeX, X, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, X } from 'lucide-react';
 
 /**
  * Компонент мини-плеера
@@ -93,11 +93,11 @@ const MiniPlayer = () => {
           </button>
           
           <div className="flex-1">
-            <div className="text-sm text-black mb-1">{currentTrackTitle}</div>
-            <div className="flex items-center space-x-2 text-xs text-gray-600">
-              <span>{formatTime(currentTime)}</span>
+            <div className="text-sm text-black mb-2">{currentTrackTitle}</div>
+            <div className="space-y-2">
+              {/* Прогресс-бар на отдельной строке */}
               <div
-                className="flex-1 h-1 bg-gray-300 rounded-full cursor-pointer"
+                className="w-full h-2 bg-gray-300 rounded-full cursor-pointer"
                 onClick={handleSeek}
               >
                 <div
@@ -105,7 +105,11 @@ const MiniPlayer = () => {
                   style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
                 />
               </div>
-              <span>{formatTime(duration)}</span>
+              {/* Время на отдельной строке */}
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
             </div>
           </div>
           
@@ -122,7 +126,7 @@ const MiniPlayer = () => {
                      className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                      title="Назад на 10 секунд"
                    >
-                     <SkipBack className="h-4 w-4" />
+                     <span className="text-xs font-medium">-10</span>
                    </button>
                    <button
                      onClick={(e) => {
@@ -135,7 +139,7 @@ const MiniPlayer = () => {
                      className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                      title="Вперед на 10 секунд"
                    >
-                     <SkipForward className="h-4 w-4" />
+                     <span className="text-xs font-medium">+10</span>
                    </button>
                  </div>
           

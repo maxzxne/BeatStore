@@ -20,7 +20,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import AudioPlayer from '../components/AudioPlayer';
 import MiniPlayer from '../components/MiniPlayer';
 import { api } from '../utils/api';
-import { Heart, ShoppingCart, Download, ArrowLeft, Check, SkipBack, SkipForward } from 'lucide-react';
+import { Heart, ShoppingCart, Download, ArrowLeft, Check } from 'lucide-react';
 
 /**
  * Компонент страницы бита
@@ -333,7 +333,7 @@ const BeatPage = () => {
                       className="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Назад на 10 секунд"
                     >
-                      <SkipBack className="h-5 w-5" />
+                      <span className="text-sm font-medium">-10</span>
                     </button>
                     
                     <button
@@ -349,7 +349,7 @@ const BeatPage = () => {
                       className="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Вперед на 10 секунд"
                     >
-                      <SkipForward className="h-5 w-5" />
+                      <span className="text-sm font-medium">+10</span>
                     </button>
                   </div>
                 </div>

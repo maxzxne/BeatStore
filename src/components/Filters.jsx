@@ -1,21 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const Filters = ({ onFilterChange, genres = [] }) => {
+const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
   const { isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    genre: '',
-    minBpm: '',
-    maxBpm: '',
-    minPrice: '',
-    maxPrice: '',
-    key: '',
-    purchased: ''
-  });
+  const [filters, setFilters] = useState(currentFilters);
 
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  // Синхронизация локального состояния с переданными фильтрами
+  useEffect(() => {
+    setFilters(currentFilters);
+  }, [currentFilters]);
 
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
@@ -49,7 +46,7 @@ const Filters = ({ onFilterChange, genres = [] }) => {
         <Filter className="h-4 w-4 mr-2" />
         Фильтры
         {hasActiveFilters && (
-          <span className="ml-2 bg-primary-600 text-white text-xs px-2 py-1 rounded-full">
+          <span className="ml-2 bg-black text-white text-xs px-2 py-1 rounded-full">
             {Object.values(filters).filter(v => v !== '').length}
           </span>
         )}
@@ -63,7 +60,7 @@ const Filters = ({ onFilterChange, genres = [] }) => {
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-primary-400 hover:text-primary-300"
+                  className="text-sm text-black hover:text-gray-600"
                 >
                   Очистить все
                 </button>
@@ -77,7 +74,7 @@ const Filters = ({ onFilterChange, genres = [] }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Genre */}
             <div>
               <label className="block text-sm font-medium text-black mb-2">
