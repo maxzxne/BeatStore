@@ -10,7 +10,7 @@
  * - Кнопку закрытия
  */
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { Play, Pause, Volume2, VolumeX, X } from 'lucide-react';
 
@@ -36,8 +36,6 @@ const MiniPlayer = () => {
     toggleMute,
     stopTrack
   } = useAudioPlayer();
-  
-  const audioRef = useRef(null);
 
   if (!currentTrack && !currentTrackTitle) {
     return null;
@@ -60,7 +58,6 @@ const MiniPlayer = () => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const newTime = (clickX / rect.width) * duration;
-    console.log('MiniPlayer handleSeek:', newTime, 'from click position:', clickX, 'width:', rect.width);
     seekTo(newTime);
   };
 
@@ -118,9 +115,7 @@ const MiniPlayer = () => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('MiniPlayer seek back - currentTime:', currentTime, 'duration:', duration);
                 const newTime = Math.max(0, currentTime - 10);
-                console.log('MiniPlayer seeking back to:', newTime, 'from:', currentTime);
                 seekTo(newTime);
               }}
               disabled={!currentTrack}
@@ -133,18 +128,8 @@ const MiniPlayer = () => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('MiniPlayer seek forward button clicked!');
-                console.log('Button state - currentTrack:', currentTrack, 'disabled:', !currentTrack);
-                console.log('MiniPlayer seek forward - currentTime:', currentTime, 'duration:', duration);
-                console.log('seekTo function:', typeof seekTo);
                 const newTime = currentTime + 10;
-                console.log('MiniPlayer seeking forward to:', newTime, 'from:', currentTime);
-                if (typeof seekTo === 'function') {
-                  seekTo(newTime);
-                  console.log('seekTo called successfully');
-                } else {
-                  console.error('seekTo is not a function!');
-                }
+                seekTo(newTime);
               }}
               disabled={!currentTrack}
               className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

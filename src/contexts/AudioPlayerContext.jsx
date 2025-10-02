@@ -9,7 +9,7 @@
  * - Мини-плеер внизу страницы
  */
 
-import React, { createContext, useContext, useState, useRef } from 'react';
+import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 
 // Создание контекста для аудио плеера
 const AudioPlayerContext = createContext();
@@ -53,7 +53,7 @@ export const AudioPlayerProvider = ({ children }) => {
   // Флаг для предотвращения обновления времени во время перемотки
   const isSeekingRef = useRef(false);
 
-  const playTrack = (trackId, trackUrl, trackTitle) => {
+  const playTrack = useCallback((trackId, trackUrl, trackTitle) => {
     // Если уже играет этот трек - ставим на паузу
     if (currentTrack === trackId && isPlaying) {
       pauseTrack();
@@ -63,21 +63,6 @@ export const AudioPlayerProvider = ({ children }) => {
     // Если это тот же трек, но на паузе - просто возобновляем
     if (currentTrack === trackId && !isPlaying && audioRef.current) {
       resumeTrack();
-      return;
-    }
-
-    // Если это тот же трек, но плеер был закрыт - возобновляем с текущей позиции
-    if (audioRef.current && audioRef.current.src === trackUrl) {
-      setCurrentTrack(trackId);
-      setCurrentTrackUrl(trackUrl);
-      setCurrentTrackTitle(trackTitle);
-      audioRef.current.play()
-        .then(() => {
-          setIsPlaying(true);
-        })
-        .catch(error => {
-          console.error('Ошибка воспроизведения:', error);
-        });
       return;
     }
 
@@ -95,14 +80,16 @@ export const AudioPlayerProvider = ({ children }) => {
     
     // Устанавливаем src только если это новый трек
     if (audio.src !== trackUrl) {
+      console.log('Changing track from', audio.src, 'to', trackUrl);
       audio.src = trackUrl;
       audio.preload = 'metadata';
+      // Сбрасываем время при смене трека
+      setCurrentTime(0);
     }
 
-    // Устанавливаем информацию о треке сразу
-    setCurrentTrack(trackId);
-    setCurrentTrackUrl(trackUrl);
-    setCurrentTrackTitle(trackTitle);
+    // Устанавливаем громкость и режим без звука
+    audio.volume = volume;
+    audio.muted = isMuted;
 
     // Устанавливаем обработчики событий
     audio.onloadedmetadata = () => {
@@ -110,9 +97,7 @@ export const AudioPlayerProvider = ({ children }) => {
     };
 
     audio.ontimeupdate = () => {
-      if (!isSeekingRef.current) {
-        setCurrentTime(audio.currentTime);
-      }
+      setCurrentTime(audio.currentTime);
     };
 
     audio.onended = () => {
@@ -121,17 +106,22 @@ export const AudioPlayerProvider = ({ children }) => {
       setCurrentTrackUrl(null);
       setCurrentTrackTitle(null);
       setCurrentTime(0);
-      audioRef.current = null;
     };
 
     audio.onerror = () => {
+      console.error('Ошибка воспроизведения аудио');
       setIsPlaying(false);
       setCurrentTrack(null);
       setCurrentTrackUrl(null);
       setCurrentTrackTitle(null);
       setCurrentTime(0);
-      audioRef.current = null;
     };
+
+    // Устанавливаем информацию о треке
+    setCurrentTrack(trackId);
+    setCurrentTrackUrl(trackUrl);
+    setCurrentTrackTitle(trackTitle);
+    // НЕ сбрасываем время при смене трека
 
     // Запускаем воспроизведение
     audio.play()
@@ -144,28 +134,19 @@ export const AudioPlayerProvider = ({ children }) => {
         setCurrentTrack(null);
         setCurrentTrackUrl(null);
         setCurrentTrackTitle(null);
-        audioRef.current = null;
+        setCurrentTime(0);
       });
-  };
+  }, [currentTrack, isPlaying, volume, isMuted]);
 
-  const pauseTrack = () => {
+  const pauseTrack = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
     }
-  };
+  }, []);
 
-  const resumeTrack = () => {
+  const resumeTrack = useCallback(() => {
     if (audioRef.current && currentTrack) {
-      // Убеждаемся, что нет других аудио элементов
-      const allAudio = document.querySelectorAll('audio');
-      allAudio.forEach(audio => {
-        if (audio !== audioRef.current) {
-          audio.pause();
-          audio.currentTime = 0;
-        }
-      });
-      
       audioRef.current.play()
         .then(() => {
           setIsPlaying(true);
@@ -174,103 +155,52 @@ export const AudioPlayerProvider = ({ children }) => {
           console.error('Ошибка возобновления:', error);
         });
     }
-  };
+  }, [currentTrack]);
 
-  const seekTo = (time) => {
+  const seekTo = useCallback((time) => {
     if (audioRef.current && !isNaN(time) && isFinite(time)) {
-      const clampedTime = Math.max(0, Math.min(time, audioRef.current.duration || 0));
+      const clampedTime = Math.max(0, Math.min(time, duration || 0));
       
-      // Проверяем, готов ли аудио элемент
-      if (audioRef.current.readyState >= 2) {
-        audioRef.current.currentTime = clampedTime;
-        setCurrentTime(clampedTime);
-        return;
-      }
+      console.log('seekTo called:', {
+        time,
+        clampedTime,
+        currentTime: audioRef.current.currentTime,
+        duration: audioRef.current.duration,
+        currentTrack,
+        src: audioRef.current.src
+      });
       
-      // Останавливаем текущее воспроизведение
-      const wasPlaying = isPlaying;
-      if (wasPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      }
+      // Устанавливаем время в аудио элементе
+      audioRef.current.currentTime = clampedTime;
       
-      // Создаем новый аудио элемент с нужной позицией
-      const newAudio = new Audio();
-      newAudio.src = audioRef.current.src;
-      newAudio.volume = audioRef.current.volume;
-      newAudio.muted = audioRef.current.muted;
-      newAudio.preload = 'metadata';
+      // Обновляем состояние сразу
+      setCurrentTime(clampedTime);
       
-      // Пробуем разные события
-      const handleAudioReady = () => {
-        newAudio.currentTime = clampedTime;
-        
-        // Заменяем старый элемент
-        audioRef.current = newAudio;
-        
-        // Настраиваем обработчики
-        newAudio.ontimeupdate = () => {
-          setCurrentTime(newAudio.currentTime);
-        };
-        
-        newAudio.onended = () => {
-          setIsPlaying(false);
-          setCurrentTrack(null);
-          setCurrentTrackUrl(null);
-          setCurrentTrackTitle(null);
-        };
-        
-        newAudio.onerror = (error) => {
-          console.error('Audio error:', error);
-          setIsPlaying(false);
-        };
-        
-        setCurrentTime(clampedTime);
-        setDuration(newAudio.duration);
-        
-        // Восстанавливаем воспроизведение если нужно
-        if (wasPlaying) {
-          newAudio.play().catch(error => {
-            console.error('Error resuming playback:', error);
-          });
-        }
-      };
-      
-      // Пробуем несколько событий
-      newAudio.addEventListener('loadedmetadata', handleAudioReady, { once: true });
-      newAudio.addEventListener('canplay', handleAudioReady, { once: true });
-      newAudio.addEventListener('canplaythrough', handleAudioReady, { once: true });
-      
-      // Fallback на случай, если события не сработают
-      setTimeout(() => {
-        if (audioRef.current === newAudio) {
-          handleAudioReady();
-        }
-      }, 1000);
+      console.log('after seekTo:', audioRef.current.currentTime);
     }
-  };
+  }, [duration, currentTrack]);
 
-  const stopTrack = () => {
+  const stopTrack = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
-      audioRef.current.currentTime = 0; // Сбрасываем на начало
+      audioRef.current.currentTime = 0;
     }
     setIsPlaying(false);
     setCurrentTrack(null);
     setCurrentTrackUrl(null);
     setCurrentTrackTitle(null);
-    setCurrentTime(0); // Сбрасываем время на 0
-  };
+    setCurrentTime(0);
+  }, []);
 
-  const setVolumeValue = (newVolume) => {
+  const setVolume = useCallback((newVolume) => {
     if (audioRef.current) {
       audioRef.current.volume = newVolume;
       setVolumeState(newVolume);
       setIsMuted(newVolume === 0);
     }
-  };
+  }, []);
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (audioRef.current) {
       if (isMuted) {
         audioRef.current.volume = volume;
@@ -280,15 +210,15 @@ export const AudioPlayerProvider = ({ children }) => {
         setIsMuted(true);
       }
     }
-  };
+  }, [isMuted, volume]);
 
-  const isCurrentTrack = (trackId) => {
+  const isCurrentTrack = useCallback((trackId) => {
     return currentTrack === trackId;
-  };
+  }, [currentTrack]);
 
-  const isCurrentTrackPlaying = (trackId) => {
+  const isCurrentTrackPlaying = useCallback((trackId) => {
     return currentTrack === trackId && isPlaying;
-  };
+  }, [currentTrack, isPlaying]);
 
   const value = {
     currentTrack,
@@ -304,7 +234,7 @@ export const AudioPlayerProvider = ({ children }) => {
     resumeTrack,
     seekTo,
     stopTrack,
-    setVolume: setVolumeValue,
+    setVolume,
     toggleMute,
     isCurrentTrack,
     isCurrentTrackPlaying

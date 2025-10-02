@@ -11,8 +11,8 @@ Backend API для BeatStore - платформы продажи музыкал�
 Технологии: FastAPI, SQLAlchemy, SQLite, JWT, bcrypt
 """
 
-from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Form
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Form, Request
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +26,7 @@ from sqlalchemy import or_
 import shutil
 import os
 import sys
+import re
 
 from database import SessionLocal, engine
 from models import Base, User, Beat, Purchase, cart_table
@@ -80,6 +81,84 @@ def custom_json_encoder(obj):
     return obj
 
 # Подключение статических файлов (аудио, обложки)
+# Функция для обработки Range запросов
+def parse_range_header(range_header: str, file_size: int):
+    """Парсит Range заголовок и возвращает начальную и конечную позиции"""
+    if not range_header:
+        return None, None
+    
+    # Извлекаем диапазон из заголовка (например, "bytes=0-1023")
+    match = re.match(r'bytes=(\d+)-(\d*)', range_header)
+    if not match:
+        return None, None
+    
+    start = int(match.group(1))
+    end = int(match.group(2)) if match.group(2) else file_size - 1
+    
+    # Проверяем корректность диапазона
+    if start >= file_size or end >= file_size or start > end:
+        return None, None
+    
+    return start, end
+
+def serve_audio_with_range(file_path: str, request: Request):
+    """Обслуживает аудио файл с поддержкой Range запросов"""
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    file_size = os.path.getsize(file_path)
+    range_header = request.headers.get('range')
+    
+    if not range_header:
+        # Обычный запрос без Range
+        return FileResponse(file_path, media_type="audio/mpeg")
+    
+    start, end = parse_range_header(range_header, file_size)
+    if start is None or end is None:
+        # Некорректный Range заголовок
+        return FileResponse(file_path, media_type="audio/mpeg")
+    
+    content_length = end - start + 1
+    
+    def iterfile():
+        with open(file_path, "rb") as file:
+            file.seek(start)
+            remaining = content_length
+            while remaining:
+                chunk_size = min(8192, remaining)
+                chunk = file.read(chunk_size)
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+                yield chunk
+    
+    headers = {
+        'Content-Range': f'bytes {start}-{end}/{file_size}',
+        'Accept-Ranges': 'bytes',
+        'Content-Length': str(content_length),
+        'Content-Type': 'audio/mpeg'
+    }
+    
+    return StreamingResponse(
+        iterfile(),
+        status_code=206,
+        headers=headers
+    )
+
+# Эндпоинт для аудио файлов с поддержкой Range
+@app.get("/static/demos/{filename}")
+async def serve_demo_audio(filename: str, request: Request):
+    """Обслуживает демо аудио файлы с поддержкой Range запросов"""
+    file_path = f"static/demos/{filename}"
+    return serve_audio_with_range(file_path, request)
+
+@app.get("/static/audio/{filename}")
+async def serve_full_audio(filename: str, request: Request):
+    """Обслуживает полные аудио файлы с поддержкой Range запросов"""
+    file_path = f"static/audio/{filename}"
+    return serve_audio_with_range(file_path, request)
+
+# Статические файлы для остальных типов (обложки и т.д.)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Настройка CORS для взаимодействия с frontend
