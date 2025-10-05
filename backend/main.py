@@ -737,9 +737,14 @@ async def create_beat_with_audio(
                 shutil.copyfileobj(cover_file.file, buffer)
             new_beat.cover_url = f"/static/covers/{cover_filename}"
             print(f"Cover saved locally: {cover_path}")
-    
-    db.commit()
-    db.refresh(new_beat)
+        
+        db.commit()
+        db.refresh(new_beat)
+        
+    except Exception as e:
+        print(f"Error saving files: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error saving files: {str(e)}")
     
     return {
         "message": "Beat created successfully",
