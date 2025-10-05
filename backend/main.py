@@ -30,7 +30,7 @@ import re
 
 from database import SessionLocal, engine
 from models import Base, User, Beat, Purchase, cart_table
-from cloudinary_utils import upload_file_from_bytes, delete_file_from_cloudinary
+# Убираем Cloudinary - используем локальное хранение на Render
 
 # Настройка кодировки для Windows
 if sys.platform == "win32":
@@ -148,7 +148,20 @@ def serve_audio_with_range(file_path: str, request: Request):
         headers=headers
     )
 
-# Статические файлы только для фронтенда (аудио файлы теперь на Cloudinary)
+# Эндпоинт для аудио файлов с поддержкой Range
+@app.get("/static/demos/{filename}")
+async def serve_demo_audio(filename: str, request: Request):
+    """Обслуживает демо аудио файлы с поддержкой Range запросов"""
+    file_path = f"static/demos/{filename}"
+    return serve_audio_with_range(file_path, request)
+
+@app.get("/static/audio/{filename}")
+async def serve_full_audio(filename: str, request: Request):
+    """Обслуживает полные аудио файлы с поддержкой Range запросов"""
+    file_path = f"static/audio/{filename}"
+    return serve_audio_with_range(file_path, request)
+
+# Статические файлы для остальных типов (обложки и т.д.)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Раздача фронтенда
@@ -636,35 +649,32 @@ async def upload_audio(
     if not beat:
         raise HTTPException(status_code=404, detail="Beat not found")
     
-    try:
-        # Загружаем демо файл в Cloudinary
-        if demo_file:
-            demo_content = await demo_file.read()
-            demo_url = upload_file_from_bytes(demo_content, beat_id, demo_file.filename, "demo")
-            if demo_url:
-                beat.demo_url = demo_url
-                print(f"Demo uploaded to Cloudinary: {demo_url}")
-            else:
-                raise HTTPException(status_code=500, detail="Failed to upload demo file")
-        
-        # Загружаем полный файл в Cloudinary
-        if full_file:
-            full_content = await full_file.read()
-            full_url = upload_file_from_bytes(full_content, beat_id, full_file.filename, "full")
-            if full_url:
-                beat.full_audio_url = full_url
-                print(f"Full audio uploaded to Cloudinary: {full_url}")
-            else:
-                raise HTTPException(status_code=500, detail="Failed to upload full file")
-        
-        db.commit()
-        db.refresh(beat)
-        
-        return {"message": "Files uploaded successfully", "beat_id": beat_id}
+    # Создаем папки если их нет
+    os.makedirs("static/demos", exist_ok=True)
+    os.makedirs("static/audio", exist_ok=True)
     
-    except Exception as e:
-        print(f"Error uploading files: {e}")
-        raise HTTPException(status_code=500, detail=f"Error uploading files: {str(e)}")
+    # Загружаем демо файл
+    if demo_file:
+        demo_filename = f"demo_{beat_id}_{demo_file.filename}"
+        demo_path = f"static/demos/{demo_filename}"
+        with open(demo_path, "wb") as buffer:
+            shutil.copyfileobj(demo_file.file, buffer)
+        beat.demo_url = f"/static/demos/{demo_filename}"
+        print(f"Demo saved locally: {demo_path}")
+    
+    # Загружаем полный файл
+    if full_file:
+        full_filename = f"full_{beat_id}_{full_file.filename}"
+        full_path = f"static/audio/{full_filename}"
+        with open(full_path, "wb") as buffer:
+            shutil.copyfileobj(full_file.file, buffer)
+        beat.full_audio_url = f"/static/audio/{full_filename}"
+        print(f"Full audio saved locally: {full_path}")
+    
+    db.commit()
+    db.refresh(beat)
+    
+    return {"message": "Files uploaded successfully", "beat_id": beat_id}
 
 # Быстрый эндпоинт для добавления нового бита с файлом
 @app.post("/create-beat-with-audio")
@@ -696,34 +706,37 @@ async def create_beat_with_audio(
     db.refresh(new_beat)
     
     try:
-        # Загружаем демо файл в Cloudinary
-        demo_content = await demo_file.read()
-        demo_url = upload_file_from_bytes(demo_content, new_beat.id, demo_file.filename, "demo")
-        if demo_url:
-            new_beat.demo_url = demo_url
-            print(f"Demo uploaded to Cloudinary: {demo_url}")
-        else:
-            raise HTTPException(status_code=500, detail="Failed to upload demo file")
+        # Загружаем демо файл локально
+        demo_filename = f"demo_{new_beat.id}_{demo_file.filename}"
+        demo_path = f"static/demos/{demo_filename}"
+        os.makedirs(os.path.dirname(demo_path), exist_ok=True)
         
-        # Загружаем полный файл в Cloudinary (опционально)
+        with open(demo_path, "wb") as buffer:
+            shutil.copyfileobj(demo_file.file, buffer)
+        new_beat.demo_url = f"/static/demos/{demo_filename}"
+        print(f"Demo saved locally: {demo_path}")
+        
+        # Загружаем полный файл локально (опционально)
         if full_file:
-            full_content = await full_file.read()
-            full_url = upload_file_from_bytes(full_content, new_beat.id, full_file.filename, "full")
-            if full_url:
-                new_beat.full_audio_url = full_url
-                print(f"Full audio uploaded to Cloudinary: {full_url}")
-            else:
-                print("Warning: Failed to upload full file")
+            full_filename = f"full_{new_beat.id}_{full_file.filename}"
+            full_path = f"static/audio/{full_filename}"
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            
+            with open(full_path, "wb") as buffer:
+                shutil.copyfileobj(full_file.file, buffer)
+            new_beat.full_audio_url = f"/static/audio/{full_filename}"
+            print(f"Full audio saved locally: {full_path}")
         
-        # Загружаем обложку в Cloudinary (опционально)
+        # Загружаем обложку локально (опционально)
         if cover_file:
-            cover_content = await cover_file.read()
-            cover_url = upload_file_from_bytes(cover_content, new_beat.id, cover_file.filename, "cover")
-            if cover_url:
-                new_beat.cover_url = cover_url
-                print(f"Cover uploaded to Cloudinary: {cover_url}")
-            else:
-                print("Warning: Failed to upload cover")
+            cover_filename = f"cover_{new_beat.id}_{cover_file.filename}"
+            cover_path = f"static/covers/{cover_filename}"
+            os.makedirs(os.path.dirname(cover_path), exist_ok=True)
+            
+            with open(cover_path, "wb") as buffer:
+                shutil.copyfileobj(cover_file.file, buffer)
+            new_beat.cover_url = f"/static/covers/{cover_filename}"
+            print(f"Cover saved locally: {cover_path}")
     
     db.commit()
     db.refresh(new_beat)
@@ -941,35 +954,41 @@ async def upload_beat_admin(
     db.refresh(beat)
     
     try:
-        # Загружаем демо файл в Cloudinary
+        # Загружаем демо файл локально
         if demo_file:
-            demo_content = await demo_file.read()
-            demo_url = upload_file_from_bytes(demo_content, beat.id, demo_file.filename, "demo")
-            if demo_url:
-                beat.demo_url = demo_url
-                print(f"Demo uploaded to Cloudinary: {demo_url}")
-            else:
-                raise HTTPException(status_code=500, detail="Failed to upload demo file")
+            demo_filename = f"demo_{beat.id}_{demo_file.filename}"
+            demo_path = f"static/demos/{demo_filename}"
+            os.makedirs(os.path.dirname(demo_path), exist_ok=True)
+            
+            with open(demo_path, "wb") as buffer:
+                shutil.copyfileobj(demo_file.file, buffer)
+            
+            beat.demo_url = f"/static/demos/{demo_filename}"
+            print(f"Demo saved locally: {demo_path}")
         
-        # Загружаем полный файл в Cloudinary
+        # Загружаем полный файл локально
         if full_file:
-            full_content = await full_file.read()
-            full_url = upload_file_from_bytes(full_content, beat.id, full_file.filename, "full")
-            if full_url:
-                beat.full_audio_url = full_url
-                print(f"Full audio uploaded to Cloudinary: {full_url}")
-            else:
-                print("Warning: Failed to upload full file")
+            full_filename = f"full_{beat.id}_{full_file.filename}"
+            full_path = f"static/audio/{full_filename}"
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            
+            with open(full_path, "wb") as buffer:
+                shutil.copyfileobj(full_file.file, buffer)
+            
+            beat.full_audio_url = f"/static/audio/{full_filename}"
+            print(f"Full audio saved locally: {full_path}")
         
-        # Загружаем обложку в Cloudinary
+        # Загружаем обложку локально
         if cover_file:
-            cover_content = await cover_file.read()
-            cover_url = upload_file_from_bytes(cover_content, beat.id, cover_file.filename, "cover")
-            if cover_url:
-                beat.cover_url = cover_url
-                print(f"Cover uploaded to Cloudinary: {cover_url}")
-            else:
-                print("Warning: Failed to upload cover")
+            cover_filename = f"cover_{beat.id}_{cover_file.filename}"
+            cover_path = f"static/covers/{cover_filename}"
+            os.makedirs(os.path.dirname(cover_path), exist_ok=True)
+            
+            with open(cover_path, "wb") as buffer:
+                shutil.copyfileobj(cover_file.file, buffer)
+            
+            beat.cover_url = f"/static/covers/{cover_filename}"
+            print(f"Cover saved locally: {cover_path}")
         
         db.commit()
         db.refresh(beat)

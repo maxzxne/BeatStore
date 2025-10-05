@@ -4,7 +4,9 @@
 
 import cloudinary
 import cloudinary.uploader
+import cloudinary.utils
 import os
+import time
 from typing import Optional
 
 # Настройка Cloudinary
@@ -92,47 +94,68 @@ def upload_file_from_bytes(file_bytes: bytes, beat_id: int, filename: str, file_
         folder = f"beatstore/{file_type}s"
         resource_type = "video" if file_type in ["demo", "full"] else "image"
         
-        # Загружаем файл
+        # Загружаем файл как приватный
         result = cloudinary.uploader.upload(
             file_bytes,
             folder=folder,
             resource_type=resource_type,
             public_id=f"beat_{beat_id}_{file_type}",
-            overwrite=True
+            overwrite=True,
+            type="private"  # Делаем файл приватным
         )
         
-        return result["secure_url"]
+        # Возвращаем только public_id, а не полный URL
+        return result["public_id"]
     except Exception as e:
         print(f"Ошибка загрузки файла: {e}")
         return None
 
-def delete_file_from_cloudinary(url: str) -> bool:
+def generate_signed_url(public_id: str, resource_type: str = "video", expires_in: int = 3600) -> Optional[str]:
     """
-    Удаляет файл из Cloudinary по URL
+    Генерирует подписанный URL для приватного файла
     
     Args:
-        url: URL файла в Cloudinary
+        public_id: ID файла в Cloudinary
+        resource_type: Тип ресурса ('video' или 'image')
+        expires_in: Время жизни URL в секундах (по умолчанию 1 час)
+    
+    Returns:
+        Подписанный URL или None при ошибке
+    """
+    try:
+        # Генерируем подписанный URL
+        url = cloudinary.utils.cloudinary_url(
+            public_id,
+            resource_type=resource_type,
+            type="private",
+            sign_url=True,
+            expires_at=int(time.time()) + expires_in
+        )[0]
+        
+        return url
+    except Exception as e:
+        print(f"Ошибка генерации подписанного URL: {e}")
+        return None
+
+def delete_file_from_cloudinary(public_id: str, resource_type: str = "video") -> bool:
+    """
+    Удаляет файл из Cloudinary по public_id
+    
+    Args:
+        public_id: ID файла в Cloudinary
+        resource_type: Тип ресурса ('video' или 'image')
     
     Returns:
         True если файл удален, False при ошибке
     """
     try:
-        # Извлекаем public_id из URL
-        # URL выглядит как: https://res.cloudinary.com/cloud_name/video/upload/v1234567890/beatstore/demos/beat_1_demo.mp3
-        parts = url.split("/")
-        if "cloudinary.com" in url and len(parts) > 6:
-            public_id = "/".join(parts[6:]).split(".")[0]  # Убираем расширение файла
-            
-            # Определяем тип ресурса
-            resource_type = "video" if "/video/" in url else "image"
-            
-            result = cloudinary.uploader.destroy(
-                public_id,
-                resource_type=resource_type
-            )
-            
-            return result.get("result") == "ok"
+        result = cloudinary.uploader.destroy(
+            public_id,
+            resource_type=resource_type,
+            type="private"
+        )
+        
+        return result.get("result") == "ok"
     except Exception as e:
         print(f"Ошибка удаления файла: {e}")
-    
-    return False
+        return False
