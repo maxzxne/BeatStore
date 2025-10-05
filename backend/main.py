@@ -62,6 +62,8 @@ def create_admin_user():
             db.add(admin_user)
             db.commit()
             print("Админ создан: username=admin, password=admin123")
+        else:
+            print(f"Админ уже существует: {admin.username}, is_admin: {admin.is_admin}")
     except Exception as e:
         print(f"Ошибка создания админа: {e}")
     finally:
@@ -752,10 +754,22 @@ async def create_beat_with_audio(
 # Админские эндпоинты
 @app.post("/api/admin/login", response_model=Token)
 def admin_login(login_data: UserLogin, db: Session = Depends(get_db)):
+    print(f"Admin login attempt: username={login_data.username}")
+    
     # Проверяем пользователя
     user = db.query(User).filter(User.username == login_data.username).first()
     
-    if not user or not verify_password(login_data.password, user.password_hash):
+    if not user:
+        print(f"User not found: {login_data.username}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password"
+        )
+    
+    print(f"User found: {user.username}, is_admin: {user.is_admin}")
+    
+    if not verify_password(login_data.password, user.password_hash):
+        print(f"Password verification failed for user: {login_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password"
@@ -763,6 +777,7 @@ def admin_login(login_data: UserLogin, db: Session = Depends(get_db)):
     
     # Проверяем права админа
     if not user.is_admin:
+        print(f"User {login_data.username} is not admin")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
@@ -774,6 +789,7 @@ def admin_login(login_data: UserLogin, db: Session = Depends(get_db)):
         data={"sub": user.username, "type": "admin"}, expires_delta=access_token_expires
     )
     
+    print(f"Admin login successful for: {login_data.username}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 def get_current_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
