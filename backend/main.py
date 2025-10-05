@@ -176,34 +176,6 @@ async def serve_frontend():
     """Отдает главную страницу фронтенда"""
     return FileResponse("static/frontend/index.html")
 
-# Эндпоинт для всех остальных маршрутов фронтенда (SPA routing)
-@app.get("/{path:path}")
-async def serve_frontend_routes(path: str):
-    """Отдает фронтенд для всех маршрутов (SPA routing)"""
-    # Проверяем, не является ли это API маршрутом или статическим файлом
-    if (path.startswith("api/") or 
-        path.startswith("static/") or 
-        path.startswith("beats/") or 
-        path.startswith("login") or 
-        path.startswith("register") or 
-        path.startswith("me") or 
-        path.startswith("favorites") or 
-        path.startswith("cart") or 
-        path.startswith("purchases") or
-        path.startswith("favicon.ico") or
-        path.startswith("assets/") or
-        path.endswith(".js") or
-        path.endswith(".css") or
-        path.endswith(".png") or
-        path.endswith(".jpg") or
-        path.endswith(".jpeg") or
-        path.endswith(".gif") or
-        path.endswith(".svg")):
-        raise HTTPException(status_code=404, detail="Not found")
-    
-    # Для всех остальных маршрутов отдаем index.html
-    return FileResponse("static/frontend/index.html")
-
 # Настройка CORS для взаимодействия с frontend
 app.add_middleware(
     CORSMiddleware,
@@ -1023,6 +995,35 @@ async def upload_beat_admin(
         db.delete(beat)
         db.commit()
         raise HTTPException(status_code=500, detail=f"Error uploading files: {str(e)}")
+
+# Эндпоинт для всех остальных маршрутов фронтенда (SPA routing)
+# Должен быть в самом конце, чтобы не перехватывать API маршруты
+@app.get("/{path:path}")
+async def serve_frontend_routes(path: str):
+    """Отдает фронтенд для всех маршрутов (SPA routing)"""
+    # Проверяем, не является ли это API маршрутом или статическим файлом
+    if (path.startswith("api/") or 
+        path.startswith("static/") or 
+        path.startswith("beats/") or 
+        path.startswith("login") or 
+        path.startswith("register") or 
+        path.startswith("me") or 
+        path.startswith("favorites") or 
+        path.startswith("cart") or 
+        path.startswith("purchases") or
+        path.startswith("favicon.ico") or
+        path.startswith("assets/") or
+        path.endswith(".js") or
+        path.endswith(".css") or
+        path.endswith(".png") or
+        path.endswith(".jpg") or
+        path.endswith(".jpeg") or
+        path.endswith(".gif") or
+        path.endswith(".svg")):
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    # Для всех остальных маршрутов отдаем index.html
+    return FileResponse("static/frontend/index.html")
 
 if __name__ == "__main__":
     import uvicorn
