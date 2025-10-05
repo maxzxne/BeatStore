@@ -67,7 +67,16 @@ const HomePage = () => {
       });
 
       const response = await api.get(`/beats?${params.toString()}`);
-      let filteredBeats = response.data;
+      console.log('Beats response:', response.data);
+      
+      // Проверяем, что response.data является массивом
+      let filteredBeats = [];
+      if (Array.isArray(response.data)) {
+        filteredBeats = response.data;
+      } else {
+        console.error('Expected array but got:', typeof response.data, response.data);
+        filteredBeats = [];
+      }
       
       // Client-side search filter
       if (search) {
@@ -98,10 +107,19 @@ const HomePage = () => {
   const fetchGenres = async () => {
     try {
       const response = await api.get('/beats');
-      const uniqueGenres = [...new Set(response.data.map(beat => beat.genre))];
-      setGenres(uniqueGenres);
+      console.log('Genres response:', response.data);
+      
+      // Проверяем, что response.data является массивом
+      if (Array.isArray(response.data)) {
+        const uniqueGenres = [...new Set(response.data.map(beat => beat.genre))];
+        setGenres(uniqueGenres);
+      } else {
+        console.error('Expected array but got:', typeof response.data, response.data);
+        setGenres([]);
+      }
     } catch (error) {
       console.error('Error fetching genres:', error);
+      setGenres([]);
     }
   };
 

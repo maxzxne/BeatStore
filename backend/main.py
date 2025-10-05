@@ -485,7 +485,7 @@ def get_beats(
         }
         response_data.append(beat_dict)
     
-    return JSONResponse(content=response_data, media_type="application/json; charset=utf-8")
+    return response_data
 
 @app.get("/beats/{beat_id}", response_model=BeatDetailResponse)
 def get_beat(beat_id: int, db: Session = Depends(get_db), 
