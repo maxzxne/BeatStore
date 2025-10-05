@@ -180,8 +180,25 @@ async def serve_frontend():
 @app.get("/{path:path}")
 async def serve_frontend_routes(path: str):
     """Отдает фронтенд для всех маршрутов (SPA routing)"""
-    # Проверяем, не является ли это API маршрутом
-    if path.startswith("api/") or path.startswith("static/") or path.startswith("beats/") or path.startswith("login") or path.startswith("register") or path.startswith("me") or path.startswith("favorites") or path.startswith("cart") or path.startswith("purchases"):
+    # Проверяем, не является ли это API маршрутом или статическим файлом
+    if (path.startswith("api/") or 
+        path.startswith("static/") or 
+        path.startswith("beats/") or 
+        path.startswith("login") or 
+        path.startswith("register") or 
+        path.startswith("me") or 
+        path.startswith("favorites") or 
+        path.startswith("cart") or 
+        path.startswith("purchases") or
+        path.startswith("favicon.ico") or
+        path.startswith("assets/") or
+        path.endswith(".js") or
+        path.endswith(".css") or
+        path.endswith(".png") or
+        path.endswith(".jpg") or
+        path.endswith(".jpeg") or
+        path.endswith(".gif") or
+        path.endswith(".svg")):
         raise HTTPException(status_code=404, detail="Not found")
     
     # Для всех остальных маршрутов отдаем index.html
