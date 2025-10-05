@@ -8,6 +8,9 @@ import MiniPlayer from '../components/MiniPlayer';
 import { api } from '../utils/api';
 import { ShoppingCart, Trash2, Play, Pause } from 'lucide-react';
 
+// Получаем API URL для построения полных URL файлов
+const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+
 const CartPage = () => {
   const { isAuthenticated } = useAuth();
   const { playTrack, isCurrentTrack, isCurrentTrackPlaying } = useAudioPlayer();
@@ -48,7 +51,7 @@ const CartPage = () => {
 
   const handlePlay = (beat) => {
     if (!beat.demo_url) return;
-    const trackUrl = `http://localhost:8000${beat.demo_url}`;
+    const trackUrl = `${API_URL}${beat.demo_url}`;
     playTrack(beat.id, trackUrl, beat.title);
   };
 
@@ -133,7 +136,7 @@ const CartPage = () => {
                       <div className="flex items-center justify-center relative group">
                         {beat.cover_url ? (
                           <img
-                            src={`http://localhost:8000${beat.cover_url}`}
+                            src={`${API_URL}${beat.cover_url}`}
                             alt={beat.title}
                             className="w-16 h-16 object-cover rounded"
                           />

@@ -5,6 +5,9 @@ import BeatCard from '../components/BeatCard';
 import { api } from '../utils/api';
 import { Download, CheckCircle } from 'lucide-react';
 
+// Получаем API URL для построения полных URL файлов
+const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+
 const PurchasesPage = () => {
   const { isAuthenticated } = useAuth();
   const [purchases, setPurchases] = useState([]);
@@ -103,7 +106,7 @@ const PurchasesPage = () => {
               <div className="relative">
                 {beat.cover_url ? (
                   <img
-                    src={`http://localhost:8000${beat.cover_url}`}
+                    src={`${API_URL}${beat.cover_url}`}
                     alt={beat.title}
                     className="w-full h-48 object-cover rounded-t-lg"
                   />

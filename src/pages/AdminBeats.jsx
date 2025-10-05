@@ -3,6 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { Edit, Trash2, Eye, Music } from 'lucide-react';
 
+// Получаем API URL для построения полных URL файлов
+const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+
 const AdminBeats = () => {
   const { isAdminAuthenticated } = useAuth();
   const [beats, setBeats] = useState([]);
@@ -104,7 +107,7 @@ const AdminBeats = () => {
                 <div className="flex items-center space-x-4">
                   {beat.cover_url ? (
                     <img
-                      src={`http://localhost:8000${beat.cover_url}`}
+                      src={`${API_URL}${beat.cover_url}`}
                       alt={beat.title}
                       className="w-16 h-16 object-cover rounded"
                     />
