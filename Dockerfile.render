@@ -27,12 +27,15 @@ COPY . .
 # Build frontend
 RUN npm run build
 
-# Copy backend code
+# Copy backend code (this will overwrite some files, but that's OK)
 COPY backend/ ./
 
 # Copy built frontend to static directory
 RUN mkdir -p static/frontend
 RUN cp -r dist/* static/frontend/
+
+# Ensure static directories exist
+RUN mkdir -p static/demos static/audio static/covers
 
 # Create data directory
 RUN mkdir -p data
