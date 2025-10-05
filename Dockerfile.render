@@ -30,6 +30,10 @@ RUN npm run build
 # Copy backend code
 COPY backend/ ./
 
+# Copy built frontend to static directory
+RUN mkdir -p static/frontend
+RUN cp -r dist/* static/frontend/
+
 # Create data directory
 RUN mkdir -p data
 

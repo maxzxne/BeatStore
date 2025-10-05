@@ -161,17 +161,42 @@ async def serve_full_audio(filename: str, request: Request):
 # Статические файлы для остальных типов (обложки и т.д.)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Раздача фронтенда
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Подключаем статические файлы фронтенда
+app.mount("/assets", StaticFiles(directory="static/frontend/assets"), name="frontend_assets")
+
+# Эндпоинт для главной страницы фронтенда
+@app.get("/")
+async def serve_frontend():
+    """Отдает главную страницу фронтенда"""
+    return FileResponse("static/frontend/index.html")
+
+# Эндпоинт для всех остальных маршрутов фронтенда (SPA routing)
+@app.get("/{path:path}")
+async def serve_frontend_routes(path: str):
+    """Отдает фронтенд для всех маршрутов (SPA routing)"""
+    # Проверяем, не является ли это API маршрутом
+    if path.startswith("api/") or path.startswith("static/") or path.startswith("beats/") or path.startswith("login") or path.startswith("register") or path.startswith("me") or path.startswith("favorites") or path.startswith("cart") or path.startswith("purchases"):
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    # Для всех остальных маршрутов отдаем index.html
+    return FileResponse("static/frontend/index.html")
+
 # Настройка CORS для взаимодействия с frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://frontend:3000"],
+    allow_origins=["*"],  # Для продакшена можно ограничить домены
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Настройки безопасности для JWT токенов
-SECRET_KEY = "your-secret-key-change-in-production"  # В продакшене должен быть сложный ключ
+import os
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")  # В продакшене должен быть сложный ключ
 ALGORITHM = "HS256"  # Алгоритм подписи JWT
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Время жизни токена
 
