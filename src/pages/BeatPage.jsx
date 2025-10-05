@@ -23,7 +23,6 @@ import api from '../utils/api';
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 import MiniPlayer from '../components/MiniPlayer';
-import { api } from '../utils/api';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check } from 'lucide-react';
 
 /**
