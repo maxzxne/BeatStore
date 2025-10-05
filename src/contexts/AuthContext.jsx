@@ -100,7 +100,9 @@ export const AuthProvider = ({ children }) => {
 
   const adminLogin = async (username, password) => {
     try {
+      console.log('Attempting admin login:', { username });
       const response = await api.post('/api/admin/login', { username, password });
+      console.log('Admin login successful:', response.data);
       const { access_token } = response.data;
       localStorage.setItem('adminToken', access_token);
       localStorage.removeItem('token'); // Удаляем обычный токен
@@ -108,6 +110,7 @@ export const AuthProvider = ({ children }) => {
       await fetchAdminUser();
       return { success: true };
     } catch (error) {
+      console.error('Admin login error:', error);
       return { 
         success: false, 
         error: error.response?.data?.detail || 'Admin login failed' 
@@ -117,9 +120,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, username, password) => {
     try {
-      await api.post('/register', { email, username, password });
+      console.log('Attempting registration:', { email, username });
+      const response = await api.post('/register', { email, username, password });
+      console.log('Registration successful:', response.data);
       return { success: true };
     } catch (error) {
+      console.error('Registration error:', error);
       return { 
         success: false, 
         error: error.response?.data?.detail || 'Registration failed' 
