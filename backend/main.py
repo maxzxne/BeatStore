@@ -1888,15 +1888,10 @@ def oauth_callback(provider: str, code: Optional[str] = None, error: Optional[st
 async def serve_frontend_routes(path: str):
     """Отдает фронтенд для всех маршрутов (SPA routing)"""
     # Проверяем, не является ли это API маршрутом или статическим файлом
+    # НЕ блокируем маршруты фронтенда (login, register, etc.) - они обрабатываются React Router
     if (path.startswith("api/") or 
         path.startswith("static/") or 
         path.startswith("beats/") or 
-        path.startswith("login") or 
-        path.startswith("register") or 
-        path.startswith("me") or 
-        path.startswith("favorites") or 
-        path.startswith("cart") or 
-        path.startswith("purchases") or
         path.startswith("favicon.ico") or
         path.startswith("assets/") or
         path.endswith(".js") or
@@ -1905,10 +1900,17 @@ async def serve_frontend_routes(path: str):
         path.endswith(".jpg") or
         path.endswith(".jpeg") or
         path.endswith(".gif") or
-        path.endswith(".svg")):
+        path.endswith(".svg") or
+        path.endswith(".webp") or
+        path.endswith(".ico") or
+        path.endswith(".woff") or
+        path.endswith(".woff2") or
+        path.endswith(".ttf") or
+        path.endswith(".eot")):
         raise HTTPException(status_code=404, detail="Not found")
     
-    # Для всех остальных маршрутов отдаем index.html
+    # Для всех остальных маршрутов (включая login, register, etc.) отдаем index.html
+    # React Router обработает маршрутизацию на клиенте
     index_path = "static/frontend/index.html"
     if os.path.exists(index_path):
         return FileResponse(index_path)
