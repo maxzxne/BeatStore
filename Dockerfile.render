@@ -24,7 +24,10 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build frontend
+# Build frontend with environment variables
+# VITE_API_URL будет использоваться во время сборки, если установлен
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # Copy backend code (this will overwrite some files, but that's OK)
