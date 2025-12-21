@@ -260,6 +260,7 @@ def health_check():
 
 # Эндпоинт для главной страницы фронтенда
 @app.get("/")
+@app.head("/")
 async def serve_frontend():
     """Отдает главную страницу фронтенда"""
     index_path = "static/frontend/index.html"
