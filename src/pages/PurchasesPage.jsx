@@ -4,14 +4,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import BeatCard from '../components/BeatCard';
 import { api } from '../utils/api';
-import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText } from 'lucide-react';
+import { formatMoscowDate } from '../utils/dateUtils';
+import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio } from 'lucide-react';
 
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
 const PurchasesPage = () => {
   const { isAuthenticated } = useAuth();
-  const { playTrack, isCurrentTrackPlaying, pauseTrack, resumeTrack } = useAudioPlayer();
+  const { playTrack, isCurrentTrackPlaying, pauseTrack, resumeTrack, isCurrentTrack } = useAudioPlayer();
   const [purchases, setPurchases] = useState([]);
   const [coursePurchases, setCoursePurchases] = useState([]);
   const [serviceOrders, setServiceOrders] = useState([]);
@@ -474,14 +475,20 @@ const PurchasesPage = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      {order.price && (
-                        <div className="text-lg font-bold text-black">
-                          {order.price.toLocaleString('ru-RU')} ₽
-                        </div>
-                      )}
-                      {order.prepayment_percent && order.price && (
-                        <div className="text-sm text-gray-600">
-                          Предоплата {order.prepayment_percent}%: {(order.price * order.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
+                      {order.price ? (
+                        <>
+                          <div className="text-lg font-bold text-black">
+                            {order.price.toLocaleString('ru-RU')} ₽
+                          </div>
+                          {order.prepayment_percent && (
+                            <div className="text-sm text-gray-600">
+                              Предоплата {order.prepayment_percent}%: {(order.price * order.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          Цена не указана
                         </div>
                       )}
                     </div>
@@ -515,7 +522,7 @@ const PurchasesPage = () => {
                   )}
                   
                   <div className="text-xs text-gray-500 mt-4">
-                    Создан: {new Date(order.created_at).toLocaleString('ru-RU')}
+                    Создан: {formatMoscowDate(order.created_at)}
                   </div>
                   
                   {order.status === 'confirmed' && order.price && (
@@ -530,6 +537,130 @@ const PurchasesPage = () => {
                       <button className="mt-3 btn btn-primary btn-sm">
                         Оплатить
                       </button>
+                    </div>
+                  )}
+                  
+                  {/* Файлы результата (для заказов типа "не знаю" после оплаты) */}
+                  {(order.result_wav_url || order.result_mp3_url || order.result_zip_url) && (
+                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-800 font-medium mb-3">
+                        <CheckCircle className="h-5 w-5" />
+                        <span>Готовые файлы</span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {/* MP3 файл с возможностью прослушивания */}
+                        {order.result_mp3_url && (
+                          <div className="bg-white p-3 rounded border border-green-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Music className="h-4 w-4 text-green-700" />
+                                <span className="text-sm font-medium text-gray-700">MP3 файл</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    const audioUrl = `${API_URL}${order.result_mp3_url}`;
+                                    const trackId = `order_${order.id}_mp3`;
+                                    if (isCurrentTrack(trackId) && isCurrentTrackPlaying(trackId)) {
+                                      pauseTrack();
+                                    } else {
+                                      playTrack(trackId, audioUrl, `Заказ #${order.id} - MP3`);
+                                    }
+                                  }}
+                                  className="btn btn-sm btn-outline h-8 px-3"
+                                >
+                                  {isCurrentTrack(`order_${order.id}_mp3`) && isCurrentTrackPlaying(`order_${order.id}_mp3`) ? (
+                                    <>
+                                      <Pause className="h-3 w-3 mr-1" />
+                                      Пауза
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Play className="h-3 w-3 mr-1" />
+                                      Плей
+                                    </>
+                                  )}
+                                </button>
+                                <a
+                                  href={`${API_URL}${order.result_mp3_url}`}
+                                  download
+                                  className="btn btn-sm btn-outline h-8 px-3"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Скачать
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* WAV файл с возможностью прослушивания */}
+                        {order.result_wav_url && (
+                          <div className="bg-white p-3 rounded border border-green-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <FileAudio className="h-4 w-4 text-green-700" />
+                                <span className="text-sm font-medium text-gray-700">WAV файл</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    const audioUrl = `${API_URL}${order.result_wav_url}`;
+                                    const trackId = `order_${order.id}_wav`;
+                                    if (isCurrentTrack(trackId) && isCurrentTrackPlaying(trackId)) {
+                                      pauseTrack();
+                                    } else {
+                                      playTrack(trackId, audioUrl, `Заказ #${order.id} - WAV`);
+                                    }
+                                  }}
+                                  className="btn btn-sm btn-outline h-8 px-3"
+                                >
+                                  {isCurrentTrack(`order_${order.id}_wav`) && isCurrentTrackPlaying(`order_${order.id}_wav`) ? (
+                                    <>
+                                      <Pause className="h-3 w-3 mr-1" />
+                                      Пауза
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Play className="h-3 w-3 mr-1" />
+                                      Плей
+                                    </>
+                                  )}
+                                </button>
+                                <a
+                                  href={`${API_URL}${order.result_wav_url}`}
+                                  download
+                                  className="btn btn-sm btn-outline h-8 px-3"
+                                >
+                                  <Download className="h-3 w-3 mr-1" />
+                                  Скачать
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* ZIP архив */}
+                        {order.result_zip_url && (
+                          <div className="bg-white p-3 rounded border border-green-200">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-green-700" />
+                                <span className="text-sm font-medium text-gray-700">ZIP архив</span>
+                              </div>
+                              <a
+                                href={`${API_URL}${order.result_zip_url}`}
+                                download
+                                className="btn btn-sm btn-outline h-8 px-3"
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                Скачать
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

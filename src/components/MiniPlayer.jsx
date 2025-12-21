@@ -116,53 +116,53 @@ const MiniPlayer = () => {
           
           {/* Seek buttons - скрываем на мобильных */}
           <div className="hidden sm:flex items-center space-x-1">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const newTime = Math.max(0, currentTime - 10);
-                seekTo(newTime);
-              }}
-              disabled={!currentTrack}
-              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Назад на 10 секунд"
-            >
-              <span className="text-xs font-medium">-10</span>
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const newTime = currentTime + 10;
-                seekTo(newTime);
-              }}
-              disabled={!currentTrack}
-              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Вперед на 10 секунд"
-            >
-              <span className="text-xs font-medium">+10</span>
-            </button>
-          </div>
+                   <button
+                     onClick={(e) => {
+                       e.preventDefault();
+                       e.stopPropagation();
+                       const newTime = Math.max(0, currentTime - 10);
+                       seekTo(newTime);
+                     }}
+                     disabled={!currentTrack}
+                     className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     title="Назад на 10 секунд"
+                   >
+                     <span className="text-xs font-medium">-10</span>
+                   </button>
+                   <button
+                     onClick={(e) => {
+                       e.preventDefault();
+                       e.stopPropagation();
+                       const newTime = currentTime + 10;
+                       seekTo(newTime);
+                     }}
+                     disabled={!currentTrack}
+                     className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                     title="Вперед на 10 секунд"
+                   >
+                     <span className="text-xs font-medium">+10</span>
+                   </button>
+                 </div>
           
           <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
             {/* Громкость - скрываем на мобильных */}
             <div className="hidden sm:flex items-center space-x-2">
-              <button onClick={toggleMute} className="text-gray-600 hover:text-black">
-                {isMuted ? (
-                  <VolumeX className="h-4 w-4" />
-                ) : (
-                  <Volume2 className="h-4 w-4" />
-                )}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={isMuted ? 0 : volume}
-                onChange={handleVolumeChange}
-                className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
-              />
+            <button onClick={toggleMute} className="text-gray-600 hover:text-black">
+              {isMuted ? (
+                <VolumeX className="h-4 w-4" />
+              ) : (
+                <Volume2 className="h-4 w-4" />
+              )}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={isMuted ? 0 : volume}
+              onChange={handleVolumeChange}
+              className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
+            />
             </div>
             <button 
               onClick={handleClose} 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap } from 'lucide-react';
+import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Settings } from 'lucide-react';
 
 const Sidebar = () => {
   const navItems = [
@@ -10,6 +10,7 @@ const Sidebar = () => {
     { path: '/admin/upload', label: 'Загрузка', icon: Upload },
     { path: '/admin/purchases', label: 'Покупки', icon: ShoppingBag },
     { path: '/admin/orders', label: 'Заявки', icon: FileText },
+    { path: '/admin/oauth-settings', label: 'OAuth', icon: Settings },
   ];
 
   return (

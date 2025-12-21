@@ -31,10 +31,11 @@ import shutil
 import os
 import sys
 import re
+import uuid
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, cart_table, course_cart_table, course_favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, cart_table, course_cart_table, course_favorites_table
 print("Импорт database и models завершен")
 # Убираем Cloudinary - используем локальное хранение на Render
 
@@ -65,7 +66,11 @@ def update_database_schema():
                 'service_categories': 'TEXT',
                 'deadline_days': 'INTEGER',
                 'price': 'FLOAT',
-                'prepayment_percent': 'INTEGER'
+                'prepayment_percent': 'INTEGER',
+                'contact_info': 'VARCHAR',
+                'result_wav_url': 'VARCHAR',
+                'result_mp3_url': 'VARCHAR',
+                'result_zip_url': 'VARCHAR'
             }
             
             for col_name, col_type in new_columns.items():
@@ -75,6 +80,94 @@ def update_database_schema():
                         conn.execute(text(f"ALTER TABLE service_orders ADD COLUMN {col_name} {col_type}"))
                         conn.commit()
                     print(f"Колонка {col_name} добавлена")
+        
+        # Проверяем таблицу beats
+        if 'beats' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('beats')]
+            
+            new_columns = {
+                'wav_url': 'VARCHAR',
+                'mp3_url': 'VARCHAR',
+                'exclusive_url': 'VARCHAR',
+                'allow_multiple_purchases': 'BOOLEAN DEFAULT 0'
+            }
+            
+            for col_name, col_type in new_columns.items():
+                if col_name not in columns:
+                    print(f"Добавление колонки {col_name} в beats...")
+                    with engine.connect() as conn:
+                        conn.execute(text(f"ALTER TABLE beats ADD COLUMN {col_name} {col_type}"))
+                        conn.commit()
+                    print(f"Колонка {col_name} добавлена")
+        
+        # Проверяем таблицу purchases
+        if 'purchases' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('purchases')]
+            
+            if 'purchase_type' not in columns:
+                print("Добавление колонки purchase_type в purchases...")
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE purchases ADD COLUMN purchase_type VARCHAR DEFAULT 'mp3'"))
+                    conn.commit()
+                print("Колонка purchase_type добавлена")
+        
+        # Проверяем таблицу users
+        if 'users' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('users')]
+            
+            if 'additional_contact' not in columns:
+                print("Добавление колонки additional_contact в users...")
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN additional_contact VARCHAR"))
+                    conn.commit()
+                print("Колонка additional_contact добавлена")
+        
+        # Проверяем таблицу oauth_settings
+        if 'oauth_settings' not in inspector.get_table_names():
+            print("Создание таблицы oauth_settings...")
+            Base.metadata.create_all(bind=engine)
+            # Создаем настройки по умолчанию
+            from models import OAuthSettings
+            db = SessionLocal()
+            try:
+                providers = ['google', 'vk', 'yandex', 'telegram']
+                for provider in providers:
+                    existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
+                    if not existing:
+                        oauth_setting = OAuthSettings(
+                            provider=provider,
+                            is_hidden=False,
+                            is_disabled=(provider in ['vk', 'yandex'])  # По умолчанию VK и Yandex дизейблены
+                        )
+                        db.add(oauth_setting)
+                db.commit()
+                print("Настройки OAuth созданы")
+            except Exception as e:
+                print(f"Ошибка создания настроек OAuth: {e}")
+                db.rollback()
+            finally:
+                db.close()
+        else:
+            # Проверяем, что все провайдеры есть
+            from models import OAuthSettings
+            db = SessionLocal()
+            try:
+                providers = ['google', 'vk', 'yandex', 'telegram']
+                for provider in providers:
+                    existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
+                    if not existing:
+                        oauth_setting = OAuthSettings(
+                            provider=provider,
+                            is_hidden=False,
+                            is_disabled=(provider in ['vk', 'yandex'])
+                        )
+                        db.add(oauth_setting)
+                db.commit()
+            except Exception as e:
+                print(f"Ошибка проверки настроек OAuth: {e}")
+                db.rollback()
+            finally:
+                db.close()
         
         # Создаем все таблицы (если их еще нет)
         Base.metadata.create_all(bind=engine)
@@ -309,6 +402,7 @@ class UserResponse(BaseModel):
     username: str
     is_active: bool
     is_admin: bool
+    additional_contact: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -333,6 +427,7 @@ class BeatResponse(BaseModel):
     demo_url: Optional[str]
     cover_url: Optional[str]
     is_available: bool
+    allow_multiple_purchases: bool = False
     created_at: datetime
 
     class Config:
@@ -340,8 +435,11 @@ class BeatResponse(BaseModel):
 
 class BeatDetailResponse(BeatResponse):
     """Схема ответа с детальной информацией о бите (включая полные файлы)"""
-    full_audio_url: Optional[str] = None
-    project_files_url: Optional[str] = None
+    full_audio_url: Optional[str] = None  # Старое поле для обратной совместимости
+    project_files_url: Optional[str] = None  # Старое поле
+    wav_url: Optional[str] = None
+    mp3_url: Optional[str] = None
+    exclusive_url: Optional[str] = None
 
 class CourseResponse(BaseModel):
     """Схема ответа с информацией о курсе"""
@@ -377,14 +475,15 @@ class ServiceOrderCreate(BaseModel):
     order_type: str = "know"  # "know" или "dont_know"
     service_category: Optional[str] = None  # Старое поле для обратной совместимости
     service_categories: Optional[List[str]] = None  # Массив выбранных категорий
-    materials_url: Optional[str] = None
+    materials_url: Optional[str] = None  # Может быть JSON массив URL
     reference_links: Optional[str] = None
-    reference_files_url: Optional[str] = None
+    reference_files_url: Optional[str] = None  # Может быть JSON массив URL
     description: Optional[str] = None
     deadline_min: Optional[int] = None  # Старое поле
     deadline_max: Optional[int] = None  # Старое поле
     deadline_days: Optional[int] = None  # Количество дней дедлайна
     prepayment_percent: Optional[int] = None  # Процент предоплаты (50 или 100)
+    contact_info: Optional[str] = None  # Дополнительная информация для обратной связи
     customer_name: Optional[str] = None  # Имя для неавторизованных
     customer_email: Optional[str] = None  # Email для неавторизованных
 
@@ -406,6 +505,10 @@ class ServiceOrderResponse(BaseModel):
     deadline_days: Optional[int] = None
     price: Optional[float] = None
     prepayment_percent: Optional[int] = None
+    contact_info: Optional[str] = None
+    result_wav_url: Optional[str] = None
+    result_mp3_url: Optional[str] = None
+    result_zip_url: Optional[str] = None
     status: str
     created_at: datetime
     updated_at: datetime
@@ -431,6 +534,10 @@ class ServiceOrderResponse(BaseModel):
             "deadline_days": obj.deadline_days,
             "price": obj.price,
             "prepayment_percent": obj.prepayment_percent,
+            "contact_info": obj.contact_info,
+            "result_wav_url": obj.result_wav_url,
+            "result_mp3_url": obj.result_mp3_url,
+            "result_zip_url": obj.result_zip_url,
             "status": obj.status,
             "created_at": obj.created_at,
             "updated_at": obj.updated_at
@@ -694,9 +801,35 @@ def update_user_profile(
     if user_update.password:
         current_user.password_hash = get_password_hash(user_update.password)
     
+    if user_update.additional_contact is not None:
+        current_user.additional_contact = user_update.additional_contact
+    
     db.commit()
     db.refresh(current_user)
     return current_user
+
+@app.put("/me/change-password")
+def change_password(
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Изменение пароля пользователя"""
+    # Проверяем текущий пароль
+    if not verify_password(current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Неверный текущий пароль")
+    
+    # Проверяем длину нового пароля
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
+    
+    # Устанавливаем новый пароль
+    current_user.password_hash = get_password_hash(new_password)
+    db.commit()
+    db.refresh(current_user)
+    
+    return {"message": "Пароль успешно изменен"}
 
 # Биты
 @app.get("/beats", response_model=List[BeatResponse])
@@ -844,6 +977,7 @@ def get_purchases(db: Session = Depends(get_db),
 
 @app.post("/beats/{beat_id}/purchase")
 def purchase_beat(beat_id: int, 
+                 purchase_type: str = Form("mp3"),  # 'wav', 'mp3', 'exclusive'
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     # Получаем бит
@@ -851,27 +985,69 @@ def purchase_beat(beat_id: int,
     if not beat:
         raise HTTPException(status_code=404, detail="Beat not found")
     
-    # Проверяем что пользователь еще не купил этот бит
-    existing_purchase = db.query(Purchase).filter(
-        Purchase.user_id == current_user.id,
-        Purchase.beat_id == beat_id
-    ).first()
+    if not beat.is_available:
+        raise HTTPException(status_code=400, detail="Beat is not available")
     
-    if existing_purchase:
-        raise HTTPException(status_code=400, detail="Beat already purchased")
+    # Проверяем тип покупки
+    if purchase_type not in ['wav', 'mp3', 'exclusive']:
+        raise HTTPException(status_code=400, detail="Invalid purchase type. Must be 'wav', 'mp3', or 'exclusive'")
+    
+    # Проверяем наличие соответствующего файла
+    if purchase_type == 'wav' and not getattr(beat, 'wav_url', None):
+        raise HTTPException(status_code=400, detail="WAV file not available for this beat")
+    elif purchase_type == 'mp3' and not getattr(beat, 'mp3_url', None):
+        raise HTTPException(status_code=400, detail="MP3 file not available for this beat")
+    elif purchase_type == 'exclusive' and not getattr(beat, 'exclusive_url', None):
+        raise HTTPException(status_code=400, detail="Exclusive file not available for this beat")
+    
+    # Проверяем доступность бита для покупки
+    allow_multiple = getattr(beat, 'allow_multiple_purchases', False)
+    
+    if not allow_multiple:
+        # Эксклюзивный бит - проверяем, не куплен ли уже
+        existing_purchase = db.query(Purchase).filter(
+            Purchase.user_id == current_user.id,
+            Purchase.beat_id == beat_id
+        ).first()
+        
+        if existing_purchase:
+            raise HTTPException(status_code=400, detail="Beat already purchased. This is an exclusive beat.")
+        
+        # Проверяем, не куплен ли бит кем-то другим
+        any_purchase = db.query(Purchase).filter(
+            Purchase.beat_id == beat_id
+        ).first()
+        
+        if any_purchase:
+            raise HTTPException(status_code=400, detail="Beat already purchased by another user. This is an exclusive beat.")
+    else:
+        # Множественные покупки разрешены - проверяем только, не купил ли этот пользователь уже этот тип
+        existing_purchase = db.query(Purchase).filter(
+            Purchase.user_id == current_user.id,
+            Purchase.beat_id == beat_id,
+            Purchase.purchase_type == purchase_type
+        ).first()
+        
+        if existing_purchase:
+            raise HTTPException(status_code=400, detail=f"You already purchased this beat as {purchase_type}")
     
     # Если бит платный - отклоняем (пока нет системы оплаты)
     if beat.price > 0:
         raise HTTPException(status_code=400, detail="Payment system not implemented yet. Only free beats are available.")
     
-    # Создаем бесплатную "покупку"
+    # Создаем покупку
     purchase = Purchase(
         user_id=current_user.id,
         beat_id=beat_id,
-        price_paid=0
+        price_paid=0,  # Пока бесплатно
+        purchase_type=purchase_type
     )
     
     db.add(purchase)
+    
+    # Если бит эксклюзивный, делаем его недоступным
+    if not allow_multiple:
+        beat.is_available = False
     
     # Удаляем из корзины если там был
     db.query(cart_table).filter(
@@ -882,17 +1058,24 @@ def purchase_beat(beat_id: int,
     db.commit()
     db.refresh(purchase)
     
-    return {"message": "Beat acquired successfully!", "purchase_id": purchase.id}
+    return {"message": f"Beat acquired successfully as {purchase_type}!", "purchase_id": purchase.id, "purchase_type": purchase_type}
 
 @app.get("/beats/{beat_id}/download")
 def download_beat_files(beat_id: int, 
+                       purchase_type: Optional[str] = None,  # Если не указан, используем из покупки
                        db: Session = Depends(get_db),
                        current_user: User = Depends(get_current_user)):
     # Проверяем что пользователь купил этот бит
     purchase = db.query(Purchase).filter(
         Purchase.user_id == current_user.id,
         Purchase.beat_id == beat_id
-    ).first()
+    )
+    
+    # Если указан тип покупки, фильтруем по нему
+    if purchase_type:
+        purchase = purchase.filter(Purchase.purchase_type == purchase_type)
+    
+    purchase = purchase.first()
     
     if not purchase:
         raise HTTPException(status_code=403, detail="Beat not purchased")
@@ -902,25 +1085,44 @@ def download_beat_files(beat_id: int,
     if not beat:
         raise HTTPException(status_code=404, detail="Beat not found")
     
-    # Определяем путь к файлу
-    if beat.full_audio_url:
-        # full_audio_url уже содержит /static/, поэтому убираем его
+    # Определяем путь к файлу в зависимости от типа покупки
+    file_path = None
+    filename = None
+    media_type = 'application/octet-stream'
+    
+    purchase_type_to_use = purchase_type or purchase.purchase_type
+    
+    if purchase_type_to_use == 'wav' and beat.wav_url:
+        file_path = beat.wav_url.lstrip('/')
+        filename = f"{beat.title}.wav"
+        media_type = 'audio/wav'
+    elif purchase_type_to_use == 'mp3' and getattr(beat, 'mp3_url', None):
+        file_path = beat.mp3_url.lstrip('/')
+        filename = f"{beat.title}.mp3"
+        media_type = 'audio/mpeg'
+    elif purchase_type_to_use == 'exclusive' and getattr(beat, 'exclusive_url', None):
+        file_path = beat.exclusive_url.lstrip('/')
+        filename = f"{beat.title}_exclusive.zip"
+        media_type = 'application/zip'
+    elif beat.full_audio_url:
+        # Fallback на старое поле для обратной совместимости
         file_path = beat.full_audio_url.lstrip('/')
         filename = f"{beat.title}_full.mp3"
-    else:
+        media_type = 'audio/mpeg'
+    elif beat.project_files_url:
         # Fallback на архив с проектом
-        file_path = f"static/projects/{beat_id}_project.zip"
+        file_path = beat.project_files_url.lstrip('/')
         filename = f"{beat.title}_project.zip"
+        media_type = 'application/zip'
     
-    # Проверяем существование файла
-    if not os.path.exists(file_path):
+    if not file_path or not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     
     # Возвращаем файл для скачивания
     return FileResponse(
         path=file_path,
         filename=filename,
-        media_type='application/octet-stream'
+        media_type=media_type
     )
 
 # Загрузка аудио файлов
@@ -1218,7 +1420,8 @@ def create_service_order(order: ServiceOrderCreate,
             deadline_min=order.deadline_min,  # Для обратной совместимости
             deadline_max=order.deadline_max,  # Для обратной совместимости
             deadline_days=order.deadline_days,
-            prepayment_percent=order.prepayment_percent
+            prepayment_percent=order.prepayment_percent,
+            contact_info=order.contact_info
         )
         
         db.add(service_order)
@@ -1558,12 +1761,16 @@ async def upload_beat_admin(
     key: str = Form(None),
     description: str = Form(None),
     demo_file: UploadFile = File(...),
-    full_file: UploadFile = File(None),
+    wav_file: UploadFile = File(...),
+    mp3_file: UploadFile = File(...),
+    exclusive_file: UploadFile = File(...),
     cover_file: UploadFile = File(None),
+    allow_multiple_purchases: str = Form("false"),
     current_admin: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
     # Создаем новый бит
+    allow_multiple = allow_multiple_purchases.lower() == 'true'
     beat = Beat(
         title=title,
         artist=artist,
@@ -1571,7 +1778,8 @@ async def upload_beat_admin(
         key=key,
         bpm=bpm,
         price=price,
-        description=description
+        description=description,
+        allow_multiple_purchases=allow_multiple
     )
     
     db.add(beat)
@@ -1591,17 +1799,41 @@ async def upload_beat_admin(
             beat.demo_url = f"/static/demos/{demo_filename}"
             print(f"Demo saved locally: {demo_path}")
         
-        # Загружаем полный файл локально
-        if full_file:
-            full_filename = f"full_{beat.id}_{full_file.filename}"
-            full_path = f"static/audio/{full_filename}"
-            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        # Загружаем WAV файл
+        if wav_file:
+            wav_filename = f"wav_{beat.id}_{wav_file.filename}"
+            wav_path = f"static/audio/{wav_filename}"
+            os.makedirs(os.path.dirname(wav_path), exist_ok=True)
             
-            with open(full_path, "wb") as buffer:
-                shutil.copyfileobj(full_file.file, buffer)
+            with open(wav_path, "wb") as buffer:
+                shutil.copyfileobj(wav_file.file, buffer)
             
-            beat.full_audio_url = f"/static/audio/{full_filename}"
-            print(f"Full audio saved locally: {full_path}")
+            beat.wav_url = f"/static/audio/{wav_filename}"
+            print(f"WAV saved locally: {wav_path}")
+        
+        # Загружаем MP3 файл
+        if mp3_file:
+            mp3_filename = f"mp3_{beat.id}_{mp3_file.filename}"
+            mp3_path = f"static/audio/{mp3_filename}"
+            os.makedirs(os.path.dirname(mp3_path), exist_ok=True)
+            
+            with open(mp3_path, "wb") as buffer:
+                shutil.copyfileobj(mp3_file.file, buffer)
+            
+            beat.mp3_url = f"/static/audio/{mp3_filename}"
+            print(f"MP3 saved locally: {mp3_path}")
+        
+        # Загружаем эксклюзивный ZIP файл
+        if exclusive_file:
+            exclusive_filename = f"exclusive_{beat.id}_{exclusive_file.filename}"
+            exclusive_path = f"static/audio/{exclusive_filename}"
+            os.makedirs(os.path.dirname(exclusive_path), exist_ok=True)
+            
+            with open(exclusive_path, "wb") as buffer:
+                shutil.copyfileobj(exclusive_file.file, buffer)
+            
+            beat.exclusive_url = f"/static/audio/{exclusive_filename}"
+            print(f"Exclusive ZIP saved locally: {exclusive_path}")
         
         # Загружаем обложку локально
         if cover_file:
@@ -1622,8 +1854,11 @@ async def upload_beat_admin(
             "message": "Beat uploaded successfully",
             "beat_id": beat.id,
             "demo_url": beat.demo_url,
-            "full_url": beat.full_audio_url,
-            "cover_url": beat.cover_url
+            "wav_url": beat.wav_url,
+            "mp3_url": beat.mp3_url,
+            "exclusive_url": beat.exclusive_url,
+            "cover_url": beat.cover_url,
+            "allow_multiple_purchases": beat.allow_multiple_purchases
         }
         
     except Exception as e:
@@ -1784,6 +2019,113 @@ def update_service_order_status(
     db.refresh(order)
     
     return {"message": "Order updated successfully", "order": ServiceOrderResponse.from_orm(order)}
+
+@app.post("/api/admin/service-orders/{order_id}/upload-result")
+async def upload_order_result_files(
+    order_id: int,
+    wav_file: UploadFile = File(None),
+    mp3_file: UploadFile = File(None),
+    zip_file: UploadFile = File(None),
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Загрузка файлов результата для заказа (можно заменить существующие)"""
+    order = db.query(ServiceOrder).filter(ServiceOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    os.makedirs("static/order_results", exist_ok=True)
+    
+    # Загружаем WAV файл
+    if wav_file:
+        # Удаляем старый файл, если есть
+        if order.result_wav_url and os.path.exists(f"static/{order.result_wav_url.lstrip('/')}"):
+            try:
+                os.remove(f"static/{order.result_wav_url.lstrip('/')}")
+            except:
+                pass
+        
+        wav_filename = f"result_wav_{order_id}_{uuid.uuid4().hex}_{wav_file.filename}"
+        wav_path = f"static/order_results/{wav_filename}"
+        with open(wav_path, "wb") as buffer:
+            shutil.copyfileobj(wav_file.file, buffer)
+        order.result_wav_url = f"/static/order_results/{wav_filename}"
+    
+    # Загружаем MP3 файл
+    if mp3_file:
+        # Удаляем старый файл, если есть
+        if order.result_mp3_url and os.path.exists(f"static/{order.result_mp3_url.lstrip('/')}"):
+            try:
+                os.remove(f"static/{order.result_mp3_url.lstrip('/')}")
+            except:
+                pass
+        
+        mp3_filename = f"result_mp3_{order_id}_{uuid.uuid4().hex}_{mp3_file.filename}"
+        mp3_path = f"static/order_results/{mp3_filename}"
+        with open(mp3_path, "wb") as buffer:
+            shutil.copyfileobj(mp3_file.file, buffer)
+        order.result_mp3_url = f"/static/order_results/{mp3_filename}"
+    
+    # Загружаем ZIP файл
+    if zip_file:
+        # Удаляем старый файл, если есть
+        if order.result_zip_url and os.path.exists(f"static/{order.result_zip_url.lstrip('/')}"):
+            try:
+                os.remove(f"static/{order.result_zip_url.lstrip('/')}")
+            except:
+                pass
+        
+        zip_filename = f"result_zip_{order_id}_{uuid.uuid4().hex}_{zip_file.filename}"
+        zip_path = f"static/order_results/{zip_filename}"
+        with open(zip_path, "wb") as buffer:
+            shutil.copyfileobj(zip_file.file, buffer)
+        order.result_zip_url = f"/static/order_results/{zip_filename}"
+    
+    order.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(order)
+    
+    return {
+        "message": "Files uploaded successfully",
+        "order": ServiceOrderResponse.from_orm(order)
+    }
+
+# OAuth Settings Management
+@app.get("/api/admin/oauth-settings")
+def get_oauth_settings(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    """Получение всех настроек OAuth провайдеров"""
+    settings = db.query(OAuthSettings).all()
+    return [{"id": s.id, "provider": s.provider, "is_hidden": s.is_hidden, "is_disabled": s.is_disabled} for s in settings]
+
+@app.put("/api/admin/oauth-settings/{provider}")
+def update_oauth_setting(
+    provider: str,
+    is_hidden: Optional[bool] = Form(None),
+    is_disabled: Optional[bool] = Form(None),
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Обновление настройки OAuth провайдера"""
+    setting = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
+    if not setting:
+        raise HTTPException(status_code=404, detail="OAuth provider not found")
+    
+    if is_hidden is not None:
+        setting.is_hidden = is_hidden
+    if is_disabled is not None:
+        setting.is_disabled = is_disabled
+    
+    setting.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(setting)
+    
+    return {"message": "OAuth setting updated successfully", "setting": {"id": setting.id, "provider": setting.provider, "is_hidden": setting.is_hidden, "is_disabled": setting.is_disabled}}
+
+@app.get("/oauth-settings")
+def get_public_oauth_settings(db: Session = Depends(get_db)):
+    """Получение настроек OAuth для публичного использования (без авторизации)"""
+    settings = db.query(OAuthSettings).all()
+    return {s.provider: {"is_hidden": s.is_hidden, "is_disabled": s.is_disabled} for s in settings}
 
 @app.get("/api/admin/courses")
 def get_courses_admin(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):

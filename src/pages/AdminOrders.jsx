@@ -1,19 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { FileText, User, Calendar, Link as LinkIcon, Upload, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { formatMoscowDate } from '../utils/dateUtils';
+import { FileText, User, Calendar, Link as LinkIcon, Upload, CheckCircle, XCircle, Clock, AlertCircle, Music, FileAudio, X } from 'lucide-react';
 
 const AdminOrders = () => {
   const { isAdminAuthenticated } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [resultFiles, setResultFiles] = useState({
+    wav: null,
+    mp3: null,
+    zip: null
+  });
+  const [uploadingResult, setUploadingResult] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
       fetchOrders();
     }
   }, [isAdminAuthenticated]);
+  
+  useEffect(() => {
+    if (selectedOrder) {
+      setResultFiles({
+        wav: null,
+        mp3: null,
+        zip: null
+      });
+    }
+  }, [selectedOrder]);
 
   const fetchOrders = async () => {
     try {
@@ -52,15 +69,52 @@ const AdminOrders = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleResultFileChange = (e, fileType) => {
+    const file = e.target.files[0];
+    if (file) {
+      setResultFiles(prev => ({
+        ...prev,
+        [fileType]: file
+      }));
+    }
   };
+  
+  const handleUploadResultFiles = async () => {
+    if (!selectedOrder) return;
+    
+    if (!resultFiles.wav && !resultFiles.mp3 && !resultFiles.zip) {
+      alert('Выберите хотя бы один файл для загрузки');
+      return;
+    }
+    
+    try {
+      setUploadingResult(true);
+      const formData = new FormData();
+      
+      if (resultFiles.wav) formData.append('wav_file', resultFiles.wav);
+      if (resultFiles.mp3) formData.append('mp3_file', resultFiles.mp3);
+      if (resultFiles.zip) formData.append('zip_file', resultFiles.zip);
+      
+      await api.post(`/api/admin/service-orders/${selectedOrder.id}/upload-result`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      alert('Файлы результата успешно загружены!');
+      await fetchOrders();
+      if (selectedOrder) {
+        const updated = orders.find(o => o.id === selectedOrder.id);
+        if (updated) setSelectedOrder(updated);
+      }
+      setResultFiles({ wav: null, mp3: null, zip: null });
+    } catch (error) {
+      console.error('Error uploading result files:', error);
+      alert('Ошибка загрузки файлов результата');
+    } finally {
+      setUploadingResult(false);
+    }
+  };
+  
+  const formatDate = formatMoscowDate;
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -243,14 +297,34 @@ const AdminOrders = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-600">Стоимость</label>
                     {selectedOrder.price ? (
-                      <p className="text-black font-semibold text-lg">
-                        {selectedOrder.price.toLocaleString('ru-RU')} ₽
-                        {selectedOrder.prepayment_percent && (
-                          <span className="text-sm text-gray-600 block mt-1">
-                            Предоплата ({selectedOrder.prepayment_percent}%): {(selectedOrder.price * selectedOrder.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
-                          </span>
+                      <div>
+                        <p className="text-black font-semibold text-lg mb-2">
+                          {selectedOrder.price.toLocaleString('ru-RU')} ₽
+                          {selectedOrder.prepayment_percent && (
+                            <span className="text-sm text-gray-600 block mt-1">
+                              Предоплата ({selectedOrder.prepayment_percent}%): {(selectedOrder.price * selectedOrder.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
+                            </span>
+                          )}
+                        </p>
+                        {/* Показываем возможность изменения цены для заявок "не знаю" в статусе pending */}
+                        {selectedOrder.order_type === 'dont_know' && selectedOrder.status === 'pending' && (
+                          <div className="mt-2">
+                            <input
+                              type="number"
+                              placeholder="Изменить стоимость"
+                              defaultValue={selectedOrder.price}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                              onBlur={(e) => {
+                                const price = parseFloat(e.target.value);
+                                if (price > 0 && price !== selectedOrder.price) {
+                                  updateOrderStatus(selectedOrder.id, null, price, null);
+                                }
+                              }}
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Можно изменить стоимость до подтверждения заказа</p>
+                          </div>
                         )}
-                      </p>
+                      </div>
                     ) : (
                       <div className="mt-2">
                         <input
@@ -264,6 +338,9 @@ const AdminOrders = () => {
                             }
                           }}
                         />
+                        {selectedOrder.order_type === 'dont_know' && (
+                          <p className="text-xs text-gray-500 mt-1">Укажите стоимость для заявки</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -328,6 +405,153 @@ const AdminOrders = () => {
                     <label className="text-sm font-medium text-gray-600">Дата создания</label>
                     <p className="text-black text-sm">{formatDate(selectedOrder.created_at)}</p>
                   </div>
+                  
+                  {/* Загрузка файлов результата (только для заказов типа "не знаю" после оплаты) */}
+                  {selectedOrder.order_type === 'dont_know' && (selectedOrder.status === 'paid' || selectedOrder.status === 'in_progress' || selectedOrder.status === 'completed') && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <h3 className="text-md font-semibold text-black mb-3">Файлы результата</h3>
+                      
+                      {/* Текущие файлы */}
+                      {(selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url) && (
+                        <div className="mb-4 space-y-2">
+                          {selectedOrder.result_wav_url && (
+                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <div className="flex items-center gap-2">
+                                <FileAudio className="h-4 w-4 text-gray-600" />
+                                <span className="text-sm text-gray-700">WAV файл</span>
+                              </div>
+                              <a
+                                href={`${API_URL}${selectedOrder.result_wav_url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-xs"
+                              >
+                                Скачать
+                              </a>
+                            </div>
+                          )}
+                          {selectedOrder.result_mp3_url && (
+                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <div className="flex items-center gap-2">
+                                <Music className="h-4 w-4 text-gray-600" />
+                                <span className="text-sm text-gray-700">MP3 файл</span>
+                              </div>
+                              <a
+                                href={`${API_URL}${selectedOrder.result_mp3_url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-xs"
+                              >
+                                Скачать
+                              </a>
+                            </div>
+                          )}
+                          {selectedOrder.result_zip_url && (
+                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-gray-600" />
+                                <span className="text-sm text-gray-700">ZIP архив</span>
+                              </div>
+                              <a
+                                href={`${API_URL}${selectedOrder.result_zip_url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-xs"
+                              >
+                                Скачать
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Форма загрузки файлов */}
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-1">WAV файл</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept="audio/wav,audio/*"
+                              onChange={(e) => handleResultFileChange(e, 'wav')}
+                              className="flex-1 text-sm"
+                            />
+                            {resultFiles.wav && (
+                              <button
+                                type="button"
+                                onClick={() => setResultFiles(prev => ({ ...prev, wav: null }))}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                          {resultFiles.wav && (
+                            <p className="text-xs text-gray-500 mt-1">{resultFiles.wav.name}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-1">MP3 файл</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept="audio/mpeg,audio/mp3,audio/*"
+                              onChange={(e) => handleResultFileChange(e, 'mp3')}
+                              className="flex-1 text-sm"
+                            />
+                            {resultFiles.mp3 && (
+                              <button
+                                type="button"
+                                onClick={() => setResultFiles(prev => ({ ...prev, mp3: null }))}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                          {resultFiles.mp3 && (
+                            <p className="text-xs text-gray-500 mt-1">{resultFiles.mp3.name}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-1">ZIP архив</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept=".zip,application/zip"
+                              onChange={(e) => handleResultFileChange(e, 'zip')}
+                              className="flex-1 text-sm"
+                            />
+                            {resultFiles.zip && (
+                              <button
+                                type="button"
+                                onClick={() => setResultFiles(prev => ({ ...prev, zip: null }))}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                          {resultFiles.zip && (
+                            <p className="text-xs text-gray-500 mt-1">{resultFiles.zip.name}</p>
+                          )}
+                        </div>
+                        
+                        <button
+                          onClick={handleUploadResultFiles}
+                          disabled={uploadingResult || (!resultFiles.wav && !resultFiles.mp3 && !resultFiles.zip)}
+                          className="btn btn-primary btn-sm w-full"
+                        >
+                          {uploadingResult ? 'Загрузка...' : selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url ? 'Заменить файлы' : 'Загрузить файлы'}
+                        </button>
+                        <p className="text-xs text-gray-500">
+                          Можно загрузить от 1 до 3 файлов. При повторной загрузке файлы будут заменены.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="pt-4 border-t border-gray-200">
                     <label className="text-sm font-medium text-gray-600 mb-2 block">Изменить статус</label>

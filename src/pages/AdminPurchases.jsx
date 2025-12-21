@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
+import { formatMoscowDate } from '../utils/dateUtils';
 import { ShoppingBag, User, Calendar, Banknote } from 'lucide-react';
 
 const AdminPurchases = () => {
@@ -26,15 +27,7 @@ const AdminPurchases = () => {
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const formatDate = formatMoscowDate;
 
   if (!isAdminAuthenticated) {
     return (

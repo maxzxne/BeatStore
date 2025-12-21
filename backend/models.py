@@ -74,6 +74,9 @@ class User(Base):
     oauth_provider = Column(String, nullable=True)  # google, vk, yandex
     oauth_provider_id = Column(String, nullable=True)  # ID пользователя в OAuth провайдере
     
+    # Дополнительные поля
+    additional_contact = Column(String, nullable=True)  # Дополнительная связь (Telegram и т.д.)
+    
     # Связи с другими таблицами
     favorites = relationship("Beat", secondary=favorites_table, back_populates="favorited_by")
     cart_items = relationship("Beat", secondary=cart_table, back_populates="in_carts")
@@ -102,12 +105,18 @@ class Beat(Base):
     
     # Файлы
     demo_url = Column(String)  # URL демо-версии для прослушивания
-    full_audio_url = Column(String)  # URL полной версии после покупки
-    project_files_url = Column(String)  # URL ZIP архива с проектом
+    full_audio_url = Column(String)  # URL полной версии после покупки (старое поле для обратной совместимости)
+    project_files_url = Column(String)  # URL ZIP архива с проектом (старое поле)
     cover_url = Column(String)  # URL обложки бита
+    
+    # Новые файлы для трех вариантов покупки
+    wav_url = Column(String)  # URL для WAV файла
+    mp3_url = Column(String)  # URL для MP3 файла
+    exclusive_url = Column(String)  # URL для эксклюзивного ZIP (FL-проект, дорожки и т.д.)
     
     # Статус
     is_available = Column(Boolean, default=True)  # Доступен ли для покупки
+    allow_multiple_purchases = Column(Boolean, default=False)  # Разрешить множественные покупки (False = эксклюзивный, только один покупатель)
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата добавления
     
     # Связи с пользователями
@@ -128,6 +137,7 @@ class Purchase(Base):
     beat_id = Column(Integer, ForeignKey('beats.id'), nullable=False)  # ID купленного бита
     purchase_date = Column(DateTime, default=datetime.utcnow)  # Дата покупки
     price_paid = Column(Float, nullable=False)  # Сумма, уплаченная за бит
+    purchase_type = Column(String, default="mp3")  # Тип покупки: 'wav', 'mp3', 'exclusive'
     
     # Связи с другими таблицами
     user = relationship("User", back_populates="purchases")
@@ -202,9 +212,12 @@ class ServiceOrder(Base):
     service_categories = Column(Text, nullable=True)  # JSON массив выбранных категорий
     
     # Материалы
-    materials_url = Column(String)  # URL загруженных материалов
+    materials_url = Column(String)  # URL загруженных материалов (может быть JSON массив)
     reference_links = Column(Text)  # Ссылки на референсы (через запятую или перенос строки)
-    reference_files_url = Column(String)  # URL загруженных референсов
+    reference_files_url = Column(String)  # URL загруженных референсов (может быть JSON массив)
+    
+    # Дополнительная информация для обратной связи
+    contact_info = Column(String, nullable=True)  # Telegram, WhatsApp, другой email и т.д.
     
     # Описание
     description = Column(Text)  # Описание (ТЗ)
@@ -220,8 +233,28 @@ class ServiceOrder(Base):
     
     # Статус заказа
     status = Column(String, default="pending")  # pending/confirmed/paid/in_progress/completed/cancelled
+    
+    # Файлы результата работы (для заказов типа "не знаю")
+    result_wav_url = Column(String, nullable=True)  # WAV файл результата
+    result_mp3_url = Column(String, nullable=True)  # MP3 файл результата
+    result_zip_url = Column(String, nullable=True)  # ZIP архив результата
+    
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата создания заказа
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Дата обновления
     
     # Связи с другими таблицами
     user = relationship("User", back_populates="service_orders")
+
+class OAuthSettings(Base):
+    """
+    Модель настроек OAuth провайдеров
+    Управляет видимостью и доступностью кнопок авторизации
+    """
+    __tablename__ = "oauth_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String, unique=True, nullable=False)  # google, vk, yandex, telegram
+    is_hidden = Column(Boolean, default=False)  # Скрыть кнопку с форм
+    is_disabled = Column(Boolean, default=False)  # Дизейблить кнопку (но показывать)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

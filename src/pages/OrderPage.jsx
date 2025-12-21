@@ -11,10 +11,11 @@ const OrderPage = () => {
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_email: '',
-    service_categories: [], // Массив выбранных категорий
-    materials: null,
+    contact_info: '', // Дополнительная информация для обратной связи (телеграм, почта и т.д.)
+    service_categories: [], // Массив выбранных категорий (можно дублировать)
+    materials: [], // Массив файлов материалов
     reference_links: '',
-    reference_files: null,
+    reference_files: [], // Массив файлов референсов
     description: '',
     deadline_days: '',
     prepayment_percent: 50 // 50 или 100
@@ -22,14 +23,15 @@ const OrderPage = () => {
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Категории услуг
+  // Категории услуг с описаниями
   const serviceCategories = [
-    'бит',
-    'сведение',
-    'саунддизайн',
-    'топлайны',
-    'трек под ключ',
-    'запись индивидуального курса с объяснениями по проделанной работе'
+    { value: 'бит', label: 'бит', description: null },
+    { value: 'бит в стиле трэп', label: 'бит в стиле трэп (10-15K)', description: 'Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др.' },
+    { value: 'сведение', label: 'сведение', description: null },
+    { value: 'саунддизайн', label: 'саунддизайн', description: null },
+    { value: 'топлайны', label: 'топлайны', description: null },
+    { value: 'трек под ключ', label: 'трек под ключ', description: 'Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!' },
+    { value: 'запись индивидуального курса с объяснениями по проделанной работе', label: 'запись индивидуального курса с объяснениями по проделанной работе', description: null }
   ];
 
   // Цены согласно сообщению
@@ -78,10 +80,26 @@ const OrderPage = () => {
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
-      setFormData({ ...formData, [name]: files[0] });
+      // Для множественных файлов
+      if (name === 'materials' || name === 'reference_files') {
+        const fileArray = Array.from(files);
+        setFormData(prev => ({
+          ...prev,
+          [name]: [...(prev[name] || []), ...fileArray]
+        }));
+      } else {
+        setFormData({ ...formData, [name]: files[0] });
+      }
     } else {
       setFormData({ ...formData, [name]: value });
     }
+  };
+
+  const removeFile = (fileList, index, name) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: prev[name].filter((_, i) => i !== index)
+    }));
   };
 
   // Заполняем данные пользователя, если авторизован
@@ -90,22 +108,36 @@ const OrderPage = () => {
       setFormData(prev => ({
         ...prev,
         customer_name: user.username || '',
-        customer_email: user.email || ''
+        customer_email: user.email || '',
+        contact_info: user.additional_contact || prev.contact_info || ''
       }));
     }
   }, [isAuthenticated, user, orderType]);
 
-  const toggleCategory = (category) => {
-    setFormData(prev => {
-      const categories = [...prev.service_categories];
-      const index = categories.indexOf(category);
-      if (index > -1) {
-        categories.splice(index, 1);
-      } else {
-        categories.push(category);
-      }
-      return { ...prev, service_categories: categories };
-    });
+  const addCategory = (category) => {
+    const categoryValue = typeof category === 'string' ? category : category.value;
+    setFormData(prev => ({
+      ...prev,
+      service_categories: [...prev.service_categories, categoryValue]
+    }));
+    setShowCategorySelector(false);
+  };
+  
+  const getCategoryLabel = (categoryValue) => {
+    const category = serviceCategories.find(c => c.value === categoryValue);
+    return category ? category.label : categoryValue;
+  };
+  
+  const getCategoryDescription = (categoryValue) => {
+    const category = serviceCategories.find(c => c.value === categoryValue);
+    return category ? category.description : null;
+  };
+
+  const removeCategory = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      service_categories: prev.service_categories.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSimpleSubmit = async (e) => {
@@ -123,7 +155,8 @@ const OrderPage = () => {
         order_type: "dont_know",
         customer_name: formData.customer_name,
         customer_email: formData.customer_email,
-        description: formData.description || "Пользователь не знает, что хочет. Требуется обсуждение."
+        description: formData.description || "Пользователь не знает, что хочет. Требуется обсуждение.",
+        contact_info: formData.contact_info || null
       };
 
       await api.post('/service-orders', orderData);
@@ -133,10 +166,11 @@ const OrderPage = () => {
       setFormData({
         customer_name: '',
         customer_email: '',
+        contact_info: '',
         service_categories: [],
-        materials: null,
+        materials: [],
         reference_links: '',
-        reference_files: null,
+        reference_files: [],
         description: '',
         deadline_days: '',
         prepayment_percent: 50
@@ -174,38 +208,39 @@ const OrderPage = () => {
     try {
       setUploading(true);
       
-      // Сначала загружаем файлы, если они есть
-      let materialsUrl = null;
-      let referenceFilesUrl = null;
-
-      if (formData.materials) {
+      // Загружаем все файлы материалов
+      const materialsUrls = [];
+      for (const file of formData.materials) {
         const materialsFormData = new FormData();
-        materialsFormData.append('file', formData.materials);
+        materialsFormData.append('file', file);
         const materialsResponse = await api.post('/upload-materials', materialsFormData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        materialsUrl = materialsResponse.data.url;
+        materialsUrls.push(materialsResponse.data.url);
       }
 
-      if (formData.reference_files) {
+      // Загружаем все файлы референсов
+      const referenceFilesUrls = [];
+      for (const file of formData.reference_files) {
         const refFormData = new FormData();
-        refFormData.append('file', formData.reference_files);
+        refFormData.append('file', file);
         const refResponse = await api.post('/upload-reference-files', refFormData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        referenceFilesUrl = refResponse.data.url;
+        referenceFilesUrls.push(refResponse.data.url);
       }
 
       // Создаем заказ
       const orderData = {
         order_type: "know",
         service_categories: formData.service_categories,
-        materials_url: materialsUrl,
+        materials_url: materialsUrls.length > 0 ? JSON.stringify(materialsUrls) : null,
         reference_links: formData.reference_links,
-        reference_files_url: referenceFilesUrl,
+        reference_files_url: referenceFilesUrls.length > 0 ? JSON.stringify(referenceFilesUrls) : null,
         description: formData.description,
         deadline_days: parseInt(formData.deadline_days),
         prepayment_percent: formData.prepayment_percent,
+        contact_info: formData.contact_info || null,
         customer_name: !isAuthenticated ? formData.customer_name : null,
         customer_email: !isAuthenticated ? formData.customer_email : null
       };
@@ -217,10 +252,11 @@ const OrderPage = () => {
       setFormData({
         customer_name: isAuthenticated && user ? user.username || '' : '',
         customer_email: isAuthenticated && user ? user.email || '' : '',
+        contact_info: '',
         service_categories: [],
-        materials: null,
+        materials: [],
         reference_links: '',
-        reference_files: null,
+        reference_files: [],
         description: '',
         deadline_days: '',
         prepayment_percent: 50
@@ -250,8 +286,48 @@ const OrderPage = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-black mb-2">Я знаю, что я хочу!</h3>
-                <p className="text-gray-600">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
+                <h3 className="text-xl font-bold text-black mb-4">Я знаю, что я хочу!</h3>
+                
+                {/* Информационный блок с прайсом */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                  <h4 className="font-semibold text-black mb-3">💰 Прайс на создание битов (2025):</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="font-medium text-green-700 mb-2">🟢 При 50% предоплате:</div>
+                      <ul className="space-y-1 text-gray-700">
+                        <li>• 2-3 недели: 25K</li>
+                        <li>• 1-2 недели: 30K</li>
+                        <li>• 1 неделя: 35K</li>
+                        <li>• 2-3 дня: 40K</li>
+                        <li>• 24 часа: 50K</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-medium text-red-700 mb-2">🔴 При 100% предоплате:</div>
+                      <ul className="space-y-1 text-gray-700">
+                        <li>• 2-3 недели: 20K</li>
+                        <li>• 1-2 недели: 25K</li>
+                        <li>• 1 неделя: 30K</li>
+                        <li>• 2-3 дня: 35K</li>
+                        <li>• 24 часа: 45K</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-300">
+                    <div className="text-xs text-gray-600">
+                      <div className="font-medium text-black mb-1">✨ «Песня под ключ»:</div>
+                      <div>Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-300">
+                    <div className="text-xs text-gray-600">
+                      <div className="font-medium text-black mb-1">🎶 Бит в стиле трэп:</div>
+                      <div>Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 10-15K</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-gray-600 mb-4">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
               </div>
               <div className="text-2xl">→</div>
             </div>
@@ -340,6 +416,25 @@ const OrderPage = () => {
             />
           </div>
 
+          <div>
+            <label htmlFor="contact_info" className="block text-sm font-medium text-black mb-2">
+              <Mail className="h-4 w-4 inline mr-2" />
+              Дополнительная информация для обратной связи
+            </label>
+            <input
+              type="text"
+              id="contact_info"
+              name="contact_info"
+              value={formData.contact_info}
+              onChange={handleInputChange}
+              placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
+            </p>
+          </div>
+
           <button
             type="submit"
             disabled={uploading}
@@ -417,21 +512,30 @@ const OrderPage = () => {
           
           {/* Выбранные категории */}
           <div className="flex flex-wrap gap-2 mb-3">
-            {formData.service_categories.map(category => (
-              <div
-                key={category}
-                className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg"
-              >
-                <span>{category}</span>
-                <button
-                  type="button"
-                  onClick={() => toggleCategory(category)}
-                  className="hover:bg-gray-700 rounded p-1"
+            {formData.service_categories.map((category, index) => {
+              const description = getCategoryDescription(category);
+              return (
+                <div
+                  key={`${category}-${index}`}
+                  className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg group relative"
+                  title={description || undefined}
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+                  <span>{getCategoryLabel(category)}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeCategory(index)}
+                    className="hover:bg-gray-700 rounded p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  {description && (
+                    <div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      {description}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Кнопка добавления категории */}
@@ -451,20 +555,15 @@ const OrderPage = () => {
             <div className="border border-gray-300 rounded-lg p-4 space-y-2">
               {serviceCategories.map(category => (
                 <button
-                  key={category}
+                  key={category.value}
                   type="button"
-                  onClick={() => {
-                    toggleCategory(category);
-                    setShowCategorySelector(false);
-                  }}
-                  disabled={formData.service_categories.includes(category)}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                    formData.service_categories.includes(category)
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'hover:bg-gray-100'
-                  }`}
+                  onClick={() => addCategory(category)}
+                  className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 border border-transparent hover:border-gray-300"
                 >
-                  {category}
+                  <div className="font-medium text-black">{category.label}</div>
+                  {category.description && (
+                    <div className="text-xs text-gray-600 mt-1">{category.description}</div>
+                  )}
                 </button>
               ))}
               <button
@@ -480,17 +579,62 @@ const OrderPage = () => {
 
         {/* Загрузка материалов */}
         <div>
-          <label htmlFor="materials" className="block text-sm font-medium text-black mb-2">
+          <label className="block text-sm font-medium text-black mb-2">
             <Upload className="h-4 w-4 inline mr-2" />
             Загрузка материалов
           </label>
-          <input
-            type="file"
-            id="materials"
-            name="materials"
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-          />
+          
+          {/* Список загруженных файлов */}
+          {formData.materials.length > 0 && (
+            <div className="mb-3 space-y-2">
+              {formData.materials.map((file, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
+                  <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(formData.materials, index, 'materials')}
+                    className="ml-2 text-red-600 hover:text-red-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Красивая кнопка загрузки с drag and drop */}
+          <label 
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 transition-colors"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const files = Array.from(e.dataTransfer.files);
+              setFormData(prev => ({
+                ...prev,
+                materials: [...prev.materials, ...files]
+              }));
+            }}
+          >
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Upload className="h-8 w-8 text-gray-400 mb-2" />
+              <p className="mb-2 text-sm text-gray-500">
+                <span className="font-semibold">Нажмите для загрузки</span> или перетащите файлы
+              </p>
+              <p className="text-xs text-gray-500">Можно выбрать несколько файлов</p>
+            </div>
+            <input
+              type="file"
+              id="materials"
+              name="materials"
+              onChange={handleInputChange}
+              multiple
+              className="hidden"
+            />
+          </label>
         </div>
 
         {/* Ссылки на референсы */}
@@ -512,24 +656,69 @@ const OrderPage = () => {
 
         {/* Загрузка референсов файлами */}
         <div>
-          <label htmlFor="reference_files" className="block text-sm font-medium text-black mb-2">
+          <label className="block text-sm font-medium text-black mb-2">
             <Upload className="h-4 w-4 inline mr-2" />
             Загрузка референсов файлами
           </label>
-          <input
-            type="file"
-            id="reference_files"
-            name="reference_files"
-            onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-          />
+          
+          {/* Список загруженных файлов */}
+          {formData.reference_files.length > 0 && (
+            <div className="mb-3 space-y-2">
+              {formData.reference_files.map((file, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
+                  <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(formData.reference_files, index, 'reference_files')}
+                    className="ml-2 text-red-600 hover:text-red-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Красивая кнопка загрузки с drag and drop */}
+          <label 
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 transition-colors"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const files = Array.from(e.dataTransfer.files);
+              setFormData(prev => ({
+                ...prev,
+                reference_files: [...prev.reference_files, ...files]
+              }));
+            }}
+          >
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Upload className="h-8 w-8 text-gray-400 mb-2" />
+              <p className="mb-2 text-sm text-gray-500">
+                <span className="font-semibold">Нажмите для загрузки</span> или перетащите файлы
+              </p>
+              <p className="text-xs text-gray-500">Можно выбрать несколько файлов</p>
+            </div>
+            <input
+              type="file"
+              id="reference_files"
+              name="reference_files"
+              onChange={handleInputChange}
+              multiple
+              className="hidden"
+            />
+          </label>
         </div>
 
-        {/* Описание (ТЗ) */}
+        {/* Описание (Техническое задание) */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-black mb-2">
             <FileText className="h-4 w-4 inline mr-2" />
-            Описание (ТЗ)
+            Описание (Техническое задание)
           </label>
           <textarea
             id="description"
@@ -540,6 +729,26 @@ const OrderPage = () => {
             rows={6}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
           />
+        </div>
+
+        {/* Дополнительная информация для обратной связи */}
+        <div>
+          <label htmlFor="contact_info" className="block text-sm font-medium text-black mb-2">
+            <Mail className="h-4 w-4 inline mr-2" />
+            Дополнительная информация для обратной связи
+          </label>
+          <input
+            type="text"
+            id="contact_info"
+            name="contact_info"
+            value={formData.contact_info}
+            onChange={handleInputChange}
+            placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
+          </p>
         </div>
 
         {/* Дедлайн */}

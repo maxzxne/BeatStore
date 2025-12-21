@@ -25,9 +25,12 @@ const AdminUpload = () => {
   });
   const [beatFiles, setBeatFiles] = useState({
     demo_file: null,
-    full_file: null,
+    wav_file: null,
+    mp3_file: null,
+    exclusive_file: null,
     cover_file: null
   });
+  const [allowMultiplePurchases, setAllowMultiplePurchases] = useState(false);
   const [courseFiles, setCourseFiles] = useState({
     preview_video_file: null,
     full_video_file: null
@@ -337,13 +340,14 @@ const AdminUpload = () => {
             <div className="card-content space-y-4">
               <div>
                 <label htmlFor="beat_demo_file" className="block text-sm font-medium text-black mb-2">
-                  Демо файл *
+                  Демо файл (для прослушивания) *
                 </label>
                 <div className="flex items-center space-x-3">
                   <FileAudio className="h-5 w-5 text-dark-400" />
                   <input
                     type="file"
                     id="beat_demo_file"
+                    accept="audio/*"
                     name="demo_file"
                     accept="audio/*"
                     onChange={handleBeatFileChange}
@@ -357,24 +361,93 @@ const AdminUpload = () => {
               </div>
               
               <div>
-                <label htmlFor="beat_full_file" className="block text-sm font-medium text-black mb-2">
-                  Полный файл
+                <label htmlFor="beat_wav_file" className="block text-sm font-medium text-black mb-2">
+                  WAV файл *
                 </label>
                 <div className="flex items-center space-x-3">
                   <FileAudio className="h-5 w-5 text-dark-400" />
                   <input
                     type="file"
-                    id="beat_full_file"
-                    name="full_file"
-                    accept="audio/*"
+                    id="beat_wav_file"
+                    name="wav_file"
+                    accept="audio/wav,audio/*"
                     onChange={handleBeatFileChange}
                     className="input flex-1"
+                    required
                   />
                 </div>
                 <p className="text-xs text-dark-400 mt-1">
-                  Полная версия для скачивания после покупки
+                  WAV версия для покупки
                 </p>
               </div>
+              
+              <div>
+                <label htmlFor="beat_mp3_file" className="block text-sm font-medium text-black mb-2">
+                  MP3 файл *
+                </label>
+                <div className="flex items-center space-x-3">
+                  <FileAudio className="h-5 w-5 text-dark-400" />
+                  <input
+                    type="file"
+                    id="beat_mp3_file"
+                    name="mp3_file"
+                    accept="audio/mpeg,audio/mp3,audio/*"
+                    onChange={handleBeatFileChange}
+                    className="input flex-1"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-dark-400 mt-1">
+                  MP3 версия для покупки
+                </p>
+              </div>
+              
+              <div>
+                <label htmlFor="beat_exclusive_file" className="block text-sm font-medium text-black mb-2">
+                  Эксклюзивный файл (ZIP) *
+                </label>
+                <div className="flex items-center space-x-3">
+                  <FileAudio className="h-5 w-5 text-dark-400" />
+                  <input
+                    type="file"
+                    id="beat_exclusive_file"
+                    name="exclusive_file"
+                    accept=".zip,application/zip"
+                    onChange={handleBeatFileChange}
+                    className="input flex-1"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-dark-400 mt-1">
+                  ZIP архив с FL-проектом, дорожками и другими файлами
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <h2 className="text-lg font-semibold text-black">Настройки покупки</h2>
+            </div>
+            
+            <div className="card-content">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="allow_multiple_purchases"
+                  checked={allowMultiplePurchases}
+                  onChange={(e) => setAllowMultiplePurchases(e.target.checked)}
+                  className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                />
+                <label htmlFor="allow_multiple_purchases" className="text-sm font-medium text-black">
+                  Разрешить множественные покупки
+                </label>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                {allowMultiplePurchases 
+                  ? "Бит можно покупать много раз (как в аренду)"
+                  : "Бит эксклюзивный - только один покупатель (по умолчанию)"}
+              </p>
             </div>
           </div>
 
