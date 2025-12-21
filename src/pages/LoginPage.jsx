@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Lock } from 'lucide-react';
 import { api } from '../utils/api';
+import YandexIDButton from '../components/YandexIDButton';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -223,16 +224,48 @@ const LoginPage = () => {
             )}
             
             {!oauthSettings.yandex?.is_hidden && (
-              <button
-                onClick={() => handleOAuthLogin('yandex')}
+              <YandexIDButton
+                clientId={import.meta.env.VITE_YANDEX_CLIENT_ID}
+                redirectUri={`${window.location.origin}/oauth/yandex/callback`}
+                onSuccess={async (data) => {
+                  try {
+                    setLoading(true);
+                    setError('');
+                    
+                    // Обрабатываем данные от Yandex ID
+                    // data содержит access_token и информацию о пользователе
+                    const yandexData = {
+                      provider: 'yandex',
+                      access_token: data.access_token,
+                      provider_user_id: data.id || data.user_id || data.uid,
+                      email: data.default_email,
+                      username: data.login || data.default_email?.split('@')[0],
+                      first_name: data.first_name,
+                      last_name: data.last_name
+                    };
+                    
+                    const response = await api.post('/oauth/login', yandexData);
+                    
+                    if (response.data.access_token) {
+                      localStorage.setItem('token', response.data.access_token);
+                      navigate('/');
+                    } else {
+                      setError('Не удалось авторизоваться через Yandex');
+                    }
+                  } catch (err) {
+                    console.error('Yandex ID auth error:', err);
+                    setError(err.response?.data?.detail || 'Ошибка авторизации через Yandex ID');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                onError={(error) => {
+                  setError(error);
+                  setLoading(false);
+                }}
                 disabled={loading || oauthSettings.yandex?.is_disabled}
-                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="#FC3F1D">
-                <path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0 5.76 0 .57 5.19.57 11.6s5.19 11.6 11.67 11.6c6.69 0 11.138-4.699 11.138-11.334 0-.768-.086-1.512-.24-2.181H12.24z"/>
-              </svg>
-              Войти через Yandex
-              </button>
+                size="L"
+              />
             )}
             
             {/* Кнопка авторизации через Telegram - всегда видна */}

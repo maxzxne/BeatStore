@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
-import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Plus, X } from 'lucide-react';
+import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Plus, X, HelpCircle } from 'lucide-react';
 
 const OrderPage = () => {
   const { isAuthenticated, user } = useAuth();
@@ -26,7 +26,7 @@ const OrderPage = () => {
   // Категории услуг с описаниями
   const serviceCategories = [
     { value: 'бит', label: 'бит', description: null },
-    { value: 'бит в стиле трэп', label: 'бит в стиле трэп (10-15K)', description: 'Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др.' },
+    { value: 'бит в стиле трэп', label: 'бит в стиле трэп (15K)', description: 'Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др.' },
     { value: 'сведение', label: 'сведение', description: null },
     { value: 'саунддизайн', label: 'саунддизайн', description: null },
     { value: 'топлайны', label: 'топлайны', description: null },
@@ -69,12 +69,28 @@ const OrderPage = () => {
   };
 
   const calculateTotalPrice = () => {
-    if (formData.service_categories.length === 0 || !formData.deadline_days) return 0;
+    if (formData.service_categories.length === 0) return 0;
     
-    const pricePerService = getPrice(formData.deadline_days, formData.prepayment_percent);
-    if (!pricePerService) return 0;
+    let total = 0;
     
-    return pricePerService * formData.service_categories.length;
+    formData.service_categories.forEach(category => {
+      // Бит в стиле трэп всегда стоит 15К
+      if (category === 'бит в стиле трэп') {
+        total += 15000;
+      } else {
+        // Для остальных услуг нужен срок и предоплата
+        if (!formData.deadline_days) {
+          // Если нет срока, не добавляем к общей сумме
+          return;
+        }
+        const pricePerService = getPrice(formData.deadline_days, formData.prepayment_percent);
+        if (pricePerService) {
+          total += pricePerService;
+        }
+      }
+    });
+    
+    return total;
   };
 
   const handleInputChange = (e) => {
@@ -410,6 +426,17 @@ const OrderPage = () => {
   // Подробная форма для "знаю"
   const totalPrice = calculateTotalPrice();
   const prepaymentAmount = totalPrice * (formData.prepayment_percent / 100);
+  
+  // Подсчет количества каждой услуги
+  const getServiceCounts = () => {
+    const counts = {};
+    formData.service_categories.forEach(category => {
+      counts[category] = (counts[category] || 0) + 1;
+    });
+    return counts;
+  };
+  
+  const serviceCounts = getServiceCounts();
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-2xl">
@@ -764,30 +791,94 @@ const OrderPage = () => {
           </div>
         </div>
 
-        {/* Калькулятор стоимости */}
-        {totalPrice > 0 && (
-          <div className="bg-gray-50 border border-gray-300 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-black mb-4">Расчет стоимости</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Количество услуг:</span>
-                <span className="font-medium">{formData.service_categories.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Стоимость одной услуги:</span>
-                <span className="font-medium">{getPrice(formData.deadline_days, formData.prepayment_percent)?.toLocaleString('ru-RU')} ₽</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
-                <span>Итого:</span>
-                <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-600 border-t pt-2 mt-2">
-                <span>Предоплата ({formData.prepayment_percent}%):</span>
-                <span className="font-medium">{prepaymentAmount.toLocaleString('ru-RU')} ₽</span>
+        {/* Калькулятор стоимости - всегда отображается */}
+        <div className="bg-gray-50 border border-gray-300 rounded-lg p-6">
+          <h3 className="text-lg font-bold text-black mb-4">Расчет стоимости</h3>
+          <div className="space-y-2">
+            {formData.service_categories.length === 0 ? (
+              <p className="text-gray-500 text-sm">Выберите услуги для расчета стоимости</p>
+            ) : (
+              <>
+                {Object.entries(serviceCounts).map(([category, count]) => {
+                  const isTrap = category === 'бит в стиле трэп';
+                  const servicePrice = isTrap ? 15000 : getPrice(formData.deadline_days, formData.prepayment_percent);
+                  const totalForService = servicePrice ? servicePrice * count : 0;
+                  
+                  if (!servicePrice && !isTrap) {
+                    return (
+                      <div key={category} className="flex justify-between text-gray-500">
+                        <span>{category} × {count}:</span>
+                        <span className="text-sm">Укажите срок выполнения</span>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div key={category} className="flex justify-between">
+                      <span>{category} × {count}:</span>
+                      <span className="font-medium">
+                        {servicePrice?.toLocaleString('ru-RU')} ₽ × {count} = {totalForService.toLocaleString('ru-RU')} ₽
+                      </span>
+                    </div>
+                  );
+                })}
+                {totalPrice > 0 && (
+                  <>
+                    <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
+                      <span>Итого:</span>
+                      <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600 border-t pt-2 mt-2">
+                      <span>Предоплата ({formData.prepayment_percent}%):</span>
+                      <span className="font-medium">{prepaymentAmount.toLocaleString('ru-RU')} ₽</span>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          
+          {/* Информация о стоимости */}
+          <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-600">
+            <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
+            <div className="relative group">
+              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help flex-shrink-0" />
+              <div className="absolute bottom-full right-0 mb-2 w-80 p-4 bg-black text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="space-y-3">
+                  <div>
+                    <div className="font-semibold mb-2">🟢 При 50% предоплате:</div>
+                    <ul className="space-y-1 text-gray-300">
+                      <li>• 2-3 недели: 25K</li>
+                      <li>• 1-2 недели: 30K</li>
+                      <li>• 1 неделя: 35K</li>
+                      <li>• 2-3 дня: 40K</li>
+                      <li>• 24 часа: 50K</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-2">🔴 При 100% предоплате:</div>
+                    <ul className="space-y-1 text-gray-300">
+                      <li>• 2-3 недели: 20K</li>
+                      <li>• 1-2 недели: 25K</li>
+                      <li>• 1 неделя: 30K</li>
+                      <li>• 2-3 дня: 35K</li>
+                      <li>• 24 часа: 45K</li>
+                    </ul>
+                  </div>
+                  <div className="pt-2 border-t border-gray-600">
+                    <div className="font-semibold mb-1">✨ «Песня под ключ»:</div>
+                    <div className="text-gray-300">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
+                  </div>
+                  <div className="pt-2 border-t border-gray-600">
+                    <div className="font-semibold mb-1">🎶 Бит в стиле трэп:</div>
+                    <div className="text-gray-300">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 15K</div>
+                  </div>
+                </div>
+                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
         <button
           type="submit"

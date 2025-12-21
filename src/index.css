@@ -160,7 +160,12 @@
   }
   
   .input {
-    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  
+  /* По умолчанию input занимает всю ширину, но можно переопределить через w-auto */
+  .input:not([class*="w-"]) {
+    @apply w-full;
   }
   
   /* Стили для select элементов */
@@ -184,6 +189,12 @@
   select option {
     background-color: white;
     color: black;
+  }
+  
+  select option:hover,
+  select option:focus {
+    background-color: black !important;
+    color: white !important;
   }
   
   select option:checked {

@@ -143,7 +143,7 @@ const CoursesPage = () => {
           <select
             value={filters.purpose}
             onChange={(e) => setFilters({ ...filters, purpose: e.target.value })}
-            className="input"
+            className="input w-auto min-w-[200px]"
           >
             <option value="">Все категории</option>
             <option value="сведение">Сведение</option>
@@ -156,7 +156,7 @@ const CoursesPage = () => {
             placeholder="Мин. цена"
             value={filters.minPrice}
             onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-            className="input"
+            className="input w-auto min-w-[150px]"
           />
           
           <input
@@ -164,7 +164,7 @@ const CoursesPage = () => {
             placeholder="Макс. цена"
             value={filters.maxPrice}
             onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-            className="input"
+            className="input w-auto min-w-[150px]"
           />
         </div>
       </div>
