@@ -26,6 +26,13 @@ def get_updates(offset: Optional[int] = None):
     
     try:
         response = requests.get(url, params=params, timeout=15)
+        
+        # Обработка ошибки 409 Conflict (несколько экземпляров бота)
+        if response.status_code == 409:
+            # Это нормально, если бот запущен в нескольких местах
+            # Просто пропускаем и продолжаем
+            return {"ok": True, "result": []}
+        
         response.raise_for_status()
         result = response.json()
         if not result.get("ok"):
@@ -35,10 +42,15 @@ def get_updates(offset: Optional[int] = None):
             if updates_count > 0:
                 print(f"Получено обновлений: {updates_count}")
         return result
+    except requests.exceptions.HTTPError as e:
+        if e.response and e.response.status_code == 409:
+            # 409 Conflict - другой экземпляр бота уже получает обновления
+            # Это нормально для продакшена, просто пропускаем
+            return {"ok": True, "result": []}
+        print(f"HTTP ошибка при получении обновлений: {e}")
+        return None
     except Exception as e:
         print(f"Ошибка при получении обновлений: {e}")
-        import traceback
-        traceback.print_exc()
         return None
 
 
@@ -195,7 +207,7 @@ def main():
             updates = get_updates(last_update_id)
             
             if not updates or not updates.get("ok"):
-                time.sleep(1)
+                time.sleep(2)  # Увеличиваем задержку при ошибках
                 continue
             
             for update in updates.get("result", []):
@@ -220,7 +232,7 @@ def main():
                             json={"callback_query_id": callback_query["id"]}
                         )
             
-            time.sleep(0.5)
+            time.sleep(1)  # Увеличиваем задержку между запросами
             
         except KeyboardInterrupt:
             print("\n\n🛑 Остановка бота...")
