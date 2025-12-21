@@ -21,17 +21,21 @@
     /* Убираем отступы для Telegram Web App */
     margin: 0;
     padding: 0;
-    /* Предотвращаем скролл на iOS */
-    position: fixed;
     width: 100%;
+    /* Разрешаем скролл */
+    overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* Для Telegram Web App - убираем bounce эффект на iOS */
+    overscroll-behavior: none;
   }
   
   #root {
     min-height: 100vh;
     min-height: 100dvh;
     width: 100%;
+    /* Разрешаем скролл в root */
+    overflow-x: hidden;
   }
   
   /* Предотвращаем неожиданное редактирование */

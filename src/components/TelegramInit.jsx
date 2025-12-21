@@ -30,6 +30,20 @@ const TelegramInit = () => {
     // Важно: вызываем ready() перед получением данных
     tg.ready();
     
+    // Включаем скролл для Telegram Web App
+    try {
+      // Отключаем блокировку скролла, если она есть
+      if (tg.enableClosingConfirmation) {
+        tg.enableClosingConfirmation(false);
+      }
+      // Включаем вертикальную прокрутку
+      if (tg.isExpanded !== undefined) {
+        // Приложение уже расширено
+      }
+    } catch (e) {
+      // Игнорируем ошибки
+    }
+    
     
     // Настраиваем полноэкранный режим для десктопа
     if (tg.platform === 'tdesktop' || tg.platform === 'web' || tg.platform === 'unknown') {
