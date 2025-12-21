@@ -194,8 +194,12 @@ class ServiceOrder(Base):
     customer_name = Column(String, nullable=True)  # Имя заказчика
     customer_email = Column(String, nullable=True)  # Email заказчика
     
-    # Категория услуги
-    service_category = Column(String, nullable=False)  # бит/сведение/саунддизайн/топлайны/трек под ключ/+запись индивидуального курса
+    # Тип заказа
+    order_type = Column(String, default="know")  # "know" или "dont_know"
+    
+    # Категории услуг (JSON строка с массивом категорий)
+    service_category = Column(String, nullable=True)  # Старое поле для обратной совместимости
+    service_categories = Column(Text, nullable=True)  # JSON массив выбранных категорий
     
     # Материалы
     materials_url = Column(String)  # URL загруженных материалов
@@ -206,11 +210,16 @@ class ServiceOrder(Base):
     description = Column(Text)  # Описание (ТЗ)
     
     # Дедлайн
-    deadline_min = Column(Integer)  # Минимальный дедлайн (в днях)
-    deadline_max = Column(Integer)  # Максимальный дедлайн (в днях)
+    deadline_min = Column(Integer)  # Минимальный дедлайн (в днях) - старое поле
+    deadline_max = Column(Integer)  # Максимальный дедлайн (в днях) - старое поле
+    deadline_days = Column(Integer, nullable=True)  # Количество дней дедлайна
+    
+    # Цена и оплата
+    price = Column(Float, nullable=True)  # Стоимость услуги (устанавливается админом)
+    prepayment_percent = Column(Integer, nullable=True)  # Процент предоплаты (50 или 100)
     
     # Статус заказа
-    status = Column(String, default="pending")  # pending/in_progress/completed/cancelled
+    status = Column(String, default="pending")  # pending/confirmed/paid/in_progress/completed/cancelled
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата создания заказа
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Дата обновления
     

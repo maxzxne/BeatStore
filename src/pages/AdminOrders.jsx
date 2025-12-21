@@ -27,10 +27,12 @@ const AdminOrders = () => {
     }
   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, price = null, prepaymentPercent = null) => {
     try {
       const formData = new FormData();
-      formData.append('status', newStatus);
+      if (newStatus) formData.append('status', newStatus);
+      if (price !== null) formData.append('price', price.toString());
+      if (prepaymentPercent !== null) formData.append('prepayment_percent', prepaymentPercent.toString());
       
       await api.put(`/api/admin/service-orders/${orderId}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -38,11 +40,15 @@ const AdminOrders = () => {
       
       await fetchOrders();
       if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder({ ...selectedOrder, status: newStatus });
+        const updated = { ...selectedOrder };
+        if (newStatus) updated.status = newStatus;
+        if (price !== null) updated.price = price;
+        if (prepaymentPercent !== null) updated.prepayment_percent = prepaymentPercent;
+        setSelectedOrder(updated);
       }
     } catch (error) {
-      console.error('Error updating order status:', error);
-      alert('Ошибка обновления статуса заявки');
+      console.error('Error updating order:', error);
+      alert('Ошибка обновления заявки');
     }
   };
 
@@ -120,7 +126,16 @@ const AdminOrders = () => {
                 <div className="card-content">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-black mb-1">{order.service_category}</h3>
+                      <h3 className="font-semibold text-black mb-1">
+                        {order.service_categories && order.service_categories.length > 0
+                          ? order.service_categories.join(', ')
+                          : order.service_category || 'Заказ'}
+                      </h3>
+                      {order.order_type === 'dont_know' && (
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded mb-2 inline-block">
+                          Требует обсуждения
+                        </span>
+                      )}
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <User className="h-4 w-4" />
                         <span>
@@ -137,8 +152,11 @@ const AdminOrders = () => {
                       <Calendar className="h-3 w-3" />
                       <span>{formatDate(order.created_at)}</span>
                     </div>
-                    {order.deadline_min && order.deadline_max && (
-                      <span>Дедлайн: {order.deadline_min}-{order.deadline_max} дней</span>
+                    {order.deadline_days && (
+                      <span>Дедлайн: {order.deadline_days} {order.deadline_days === 1 ? 'день' : order.deadline_days < 5 ? 'дня' : 'дней'}</span>
+                    )}
+                    {order.price && (
+                      <span className="font-semibold text-black">{order.price.toLocaleString('ru-RU')} ₽</span>
                     )}
                   </div>
                   
@@ -162,9 +180,28 @@ const AdminOrders = () => {
                 
                 <div className="card-content space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Категория услуги</label>
-                    <p className="text-black font-semibold">{selectedOrder.service_category}</p>
+                    <label className="text-sm font-medium text-gray-600">Категории услуг</label>
+                    {selectedOrder.service_categories && selectedOrder.service_categories.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {selectedOrder.service_categories.map((cat, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-gray-100 rounded-lg text-sm">
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-black font-semibold">{selectedOrder.service_category || 'Не указано'}</p>
+                    )}
                   </div>
+                  
+                  {selectedOrder.order_type && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Тип заказа</label>
+                      <p className="text-black">
+                        {selectedOrder.order_type === 'know' ? 'Я знаю, что хочу' : 'Требует обсуждения'}
+                      </p>
+                    </div>
+                  )}
                   
                   <div>
                     <label className="text-sm font-medium text-gray-600">Пользователь</label>
@@ -187,14 +224,49 @@ const AdminOrders = () => {
                     </div>
                   )}
                   
-                  {selectedOrder.deadline_min && selectedOrder.deadline_max && (
+                  {selectedOrder.deadline_days && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Дедлайн</label>
                       <p className="text-black">
-                        {selectedOrder.deadline_min} - {selectedOrder.deadline_max} дней
+                        {selectedOrder.deadline_days} {selectedOrder.deadline_days === 1 ? 'день' : selectedOrder.deadline_days < 5 ? 'дня' : 'дней'}
                       </p>
                     </div>
                   )}
+                  
+                  {selectedOrder.prepayment_percent && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Процент предоплаты</label>
+                      <p className="text-black">{selectedOrder.prepayment_percent}%</p>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Стоимость</label>
+                    {selectedOrder.price ? (
+                      <p className="text-black font-semibold text-lg">
+                        {selectedOrder.price.toLocaleString('ru-RU')} ₽
+                        {selectedOrder.prepayment_percent && (
+                          <span className="text-sm text-gray-600 block mt-1">
+                            Предоплата ({selectedOrder.prepayment_percent}%): {(selectedOrder.price * selectedOrder.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
+                          </span>
+                        )}
+                      </p>
+                    ) : (
+                      <div className="mt-2">
+                        <input
+                          type="number"
+                          placeholder="Укажите стоимость"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          onBlur={(e) => {
+                            const price = parseFloat(e.target.value);
+                            if (price > 0) {
+                              updateOrderStatus(selectedOrder.id, null, price, null);
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                   
                   {selectedOrder.reference_links && (
                     <div>
@@ -266,6 +338,22 @@ const AdminOrders = () => {
                           className="btn btn-outline btn-sm w-full"
                         >
                           Вернуть в ожидание
+                        </button>
+                      )}
+                      {selectedOrder.status !== 'confirmed' && selectedOrder.price && (
+                        <button
+                          onClick={() => updateOrderStatus(selectedOrder.id, 'confirmed')}
+                          className="btn btn-primary btn-sm w-full"
+                        >
+                          Подтвердить заказ
+                        </button>
+                      )}
+                      {selectedOrder.status !== 'paid' && (
+                        <button
+                          onClick={() => updateOrderStatus(selectedOrder.id, 'paid')}
+                          className="btn btn-primary btn-sm w-full bg-green-600 hover:bg-green-700"
+                        >
+                          Отметить как оплачен
                         </button>
                       )}
                       {selectedOrder.status !== 'in_progress' && (

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import BeatCard from '../components/BeatCard';
 import { api } from '../utils/api';
-import { Play, Pause, Download, CheckCircle, Video } from 'lucide-react';
+import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText } from 'lucide-react';
 
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
@@ -14,13 +14,15 @@ const PurchasesPage = () => {
   const { playTrack, isCurrentTrackPlaying, pauseTrack, resumeTrack } = useAudioPlayer();
   const [purchases, setPurchases] = useState([]);
   const [coursePurchases, setCoursePurchases] = useState([]);
+  const [serviceOrders, setServiceOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('beats'); // 'beats' или 'courses'
+  const [activeTab, setActiveTab] = useState('beats'); // 'beats', 'courses' или 'orders'
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchPurchases();
       fetchCoursePurchases();
+      fetchServiceOrders();
     } else {
       setLoading(false);
     }
@@ -41,6 +43,15 @@ const PurchasesPage = () => {
       setCoursePurchases(response.data);
     } catch (error) {
       console.error('Error fetching course purchases:', error);
+    }
+  };
+
+  const fetchServiceOrders = async () => {
+    try {
+      const response = await api.get('/service-orders');
+      setServiceOrders(response.data);
+    } catch (error) {
+      console.error('Error fetching service orders:', error);
     } finally {
       setLoading(false);
     }
@@ -166,7 +177,7 @@ const PurchasesPage = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-black mb-2">Ваши покупки</h1>
         
-        {/* Табы для переключения между битами и курсами */}
+        {/* Табы для переключения между битами, курсами и заказами */}
         <div className="flex gap-4 mb-4">
           <button
             onClick={() => setActiveTab('beats')}
@@ -187,6 +198,16 @@ const PurchasesPage = () => {
             }`}
           >
             Курсы ({coursePurchases.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'orders'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Заказы ({serviceOrders.length})
           </button>
         </div>
       </div>
@@ -400,6 +421,120 @@ const PurchasesPage = () => {
                 </div>
               </Link>
             ))}
+          </div>
+        )
+      ) : (
+        serviceOrders.length === 0 ? (
+          <div className="text-center py-12">
+            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <div className="text-gray-600 text-lg">Заказов пока нет</div>
+            <p className="text-gray-500 mt-2">
+              Оформите заказ услуг, чтобы увидеть его здесь
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {serviceOrders.map(order => {
+              const statusColors = {
+                pending: 'bg-yellow-100 text-yellow-800',
+                confirmed: 'bg-blue-100 text-blue-800',
+                paid: 'bg-green-100 text-green-800',
+                in_progress: 'bg-purple-100 text-purple-800',
+                completed: 'bg-gray-100 text-gray-800',
+                cancelled: 'bg-red-100 text-red-800'
+              };
+              
+              const statusLabels = {
+                pending: 'Ожидает',
+                confirmed: 'Подтвержден',
+                paid: 'Оплачен',
+                in_progress: 'В работе',
+                completed: 'Завершен',
+                cancelled: 'Отменен'
+              };
+              
+              const categories = order.service_categories || (order.service_category ? [order.service_category] : []);
+              
+              return (
+                <div key={order.id} className="border border-gray-300 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-black mb-2">
+                        Заказ #{order.id}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
+                          {statusLabels[order.status] || order.status}
+                        </span>
+                        {order.order_type === 'dont_know' && (
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Требует обсуждения
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {order.price && (
+                        <div className="text-lg font-bold text-black">
+                          {order.price.toLocaleString('ru-RU')} ₽
+                        </div>
+                      )}
+                      {order.prepayment_percent && order.price && (
+                        <div className="text-sm text-gray-600">
+                          Предоплата {order.prepayment_percent}%: {(order.price * order.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {categories.length > 0 && (
+                    <div className="mb-3">
+                      <div className="text-sm font-medium text-gray-700 mb-1">Категории услуг:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {categories.map((cat, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-gray-100 rounded-lg text-sm">
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {order.deadline_days && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                      <Clock className="h-4 w-4" />
+                      <span>Срок: {order.deadline_days} {order.deadline_days === 1 ? 'день' : order.deadline_days < 5 ? 'дня' : 'дней'}</span>
+                    </div>
+                  )}
+                  
+                  {order.description && (
+                    <div className="mb-3">
+                      <div className="text-sm font-medium text-gray-700 mb-1">Описание:</div>
+                      <p className="text-sm text-gray-600">{order.description}</p>
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-gray-500 mt-4">
+                    Создан: {new Date(order.created_at).toLocaleString('ru-RU')}
+                  </div>
+                  
+                  {order.status === 'confirmed' && order.price && (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-yellow-800 font-medium mb-2">
+                        <DollarSign className="h-5 w-5" />
+                        <span>Требуется оплата</span>
+                      </div>
+                      <p className="text-sm text-yellow-700">
+                        Заказ подтвержден. Необходимо оплатить {order.prepayment_percent || 50}% предоплату: {(order.price * (order.prepayment_percent || 50) / 100).toLocaleString('ru-RU')} ₽
+                      </p>
+                      <button className="mt-3 btn btn-primary btn-sm">
+                        Оплатить
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )
       )}

@@ -58,19 +58,23 @@ def update_database_schema():
             columns = [col['name'] for col in inspector.get_columns('service_orders')]
             
             # Добавляем отсутствующие колонки
-            if 'customer_name' not in columns:
-                print("Добавление колонки customer_name в service_orders...")
-                with engine.connect() as conn:
-                    conn.execute(text("ALTER TABLE service_orders ADD COLUMN customer_name VARCHAR"))
-                    conn.commit()
-                print("Колонка customer_name добавлена")
+            new_columns = {
+                'customer_name': 'VARCHAR',
+                'customer_email': 'VARCHAR',
+                'order_type': 'VARCHAR DEFAULT "know"',
+                'service_categories': 'TEXT',
+                'deadline_days': 'INTEGER',
+                'price': 'FLOAT',
+                'prepayment_percent': 'INTEGER'
+            }
             
-            if 'customer_email' not in columns:
-                print("Добавление колонки customer_email в service_orders...")
-                with engine.connect() as conn:
-                    conn.execute(text("ALTER TABLE service_orders ADD COLUMN customer_email VARCHAR"))
-                    conn.commit()
-                print("Колонка customer_email добавлена")
+            for col_name, col_type in new_columns.items():
+                if col_name not in columns:
+                    print(f"Добавление колонки {col_name} в service_orders...")
+                    with engine.connect() as conn:
+                        conn.execute(text(f"ALTER TABLE service_orders ADD COLUMN {col_name} {col_type}"))
+                        conn.commit()
+                    print(f"Колонка {col_name} добавлена")
         
         # Создаем все таблицы (если их еще нет)
         Base.metadata.create_all(bind=engine)
@@ -370,13 +374,17 @@ class CourseCreate(BaseModel):
 
 class ServiceOrderCreate(BaseModel):
     """Схема для создания заказа услуги"""
-    service_category: str
+    order_type: str = "know"  # "know" или "dont_know"
+    service_category: Optional[str] = None  # Старое поле для обратной совместимости
+    service_categories: Optional[List[str]] = None  # Массив выбранных категорий
     materials_url: Optional[str] = None
     reference_links: Optional[str] = None
     reference_files_url: Optional[str] = None
     description: Optional[str] = None
-    deadline_min: Optional[int] = None
-    deadline_max: Optional[int] = None
+    deadline_min: Optional[int] = None  # Старое поле
+    deadline_max: Optional[int] = None  # Старое поле
+    deadline_days: Optional[int] = None  # Количество дней дедлайна
+    prepayment_percent: Optional[int] = None  # Процент предоплаты (50 или 100)
     customer_name: Optional[str] = None  # Имя для неавторизованных
     customer_email: Optional[str] = None  # Email для неавторизованных
 
@@ -386,16 +394,59 @@ class ServiceOrderResponse(BaseModel):
     user_id: Optional[int]
     customer_name: Optional[str]
     customer_email: Optional[str]
-    service_category: str
-    materials_url: Optional[str]
-    reference_links: Optional[str]
-    reference_files_url: Optional[str]
-    description: Optional[str]
-    deadline_min: Optional[int]
-    deadline_max: Optional[int]
+    order_type: str
+    service_category: Optional[str] = None  # Старое поле
+    service_categories: Optional[List[str]] = None  # Массив категорий
+    materials_url: Optional[str] = None
+    reference_links: Optional[str] = None
+    reference_files_url: Optional[str] = None
+    description: Optional[str] = None
+    deadline_min: Optional[int] = None  # Старое поле
+    deadline_max: Optional[int] = None  # Старое поле
+    deadline_days: Optional[int] = None
+    price: Optional[float] = None
+    prepayment_percent: Optional[int] = None
     status: str
     created_at: datetime
     updated_at: datetime
+
+    @classmethod
+    def from_orm(cls, obj):
+        """Преобразует объект БД в ответ, парся service_categories из JSON"""
+        import json
+        data = {
+            "id": obj.id,
+            "user_id": obj.user_id,
+            "customer_name": obj.customer_name,
+            "customer_email": obj.customer_email,
+            "order_type": obj.order_type or "know",
+            "service_category": obj.service_category,
+            "service_categories": None,
+            "materials_url": obj.materials_url,
+            "reference_links": obj.reference_links,
+            "reference_files_url": obj.reference_files_url,
+            "description": obj.description,
+            "deadline_min": obj.deadline_min,
+            "deadline_max": obj.deadline_max,
+            "deadline_days": obj.deadline_days,
+            "price": obj.price,
+            "prepayment_percent": obj.prepayment_percent,
+            "status": obj.status,
+            "created_at": obj.created_at,
+            "updated_at": obj.updated_at
+        }
+        
+        # Парсим service_categories из JSON
+        if obj.service_categories:
+            try:
+                data["service_categories"] = json.loads(obj.service_categories)
+            except:
+                data["service_categories"] = []
+        elif obj.service_category:
+            # Для обратной совместимости
+            data["service_categories"] = [obj.service_category]
+        
+        return cls(**data)
 
     class Config:
         from_attributes = True
@@ -1127,32 +1178,47 @@ def create_service_order(order: ServiceOrderCreate,
                         db: Session = Depends(get_db),
                         current_user: Optional[User] = Depends(get_current_user_optional)):
     try:
-        print(f"Creating service order: category={order.service_category}, user={current_user.username if current_user else 'anonymous'}")
+        import json
+        
+        print(f"Creating service order: type={order.order_type}, user={current_user.username if current_user else 'anonymous'}")
         
         # Если пользователь авторизован, используем его данные
         # Если нет, используем переданные имя и email
         user_id = current_user.id if current_user else None
         
-        if not current_user and (not order.customer_name or not order.customer_email):
+        # Для неавторизованных пользователей проверяем наличие имени и email
+        if not current_user and order.order_type == "know" and (not order.customer_name or not order.customer_email):
             print("Error: Unauthenticated user must provide name and email")
             raise HTTPException(
                 status_code=400,
                 detail="Для неавторизованных пользователей необходимо указать имя и email"
             )
         
-        print(f"Creating ServiceOrder: user_id={user_id}, customer_name={order.customer_name}, customer_email={order.customer_email}")
+        # Преобразуем service_categories в JSON строку
+        service_categories_json = None
+        if order.service_categories:
+            service_categories_json = json.dumps(order.service_categories, ensure_ascii=False)
+        elif order.service_category:
+            # Для обратной совместимости
+            service_categories_json = json.dumps([order.service_category], ensure_ascii=False)
+        
+        print(f"Creating ServiceOrder: user_id={user_id}, order_type={order.order_type}, categories={service_categories_json}")
         
         service_order = ServiceOrder(
             user_id=user_id,
             customer_name=order.customer_name if not current_user else None,
             customer_email=order.customer_email if not current_user else None,
-            service_category=order.service_category,
+            order_type=order.order_type,
+            service_category=order.service_category,  # Для обратной совместимости
+            service_categories=service_categories_json,
             materials_url=order.materials_url,
             reference_links=order.reference_links,
             reference_files_url=order.reference_files_url,
             description=order.description,
-            deadline_min=order.deadline_min,
-            deadline_max=order.deadline_max
+            deadline_min=order.deadline_min,  # Для обратной совместимости
+            deadline_max=order.deadline_max,  # Для обратной совместимости
+            deadline_days=order.deadline_days,
+            prepayment_percent=order.prepayment_percent
         )
         
         db.add(service_order)
@@ -1160,7 +1226,7 @@ def create_service_order(order: ServiceOrderCreate,
         db.refresh(service_order)
         
         print(f"Service order created successfully: id={service_order.id}")
-        return service_order
+        return ServiceOrderResponse.from_orm(service_order)
     except HTTPException:
         raise
     except Exception as e:
@@ -1178,10 +1244,11 @@ def get_service_orders(current_user: Optional[User] = Depends(get_current_user_o
                        db: Session = Depends(get_db)):
     if current_user:
         orders = db.query(ServiceOrder).filter(ServiceOrder.user_id == current_user.id).all()
+        # Преобразуем каждый заказ через from_orm
+        return [ServiceOrderResponse.from_orm(order) for order in orders]
     else:
         # Для неавторизованных возвращаем пустой список
-        orders = []
-    return orders
+        return []
 
 @app.get("/service-orders/{order_id}", response_model=ServiceOrderResponse)
 def get_service_order(order_id: int,
@@ -1193,16 +1260,18 @@ def get_service_order(order_id: int,
     ).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    return order
+    return ServiceOrderResponse.from_orm(order)
 
 @app.post("/upload-materials")
 async def upload_materials(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ):
-    """Загрузка материалов для заказа"""
+    """Загрузка материалов для заказа (доступна для неавторизованных)"""
+    import uuid
     os.makedirs("static/materials", exist_ok=True)
-    filename = f"materials_{current_user.id}_{file.filename}"
+    user_id = current_user.id if current_user else f"anon_{uuid.uuid4().hex[:8]}"
+    filename = f"materials_{user_id}_{file.filename}"
     file_path = f"static/materials/{filename}"
     
     with open(file_path, "wb") as buffer:
@@ -1213,11 +1282,13 @@ async def upload_materials(
 @app.post("/upload-reference-files")
 async def upload_reference_files(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user)
+    current_user: Optional[User] = Depends(get_current_user_optional)
 ):
-    """Загрузка референсов для заказа"""
+    """Загрузка референсов для заказа (доступна для неавторизованных)"""
+    import uuid
     os.makedirs("static/references", exist_ok=True)
-    filename = f"references_{current_user.id}_{file.filename}"
+    user_id = current_user.id if current_user else f"anon_{uuid.uuid4().hex[:8]}"
+    filename = f"references_{user_id}_{file.filename}"
     file_path = f"static/references/{filename}"
     
     with open(file_path, "wb") as buffer:
@@ -1633,50 +1704,86 @@ async def upload_course_admin(
 @app.get("/api/admin/service-orders")
 def get_service_orders_admin(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     """Получение всех заявок на услуги для админа"""
-    orders = db.query(ServiceOrder).join(User).all()
+    import json
+    orders = db.query(ServiceOrder).all()
     
     result = []
     for order in orders:
-        result.append({
+        # Парсим service_categories из JSON
+        service_categories = []
+        if order.service_categories:
+            try:
+                service_categories = json.loads(order.service_categories)
+            except:
+                pass
+        elif order.service_category:
+            service_categories = [order.service_category]
+        
+        order_data = {
             "id": order.id,
             "user_id": order.user_id,
-            "user_email": order.user.email,
-            "user_username": order.user.username,
+            "customer_name": order.customer_name,
+            "customer_email": order.customer_email,
+            "order_type": order.order_type or "know",
             "service_category": order.service_category,
+            "service_categories": service_categories,
             "materials_url": order.materials_url,
             "reference_links": order.reference_links,
             "reference_files_url": order.reference_files_url,
             "description": order.description,
             "deadline_min": order.deadline_min,
             "deadline_max": order.deadline_max,
+            "deadline_days": order.deadline_days,
+            "price": order.price,
+            "prepayment_percent": order.prepayment_percent,
             "status": order.status,
             "created_at": order.created_at,
             "updated_at": order.updated_at
-        })
+        }
+        
+        # Добавляем данные пользователя, если заказ от авторизованного пользователя
+        if order.user_id:
+            user = db.query(User).filter(User.id == order.user_id).first()
+            if user:
+                order_data["user_email"] = user.email
+                order_data["user_username"] = user.username
+        
+        result.append(order_data)
     
     return result
 
 @app.put("/api/admin/service-orders/{order_id}")
 def update_service_order_status(
     order_id: int,
-    status: str = Form(...),
+    status: Optional[str] = Form(None),
+    price: Optional[float] = Form(None),
+    prepayment_percent: Optional[int] = Form(None),
     current_admin: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Обновление статуса заявки на услугу"""
+    """Обновление статуса, цены и процента предоплаты заявки на услугу"""
     order = db.query(ServiceOrder).filter(ServiceOrder.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Service order not found")
     
-    if status not in ["pending", "in_progress", "completed", "cancelled"]:
-        raise HTTPException(status_code=400, detail="Invalid status")
+    if status:
+        if status not in ["pending", "confirmed", "paid", "in_progress", "completed", "cancelled"]:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        order.status = status
     
-    order.status = status
+    if price is not None:
+        order.price = price
+    
+    if prepayment_percent is not None:
+        if prepayment_percent not in [50, 100]:
+            raise HTTPException(status_code=400, detail="prepayment_percent must be 50 or 100")
+        order.prepayment_percent = prepayment_percent
+    
     order.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(order)
     
-    return {"message": "Order status updated successfully", "order": order}
+    return {"message": "Order updated successfully", "order": ServiceOrderResponse.from_orm(order)}
 
 @app.get("/api/admin/courses")
 def get_courses_admin(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
