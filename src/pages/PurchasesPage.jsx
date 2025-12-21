@@ -5,7 +5,7 @@ import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import BeatCard from '../components/BeatCard';
 import { api } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
-import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio } from 'lucide-react';
+import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio, HelpCircle } from 'lucide-react';
 
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
@@ -524,6 +524,49 @@ const PurchasesPage = () => {
                   <div className="text-xs text-gray-500 mt-4">
                     Создан: {formatMoscowDate(order.created_at)}
                   </div>
+                  
+                  {/* Информация о стоимости для заказов типа "знаю" */}
+                  {order.order_type === 'know' && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-600">
+                      <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
+                      <div className="relative group">
+                        <HelpCircle className="h-4 w-4 text-gray-400 cursor-help flex-shrink-0" />
+                        <div className="absolute bottom-full right-0 mb-2 w-80 p-4 bg-black text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                          <div className="space-y-3">
+                            <div>
+                              <div className="font-semibold mb-2">🟢 При 50% предоплате:</div>
+                              <ul className="space-y-1 text-gray-300">
+                                <li>• 2-3 недели: 25K</li>
+                                <li>• 1-2 недели: 30K</li>
+                                <li>• 1 неделя: 35K</li>
+                                <li>• 2-3 дня: 40K</li>
+                                <li>• 24 часа: 50K</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <div className="font-semibold mb-2">🔴 При 100% предоплате:</div>
+                              <ul className="space-y-1 text-gray-300">
+                                <li>• 2-3 недели: 20K</li>
+                                <li>• 1-2 недели: 25K</li>
+                                <li>• 1 неделя: 30K</li>
+                                <li>• 2-3 дня: 35K</li>
+                                <li>• 24 часа: 45K</li>
+                              </ul>
+                            </div>
+                            <div className="pt-2 border-t border-gray-600">
+                              <div className="font-semibold mb-1">✨ «Песня под ключ»:</div>
+                              <div className="text-gray-300">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
+                            </div>
+                            <div className="pt-2 border-t border-gray-600">
+                              <div className="font-semibold mb-1">🎶 Бит в стиле трэп:</div>
+                              <div className="text-gray-300">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 10-15K</div>
+                            </div>
+                          </div>
+                          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   {order.status === 'confirmed' && order.price && (
                     <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

@@ -143,7 +143,7 @@ const CoursesPage = () => {
           <select
             value={filters.purpose}
             onChange={(e) => setFilters({ ...filters, purpose: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className="input"
           >
             <option value="">Все категории</option>
             <option value="сведение">Сведение</option>
@@ -156,7 +156,7 @@ const CoursesPage = () => {
             placeholder="Мин. цена"
             value={filters.minPrice}
             onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className="input"
           />
           
           <input
@@ -164,7 +164,7 @@ const CoursesPage = () => {
             placeholder="Макс. цена"
             value={filters.maxPrice}
             onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg"
+            className="input"
           />
         </div>
       </div>
@@ -176,7 +176,7 @@ const CoursesPage = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {courses.map(course => (
-            <Link key={course.id} to={`/course/${course.id}`} className="card group relative">
+            <Link key={course.id} to={`/course/${course.id}`} className="card group relative hover:border-black transition-colors">
               <div className="relative">
                 {course.preview_video_url ? (
                   <div className="w-full h-48 bg-black rounded-t-lg flex items-center justify-center relative overflow-hidden">

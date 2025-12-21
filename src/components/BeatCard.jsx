@@ -117,7 +117,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
 
   return (
     <Link to={`/beat/${beat.id}`} className="group">
-      <div className={`card hover:border-primary-500 transition-colors relative ${
+      <div className={`card hover:border-black transition-colors relative ${
         isPurchased ? 'ring-2 ring-green-500 ring-opacity-50' : ''
       }`}>
         <div className="relative">

@@ -287,46 +287,6 @@ const OrderPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold text-black mb-4">Я знаю, что я хочу!</h3>
-                
-                {/* Информационный блок с прайсом */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-                  <h4 className="font-semibold text-black mb-3">💰 Прайс на создание битов (2025):</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="font-medium text-green-700 mb-2">🟢 При 50% предоплате:</div>
-                      <ul className="space-y-1 text-gray-700">
-                        <li>• 2-3 недели: 25K</li>
-                        <li>• 1-2 недели: 30K</li>
-                        <li>• 1 неделя: 35K</li>
-                        <li>• 2-3 дня: 40K</li>
-                        <li>• 24 часа: 50K</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <div className="font-medium text-red-700 mb-2">🔴 При 100% предоплате:</div>
-                      <ul className="space-y-1 text-gray-700">
-                        <li>• 2-3 недели: 20K</li>
-                        <li>• 1-2 недели: 25K</li>
-                        <li>• 1 неделя: 30K</li>
-                        <li>• 2-3 дня: 35K</li>
-                        <li>• 24 часа: 45K</li>
-                      </ul>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-gray-300">
-                    <div className="text-xs text-gray-600">
-                      <div className="font-medium text-black mb-1">✨ «Песня под ключ»:</div>
-                      <div>Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-gray-300">
-                    <div className="text-xs text-gray-600">
-                      <div className="font-medium text-black mb-1">🎶 Бит в стиле трэп:</div>
-                      <div>Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 10-15K</div>
-                    </div>
-                  </div>
-                </div>
-                
                 <p className="text-gray-600 mb-4">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
               </div>
               <div className="text-2xl">→</div>
