@@ -307,7 +307,7 @@ const PurchasesPage = () => {
             ))}
           </div>
         )
-      ) : (
+      ) : activeTab === 'courses' ? (
         coursePurchases.length === 0 ? (
           <div className="text-center py-12">
             <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
