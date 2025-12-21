@@ -4,9 +4,14 @@ SQLAlchemy модели для базы данных BeatStore
 Определяет структуру таблиц и связи между ними:
 - User - пользователи системы
 - Beat - музыкальные биты
-- Purchase - история покупок
-- favorites_table - связь многие-ко-многим для избранного
-- cart_table - связь многие-ко-многим для корзины
+- Course - курсы обучения
+- Purchase - история покупок битов
+- CoursePurchase - история покупок курсов
+- ServiceOrder - заказы услуг
+- favorites_table - связь многие-ко-многим для избранного битов
+- cart_table - связь многие-ко-многим для корзины битов
+- course_favorites_table - связь многие-ко-многим для избранного курсов
+- course_cart_table - связь многие-ко-многим для корзины курсов
 """
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Table
@@ -33,6 +38,22 @@ cart_table = Table(
     Column('beat_id', Integer, ForeignKey('beats.id'), primary_key=True)
 )
 
+# Таблица для связи многие-ко-многим (избранное курсов)
+course_favorites_table = Table(
+    'course_favorites',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('course_id', Integer, ForeignKey('courses.id'), primary_key=True)
+)
+
+# Таблица для связи многие-ко-многим (корзина курсов)
+course_cart_table = Table(
+    'course_cart',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('course_id', Integer, ForeignKey('courses.id'), primary_key=True)
+)
+
 class User(Base):
     """
     Модель пользователя системы
@@ -42,17 +63,25 @@ class User(Base):
     
     # Основные поля
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=True)  # Может быть None для OAuth
     username = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)  # Хешированный пароль
+    password_hash = Column(String, nullable=True)  # Может быть None для OAuth пользователей
     is_active = Column(Boolean, default=True)  # Активен ли пользователь
     is_admin = Column(Boolean, default=False)  # Является ли администратором
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата регистрации
+    
+    # OAuth поля
+    oauth_provider = Column(String, nullable=True)  # google, vk, yandex
+    oauth_provider_id = Column(String, nullable=True)  # ID пользователя в OAuth провайдере
     
     # Связи с другими таблицами
     favorites = relationship("Beat", secondary=favorites_table, back_populates="favorited_by")
     cart_items = relationship("Beat", secondary=cart_table, back_populates="in_carts")
     purchases = relationship("Purchase", back_populates="user")
+    course_favorites = relationship("Course", secondary=course_favorites_table, back_populates="favorited_by")
+    course_cart_items = relationship("Course", secondary=course_cart_table, back_populates="in_carts")
+    course_purchases = relationship("CoursePurchase", back_populates="user")
+    service_orders = relationship("ServiceOrder", back_populates="user")
 
 class Beat(Base):
     """
@@ -103,3 +132,87 @@ class Purchase(Base):
     # Связи с другими таблицами
     user = relationship("User", back_populates="purchases")
     beat = relationship("Beat", back_populates="purchases")
+
+class Course(Base):
+    """
+    Модель курса обучения
+    Содержит информацию о курсе с превью и полным видео
+    """
+    __tablename__ = "courses"
+    
+    # Основные поля
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)  # Название курса
+    purpose = Column(String)  # Предназначение (сведение/битмэйкинг/саунддизайн/...)
+    description = Column(Text)  # Описание курса
+    tags = Column(String)  # Тэги через запятую (компрессия, эквализация, саунддизайн и тд)
+    price = Column(Float, nullable=False)  # Цена в рублях
+    
+    # Видео файлы
+    preview_video_url = Column(String)  # URL превью видео для просмотра на сайте
+    full_video_url = Column(String)  # URL полного видео для скачивания после покупки
+    
+    # Статус
+    is_available = Column(Boolean, default=True)  # Доступен ли для покупки
+    created_at = Column(DateTime, default=datetime.utcnow)  # Дата добавления
+    
+    # Связи с пользователями
+    favorited_by = relationship("User", secondary=course_favorites_table, back_populates="course_favorites")
+    in_carts = relationship("User", secondary=course_cart_table, back_populates="course_cart_items")
+    purchases = relationship("CoursePurchase", back_populates="course")
+
+class CoursePurchase(Base):
+    """
+    Модель покупки курса
+    Записывает историю всех покупок курсов пользователями
+    """
+    __tablename__ = "course_purchases"
+    
+    # Основные поля
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # ID покупателя
+    course_id = Column(Integer, ForeignKey('courses.id'), nullable=False)  # ID купленного курса
+    purchase_date = Column(DateTime, default=datetime.utcnow)  # Дата покупки
+    price_paid = Column(Float, nullable=False)  # Сумма, уплаченная за курс
+    
+    # Связи с другими таблицами
+    user = relationship("User", back_populates="course_purchases")
+    course = relationship("Course", back_populates="purchases")
+
+class ServiceOrder(Base):
+    """
+    Модель заказа услуги
+    Содержит информацию о заказе услуги от пользователя
+    """
+    __tablename__ = "service_orders"
+    
+    # Основные поля
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)  # ID заказчика (может быть None для неавторизованных)
+    
+    # Контактная информация для неавторизованных пользователей
+    customer_name = Column(String, nullable=True)  # Имя заказчика
+    customer_email = Column(String, nullable=True)  # Email заказчика
+    
+    # Категория услуги
+    service_category = Column(String, nullable=False)  # бит/сведение/саунддизайн/топлайны/трек под ключ/+запись индивидуального курса
+    
+    # Материалы
+    materials_url = Column(String)  # URL загруженных материалов
+    reference_links = Column(Text)  # Ссылки на референсы (через запятую или перенос строки)
+    reference_files_url = Column(String)  # URL загруженных референсов
+    
+    # Описание
+    description = Column(Text)  # Описание (ТЗ)
+    
+    # Дедлайн
+    deadline_min = Column(Integer)  # Минимальный дедлайн (в днях)
+    deadline_max = Column(Integer)  # Максимальный дедлайн (в днях)
+    
+    # Статус заказа
+    status = Column(String, default="pending")  # pending/in_progress/completed/cancelled
+    created_at = Column(DateTime, default=datetime.utcnow)  # Дата создания заказа
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Дата обновления
+    
+    # Связи с другими таблицами
+    user = relationship("User", back_populates="service_orders")

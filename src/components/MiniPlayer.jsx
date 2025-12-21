@@ -78,26 +78,27 @@ const MiniPlayer = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 p-4 z-50">
-      <div className="container mx-auto">
-        <div className="flex items-center space-x-4">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 p-3 sm:p-4 z-50 safe-area-bottom">
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <button
             onClick={handleTogglePlay}
-            className="bg-black hover:bg-gray-800 rounded-full p-2 transition-colors"
+            className="bg-black hover:bg-gray-800 rounded-full p-2 sm:p-2.5 transition-colors flex-shrink-0"
+            aria-label={isPlaying ? 'Пауза' : 'Воспроизведение'}
           >
             {isPlaying ? (
-              <Pause className="h-5 w-5 text-white" />
+              <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             ) : (
-              <Play className="h-5 w-5 text-white" />
+              <Play className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             )}
           </button>
           
-          <div className="flex-1">
-            <div className="text-sm text-black mb-2">{currentTrackTitle}</div>
-            <div className="space-y-2">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs sm:text-sm text-black mb-1 sm:mb-2 truncate">{currentTrackTitle}</div>
+            <div className="space-y-1 sm:space-y-2">
               {/* Прогресс-бар на отдельной строке */}
               <div
-                className="w-full h-2 bg-gray-300 rounded-full cursor-pointer"
+                className="w-full h-1.5 sm:h-2 bg-gray-300 rounded-full cursor-pointer"
                 onClick={handleSeek}
               >
                 <div
@@ -113,59 +114,63 @@ const MiniPlayer = () => {
             </div>
           </div>
           
-                 {/* Seek buttons */}
-                 <div className="flex items-center space-x-1">
-                   <button
-                     onClick={(e) => {
-                       e.preventDefault();
-                       e.stopPropagation();
-                       const newTime = Math.max(0, currentTime - 10);
-                       seekTo(newTime);
-                     }}
-                     disabled={!currentTrack}
-                     className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                     title="Назад на 10 секунд"
-                   >
-                     <span className="text-xs font-medium">-10</span>
-                   </button>
-                   <button
-                     onClick={(e) => {
-                       e.preventDefault();
-                       e.stopPropagation();
-                       const newTime = currentTime + 10;
-                       seekTo(newTime);
-                     }}
-                     disabled={!currentTrack}
-                     className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                     title="Вперед на 10 секунд"
-                   >
-                     <span className="text-xs font-medium">+10</span>
-                   </button>
-                 </div>
-          
-          <div className="flex items-center space-x-2">
-            <button onClick={toggleMute} className="text-gray-600 hover:text-black">
-              {isMuted ? (
-                <VolumeX className="h-4 w-4" />
-              ) : (
-                <Volume2 className="h-4 w-4" />
-              )}
+          {/* Seek buttons - скрываем на мобильных */}
+          <div className="hidden sm:flex items-center space-x-1">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const newTime = Math.max(0, currentTime - 10);
+                seekTo(newTime);
+              }}
+              disabled={!currentTrack}
+              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Назад на 10 секунд"
+            >
+              <span className="text-xs font-medium">-10</span>
             </button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={isMuted ? 0 : volume}
-              onChange={handleVolumeChange}
-              className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
-            />
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const newTime = currentTime + 10;
+                seekTo(newTime);
+              }}
+              disabled={!currentTrack}
+              className="w-8 h-8 rounded-full border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Вперед на 10 секунд"
+            >
+              <span className="text-xs font-medium">+10</span>
+            </button>
+          </div>
+          
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+            {/* Громкость - скрываем на мобильных */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <button onClick={toggleMute} className="text-gray-600 hover:text-black">
+                {isMuted ? (
+                  <VolumeX className="h-4 w-4" />
+                ) : (
+                  <Volume2 className="h-4 w-4" />
+                )}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
+                className="w-16 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
+              />
+            </div>
             <button 
               onClick={handleClose} 
-              className="text-gray-600 hover:text-red-500 transition-colors"
+              className="text-gray-600 hover:text-red-500 transition-colors p-1"
               title="Закрыть плеер"
+              aria-label="Закрыть плеер"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
         </div>

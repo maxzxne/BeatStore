@@ -7,19 +7,132 @@
     @apply border-gray-300;
   }
   
+  html {
+    /* Для Telegram Web App - убираем отступы */
+    height: 100%;
+    overflow-x: hidden;
+  }
+  
   body {
     @apply bg-white text-black font-sans;
     font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+    min-height: 100dvh; /* Динамическая высота viewport для мобильных */
+    /* Убираем отступы для Telegram Web App */
+    margin: 0;
+    padding: 0;
+    /* Предотвращаем скролл на iOS */
+    position: fixed;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+  }
+  
+  /* Предотвращаем неожиданное редактирование */
+  *:not(input):not(textarea):not(select):not([contenteditable="true"]) {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  /* Разрешаем выделение текста в нужных местах */
+  p, span, h1, h2, h3, h4, h5, h6, label, a, button {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+  
+  /* Убираем outline только для неинтерактивных элементов */
+  *:not(input):not(textarea):not(select):not(button):not(a):not([tabindex]) {
+    outline: none !important;
+  }
+  
+  /* Убираем возможность фокуса для неинтерактивных элементов */
+  *:not(input):not(textarea):not(select):not(button):not(a):not([tabindex]):not([contenteditable]) {
+    tabindex: -1;
   }
 }
 
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-white;
+    /* Увеличиваем размер кнопок на мобильных */
+    @apply min-h-[44px] px-4;
   }
   
   .btn-primary {
     @apply bg-black text-white hover:bg-gray-800;
+  }
+  
+  /* Адаптивные контейнеры */
+  .container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Адаптивные карточки */
+  .card {
+    @apply p-4 sm:p-6;
+  }
+  
+  /* Адаптивные заголовки */
+  h1 {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+  
+  h2 {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+  
+  /* Адаптивные отступы */
+  .section-padding {
+    @apply py-6 sm:py-8 lg:py-12;
+  }
+  
+  /* Telegram Web App стили */
+  @supports (padding: max(0px)) {
+    body {
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+    
+    #root {
+      padding-left: max(0px, env(safe-area-inset-left));
+      padding-right: max(0px, env(safe-area-inset-right));
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+  }
+  
+  /* Улучшенная прокрутка на мобильных */
+  @media (max-width: 768px) {
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Увеличиваем размеры интерактивных элементов для удобства */
+    input, textarea, select, button, a {
+      min-height: 44px;
+      font-size: 16px; /* Предотвращает зум на iOS */
+    }
+    
+    /* Адаптивные отступы для контента */
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+  }
+  
+  /* Безопасная зона для мини-плеера */
+  .safe-area-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
   
   .btn-secondary {

@@ -23,7 +23,7 @@ import api from '../utils/api';
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 import MiniPlayer from '../components/MiniPlayer';
-import { Heart, ShoppingCart, Download, ArrowLeft, Check } from 'lucide-react';
+import { Heart, ShoppingCart, Download, ArrowLeft, Check, Play, Pause } from 'lucide-react';
 
 /**
  * Компонент страницы бита
@@ -36,7 +36,7 @@ const BeatPage = () => {
   
   // Контексты
   const { isAuthenticated } = useAuth();
-  const { seekTo, currentTime, duration, isCurrentTrack } = useAudioPlayer();
+  const { seekTo, currentTime, duration, isCurrentTrack, playTrack, pauseTrack, isCurrentTrackPlaying } = useAudioPlayer();
   const { showSuccess, showError } = useNotification();
   
   // Состояние компонента
@@ -258,7 +258,7 @@ const BeatPage = () => {
                   <>
                     <button
                       onClick={handleFavorite}
-                      className={`p-3 rounded-full border transition-colors ${
+                      className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${
                         isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
                       }`}
                       title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
@@ -269,7 +269,7 @@ const BeatPage = () => {
                     {!isPurchased && (
                       <button
                         onClick={handleAddToCart}
-                        className={`p-3 rounded-full border transition-colors relative ${
+                        className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors relative ${
                           isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
                         }`}
                         title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
@@ -288,17 +288,42 @@ const BeatPage = () => {
                 )}
                 
                 {isPurchased ? (
-                  <button
-                    onClick={handleDownload}
-                    className="btn btn-primary btn-sm flex-1"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Скачать
-                  </button>
+                  <div className="flex items-center gap-2 flex-1">
+                    <button
+                      onClick={async () => {
+                        if (isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id)) {
+                          pauseTrack();
+                        } else {
+                          const fullUrl = `${API_URL}${beat.full_audio_url}`;
+                          playTrack(beat.id, fullUrl, beat.title);
+                        }
+                      }}
+                      className="btn btn-primary btn-sm flex-1"
+                    >
+                      {isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id) ? (
+                        <>
+                          <Pause className="h-4 w-4 mr-2" />
+                          Пауза
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Плей
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleDownload}
+                      className="btn btn-outline btn-sm"
+                      title="Скачать"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                  </div>
                 ) : (
                   <button
                     onClick={handlePurchase}
-                    className="btn btn-primary btn-sm flex-1"
+                    className="btn btn-primary btn-sm flex-1 h-12 text-base"
                     disabled={!isAuthenticated}
                   >
                     {beat.price === 0 ? 'Получить бесплатно' : `Купить сейчас`}

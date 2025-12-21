@@ -147,10 +147,10 @@ const HomePage = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Биты</h1>
-        <p className="text-gray-600">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Биты</h1>
+        <p className="text-gray-600 text-sm sm:text-base">
           {beats.length} битов доступно
         </p>
       </div>
@@ -158,14 +158,14 @@ const HomePage = () => {
       <Filters onFilterChange={handleFilterChange} genres={genres} currentFilters={filters} />
 
       {beats.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-600 text-lg">Биты не найдены</div>
-          <p className="text-gray-500 mt-2">
+        <div className="text-center py-8 sm:py-12">
+          <div className="text-gray-600 text-base sm:text-lg">Биты не найдены</div>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">
             Попробуйте изменить фильтры
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {beats.map(beat => {
             const isPurchased = purchasedBeats.some(purchasedBeat => purchasedBeat.id === beat.id);
             return (
@@ -183,7 +183,7 @@ const HomePage = () => {
       <MiniPlayer />
       
       {/* Bottom padding to prevent overlap with mini player */}
-      <div className="h-20"></div>
+      <div className="h-20 sm:h-24"></div>
     </div>
   );
 };

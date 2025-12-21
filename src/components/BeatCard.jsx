@@ -178,7 +178,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
                 <>
                   <button
                     onClick={handleFavorite}
-                    className={`p-2 rounded-full transition-colors ${
+                    className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${
                       isFavorite
                         ? 'text-black hover:text-gray-700'
                         : 'text-gray-500 hover:text-black'
@@ -190,7 +190,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
                   {!isPurchased && (
                     <button
                       onClick={handleAddToCart}
-                      className={`p-2 rounded-full transition-colors relative ${
+                      className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors relative ${
                         isInCart
                           ? 'text-black hover:text-gray-700'
                           : 'text-gray-500 hover:text-black'

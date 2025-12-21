@@ -95,8 +95,8 @@ const AdminDashboard = () => {
           const Icon = stat.icon;
           return (
             <div key={index} className="card">
-              <div className="card-content">
-                <div className="flex items-start justify-between">
+              <div className="card-content h-full flex items-center">
+                <div className="flex items-center justify-between w-full">
                   <div className="flex flex-col">
                     <p className="text-gray-600 text-sm mb-1">{stat.title}</p>
                     <p className="text-2xl font-bold text-black">{stat.value}</p>

@@ -31,8 +31,16 @@ const CartPage = () => {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/cart');
-      setCartItems(response.data);
+      // Получаем и биты, и курсы из корзины
+      const [beatsResponse, coursesResponse] = await Promise.all([
+        api.get('/cart').catch(() => ({ data: [] })),
+        api.get('/course-cart').catch(() => ({ data: [] }))
+      ]);
+      
+      // Объединяем биты и курсы, добавляя тип для различения
+      const beats = beatsResponse.data.map(item => ({ ...item, type: 'beat' }));
+      const courses = coursesResponse.data.map(item => ({ ...item, type: 'course' }));
+      setCartItems([...beats, ...courses]);
     } catch (error) {
       console.error('Error fetching cart:', error);
     } finally {
@@ -40,12 +48,18 @@ const CartPage = () => {
     }
   };
 
-  const removeFromCart = async (beatId) => {
+  const removeFromCart = async (itemId, itemType) => {
     try {
-      await api.delete(`/beats/${beatId}/cart`);
-      setCartItems(cartItems.filter(item => item.id !== beatId));
+      if (itemType === 'course') {
+        await api.delete(`/courses/${itemId}/cart`);
+      } else {
+        await api.delete(`/beats/${itemId}/cart`);
+      }
+      setCartItems(cartItems.filter(item => item.id !== itemId));
+      showSuccess('Удалено из корзины');
     } catch (error) {
       console.error('Error removing from cart:', error);
+      showError('Ошибка удаления из корзины');
     }
   };
 
@@ -56,34 +70,46 @@ const CartPage = () => {
   };
 
   const handleBulkPurchase = async () => {
-    if (totalPrice > 0) return; // Only allow for free beats
+    if (totalPrice > 0) return; // Only allow for free items
     
     setPurchasing(true);
     try {
-      const freeBeats = cartItems.filter(beat => beat.price === 0);
-      const purchasePromises = freeBeats.map(beat => 
-        api.post(`/beats/${beat.id}/purchase`)
-      );
+      const freeItems = cartItems.filter(item => item.price === 0);
+      const purchasePromises = freeItems.map(item => {
+        if (item.type === 'course') {
+          return api.post(`/courses/${item.id}/purchase`);
+        } else {
+          return api.post(`/beats/${item.id}/purchase`);
+        }
+      });
       
       await Promise.all(purchasePromises);
       
-      // Remove purchased beats from cart
-      setCartItems(cartItems.filter(beat => beat.price > 0));
+      // Remove purchased items from cart
+      setCartItems(cartItems.filter(item => item.price > 0));
       
-      showSuccess(`Успешно приобретено ${freeBeats.length} бесплатных битов!`);
+      const beatsCount = freeItems.filter(item => item.type === 'beat').length;
+      const coursesCount = freeItems.filter(item => item.type === 'course').length;
+      let message = 'Успешно приобретено: ';
+      if (beatsCount > 0) message += `${beatsCount} бесплатных битов`;
+      if (beatsCount > 0 && coursesCount > 0) message += ' и ';
+      if (coursesCount > 0) message += `${coursesCount} бесплатных курсов`;
+      message += '!';
+      
+      showSuccess(message);
       setTimeout(() => {
         navigate('/success');
       }, 1500);
     } catch (error) {
-      console.error('Error purchasing beats:', error);
-      showError('Ошибка при покупке битов');
+      console.error('Error purchasing items:', error);
+      showError('Ошибка при покупке');
     } finally {
       setPurchasing(false);
     }
   };
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
-  const freeBeatsCount = cartItems.filter(beat => beat.price === 0).length;
+  const freeItemsCount = cartItems.filter(item => item.price === 0).length;
 
   if (!isAuthenticated) {
     return (
@@ -129,15 +155,32 @@ const CartPage = () => {
           {/* Cart Items */}
           <div className="lg:col-span-2">
             <div className="space-y-4">
-              {cartItems.map(beat => (
-                <div key={beat.id} className="card">
+              {cartItems.map(item => (
+                <div key={`${item.type}-${item.id}`} className="card">
                   <div className="card-content py-4">
                     <div className="flex items-center space-x-4 min-h-[80px]">
                       <div className="flex items-center justify-center relative group">
-                        {beat.cover_url ? (
+                        {item.type === 'course' ? (
+                          // Для курсов показываем превью видео или плейсхолдер
+                          item.preview_video_url ? (
+                            <div className="w-16 h-16 bg-black rounded overflow-hidden">
+                              <video
+                                src={`${API_URL}${item.preview_video_url}`}
+                                className="w-full h-full object-cover"
+                                muted
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 rounded flex items-center justify-center">
+                              <span className="text-gray-600 text-xs font-medium">Курс</span>
+                            </div>
+                          )
+                        ) : (
+                          // Для битов показываем обложку
+                          item.cover_url ? (
                           <img
-                            src={`${API_URL}${beat.cover_url}`}
-                            alt={beat.title}
+                              src={`${API_URL}${item.cover_url}`}
+                              alt={item.title}
                             className="w-16 h-16 object-cover rounded"
                           />
                         ) : (
@@ -147,16 +190,17 @@ const CartPage = () => {
                               <span className="text-gray-600 text-xs font-medium">BeatStore</span>
                             </div>
                           </div>
+                          )
                         )}
                         
-                        {/* Play button overlay */}
-                        {beat.demo_url && (
+                        {/* Play button overlay только для битов */}
+                        {item.type === 'beat' && item.demo_url && (
                           <button
-                            onClick={() => handlePlay(beat)}
+                            onClick={() => handlePlay(item)}
                             className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded"
                           >
                             <div className="bg-black rounded-full p-1">
-                              {isCurrentTrackPlaying(beat.id) ? (
+                              {isCurrentTrackPlaying(item.id) ? (
                                 <Pause className="h-4 w-4 text-white" />
                               ) : (
                                 <Play className="h-4 w-4 text-white" />
@@ -168,21 +212,30 @@ const CartPage = () => {
                       
                       <div className="flex-1 flex flex-col justify-center">
                         <Link 
-                          to={`/beat/${beat.id}`}
+                          to={item.type === 'course' ? `/course/${item.id}` : `/beat/${item.id}`}
                           className="font-semibold text-black hover:text-gray-700 transition-colors"
                         >
-                          {beat.title}
+                          {item.title}
                         </Link>
-                        <p className="text-gray-600 text-sm">{beat.artist}</p>
-                        <p className="text-gray-600 text-sm">{beat.genre} • {beat.bpm} BPM</p>
+                        {item.type === 'beat' ? (
+                          <>
+                            <p className="text-gray-600 text-sm">{item.artist}</p>
+                            <p className="text-gray-600 text-sm">{item.genre} • {item.bpm} BPM</p>
+                          </>
+                        ) : (
+                          <>
+                            {item.purpose && <p className="text-gray-600 text-sm">{item.purpose}</p>}
+                            {item.tags && <p className="text-gray-600 text-sm">{item.tags.split(',')[0]}</p>}
+                          </>
+                        )}
                       </div>
                       
                       <div className="text-right flex flex-col justify-center">
                         <div className="text-lg font-bold text-black">
-                          {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
+                          {item.price === 0 ? 'Бесплатно' : `${item.price.toFixed(0)} ₽`}
                         </div>
                         <button
-                          onClick={() => removeFromCart(beat.id)}
+                          onClick={() => removeFromCart(item.id, item.type)}
                           className="text-dark-400 hover:text-red-500 mt-2"
                           title="Удалить из корзины"
                         >
@@ -225,17 +278,17 @@ const CartPage = () => {
               </div>
               
               <div className="card-footer">
-                {freeBeatsCount > 0 && totalPrice === 0 ? (
+                {freeItemsCount > 0 && totalPrice === 0 ? (
                   <button
                     onClick={handleBulkPurchase}
                     disabled={purchasing}
-                    className="btn btn-primary w-full"
+                    className="btn btn-primary w-full h-12 text-base"
                   >
-                    {purchasing ? "Покупка..." : `Получить ${freeBeatsCount} бесплатных битов`}
+                    {purchasing ? "Покупка..." : `Получить ${freeItemsCount} бесплатных товаров`}
                   </button>
                 ) : (
                   <button
-                    className="btn btn-primary w-full"
+                    className="btn btn-primary w-full h-12 text-base"
                     disabled={cartItems.length === 0 || totalPrice > 0}
                     title={totalPrice > 0 ? "Оплата онлайн будет доступна позже" : ""}
                   >

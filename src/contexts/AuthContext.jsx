@@ -133,6 +133,62 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithTelegram = async (telegramAuthData) => {
+    console.log('========================================');
+    console.log('🔐 loginWithTelegram: НАЧАЛО');
+    console.log('loginWithTelegram: входные данные =', telegramAuthData);
+    console.log('========================================');
+    
+    try {
+      // Используем существующий OAuth endpoint для Telegram
+      const telegramData = {
+        provider: 'telegram',
+        provider_user_id: telegramAuthData.id?.toString() || telegramAuthData.id,
+        access_token: telegramAuthData.hash || 'telegram_webapp', // Telegram Web App использует hash
+        username: telegramAuthData.username || null,
+        first_name: telegramAuthData.first_name || null,
+        last_name: telegramAuthData.last_name || null,
+        email: null, // Telegram не предоставляет email
+        photo_url: telegramAuthData.photo_url || null
+      };
+      
+      console.log('loginWithTelegram: отправляем данные на сервер:', telegramData);
+      console.log('loginWithTelegram: URL = /oauth/login');
+      
+      const response = await api.post('/oauth/login', telegramData);
+      console.log('loginWithTelegram: ответ сервера получен:', response.data);
+      
+      const { access_token } = response.data;
+      console.log('loginWithTelegram: access_token получен:', access_token ? 'ЕСТЬ' : 'НЕТ');
+      
+      localStorage.setItem('token', access_token);
+      console.log('loginWithTelegram: токен сохранен в localStorage');
+      
+      console.log('loginWithTelegram: получаем данные пользователя...');
+      await fetchUser();
+      console.log('loginWithTelegram: данные пользователя получены');
+      
+      console.log('✅ loginWithTelegram: УСПЕХ');
+      console.log('========================================');
+      return { success: true };
+    } catch (error) {
+      console.error('========================================');
+      console.error('❌ loginWithTelegram: ОШИБКА');
+      console.error('loginWithTelegram: error =', error);
+      console.error('loginWithTelegram: error.message =', error.message);
+      console.error('loginWithTelegram: error.response =', error.response);
+      console.error('loginWithTelegram: error.response?.data =', error.response?.data);
+      console.error('loginWithTelegram: error.response?.status =', error.response?.status);
+      console.error('loginWithTelegram: error.stack =', error.stack);
+      console.error('========================================');
+      
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || error.message || 'Telegram login failed' 
+      };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('adminToken');
@@ -147,7 +203,9 @@ export const AuthProvider = ({ children }) => {
     login,
     adminLogin,
     register,
+    loginWithTelegram,
     logout,
+    fetchUser,
     isAuthenticated: !!user,
     isAdminAuthenticated: !!adminUser
   };

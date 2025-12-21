@@ -1,13 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Music, Upload, ShoppingBag } from 'lucide-react';
+import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap } from 'lucide-react';
 
 const Sidebar = () => {
   const navItems = [
     { path: '/admin/dashboard', label: 'Панель', icon: BarChart3 },
     { path: '/admin/beats', label: 'Биты', icon: Music },
+    { path: '/admin/courses', label: 'Курсы', icon: GraduationCap },
     { path: '/admin/upload', label: 'Загрузка', icon: Upload },
     { path: '/admin/purchases', label: 'Покупки', icon: ShoppingBag },
+    { path: '/admin/orders', label: 'Заявки', icon: FileText },
   ];
 
   return (

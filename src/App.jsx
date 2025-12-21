@@ -23,8 +23,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AudioPlayerProvider } from './contexts/AudioPlayerContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Layout from './components/Layout';
+import TelegramInit from './components/TelegramInit';
 import HomePage from './pages/HomePage';
 import BeatPage from './pages/BeatPage';
+import CoursesPage from './pages/CoursesPage';
+import CourseDetailPage from './pages/CourseDetailPage';
+import OrderPage from './pages/OrderPage';
+import ProfilePage from './pages/ProfilePage';
 import FavoritesPage from './pages/FavoritesPage';
 import CartPage from './pages/CartPage';
 import PurchasesPage from './pages/PurchasesPage';
@@ -34,8 +39,10 @@ import RegisterPage from './pages/RegisterPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminBeats from './pages/AdminBeats';
+import AdminCourses from './pages/AdminCourses';
 import AdminUpload from './pages/AdminUpload';
 import AdminPurchases from './pages/AdminPurchases';
+import AdminOrders from './pages/AdminOrders';
 import ErrorPage from './pages/ErrorPage';
 
 /**
@@ -48,12 +55,17 @@ function App() {
     <AuthProvider>                    {/* Управление аутентификацией пользователей и админов */}
       <AudioPlayerProvider>           {/* Глобальный аудио плеер для воспроизведения битов */}
         <NotificationProvider>        {/* Система уведомлений */}
+          <TelegramInit />            {/* Инициализация Telegram Web App */}
           <Router>
             <Routes>
               {/* Публичные маршруты - доступны всем пользователям */}
               <Route path="/" element={<Layout />}>
                 <Route index element={<HomePage />} />                    {/* Главная страница с каталогом битов */}
                 <Route path="beat/:id" element={<BeatPage />} />          {/* Страница отдельного бита */}
+                <Route path="courses" element={<CoursesPage />} />       {/* Страница курсов */}
+                <Route path="course/:id" element={<CourseDetailPage />} /> {/* Страница детального просмотра курса */}
+                <Route path="order" element={<OrderPage />} />           {/* Форма заказа услуг */}
+                <Route path="profile" element={<ProfilePage />} />       {/* Личный кабинет */}
                 <Route path="favorites" element={<FavoritesPage />} />    {/* Избранные биты */}
                 <Route path="cart" element={<CartPage />} />              {/* Корзина покупок */}
                 <Route path="purchases" element={<PurchasesPage />} />    {/* История покупок */}
@@ -70,8 +82,10 @@ function App() {
                 <Route index element={<AdminDashboard />} />              {/* Панель управления */}
                 <Route path="dashboard" element={<AdminDashboard />} />   {/* Аналитика и статистика */}
                 <Route path="beats" element={<AdminBeats />} />           {/* Управление битами */}
-                <Route path="upload" element={<AdminUpload />} />         {/* Загрузка новых битов */}
+                <Route path="courses" element={<AdminCourses />} />       {/* Управление курсами */}
+                <Route path="upload" element={<AdminUpload />} />         {/* Загрузка новых битов и курсов */}
                 <Route path="purchases" element={<AdminPurchases />} />   {/* История всех покупок */}
+                <Route path="orders" element={<AdminOrders />} />         {/* Заявки на услуги */}
               </Route>
               
               {/* Обработка ошибок */}

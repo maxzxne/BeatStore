@@ -1,25 +1,42 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - backend_data:/app/data
+      - ./backend/data:/app/data
+      - ./backend/static:/app/static
     environment:
       - PYTHONPATH=/app
-      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/beatstore.db}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-secret-key-here}
-      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DATABASE_URL=sqlite:///./data/beatstore.db
+      - JWT_SECRET_KEY=your-secret-key-here-change-in-production
+      - ENVIRONMENT=development
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-}
+      - MINI_APP_URL=${MINI_APP_URL:-}
+      - FRONTEND_URL=${FRONTEND_URL:-https://unvisited-eve-unadjusted.ngrok-free.dev}
     restart: unless-stopped
 
   frontend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     depends_on:
       - backend
     environment:
-      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+      - VITE_API_URL=http://localhost:8000
+      - VITE_TELEGRAM_BOT_USERNAME=${VITE_TELEGRAM_BOT_USERNAME:-XWinnerbeatpleasebot}
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./vite.config.js:/app/vite.config.js
+      - ./tailwind.config.js:/app/tailwind.config.js
+      - ./postcss.config.js:/app/postcss.config.js
     restart: unless-stopped
 
 volumes:

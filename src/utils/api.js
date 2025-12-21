@@ -11,7 +11,8 @@
 import axios from 'axios';
 
 // URL API сервера (из переменных окружения или localhost по умолчанию)
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+// В Docker контейнере фронтенд обращается к бэкенду через localhost:8000
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Отладочная информация
 console.log('API_URL:', API_URL);
