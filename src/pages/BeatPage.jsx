@@ -52,16 +52,18 @@ const BeatPage = () => {
     fetchBeat();
   }, [id]);
 
+  useEffect(() => {
+    // Обновляем статус после загрузки бита
+    if (beat && isAuthenticated) {
+      checkBeatStatus();
+    }
+  }, [beat, isAuthenticated, id]);
+
   const fetchBeat = async () => {
     try {
       setLoading(true);
       const response = await api.get(`/beats/${id}`);
       setBeat(response.data);
-      
-      if (isAuthenticated) {
-        // Check if beat is in favorites, cart, or purchased
-        await checkBeatStatus();
-      }
     } catch (error) {
       console.error('Error fetching beat:', error);
       navigate('/');
@@ -151,8 +153,8 @@ const BeatPage = () => {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         
-        setIsPurchased(true);
-        setPurchasedTypes([...purchasedTypes, selectedPurchaseType]);
+        // Обновляем статус после покупки
+        await checkBeatStatus();
         setIsInCart(false);
         showSuccess(`Бит успешно приобретен как ${selectedPurchaseType.toUpperCase()}!`);
         setTimeout(() => {
@@ -261,7 +263,7 @@ const BeatPage = () => {
                 <img
                   src={`${API_URL}${beat.cover_url}`}
                   alt={beat.title}
-                  className="w-full h-64 object-contain rounded-lg mb-6 bg-gray-50"
+                  className="w-full max-w-md mx-auto h-48 object-contain rounded-lg mb-6 bg-gray-50"
                 />
               )}
               
@@ -335,38 +337,13 @@ const BeatPage = () => {
                 )}
                 
                 {isPurchased ? (
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={async () => {
-                          if (isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id)) {
-                            pauseTrack();
-                          } else {
-                            const fullUrl = `${API_URL}${beat.demo_url}`;
-                            playTrack(beat.id, fullUrl, beat.title);
-                          }
-                        }}
-                        className="btn btn-primary btn-sm flex-1"
-                      >
-                        {isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id) ? (
-                          <>
-                            <Pause className="h-4 w-4 mr-2" />
-                            Пауза
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4 mr-2" />
-                            Плей
-                          </>
-                        )}
-                      </button>
-                    </div>
+                  <div className="flex-1 space-y-2">
                     {/* Кнопки скачивания для каждого типа */}
                     <div className="flex gap-2">
                       {purchasedTypes.includes('wav') && (
                         <button
                           onClick={() => handleDownload('wav')}
-                          className="btn btn-outline btn-sm flex-1"
+                          className="btn btn-outline btn-sm flex-1 h-9"
                           title="Скачать WAV"
                         >
                           <Download className="h-4 w-4 mr-1" />
@@ -376,7 +353,7 @@ const BeatPage = () => {
                       {purchasedTypes.includes('mp3') && (
                         <button
                           onClick={() => handleDownload('mp3')}
-                          className="btn btn-outline btn-sm flex-1"
+                          className="btn btn-outline btn-sm flex-1 h-9"
                           title="Скачать MP3"
                         >
                           <Download className="h-4 w-4 mr-1" />
@@ -386,7 +363,7 @@ const BeatPage = () => {
                       {purchasedTypes.includes('exclusive') && (
                         <button
                           onClick={() => handleDownload('exclusive')}
-                          className="btn btn-outline btn-sm flex-1"
+                          className="btn btn-outline btn-sm flex-1 h-9"
                           title="Скачать эксклюзив"
                         >
                           <Download className="h-4 w-4 mr-1" />
@@ -394,6 +371,30 @@ const BeatPage = () => {
                         </button>
                       )}
                     </div>
+                    {/* Кнопка плей - компактная */}
+                    <button
+                      onClick={async () => {
+                        if (isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id)) {
+                          pauseTrack();
+                        } else {
+                          const fullUrl = `${API_URL}${beat.demo_url}`;
+                          playTrack(beat.id, fullUrl, beat.title);
+                        }
+                      }}
+                      className="btn btn-primary btn-sm w-full h-9"
+                    >
+                      {isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id) ? (
+                        <>
+                          <Pause className="h-4 w-4 mr-2" />
+                          Пауза
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Плей
+                        </>
+                      )}
+                    </button>
                   </div>
                 ) : (
                   <div className="flex-1 space-y-2">

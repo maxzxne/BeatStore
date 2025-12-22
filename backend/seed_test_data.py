@@ -60,8 +60,11 @@ def seed_test_data():
         test_beats = []
         for i in range(min(7, len(demo_files))):  # Создаем до 7 битов
             price = 0.0 if i < 2 else (5000.0 + i * 1000.0)  # Первые 2 бесплатные, остальные платные
+            # Делаем биты с индексом 3, 4, 5 одноразовыми (после покупки исчезают)
+            is_exclusive = i >= 3 and i <= 5
+            title = f"Test Beat {i+1}" + (" (одноразовый)" if is_exclusive else "")
             test_beats.append({
-                "title": f"Test Beat {i+1}",
+                "title": title,
                 "artist": f"Producer {i+1}",
                 "genre": genres[i % len(genres)],
                 "bpm": bpms[i % len(bpms)],
@@ -70,6 +73,7 @@ def seed_test_data():
                 "demo_index": i,
                 "audio_index": i if i < len(audio_files) else None,
                 "cover_index": i if i < len(cover_files) else None,
+                "allow_multiple": not is_exclusive,  # Одноразовые биты не разрешают множественные покупки
             })
         
         for beat_data in test_beats:
@@ -94,7 +98,7 @@ def seed_test_data():
                 exclusive_url=exclusive_url,
                 cover_url=cover_url,
                 is_available=True,
-                allow_multiple_purchases=True
+                allow_multiple_purchases=beat_data.get("allow_multiple", True)  # Одноразовые биты имеют False
             )
             db.add(beat)
             print(f"✅ Создан бит: {beat_data['title']} ({beat_data['price']}₽) - MP3: {'✓' if mp3_url else '✗'}, WAV: {'✓' if wav_url else '✗'}, ZIP: {'✓' if exclusive_url else '✗'}")

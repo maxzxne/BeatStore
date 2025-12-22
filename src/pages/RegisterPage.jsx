@@ -281,7 +281,7 @@ const RegisterPage = () => {
           {/* OAuth кнопки - показываем только после загрузки настроек */}
           {!oauthSettingsLoading && (
             <div className="space-y-3">
-            {!oauthSettings.google?.is_hidden && (
+            {oauthSettings.google && !oauthSettings.google.is_hidden && (
               <button
                 onClick={() => handleOAuthLogin('google')}
                 disabled={loading || oauthSettings.google?.is_disabled}
@@ -297,7 +297,7 @@ const RegisterPage = () => {
               </button>
             )}
             
-            {!oauthSettings.vk?.is_hidden && (
+            {oauthSettings.vk && !oauthSettings.vk.is_hidden && (
               <button
                 onClick={() => handleOAuthLogin('vk')}
                 disabled={loading || oauthSettings.vk?.is_disabled}
@@ -310,7 +310,7 @@ const RegisterPage = () => {
               </button>
             )}
             
-            {!oauthSettings.yandex?.is_hidden && (
+            {oauthSettings.yandex && !oauthSettings.yandex.is_hidden && (
               <button
                 onClick={() => handleOAuthLogin('yandex')}
                 disabled={loading || oauthSettings.yandex?.is_disabled}
@@ -325,7 +325,7 @@ const RegisterPage = () => {
             )}
             
             {/* Кнопка авторизации через Telegram - всегда видна */}
-            {!oauthSettings.telegram?.is_hidden && (
+            {oauthSettings.telegram && !oauthSettings.telegram.is_hidden && (
               <button
                 onClick={() => {
                   const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'XWinnerbeatpleasebot';

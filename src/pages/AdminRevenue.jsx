@@ -56,15 +56,20 @@ const AdminRevenue = () => {
     const chartHeight = 300;
     const chartWidth = Math.max(600, days.length * 60); // Минимальная ширина 600px, или 60px на день
 
-    // Вычисляем координаты точек
+    // Вычисляем координаты точек с увеличенными отступами
+    const leftPadding = 60; // Отступ слева для цифр
+    const bottomPadding = 40; // Отступ снизу для дат
+    const topPadding = 20; // Отступ сверху
+    const rightPadding = 20; // Отступ справа
+    
     const points = days.map((day, index) => {
       const value = stats.revenue_by_day[day];
-      const x = (index / (days.length - 1 || 1)) * (chartWidth - 40) + 20; // Отступы по 20px с каждой стороны
-      const y = chartHeight - (value / maxValue) * (chartHeight - 40) - 20; // Отступы по 20px снизу и сверху
+      const x = (index / (days.length - 1 || 1)) * (chartWidth - leftPadding - rightPadding) + leftPadding;
+      const y = chartHeight - (value / maxValue) * (chartHeight - topPadding - bottomPadding) - bottomPadding;
       return { x, y, value, day };
     });
 
-    // Создаем путь для линии
+    // Создаем путь для линии с учетом новых отступов
     const pathData = points.map((point, index) => {
       return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
     }).join(' ');
@@ -80,13 +85,17 @@ const AdminRevenue = () => {
           >
             {/* Сетка (опционально) */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-              const y = chartHeight - (ratio * (chartHeight - 40)) - 20;
+              const leftPadding = 60;
+              const bottomPadding = 40;
+              const topPadding = 20;
+              const rightPadding = 20;
+              const y = chartHeight - (ratio * (chartHeight - topPadding - bottomPadding)) - bottomPadding;
               return (
                 <line
                   key={ratio}
-                  x1="20"
+                  x1={leftPadding}
                   y1={y}
-                  x2={chartWidth - 20}
+                  x2={chartWidth - rightPadding}
                   y2={y}
                   stroke="#e5e7eb"
                   strokeWidth="1"
@@ -107,7 +116,7 @@ const AdminRevenue = () => {
 
             {/* Подписи на оси Y - рендерим после линии, чтобы были поверх */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-              const y = chartHeight - (ratio * (chartHeight - 40)) - 20;
+              const y = chartHeight - (ratio * (chartHeight - topPadding - bottomPadding)) - bottomPadding;
               const value = maxValue * ratio;
               return (
                 <g key={`label-${ratio}`}>
@@ -115,7 +124,7 @@ const AdminRevenue = () => {
                   <rect
                     x="5"
                     y={y - 8}
-                    width="45"
+                    width="50"
                     height="16"
                     fill="#fff"
                     opacity="0.95"
@@ -124,7 +133,7 @@ const AdminRevenue = () => {
                     strokeWidth="0.5"
                   />
                   <text
-                    x="15"
+                    x="50"
                     y={y + 5}
                     fontSize="13"
                     fill="#000"
@@ -156,12 +165,12 @@ const AdminRevenue = () => {
                     className="cursor-pointer hover:r-6 transition-all"
                   />
                   
-                  {/* Подпись даты - рендерим после точки, чтобы была поверх линии */}
-                  <g transform={`translate(${point.x}, ${chartHeight - 5}) rotate(-45)`}>
+                  {/* Подпись даты - горизонтально, рендерим после точки, чтобы была поверх линии */}
+                  <g>
                     {/* Фон для лучшей читаемости */}
                     <rect
-                      x="-25"
-                      y="-8"
+                      x={point.x - 25}
+                      y={chartHeight - 35}
                       width="50"
                       height="16"
                       fill="#fff"
@@ -171,9 +180,9 @@ const AdminRevenue = () => {
                       strokeWidth="0.5"
                     />
                     <text
-                      x="0"
-                      y="4"
-                      fontSize="12"
+                      x={point.x}
+                      y={chartHeight - 22}
+                      fontSize="11"
                       fill="#000"
                       fontWeight="600"
                       textAnchor="middle"
