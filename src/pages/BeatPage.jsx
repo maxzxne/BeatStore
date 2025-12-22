@@ -273,10 +273,10 @@ const BeatPage = () => {
         Назад
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         {/* Beat Info */}
-        <div>
-          <div className="card">
+        <div className="flex flex-col">
+          <div className="card flex-1">
             <div className="card-header">
               <h1 className="text-2xl font-bold text-black">{beat.title}</h1>
               <p className="text-gray-600">{beat.artist}</p>
@@ -342,42 +342,43 @@ const BeatPage = () => {
             </div>
             
             <div className="card-footer">
-              <div className="flex items-center space-x-4 w-full">
-                {isAuthenticated && (
-                  <>
+              {/* Кнопки избранного и корзины */}
+              {isAuthenticated && (
+                <div className="flex items-center space-x-4 mb-4">
+                  <button
+                    onClick={handleFavorite}
+                    className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${
+                      isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                    }`}
+                    title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                  >
+                    <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                  </button>
+                  
+                  {!isPurchased && (
                     <button
-                      onClick={handleFavorite}
-                      className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${
-                        isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                      onClick={handleAddToCart}
+                      className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors relative ${
+                        isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
                       }`}
-                      title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                      title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
                     >
-                      <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                      {isInCart ? (
+                        <div className="relative">
+                          <ShoppingCart className="h-5 w-5" fill="currentColor" />
+                          <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
+                        </div>
+                      ) : (
+                        <ShoppingCart className="h-5 w-5" fill="none" />
+                      )}
                     </button>
-                    
-                    {!isPurchased && (
-                      <button
-                        onClick={handleAddToCart}
-                        className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors relative ${
-                          isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
-                        }`}
-                        title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
-                      >
-                        {isInCart ? (
-                          <div className="relative">
-                            <ShoppingCart className="h-5 w-5" fill="currentColor" />
-                            <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
-                          </div>
-                        ) : (
-                          <ShoppingCart className="h-5 w-5" fill="none" />
-                        )}
-                      </button>
-                    )}
-                  </>
-                )}
-                
-                {isPurchased ? (
-                  <div className="flex-1 space-y-2">
+                  )}
+                </div>
+              )}
+              
+              {/* Кнопки покупки/скачивания */}
+              {isPurchased ? (
+                <div className="space-y-2">
                     {/* Кнопки скачивания для каждого типа */}
                     <div className="flex gap-2">
                       {purchasedTypes.includes('wav') && (
@@ -435,9 +436,9 @@ const BeatPage = () => {
                         </>
                       )}
                     </button>
-                  </div>
-                ) : (
-                  <div className="flex-1 space-y-2">
+                </div>
+              ) : (
+                <div className="space-y-2">
                     {/* Выбор варианта покупки - компактный */}
                     <div className="flex gap-1.5">
                       {beat.wav_url && (
@@ -483,23 +484,22 @@ const BeatPage = () => {
                         </button>
                       )}
                     </div>
-                    <button
-                      onClick={handlePurchase}
-                      className="btn btn-primary btn-sm w-full h-10 text-sm"
-                      disabled={!isAuthenticated}
-                    >
-                      {beat.price === 0 ? 'Получить бесплатно' : 'Купить'}
-                    </button>
-                  </div>
-                )}
-              </div>
+                  <button
+                    onClick={handlePurchase}
+                    className="btn btn-primary h-10 w-full text-sm"
+                    disabled={!isAuthenticated || (!beat.wav_url && !beat.mp3_url && !beat.exclusive_url)}
+                  >
+                    Купить
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Audio Player */}
-        <div>
-          <div className="card">
+        <div className="flex flex-col">
+          <div className="card flex-1">
             <div className="card-header">
               <h2 className="text-lg font-semibold text-black">Превью</h2>
             </div>
