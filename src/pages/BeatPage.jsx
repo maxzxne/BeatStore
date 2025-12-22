@@ -141,26 +141,36 @@ const BeatPage = () => {
   const handlePurchase = async () => {
     if (!isAuthenticated) return;
     
-    try {
-      const formData = new FormData();
-      formData.append('purchase_type', selectedPurchaseType);
-      
-      await api.post(`/beats/${id}/purchase`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
-      setIsPurchased(true);
-      setPurchasedTypes([...purchasedTypes, selectedPurchaseType]);
-      // Удаляем из корзины после покупки (это делается автоматически на бэкенде)
-      setIsInCart(false);
-      showSuccess(`Бит успешно приобретен как ${selectedPurchaseType.toUpperCase()}!`);
-      setTimeout(() => {
-        navigate('/success');
-      }, 1500);
-    } catch (error) {
-      console.error('Error purchasing beat:', error);
-      const errorMessage = error.response?.data?.detail || 'Ошибка при покупке';
-      showError(errorMessage);
+    // Если бит бесплатный, покупаем сразу
+    if (beat.price === 0) {
+      try {
+        const formData = new FormData();
+        formData.append('purchase_type', selectedPurchaseType);
+        
+        await api.post(`/beats/${id}/purchase`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        setIsPurchased(true);
+        setPurchasedTypes([...purchasedTypes, selectedPurchaseType]);
+        setIsInCart(false);
+        showSuccess(`Бит успешно приобретен как ${selectedPurchaseType.toUpperCase()}!`);
+        setTimeout(() => {
+          navigate('/success');
+        }, 1500);
+      } catch (error) {
+        console.error('Error purchasing beat:', error);
+        const errorMessage = error.response?.data?.detail || 'Ошибка при покупке';
+        showError(errorMessage);
+      }
+    } else {
+      // Для платных битов переходим на тестовую страницу оплаты
+      const params = new URLSearchParams();
+      params.append('type', 'beat');
+      params.append('item_id', id.toString());
+      params.append('purchase_type', selectedPurchaseType);
+      params.append('total_price', beat.price.toString());
+      navigate(`/test-payment?${params.toString()}`);
     }
   };
 

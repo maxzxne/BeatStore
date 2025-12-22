@@ -44,6 +44,10 @@ import AdminUpload from './pages/AdminUpload';
 import AdminPurchases from './pages/AdminPurchases';
 import AdminOrders from './pages/AdminOrders';
 import AdminOAuthSettings from './pages/AdminOAuthSettings';
+import AdminRevenue from './pages/AdminRevenue';
+import TestPaymentPage from './pages/TestPaymentPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentFailurePage from './pages/PaymentFailurePage';
 import ErrorPage from './pages/ErrorPage';
 
 /**
@@ -71,6 +75,9 @@ function App() {
                 <Route path="cart" element={<CartPage />} />              {/* Корзина покупок */}
                 <Route path="purchases" element={<PurchasesPage />} />    {/* История покупок */}
                 <Route path="success" element={<SuccessPage />} />        {/* Страница успешной покупки */}
+                <Route path="test-payment" element={<TestPaymentPage />} />
+                <Route path="payment/success" element={<PaymentSuccessPage />} />
+                <Route path="payment/failure" element={<PaymentFailurePage />} />
               </Route>
               
               {/* Маршруты аутентификации */}
@@ -87,6 +94,7 @@ function App() {
                 <Route path="upload" element={<AdminUpload />} />         {/* Загрузка новых битов и курсов */}
                 <Route path="purchases" element={<AdminPurchases />} />   {/* История всех покупок */}
                 <Route path="orders" element={<AdminOrders />} />         {/* Заявки на услуги */}
+                <Route path="revenue" element={<AdminRevenue />} />       {/* Доходы */}
                 <Route path="oauth-settings" element={<AdminOAuthSettings />} /> {/* Настройки OAuth */}
               </Route>
               

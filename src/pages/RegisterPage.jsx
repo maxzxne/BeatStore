@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Lock, Mail } from 'lucide-react';
+import { User, Lock, Mail, ArrowLeft } from 'lucide-react';
 import { api } from '../utils/api';
 
 const RegisterPage = () => {
@@ -137,6 +137,10 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="max-w-md w-full mx-4">
+        <Link to="/" className="inline-flex items-center text-black hover:text-gray-600 mb-4 transition-colors">
+          <ArrowLeft className="h-5 w-5 mr-1" />
+          <span className="text-sm">На главную</span>
+        </Link>
         <div className="card">
           <div className="card-header text-center">
             <div className="bg-black rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">

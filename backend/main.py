@@ -130,16 +130,16 @@ def update_database_schema():
             from models import OAuthSettings
             db = SessionLocal()
             try:
-                providers = ['google', 'vk', 'yandex', 'telegram']
-                for provider in providers:
-                    existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
-                    if not existing:
-                        oauth_setting = OAuthSettings(
-                            provider=provider,
-                            is_hidden=False,
-                            is_disabled=(provider in ['vk', 'yandex'])  # По умолчанию VK и Yandex дизейблены
-                        )
-                        db.add(oauth_setting)
+                   providers = ['google', 'vk', 'yandex', 'telegram']
+                   for provider in providers:
+                       existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
+                       if not existing:
+                           oauth_setting = OAuthSettings(
+                               provider=provider,
+                               is_hidden=(provider in ['google', 'vk', 'yandex']),  # По умолчанию Google, VK, Yandex скрыты
+                               is_disabled=False
+                           )
+                           db.add(oauth_setting)
                 db.commit()
                 print("Настройки OAuth созданы")
             except Exception as e:
@@ -152,16 +152,16 @@ def update_database_schema():
             from models import OAuthSettings
             db = SessionLocal()
             try:
-                providers = ['google', 'vk', 'yandex', 'telegram']
-                for provider in providers:
-                    existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
-                    if not existing:
-                        oauth_setting = OAuthSettings(
-                            provider=provider,
-                            is_hidden=False,
-                            is_disabled=(provider in ['vk', 'yandex'])
-                        )
-                        db.add(oauth_setting)
+                   providers = ['google', 'vk', 'yandex', 'telegram']
+                   for provider in providers:
+                       existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
+                       if not existing:
+                           oauth_setting = OAuthSettings(
+                               provider=provider,
+                               is_hidden=(provider in ['google', 'vk', 'yandex']),  # По умолчанию Google, VK, Yandex скрыты
+                               is_disabled=False
+                           )
+                           db.add(oauth_setting)
                 db.commit()
             except Exception as e:
                 print(f"Ошибка проверки настроек OAuth: {e}")
@@ -978,6 +978,7 @@ def get_purchases(db: Session = Depends(get_db),
 @app.post("/beats/{beat_id}/purchase")
 def purchase_beat(beat_id: int, 
                  purchase_type: str = Form("mp3"),  # 'wav', 'mp3', 'exclusive'
+                 payment_success: Optional[str] = Form(None),  # 'true' если оплата успешна
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     # Получаем бит
@@ -1031,15 +1032,16 @@ def purchase_beat(beat_id: int,
         if existing_purchase:
             raise HTTPException(status_code=400, detail=f"You already purchased this beat as {purchase_type}")
     
-    # Если бит платный - отклоняем (пока нет системы оплаты)
+    # Если бит платный - проверяем успешность оплаты
     if beat.price > 0:
-        raise HTTPException(status_code=400, detail="Payment system not implemented yet. Only free beats are available.")
+        if payment_success != 'true':
+            raise HTTPException(status_code=400, detail="Payment required. Please complete payment first.")
     
     # Создаем покупку
     purchase = Purchase(
         user_id=current_user.id,
         beat_id=beat_id,
-        price_paid=0,  # Пока бесплатно
+        price_paid=beat.price,  # Сохраняем цену бита
         purchase_type=purchase_type
     )
     
@@ -1302,9 +1304,10 @@ def get_course_purchases(current_user: User = Depends(get_current_user), db: Ses
     return [c for c in courses if c]
 
 @app.post("/courses/{course_id}/purchase")
-def purchase_course(course_id: int, 
-                 db: Session = Depends(get_db),
-                 current_user: User = Depends(get_current_user)):
+def purchase_course(course_id: int,
+                    payment_success: Optional[str] = Form(None),  # 'true' если оплата успешна
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(get_current_user)):
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -1320,6 +1323,11 @@ def purchase_course(course_id: int,
     
     if existing_purchase:
         raise HTTPException(status_code=400, detail="Course already purchased")
+    
+    # Если курс платный - проверяем успешность оплаты
+    if course.price > 0:
+        if payment_success != 'true':
+            raise HTTPException(status_code=400, detail="Payment required. Please complete payment first.")
     
     # Создаем покупку
     purchase = CoursePurchase(
@@ -1373,6 +1381,68 @@ def download_course_video(course_id: int,
         filename=filename,
         media_type='video/mp4'
     )
+
+@app.post("/payment/process-cart")
+def process_cart_payment(
+    success: bool,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Обработка оплаты всех товаров из корзины"""
+    if not success:
+        raise HTTPException(status_code=400, detail="Payment was not successful")
+    
+    # Получаем все товары из корзины
+    beats_in_cart = current_user.cart_items
+    courses_in_cart = current_user.course_cart_items
+    
+    total_price = sum(beat.price for beat in beats_in_cart) + sum(course.price for course in courses_in_cart)
+    
+    if total_price == 0:
+        raise HTTPException(status_code=400, detail="Cart is empty or contains only free items")
+    
+    # Покупаем все биты из корзины
+    for beat in beats_in_cart:
+        if beat.price > 0:
+            # Проверяем, не куплен ли уже
+            existing = db.query(Purchase).filter(
+                Purchase.user_id == current_user.id,
+                Purchase.beat_id == beat.id
+            ).first()
+            
+            if not existing:
+                purchase = Purchase(
+                    user_id=current_user.id,
+                    beat_id=beat.id,
+                    price_paid=beat.price,
+                    purchase_type="mp3"  # По умолчанию MP3
+                )
+                db.add(purchase)
+    
+    # Покупаем все курсы из корзины
+    for course in courses_in_cart:
+        if course.price > 0:
+            # Проверяем, не куплен ли уже
+            existing = db.query(CoursePurchase).filter(
+                CoursePurchase.user_id == current_user.id,
+                CoursePurchase.course_id == course.id
+            ).first()
+            
+            if not existing:
+                course_purchase = CoursePurchase(
+                    user_id=current_user.id,
+                    course_id=course.id,
+                    price_paid=course.price
+                )
+                db.add(course_purchase)
+    
+    # Очищаем корзину
+    db.query(cart_table).filter(cart_table.c.user_id == current_user.id).delete()
+    db.query(course_cart_table).filter(course_cart_table.c.user_id == current_user.id).delete()
+    
+    db.commit()
+    
+    return {"message": "Cart payment processed successfully", "total_price": total_price}
 
 # Заказы услуг
 @app.post("/service-orders", response_model=ServiceOrderResponse)
@@ -1685,6 +1755,95 @@ def get_analytics(current_admin: User = Depends(get_current_admin_user), db: Ses
         "paid_purchases": paid_purchases,
         "free_purchases": free_purchases,
         "total_revenue": total_revenue
+    }
+
+@app.get("/api/admin/revenue")
+def get_revenue_stats(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Получение статистики доходов с фильтрацией по датам"""
+    from datetime import datetime
+    
+    # Парсим даты, если указаны
+    start_dt = None
+    end_dt = None
+    if start_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+        except:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+    if end_date:
+        try:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            # Добавляем 23:59:59 к конечной дате
+            end_dt = end_dt.replace(hour=23, minute=59, second=59)
+        except:
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            end_dt = end_dt.replace(hour=23, minute=59, second=59)
+    
+    # Запросы с фильтрацией по датам
+    purchases_query = db.query(Purchase)
+    course_purchases_query = db.query(CoursePurchase)
+    orders_query = db.query(ServiceOrder).filter(ServiceOrder.status.in_(['paid', 'completed']))
+    
+    if start_dt:
+        purchases_query = purchases_query.filter(Purchase.purchase_date >= start_dt)
+        course_purchases_query = course_purchases_query.filter(CoursePurchase.purchase_date >= start_dt)
+        orders_query = orders_query.filter(ServiceOrder.created_at >= start_dt)
+    
+    if end_dt:
+        purchases_query = purchases_query.filter(Purchase.purchase_date <= end_dt)
+        course_purchases_query = course_purchases_query.filter(CoursePurchase.purchase_date <= end_dt)
+        orders_query = orders_query.filter(ServiceOrder.created_at <= end_dt)
+    
+    purchases = purchases_query.all()
+    course_purchases = course_purchases_query.all()
+    orders = orders_query.all()
+    
+    # Доходы по битам
+    beat_revenue = sum(p.price_paid for p in purchases)
+    beat_count = len(purchases)
+    
+    # Доходы по курсам
+    course_revenue = sum(cp.price_paid for cp in course_purchases)
+    course_count = len(course_purchases)
+    
+    # Доходы по заказам услуг
+    order_revenue = sum(o.price for o in orders if o.price)
+    order_count = len(orders)
+    
+    total_revenue = beat_revenue + course_revenue + order_revenue
+    
+    # Данные для графика (по дням)
+    revenue_by_day = {}
+    
+    for purchase in purchases:
+        day = purchase.purchase_date.date().isoformat()
+        revenue_by_day[day] = revenue_by_day.get(day, 0) + purchase.price_paid
+    
+    for cp in course_purchases:
+        day = cp.purchase_date.date().isoformat()
+        revenue_by_day[day] = revenue_by_day.get(day, 0) + cp.price_paid
+    
+    for order in orders:
+        if order.price:
+            day = order.created_at.date().isoformat()
+            revenue_by_day[day] = revenue_by_day.get(day, 0) + order.price
+    
+    return {
+        "total_revenue": total_revenue,
+        "beat_revenue": beat_revenue,
+        "beat_count": beat_count,
+        "course_revenue": course_revenue,
+        "course_count": course_count,
+        "order_revenue": order_revenue,
+        "order_count": order_count,
+        "revenue_by_day": revenue_by_day,
+        "start_date": start_date,
+        "end_date": end_date
     }
 
 @app.get("/api/admin/purchases")

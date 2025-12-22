@@ -252,7 +252,7 @@ const PurchasesPage = () => {
                     onClick={(e) => handlePlay(beat, e)}
                     className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity z-50"
                   >
-                    <div className="bg-primary-600 rounded-full p-3">
+                    <div className="bg-black rounded-full p-3">
                       {isCurrentTrackPlaying(beat.id) ? (
                         <Pause className="h-6 w-6 text-white" />
                       ) : (
@@ -277,31 +277,13 @@ const PurchasesPage = () => {
                       Куплено
                     </span>
                     
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => handlePlay(beat, e)}
-                        className="btn btn-primary btn-sm"
-                      >
-                        {isCurrentTrackPlaying(beat.id) ? (
-                          <>
-                            <Pause className="h-4 w-4 mr-2" />
-                            Пауза
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4 mr-2" />
-                            Плей
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={(e) => handleDownload(beat.id, e)}
-                        className="btn btn-outline btn-sm"
-                        title="Скачать"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => handleDownload(beat.id, e)}
+                      className="btn btn-outline btn-sm"
+                      title="Скачать"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </Link>
@@ -335,7 +317,7 @@ const PurchasesPage = () => {
                         onClick={(e) => handlePlayCourse(course, e)}
                         className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity z-50"
                       >
-                        <div className="bg-primary-600 rounded-full p-3">
+                        <div className="bg-black rounded-full p-3">
                           {isCurrentTrackPlaying(`course_${course.id}`) ? (
                             <Pause className="h-6 w-6 text-white" />
                           ) : (
@@ -356,7 +338,7 @@ const PurchasesPage = () => {
                         onClick={(e) => handlePlayCourse(course, e)}
                         className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity z-50"
                       >
-                        <div className="bg-primary-600 rounded-full p-3">
+                        <div className="bg-black rounded-full p-3">
                           {isCurrentTrackPlaying(`course_${course.id}`) ? (
                             <Pause className="h-6 w-6 text-white" />
                           ) : (
@@ -393,31 +375,13 @@ const PurchasesPage = () => {
                       Куплено
                     </span>
                     
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => handlePlayCourse(course, e)}
-                        className="btn btn-primary btn-sm"
-                      >
-                        {isCurrentTrackPlaying(`course_${course.id}`) ? (
-                          <>
-                            <Pause className="h-4 w-4 mr-2" />
-                            Пауза
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4 mr-2" />
-                            Плей
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={(e) => handleDownloadCourse(course.id, e)}
-                        className="btn btn-outline btn-sm"
-                        title="Скачать"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={(e) => handleDownloadCourse(course.id, e)}
+                      className="btn btn-outline btn-sm"
+                      title="Скачать"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </Link>

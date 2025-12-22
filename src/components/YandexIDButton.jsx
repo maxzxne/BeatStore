@@ -21,7 +21,7 @@ const YandexIDButton = ({
 
   useEffect(() => {
     if (!clientId) {
-      if (onError) onError('Yandex Client ID не настроен');
+      // Не показываем ошибку, если clientId не настроен - просто не рендерим кнопку
       return;
     }
 
@@ -128,12 +128,9 @@ const YandexIDButton = ({
     }
   }, [clientId, redirectUri, size]);
 
+  // Если clientId не настроен, не рендерим ничего (кнопка будет скрыта через is_hidden)
   if (!clientId) {
-    return (
-      <div className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 rounded-lg opacity-50 cursor-not-allowed">
-        <span className="text-gray-500">Yandex ID не настроен</span>
-      </div>
-    );
+    return null;
   }
 
   return (

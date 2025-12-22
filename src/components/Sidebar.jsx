@@ -1,10 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Settings } from 'lucide-react';
+import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Settings, DollarSign } from 'lucide-react';
 
 const Sidebar = () => {
   const navItems = [
     { path: '/admin/dashboard', label: 'Панель', icon: BarChart3 },
+    { path: '/admin/revenue', label: 'Доходы', icon: DollarSign },
     { path: '/admin/beats', label: 'Биты', icon: Music },
     { path: '/admin/courses', label: 'Курсы', icon: GraduationCap },
     { path: '/admin/upload', label: 'Загрузка', icon: Upload },

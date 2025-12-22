@@ -119,13 +119,23 @@ const CourseDetailPage = () => {
       return;
     }
     
-    try {
-      await api.post(`/courses/${id}/purchase`);
-      setIsPurchased(true);
-      showSuccess('Курс успешно куплен!');
-    } catch (error) {
-      console.error('Error purchasing course:', error);
-      showError(error.response?.data?.detail || 'Ошибка покупки курса');
+    // Если курс бесплатный, покупаем сразу
+    if (course.price === 0) {
+      try {
+        await api.post(`/courses/${id}/purchase`);
+        setIsPurchased(true);
+        showSuccess('Курс успешно куплен!');
+      } catch (error) {
+        console.error('Error purchasing course:', error);
+        showError(error.response?.data?.detail || 'Ошибка покупки курса');
+      }
+    } else {
+      // Для платных курсов переходим на тестовую страницу оплаты
+      const params = new URLSearchParams();
+      params.append('type', 'course');
+      params.append('item_id', id.toString());
+      params.append('total_price', course.price.toString());
+      navigate(`/test-payment?${params.toString()}`);
     }
   };
 

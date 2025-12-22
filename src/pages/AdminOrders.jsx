@@ -7,6 +7,8 @@ import { FileText, User, Calendar, Link as LinkIcon, Upload, CheckCircle, XCircl
 const AdminOrders = () => {
   const { isAdminAuthenticated } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'confirmed', 'paid', 'in_progress', 'completed', 'cancelled'
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [resultFiles, setResultFiles] = useState({
@@ -43,6 +45,15 @@ const AdminOrders = () => {
       setLoading(false);
     }
   };
+
+  // Фильтрация заявок по статусу
+  useEffect(() => {
+    if (statusFilter === 'all') {
+      setFilteredOrders(orders);
+    } else {
+      setFilteredOrders(orders.filter(order => order.status === statusFilter));
+    }
+  }, [orders, statusFilter]);
 
   const updateOrderStatus = async (orderId, newStatus, price = null, prepaymentPercent = null) => {
     try {
@@ -116,14 +127,16 @@ const AdminOrders = () => {
   
   const formatDate = formatMoscowDate;
 
+  const statusConfig = {
+    pending: { label: 'Ожидает', color: 'bg-yellow-500/20 text-yellow-600', icon: Clock },
+    confirmed: { label: 'Подтверждено', color: 'bg-blue-500/20 text-blue-600', icon: CheckCircle },
+    paid: { label: 'Оплачено', color: 'bg-green-500/20 text-green-600', icon: CheckCircle },
+    in_progress: { label: 'В работе', color: 'bg-purple-500/20 text-purple-600', icon: AlertCircle },
+    completed: { label: 'Завершено', color: 'bg-green-500/20 text-green-600', icon: CheckCircle },
+    cancelled: { label: 'Отменено', color: 'bg-red-500/20 text-red-600', icon: XCircle }
+  };
+
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: { label: 'Ожидает', color: 'bg-yellow-500/20 text-yellow-600', icon: Clock },
-      in_progress: { label: 'В работе', color: 'bg-blue-500/20 text-blue-600', icon: AlertCircle },
-      completed: { label: 'Завершено', color: 'bg-green-500/20 text-green-600', icon: CheckCircle },
-      cancelled: { label: 'Отменено', color: 'bg-red-500/20 text-red-600', icon: XCircle }
-    };
-    
     const config = statusConfig[status] || statusConfig.pending;
     const Icon = config.icon;
     
@@ -157,10 +170,25 @@ const AdminOrders = () => {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-black mb-2">Заявки на услуги</h1>
-        <p className="text-gray-600">{orders.length} всего заявок</p>
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-gray-600">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="input w-auto min-w-[200px]"
+          >
+            <option value="all">Все статусы</option>
+            <option value="pending">Ожидает</option>
+            <option value="confirmed">Подтверждено</option>
+            <option value="paid">Оплачено</option>
+            <option value="in_progress">В работе</option>
+            <option value="completed">Завершено</option>
+            <option value="cancelled">Отменено</option>
+          </select>
+        </div>
       </div>
 
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <div className="text-gray-600 text-lg">Заявок пока нет</div>
@@ -169,7 +197,7 @@ const AdminOrders = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Список заявок */}
           <div className="lg:col-span-2 space-y-4">
-            {orders.map(order => (
+            {filteredOrders.map(order => (
               <div
                 key={order.id}
                 className={`card cursor-pointer transition-all ${

@@ -8,7 +8,13 @@ import json
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Beat, Course, User, ServiceOrder
+from models import Beat, Course, User, ServiceOrder, Purchase, CoursePurchase
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
 
 def seed_test_data():
     """Заполняет базу данных тестовыми битами, курсами и заявками"""
@@ -110,18 +116,54 @@ def seed_test_data():
             db.add(course)
             print(f"✅ Создан курс: {course_data['title']} ({course_data['price']}₽)")
         
-        # Создаем тестового пользователя для заявок
+        db.commit()  # Сохраняем биты и курсы перед созданием покупок
+        
+        # Создаем тестового пользователя для заявок и покупок
         test_user = db.query(User).filter(User.username == "test_user").first()
         if not test_user:
             test_user = User(
                 username="test_user",
                 email="test@example.com",
-                password_hash=None,
+                password_hash=get_password_hash("test123"),
                 is_active=True
             )
             db.add(test_user)
-            db.flush()
+            db.commit()
+            db.refresh(test_user)
             print("✅ Создан тестовый пользователь")
+        
+        # Получаем созданные биты и курсы для покупок
+        all_beats = db.query(Beat).all()
+        all_courses = db.query(Course).all()
+        
+        # Создаем тестовые покупки битов
+        if len(all_beats) >= 3:
+            # Покупаем первые 3 бита (2 бесплатных + 1 платный)
+            for i, beat in enumerate(all_beats[:3]):
+                purchase = Purchase(
+                    user_id=test_user.id,
+                    beat_id=beat.id,
+                    purchase_date=now - timedelta(days=10-i*2),  # Разные даты
+                    price_paid=beat.price,
+                    purchase_type="mp3" if i < 2 else "wav"  # Для платного - WAV
+                )
+                db.add(purchase)
+                print(f"✅ Создана покупка бита: {beat.title} ({beat.price}₽)")
+        
+        # Создаем тестовые покупки курсов
+        if len(all_courses) >= 2:
+            # Покупаем первые 2 курса (1 бесплатный + 1 платный)
+            for i, course in enumerate(all_courses[:2]):
+                course_purchase = CoursePurchase(
+                    user_id=test_user.id,
+                    course_id=course.id,
+                    purchase_date=now - timedelta(days=8-i*3),  # Разные даты
+                    price_paid=course.price
+                )
+                db.add(course_purchase)
+                print(f"✅ Создана покупка курса: {course.title} ({course.price}₽)")
+        
+        db.commit()  # Сохраняем покупки
         
         # Создаем тестовые заявки (старые и новые)
         now = datetime.utcnow()

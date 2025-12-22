@@ -288,11 +288,17 @@ const CartPage = () => {
                   </button>
                 ) : (
                   <button
+                    onClick={() => {
+                      // Переходим на тестовую страницу оплаты
+                      const params = new URLSearchParams();
+                      params.append('type', 'cart');
+                      params.append('total_price', totalPrice.toString());
+                      navigate(`/test-payment?${params.toString()}`);
+                    }}
                     className="btn btn-primary w-full h-12 text-base"
-                    disabled={cartItems.length === 0 || totalPrice > 0}
-                    title={totalPrice > 0 ? "Оплата онлайн будет доступна позже" : ""}
+                    disabled={cartItems.length === 0 || totalPrice === 0}
                   >
-                    {totalPrice > 0 ? "Оплата онлайн будет доступна позже" : "Перейти к оплате"}
+                    {totalPrice > 0 ? `Оформить заказ на ${totalPrice.toLocaleString('ru-RU')} ₽` : "Перейти к оплате"}
                   </button>
                 )}
               </div>
