@@ -80,18 +80,32 @@ const BeatPage = () => {
       const isBeatPurchased = purchasedBeats.some(purchasedBeat => purchasedBeat.id === parseInt(id));
       setIsPurchased(isBeatPurchased);
       
-      // Если бит куплен, определяем доступные типы файлов из самого бита
+      // Если бит куплен, получаем реальные купленные типы из API
       if (isBeatPurchased && beat) {
-        const availableTypes = [];
-        if (beat.wav_url) availableTypes.push('wav');
-        if (beat.mp3_url) availableTypes.push('mp3');
-        if (beat.exclusive_url) availableTypes.push('exclusive');
-        // Если новых полей нет, используем старые
-        if (availableTypes.length === 0) {
-          if (beat.full_audio_url) availableTypes.push('mp3');
-          if (beat.project_files_url) availableTypes.push('exclusive');
+        try {
+          const purchasesInfo = await api.get(`/beats/${id}/purchases`);
+          const purchasedTypesList = purchasesInfo.data.purchased_types || [];
+          
+          // Если бит одноразовый (allow_multiple_purchases = false) и куплен как exclusive,
+          // показываем только exclusive, иначе показываем все купленные типы
+          if (!beat.allow_multiple_purchases && purchasedTypesList.includes('exclusive')) {
+            setPurchasedTypes(['exclusive']);
+          } else {
+            setPurchasedTypes(purchasedTypesList);
+          }
+        } catch (error) {
+          console.error('Error fetching purchase types:', error);
+          // Fallback: определяем доступные типы из самого бита
+          const availableTypes = [];
+          if (beat.wav_url) availableTypes.push('wav');
+          if (beat.mp3_url) availableTypes.push('mp3');
+          if (beat.exclusive_url) availableTypes.push('exclusive');
+          if (availableTypes.length === 0) {
+            if (beat.full_audio_url) availableTypes.push('mp3');
+            if (beat.project_files_url) availableTypes.push('exclusive');
+          }
+          setPurchasedTypes(availableTypes);
         }
-        setPurchasedTypes(availableTypes);
       }
 
       // Check if beat is in favorites
@@ -167,11 +181,21 @@ const BeatPage = () => {
       }
     } else {
       // Для платных битов переходим на тестовую страницу оплаты
+      // Определяем цену в зависимости от типа покупки
+      let actualPrice = beat.price;
+      if (selectedPurchaseType === 'mp3' && beat.price_mp3 !== null && beat.price_mp3 !== undefined) {
+        actualPrice = beat.price_mp3;
+      } else if (selectedPurchaseType === 'wav' && beat.price_wav !== null && beat.price_wav !== undefined) {
+        actualPrice = beat.price_wav;
+      } else if (selectedPurchaseType === 'exclusive' && beat.price_exclusive !== null && beat.price_exclusive !== undefined) {
+        actualPrice = beat.price_exclusive;
+      }
+      
       const params = new URLSearchParams();
       params.append('type', 'beat');
       params.append('item_id', id.toString());
       params.append('purchase_type', selectedPurchaseType);
-      params.append('total_price', beat.price.toString());
+      params.append('total_price', actualPrice.toString());
       navigate(`/test-payment?${params.toString()}`);
     }
   };
@@ -287,9 +311,25 @@ const BeatPage = () => {
                 
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Цена:</span>
-                  <span className="text-2xl font-bold text-black">
-                    {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
-                  </span>
+                  <div className="text-right">
+                    {beat.price_mp3 !== null && beat.price_mp3 !== undefined ? (
+                      <div className="space-y-1">
+                        {beat.price_mp3 !== null && beat.price_mp3 !== undefined && (
+                          <div className="text-sm text-gray-500">MP3: {beat.price_mp3 === 0 ? 'Бесплатно' : `${beat.price_mp3.toFixed(0)} ₽`}</div>
+                        )}
+                        {beat.price_wav !== null && beat.price_wav !== undefined && (
+                          <div className="text-sm text-gray-500">WAV: {beat.price_wav === 0 ? 'Бесплатно' : `${beat.price_wav.toFixed(0)} ₽`}</div>
+                        )}
+                        {beat.price_exclusive !== null && beat.price_exclusive !== undefined && (
+                          <div className="text-sm text-gray-500">Exclusive: {beat.price_exclusive === 0 ? 'Бесплатно' : `${beat.price_exclusive.toFixed(0)} ₽`}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-2xl font-bold text-black">
+                        {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 
                 {beat.description && (
@@ -400,45 +440,48 @@ const BeatPage = () => {
                   <div className="flex-1 space-y-2">
                     {/* Выбор варианта покупки - компактный */}
                     <div className="flex gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPurchaseType('wav')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          selectedPurchaseType === 'wav'
-                            ? 'bg-black text-white border border-black'
-                            : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
-                        }`}
-                        disabled={!beat.wav_url}
-                        title="WAV формат"
-                      >
-                        WAV
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPurchaseType('mp3')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          selectedPurchaseType === 'mp3'
-                            ? 'bg-black text-white border border-black'
-                            : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
-                        }`}
-                        disabled={!beat.mp3_url}
-                        title="MP3 формат"
-                      >
-                        MP3
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPurchaseType('exclusive')}
-                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                          selectedPurchaseType === 'exclusive'
-                            ? 'bg-black text-white border border-black'
-                            : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
-                        }`}
-                        disabled={!beat.exclusive_url}
-                        title="Эксклюзив (ZIP)"
-                      >
-                        ZIP
-                      </button>
+                      {beat.wav_url && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPurchaseType('wav')}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                            selectedPurchaseType === 'wav'
+                              ? 'bg-black text-white border border-black'
+                              : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
+                          }`}
+                          title={`WAV${beat.price_wav !== null && beat.price_wav !== undefined ? ` - ${beat.price_wav === 0 ? 'Бесплатно' : `${beat.price_wav.toFixed(0)} ₽`}` : ''}`}
+                        >
+                          WAV{beat.price_wav !== null && beat.price_wav !== undefined ? ` (${beat.price_wav === 0 ? '0' : beat.price_wav.toFixed(0)}₽)` : ''}
+                        </button>
+                      )}
+                      {beat.mp3_url && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPurchaseType('mp3')}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                            selectedPurchaseType === 'mp3'
+                              ? 'bg-black text-white border border-black'
+                              : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
+                          }`}
+                          title={`MP3${beat.price_mp3 !== null && beat.price_mp3 !== undefined ? ` - ${beat.price_mp3 === 0 ? 'Бесплатно' : `${beat.price_mp3.toFixed(0)} ₽`}` : ''}`}
+                        >
+                          MP3{beat.price_mp3 !== null && beat.price_mp3 !== undefined ? ` (${beat.price_mp3 === 0 ? '0' : beat.price_mp3.toFixed(0)}₽)` : ''}
+                        </button>
+                      )}
+                      {beat.exclusive_url && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPurchaseType('exclusive')}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                            selectedPurchaseType === 'exclusive'
+                              ? 'bg-black text-white border border-black'
+                              : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
+                          }`}
+                          title={`Exclusive${beat.price_exclusive !== null && beat.price_exclusive !== undefined ? ` - ${beat.price_exclusive === 0 ? 'Бесплатно' : `${beat.price_exclusive.toFixed(0)} ₽`}` : ''}`}
+                        >
+                          ZIP{beat.price_exclusive !== null && beat.price_exclusive !== undefined ? ` (${beat.price_exclusive === 0 ? '0' : beat.price_exclusive.toFixed(0)}₽)` : ''}
+                        </button>
+                      )}
                     </div>
                     <button
                       onClick={handlePurchase}

@@ -89,7 +89,10 @@ def update_database_schema():
                 'wav_url': 'VARCHAR',
                 'mp3_url': 'VARCHAR',
                 'exclusive_url': 'VARCHAR',
-                'allow_multiple_purchases': 'BOOLEAN DEFAULT 0'
+                'allow_multiple_purchases': 'BOOLEAN DEFAULT 0',
+                'price_mp3': 'FLOAT',
+                'price_wav': 'FLOAT',
+                'price_exclusive': 'FLOAT'
             }
             
             for col_name, col_type in new_columns.items():
@@ -423,6 +426,9 @@ class BeatResponse(BaseModel):
     key: Optional[str]
     bpm: int
     price: float
+    price_mp3: Optional[float] = None
+    price_wav: Optional[float] = None
+    price_exclusive: Optional[float] = None
     description: Optional[str]
     demo_url: Optional[str]
     cover_url: Optional[str]
@@ -975,6 +981,25 @@ def get_purchases(db: Session = Depends(get_db),
     purchases = db.query(Purchase).filter(Purchase.user_id == current_user.id).all()
     return [purchase.beat for purchase in purchases]
 
+@app.get("/beats/{beat_id}/purchases")
+def get_beat_purchases(beat_id: int,
+                      db: Session = Depends(get_db),
+                      current_user: User = Depends(get_current_user)):
+    """Получить типы покупок бита текущим пользователем"""
+    beat = db.query(Beat).filter(Beat.id == beat_id).first()
+    if not beat:
+        raise HTTPException(status_code=404, detail="Beat not found")
+    
+    purchases = db.query(Purchase).filter(
+        Purchase.user_id == current_user.id,
+        Purchase.beat_id == beat_id
+    ).all()
+    
+    return {
+        "purchased_types": [p.purchase_type for p in purchases],
+        "is_exclusive_beat": not getattr(beat, 'allow_multiple_purchases', False)
+    }
+
 @app.post("/beats/{beat_id}/purchase")
 def purchase_beat(beat_id: int, 
                  purchase_type: str = Form("mp3"),  # 'wav', 'mp3', 'exclusive'
@@ -1032,8 +1057,18 @@ def purchase_beat(beat_id: int,
         if existing_purchase:
             raise HTTPException(status_code=400, detail=f"You already purchased this beat as {purchase_type}")
     
+    # Определяем цену в зависимости от типа покупки
+    if purchase_type == 'mp3':
+        actual_price = getattr(beat, 'price_mp3', None) or beat.price
+    elif purchase_type == 'wav':
+        actual_price = getattr(beat, 'price_wav', None) or beat.price
+    elif purchase_type == 'exclusive':
+        actual_price = getattr(beat, 'price_exclusive', None) or beat.price
+    else:
+        actual_price = beat.price
+    
     # Если бит платный - проверяем успешность оплаты
-    if beat.price > 0:
+    if actual_price > 0:
         if payment_success != 'true':
             raise HTTPException(status_code=400, detail="Payment required. Please complete payment first.")
     
@@ -1041,15 +1076,16 @@ def purchase_beat(beat_id: int,
     purchase = Purchase(
         user_id=current_user.id,
         beat_id=beat_id,
-        price_paid=beat.price,  # Сохраняем цену бита
+        price_paid=actual_price,  # Сохраняем реальную цену в зависимости от типа
         purchase_type=purchase_type
     )
     
     db.add(purchase)
     
-    # Если бит эксклюзивный, делаем его недоступным
+    # Если бит эксклюзивный (одноразовый), делаем его недоступным
     if not allow_multiple:
         beat.is_available = False
+        print(f"⚠️ Бит {beat_id} ({beat.title}) помечен как недоступный (одноразовый бит)")
     
     # Удаляем из корзины если там был
     db.query(cart_table).filter(
@@ -1059,6 +1095,11 @@ def purchase_beat(beat_id: int,
     
     db.commit()
     db.refresh(purchase)
+    db.refresh(beat)  # Обновляем бит чтобы убедиться что изменения сохранены
+    
+    # Проверяем что бит действительно скрыт
+    if not allow_multiple and beat.is_available:
+        print(f"❌ ОШИБКА: Бит {beat_id} не был скрыт после покупки!")
     
     return {"message": f"Beat acquired successfully as {purchase_type}!", "purchase_id": purchase.id, "purchase_type": purchase_type}
 
@@ -1920,6 +1961,9 @@ async def upload_beat_admin(
     genre: str = Form(...),
     bpm: int = Form(...),
     price: float = Form(...),
+    price_mp3: Optional[float] = Form(None),
+    price_wav: Optional[float] = Form(None),
+    price_exclusive: Optional[float] = Form(None),
     key: str = Form(None),
     description: str = Form(None),
     demo_file: UploadFile = File(...),
@@ -1940,6 +1984,9 @@ async def upload_beat_admin(
         key=key,
         bpm=bpm,
         price=price,
+        price_mp3=price_mp3,
+        price_wav=price_wav,
+        price_exclusive=price_exclusive,
         description=description,
         allow_multiple_purchases=allow_multiple
     )

@@ -13,6 +13,9 @@ const AdminUpload = () => {
     genre: '',
     bpm: '',
     price: '',
+    price_mp3: '',
+    price_wav: '',
+    price_exclusive: '',
     key: '',
     description: ''
   });
@@ -105,6 +108,9 @@ const AdminUpload = () => {
         genre: '',
         bpm: '',
         price: '',
+        price_mp3: '',
+        price_wav: '',
+        price_exclusive: '',
         key: '',
         description: ''
       });
@@ -285,7 +291,7 @@ const AdminUpload = () => {
                 
                 <div>
                   <label htmlFor="beat_price" className="block text-sm font-medium text-black mb-2">
-                    Цена (₽) *
+                    Базовая цена (₽) *
                   </label>
                   <input
                     type="number"
@@ -297,6 +303,59 @@ const AdminUpload = () => {
                     className="input w-full"
                     placeholder="0"
                     required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Используется, если не указаны отдельные цены
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="beat_price_mp3" className="block text-sm font-medium text-black mb-2">
+                    Цена MP3 (₽)
+                  </label>
+                  <input
+                    type="number"
+                    id="beat_price_mp3"
+                    step="1"
+                    name="price_mp3"
+                    value={beatFormData.price_mp3}
+                    onChange={handleBeatInputChange}
+                    className="input w-full"
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="beat_price_wav" className="block text-sm font-medium text-black mb-2">
+                    Цена WAV (₽)
+                  </label>
+                  <input
+                    type="number"
+                    id="beat_price_wav"
+                    step="1"
+                    name="price_wav"
+                    value={beatFormData.price_wav}
+                    onChange={handleBeatInputChange}
+                    className="input w-full"
+                    placeholder="0"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="beat_price_exclusive" className="block text-sm font-medium text-black mb-2">
+                    Цена Exclusive (₽)
+                  </label>
+                  <input
+                    type="number"
+                    id="beat_price_exclusive"
+                    step="1"
+                    name="price_exclusive"
+                    value={beatFormData.price_exclusive}
+                    onChange={handleBeatInputChange}
+                    className="input w-full"
+                    placeholder="0"
                   />
                 </div>
               </div>

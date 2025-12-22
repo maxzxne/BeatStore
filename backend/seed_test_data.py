@@ -25,6 +25,30 @@ def seed_test_data():
         existing_beats = db.query(Beat).count()
         existing_courses = db.query(Course).count()
         
+        # Обновляем существующие биты - делаем биты с "(одноразовый)" в названии одноразовыми
+        # Также обновляем биты Test Beat 4, 5, 6 если они еще не обновлены
+        if existing_beats > 0:
+            print("🔄 Обновление существующих битов...")
+            all_beats = sorted(db.query(Beat).all(), key=lambda b: b.id)  # Сортируем по ID
+            updated_count = 0
+            for i, beat in enumerate(all_beats, 1):
+                # Обновляем биты с "(одноразовый)" в названии
+                if "(одноразовый)" in beat.title and beat.allow_multiple_purchases:
+                    beat.allow_multiple_purchases = False
+                    updated_count += 1
+                    print(f"✅ Обновлен бит: {beat.title} - теперь одноразовый")
+                # Также обновляем биты Test Beat 4, 5, 6 если они еще не имеют "(одноразовый)" в названии
+                elif beat.title.startswith("Test Beat") and i >= 4 and i <= 6:
+                    if beat.allow_multiple_purchases:
+                        beat.allow_multiple_purchases = False
+                        if "(одноразовый)" not in beat.title:
+                            beat.title = beat.title + " (одноразовый)"
+                        updated_count += 1
+                        print(f"✅ Обновлен бит: {beat.title} - теперь одноразовый")
+            if updated_count > 0:
+                db.commit()
+                print(f"✅ Обновлено {updated_count} битов")
+        
         if existing_beats > 0 or existing_courses > 0:
             print("📦 Тестовые данные уже существуют, пропускаем заполнение")
             return
@@ -59,7 +83,19 @@ def seed_test_data():
         
         test_beats = []
         for i in range(min(7, len(demo_files))):  # Создаем до 7 битов
-            price = 0.0 if i < 2 else (5000.0 + i * 1000.0)  # Первые 2 бесплатные, остальные платные
+            base_price = 0.0 if i < 2 else (5000.0 + i * 1000.0)  # Первые 2 бесплатные, остальные платные
+            
+            # Устанавливаем отдельные цены для каждого типа файла
+            # MP3 - самая дешевая, WAV - средняя, Exclusive - самая дорогая
+            if base_price == 0:
+                price_mp3 = 0.0
+                price_wav = 0.0
+                price_exclusive = 0.0
+            else:
+                price_mp3 = base_price  # MP3 - базовая цена
+                price_wav = base_price * 1.5  # WAV - на 50% дороже
+                price_exclusive = base_price * 2.5  # Exclusive - в 2.5 раза дороже
+            
             # Делаем биты с индексом 3, 4, 5 одноразовыми (после покупки исчезают)
             is_exclusive = i >= 3 and i <= 5
             title = f"Test Beat {i+1}" + (" (одноразовый)" if is_exclusive else "")
@@ -69,7 +105,10 @@ def seed_test_data():
                 "genre": genres[i % len(genres)],
                 "bpm": bpms[i % len(bpms)],
                 "key": keys[i % len(keys)],
-                "price": price,
+                "price": base_price,  # Базовая цена для обратной совместимости
+                "price_mp3": price_mp3,
+                "price_wav": price_wav,
+                "price_exclusive": price_exclusive,
                 "demo_index": i,
                 "audio_index": i if i < len(audio_files) else None,
                 "cover_index": i if i < len(cover_files) else None,
@@ -91,7 +130,10 @@ def seed_test_data():
                 genre=beat_data["genre"],
                 bpm=beat_data["bpm"],
                 key=beat_data["key"],
-                price=beat_data["price"],
+                price=beat_data["price"],  # Базовая цена
+                price_mp3=beat_data.get("price_mp3"),
+                price_wav=beat_data.get("price_wav"),
+                price_exclusive=beat_data.get("price_exclusive"),
                 demo_url=demo_url,
                 mp3_url=mp3_url,
                 wav_url=wav_url,
@@ -101,7 +143,8 @@ def seed_test_data():
                 allow_multiple_purchases=beat_data.get("allow_multiple", True)  # Одноразовые биты имеют False
             )
             db.add(beat)
-            print(f"✅ Создан бит: {beat_data['title']} ({beat_data['price']}₽) - MP3: {'✓' if mp3_url else '✗'}, WAV: {'✓' if wav_url else '✗'}, ZIP: {'✓' if exclusive_url else '✗'}")
+            price_info = f"MP3: {beat_data.get('price_mp3', beat_data['price'])}₽, WAV: {beat_data.get('price_wav', beat_data['price'])}₽, Exclusive: {beat_data.get('price_exclusive', beat_data['price'])}₽"
+            print(f"✅ Создан бит: {beat_data['title']} ({price_info}) - MP3: {'✓' if mp3_url else '✗'}, WAV: {'✓' if wav_url else '✗'}, ZIP: {'✓' if exclusive_url else '✗'}")
         
         # Создаем тестовые курсы (с нулевыми и ненулевыми ценами)
         purposes = ["битмэйкинг", "сведение", "саунддизайн"]
@@ -159,15 +202,26 @@ def seed_test_data():
         if len(all_beats) >= 3:
             # Покупаем первые 3 бита (2 бесплатных + 1 платный)
             for i, beat in enumerate(all_beats[:3]):
+                # Определяем тип покупки и соответствующую цену
+                purchase_type = "mp3" if i < 2 else "wav"  # Для платного - WAV
+                
+                # Определяем цену в зависимости от типа покупки
+                if purchase_type == 'mp3':
+                    actual_price = beat.price_mp3 if beat.price_mp3 is not None else beat.price
+                elif purchase_type == 'wav':
+                    actual_price = beat.price_wav if beat.price_wav is not None else beat.price
+                else:
+                    actual_price = beat.price_exclusive if beat.price_exclusive is not None else beat.price
+                
                 purchase = Purchase(
                     user_id=test_user.id,
                     beat_id=beat.id,
                     purchase_date=now - timedelta(days=10-i*2),  # Разные даты
-                    price_paid=beat.price,
-                    purchase_type="mp3" if i < 2 else "wav"  # Для платного - WAV
+                    price_paid=actual_price,
+                    purchase_type=purchase_type
                 )
                 db.add(purchase)
-                print(f"✅ Создана покупка бита: {beat.title} ({beat.price}₽)")
+                print(f"✅ Создана покупка бита: {beat.title} ({purchase_type.upper()}, {actual_price}₽)")
         
         # Создаем тестовые покупки курсов
         if len(all_courses) >= 2:

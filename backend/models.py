@@ -100,7 +100,10 @@ class Beat(Base):
     genre = Column(String, nullable=False)  # Жанр музыки
     key = Column(String)  # Тональность (например, C, F#, Am)
     bpm = Column(Integer, nullable=False)  # Темп (удары в минуту)
-    price = Column(Float, nullable=False)  # Цена в рублях
+    price = Column(Float, nullable=False)  # Цена в рублях (базовая цена для обратной совместимости)
+    price_mp3 = Column(Float, nullable=True)  # Цена для MP3 файла
+    price_wav = Column(Float, nullable=True)  # Цена для WAV файла
+    price_exclusive = Column(Float, nullable=True)  # Цена для эксклюзивного ZIP
     description = Column(Text)  # Описание бита
     
     # Файлы

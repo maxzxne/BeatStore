@@ -161,6 +161,14 @@ docker-compose up --build
 - Backend API: http://localhost:8000
 - API документация: http://localhost:8000/docs
 
+### 🌐 Деплой на хостинг
+
+**Для деплоя в России (рекомендуется для новичков):**
+- 📖 [Инструкция по деплою на российские платформы](DEPLOY_RUSSIA.md) - подробное руководство для Timeweb Cloud, Yandex Cloud и других российских хостингов
+
+**Для деплоя на международные платформы:**
+- 📖 [Инструкция по деплою](DEPLOY_GUIDE.md) - Railway, Fly.io, DigitalOcean
+
 ### Разработка
 ```bash
 # Backend
