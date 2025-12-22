@@ -37,6 +37,7 @@ def seed_test_data():
         covers_dir = "static/covers"
         previews_dir = "static/course_previews"
         videos_dir = "static/course_videos"
+        test_files_dir = "static/test_files"
         
         demo_files = sorted([f for f in os.listdir(demos_dir) if f.endswith('.mp3')]) if os.path.exists(demos_dir) else []
         audio_files = sorted([f for f in os.listdir(audio_dir) if f.endswith('.mp3')]) if os.path.exists(audio_dir) else []
@@ -44,7 +45,12 @@ def seed_test_data():
         preview_files = sorted([f for f in os.listdir(previews_dir) if f.endswith(('.mp4', '.mov', '.avi'))]) if os.path.exists(previews_dir) else []
         video_files = sorted([f for f in os.listdir(videos_dir) if f.endswith(('.mp4', '.mov', '.avi'))]) if os.path.exists(videos_dir) else []
         
+        # Файлы для битов (WAV и ZIP)
+        wav_files = sorted([f for f in os.listdir(test_files_dir) if f.endswith('.wav')]) if os.path.exists(test_files_dir) else []
+        zip_files = sorted([f for f in os.listdir(test_files_dir) if f.endswith('.zip')]) if os.path.exists(test_files_dir) else []
+        
         print(f"📁 Найдено файлов: {len(demo_files)} demo, {len(audio_files)} audio, {len(cover_files)} covers, {len(preview_files)} previews, {len(video_files)} videos")
+        print(f"📁 Файлы для битов: {len(wav_files)} WAV, {len(zip_files)} ZIP")
         
         # Создаем тестовые биты (с нулевыми и ненулевыми ценами)
         genres = ["Hip-Hop", "Trap", "R&B", "Pop", "Drill"]
@@ -71,6 +77,10 @@ def seed_test_data():
             mp3_url = f"/static/audio/{audio_files[beat_data['audio_index']]}" if beat_data['audio_index'] is not None and beat_data['audio_index'] < len(audio_files) else None
             cover_url = f"/static/covers/{cover_files[beat_data['cover_index']]}" if beat_data['cover_index'] is not None and beat_data['cover_index'] < len(cover_files) else None
             
+            # Добавляем WAV и ZIP файлы для всех битов
+            wav_url = f"/static/test_files/{wav_files[0]}" if len(wav_files) > 0 else None
+            exclusive_url = f"/static/test_files/{zip_files[0]}" if len(zip_files) > 0 else None
+            
             beat = Beat(
                 title=beat_data["title"],
                 artist=beat_data["artist"],
@@ -80,12 +90,14 @@ def seed_test_data():
                 price=beat_data["price"],
                 demo_url=demo_url,
                 mp3_url=mp3_url,
+                wav_url=wav_url,
+                exclusive_url=exclusive_url,
                 cover_url=cover_url,
                 is_available=True,
                 allow_multiple_purchases=True
             )
             db.add(beat)
-            print(f"✅ Создан бит: {beat_data['title']} ({beat_data['price']}₽)")
+            print(f"✅ Создан бит: {beat_data['title']} ({beat_data['price']}₽) - MP3: {'✓' if mp3_url else '✗'}, WAV: {'✓' if wav_url else '✗'}, ZIP: {'✓' if exclusive_url else '✗'}")
         
         # Создаем тестовые курсы (с нулевыми и ненулевыми ценами)
         purposes = ["битмэйкинг", "сведение", "саунддизайн"]

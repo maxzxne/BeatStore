@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { DollarSign, Music, GraduationCap, FileText, TrendingUp, Calendar } from 'lucide-react';
+import { Music, GraduationCap, FileText, TrendingUp, Calendar } from 'lucide-react';
 
 const AdminRevenue = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -320,9 +320,9 @@ const AdminRevenue = () => {
                   {stats ? formatCurrency(stats.total_revenue) : '0 ₽'}
                 </p>
               </div>
-              <div className="bg-black rounded-full p-3">
-                <DollarSign className="h-6 w-6 text-white" />
-              </div>
+                    <div className="bg-black rounded-full p-3 flex items-center justify-center">
+                      <span className="text-white text-xl font-bold">₽</span>
+                    </div>
             </div>
           </div>
         </div>

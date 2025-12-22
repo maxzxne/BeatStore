@@ -261,7 +261,7 @@ const BeatPage = () => {
                 <img
                   src={`${API_URL}${beat.cover_url}`}
                   alt={beat.title}
-                  className="w-full h-48 object-cover rounded-lg mb-6"
+                  className="w-full h-64 object-contain rounded-lg mb-6 bg-gray-50"
                 />
               )}
               
@@ -396,52 +396,55 @@ const BeatPage = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 space-y-3">
-                    {/* Выбор варианта покупки */}
-                    <div className="flex gap-2">
+                  <div className="flex-1 space-y-2">
+                    {/* Выбор варианта покупки - компактный */}
+                    <div className="flex gap-1.5">
                       <button
                         type="button"
                         onClick={() => setSelectedPurchaseType('wav')}
-                        className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                           selectedPurchaseType === 'wav'
-                            ? 'bg-black text-white border-black'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-black'
+                            ? 'bg-black text-white border border-black'
+                            : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
                         }`}
                         disabled={!beat.wav_url}
+                        title="WAV формат"
                       >
                         WAV
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedPurchaseType('mp3')}
-                        className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                           selectedPurchaseType === 'mp3'
-                            ? 'bg-black text-white border-black'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-black'
+                            ? 'bg-black text-white border border-black'
+                            : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
                         }`}
                         disabled={!beat.mp3_url}
+                        title="MP3 формат"
                       >
                         MP3
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedPurchaseType('exclusive')}
-                        className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                           selectedPurchaseType === 'exclusive'
-                            ? 'bg-black text-white border-black'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-black'
+                            ? 'bg-black text-white border border-black'
+                            : 'bg-white text-gray-600 border border-gray-300 hover:border-black'
                         }`}
                         disabled={!beat.exclusive_url}
+                        title="Эксклюзив (ZIP)"
                       >
-                        Эксклюзив
+                        ZIP
                       </button>
                     </div>
                     <button
                       onClick={handlePurchase}
-                      className="btn btn-primary btn-sm w-full h-12 text-base"
+                      className="btn btn-primary btn-sm w-full h-10 text-sm"
                       disabled={!isAuthenticated}
                     >
-                      {beat.price === 0 ? 'Получить бесплатно' : `Купить ${selectedPurchaseType.toUpperCase()}`}
+                      {beat.price === 0 ? 'Получить бесплатно' : 'Купить'}
                     </button>
                   </div>
                 )}
