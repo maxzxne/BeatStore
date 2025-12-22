@@ -81,33 +81,21 @@ const AdminRevenue = () => {
             {/* Сетка (опционально) */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
               const y = chartHeight - (ratio * (chartHeight - 40)) - 20;
-              const value = maxValue * ratio;
               return (
-                <g key={ratio}>
-                  <line
-                    x1="20"
-                    y1={y}
-                    x2={chartWidth - 20}
-                    y2={y}
-                    stroke="#e5e7eb"
-                    strokeWidth="1"
-                    strokeDasharray="4 4"
-                  />
-                  <text
-                    x="15"
-                    y={y + 5}
-                    fontSize="12"
-                    fill="#000"
-                    fontWeight="500"
-                    textAnchor="end"
-                  >
-                    {formatCurrency(value)}
-                  </text>
-                </g>
+                <line
+                  key={ratio}
+                  x1="20"
+                  y1={y}
+                  x2={chartWidth - 20}
+                  y2={y}
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
+                  strokeDasharray="4 4"
+                />
               );
             })}
 
-            {/* Линия графика */}
+            {/* Линия графика - рендерим до подписей, чтобы подписи были поверх */}
             <path
               d={pathData}
               fill="none"
@@ -117,7 +105,39 @@ const AdminRevenue = () => {
               strokeLinejoin="round"
             />
 
-            {/* Точки */}
+            {/* Подписи на оси Y - рендерим после линии, чтобы были поверх */}
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+              const y = chartHeight - (ratio * (chartHeight - 40)) - 20;
+              const value = maxValue * ratio;
+              return (
+                <g key={`label-${ratio}`}>
+                  {/* Фон для лучшей читаемости */}
+                  <rect
+                    x="5"
+                    y={y - 8}
+                    width="45"
+                    height="16"
+                    fill="#fff"
+                    opacity="0.95"
+                    rx="2"
+                    stroke="#e5e7eb"
+                    strokeWidth="0.5"
+                  />
+                  <text
+                    x="15"
+                    y={y + 5}
+                    fontSize="13"
+                    fill="#000"
+                    fontWeight="600"
+                    textAnchor="end"
+                  >
+                    {formatCurrency(value)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Точки - рендерим после линии, чтобы были поверх */}
             {points.map((point, index) => {
               const date = new Date(point.day);
               const dayLabel = date.getDate();
@@ -136,18 +156,31 @@ const AdminRevenue = () => {
                     className="cursor-pointer hover:r-6 transition-all"
                   />
                   
-                  {/* Подпись даты */}
-                  <text
-                    x={point.x}
-                    y={chartHeight - 8}
-                    fontSize="11"
-                    fill="#000"
-                    fontWeight="500"
-                    textAnchor="middle"
-                    transform={`rotate(-45 ${point.x} ${chartHeight - 8})`}
-                  >
-                    {dayLabel} {monthLabel}
-                  </text>
+                  {/* Подпись даты - рендерим после точки, чтобы была поверх линии */}
+                  <g transform={`translate(${point.x}, ${chartHeight - 5}) rotate(-45)`}>
+                    {/* Фон для лучшей читаемости */}
+                    <rect
+                      x="-25"
+                      y="-8"
+                      width="50"
+                      height="16"
+                      fill="#fff"
+                      opacity="0.95"
+                      rx="2"
+                      stroke="#e5e7eb"
+                      strokeWidth="0.5"
+                    />
+                    <text
+                      x="0"
+                      y="4"
+                      fontSize="12"
+                      fill="#000"
+                      fontWeight="600"
+                      textAnchor="middle"
+                    >
+                      {dayLabel} {monthLabel}
+                    </text>
+                  </g>
 
                   {/* Tooltip при наведении */}
                   <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">

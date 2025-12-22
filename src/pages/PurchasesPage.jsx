@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import BeatCard from '../components/BeatCard';
@@ -13,6 +13,7 @@ const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ?
 const PurchasesPage = () => {
   const { isAuthenticated } = useAuth();
   const { playTrack, isCurrentTrackPlaying, pauseTrack, resumeTrack, isCurrentTrack } = useAudioPlayer();
+  const navigate = useNavigate();
   const [purchases, setPurchases] = useState([]);
   const [coursePurchases, setCoursePurchases] = useState([]);
   const [serviceOrders, setServiceOrders] = useState([]);
@@ -541,7 +542,17 @@ const PurchasesPage = () => {
                       <p className="text-sm text-yellow-700">
                         Заказ подтвержден. Необходимо оплатить {order.prepayment_percent || 50}% предоплату: {(order.price * (order.prepayment_percent || 50) / 100).toLocaleString('ru-RU')} ₽
                       </p>
-                      <button className="mt-3 btn btn-primary btn-sm">
+                      <button 
+                        onClick={() => {
+                          const prepaymentAmount = order.price * (order.prepayment_percent || 50) / 100;
+                          const params = new URLSearchParams();
+                          params.append('type', 'order');
+                          params.append('order_id', order.id.toString());
+                          params.append('total_price', prepaymentAmount.toString());
+                          navigate(`/test-payment?${params.toString()}`);
+                        }}
+                        className="mt-3 btn btn-primary btn-sm"
+                      >
                         Оплатить
                       </button>
                     </div>

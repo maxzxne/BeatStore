@@ -14,6 +14,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [oauthSettings, setOauthSettings] = useState({});
+  const [oauthSettingsLoading, setOauthSettingsLoading] = useState(true);
   
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -22,10 +23,28 @@ const RegisterPage = () => {
     // Загружаем настройки OAuth
     const fetchOAuthSettings = async () => {
       try {
+        setOauthSettingsLoading(true);
         const response = await api.get('/oauth-settings');
-        setOauthSettings(response.data);
+        // Преобразуем массив в объект для удобства
+        const settingsObj = {};
+        response.data.forEach(setting => {
+          settingsObj[setting.provider] = {
+            is_hidden: setting.is_hidden,
+            is_disabled: setting.is_disabled
+          };
+        });
+        setOauthSettings(settingsObj);
       } catch (error) {
         console.error('Error fetching OAuth settings:', error);
+        // В случае ошибки показываем все кнопки
+        setOauthSettings({
+          google: { is_hidden: false, is_disabled: false },
+          vk: { is_hidden: false, is_disabled: false },
+          yandex: { is_hidden: false, is_disabled: false },
+          telegram: { is_hidden: false, is_disabled: false }
+        });
+      } finally {
+        setOauthSettingsLoading(false);
       }
     };
     fetchOAuthSettings();
@@ -242,18 +261,26 @@ const RegisterPage = () => {
             </button>
           </form>
           
-          {/* OAuth разделитель */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+          {/* OAuth разделитель - показываем только если есть видимые кнопки */}
+          {!oauthSettingsLoading && (
+            (oauthSettings.google && !oauthSettings.google.is_hidden) ||
+            (oauthSettings.vk && !oauthSettings.vk.is_hidden) ||
+            (oauthSettings.yandex && !oauthSettings.yandex.is_hidden) ||
+            (oauthSettings.telegram && !oauthSettings.telegram.is_hidden)
+          ) && (
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Или зарегистрируйтесь через</span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Или зарегистрируйтесь через</span>
-            </div>
-          </div>
+          )}
           
-          {/* OAuth кнопки */}
-          <div className="space-y-3">
+          {/* OAuth кнопки - показываем только после загрузки настроек */}
+          {!oauthSettingsLoading && (
+            <div className="space-y-3">
             {!oauthSettings.google?.is_hidden && (
               <button
                 onClick={() => handleOAuthLogin('google')}
@@ -327,7 +354,8 @@ const RegisterPage = () => {
               Регистрация через Telegram
               </button>
             )}
-          </div>
+            </div>
+          )}
           
           <div className="card-footer text-center mt-6">
             <p className="text-gray-600">
