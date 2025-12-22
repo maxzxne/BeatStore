@@ -2374,6 +2374,18 @@ print("ВЫЗОВ create_admin_user()...")
 create_admin_user()
 print("create_admin_user() завершен")
 
+# Заполнение тестовыми данными
+print("=" * 50)
+print("ПРОВЕРКА ТЕСТОВЫХ ДАННЫХ...")
+print("=" * 50)
+try:
+    from seed_test_data import seed_test_data
+    seed_test_data()
+except Exception as e:
+    print(f"⚠️  Ошибка при заполнении тестовыми данными: {e}")
+    import traceback
+    traceback.print_exc()
+
 # Запуск Telegram бота в фоновом потоке
 print("=" * 50)
 print("Запуск Telegram бота...")

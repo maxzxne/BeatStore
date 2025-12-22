@@ -1,0 +1,218 @@
+"""
+Скрипт для заполнения базы данных тестовыми данными
+Запускается автоматически при деплое, если данных нет
+"""
+
+import os
+import json
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+from database import SessionLocal
+from models import Beat, Course, User, ServiceOrder
+
+def seed_test_data():
+    """Заполняет базу данных тестовыми битами, курсами и заявками"""
+    db = SessionLocal()
+    
+    try:
+        # Проверяем, есть ли уже данные
+        existing_beats = db.query(Beat).count()
+        existing_courses = db.query(Course).count()
+        
+        if existing_beats > 0 or existing_courses > 0:
+            print("📦 Тестовые данные уже существуют, пропускаем заполнение")
+            return
+        
+        print("🌱 Начинаем заполнение тестовыми данными...")
+        
+        # Получаем список существующих файлов из static
+        demos_dir = "static/demos"
+        audio_dir = "static/audio"
+        covers_dir = "static/covers"
+        previews_dir = "static/course_previews"
+        videos_dir = "static/course_videos"
+        
+        demo_files = sorted([f for f in os.listdir(demos_dir) if f.endswith('.mp3')]) if os.path.exists(demos_dir) else []
+        audio_files = sorted([f for f in os.listdir(audio_dir) if f.endswith('.mp3')]) if os.path.exists(audio_dir) else []
+        cover_files = sorted([f for f in os.listdir(covers_dir) if any(f.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp'])]) if os.path.exists(covers_dir) else []
+        preview_files = sorted([f for f in os.listdir(previews_dir) if f.endswith(('.mp4', '.mov', '.avi'))]) if os.path.exists(previews_dir) else []
+        video_files = sorted([f for f in os.listdir(videos_dir) if f.endswith(('.mp4', '.mov', '.avi'))]) if os.path.exists(videos_dir) else []
+        
+        print(f"📁 Найдено файлов: {len(demo_files)} demo, {len(audio_files)} audio, {len(cover_files)} covers, {len(preview_files)} previews, {len(video_files)} videos")
+        
+        # Создаем тестовые биты (с нулевыми и ненулевыми ценами)
+        genres = ["Hip-Hop", "Trap", "R&B", "Pop", "Drill"]
+        keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        bpms = [140, 150, 160, 120, 130]
+        
+        test_beats = []
+        for i in range(min(7, len(demo_files))):  # Создаем до 7 битов
+            price = 0.0 if i < 2 else (5000.0 + i * 1000.0)  # Первые 2 бесплатные, остальные платные
+            test_beats.append({
+                "title": f"Test Beat {i+1}",
+                "artist": f"Producer {i+1}",
+                "genre": genres[i % len(genres)],
+                "bpm": bpms[i % len(bpms)],
+                "key": keys[i % len(keys)],
+                "price": price,
+                "demo_index": i,
+                "audio_index": i if i < len(audio_files) else None,
+                "cover_index": i if i < len(cover_files) else None,
+            })
+        
+        for beat_data in test_beats:
+            demo_url = f"/static/demos/{demo_files[beat_data['demo_index']]}" if beat_data['demo_index'] < len(demo_files) else None
+            mp3_url = f"/static/audio/{audio_files[beat_data['audio_index']]}" if beat_data['audio_index'] is not None and beat_data['audio_index'] < len(audio_files) else None
+            cover_url = f"/static/covers/{cover_files[beat_data['cover_index']]}" if beat_data['cover_index'] is not None and beat_data['cover_index'] < len(cover_files) else None
+            
+            beat = Beat(
+                title=beat_data["title"],
+                artist=beat_data["artist"],
+                genre=beat_data["genre"],
+                bpm=beat_data["bpm"],
+                key=beat_data["key"],
+                price=beat_data["price"],
+                demo_url=demo_url,
+                mp3_url=mp3_url,
+                cover_url=cover_url,
+                is_available=True,
+                allow_multiple_purchases=True
+            )
+            db.add(beat)
+            print(f"✅ Создан бит: {beat_data['title']} ({beat_data['price']}₽)")
+        
+        # Создаем тестовые курсы (с нулевыми и ненулевыми ценами)
+        purposes = ["битмэйкинг", "сведение", "саунддизайн"]
+        test_courses = []
+        for i in range(min(4, len(preview_files))):  # Создаем до 4 курсов
+            price = 0.0 if i < 1 else (10000.0 + i * 2000.0)  # Первый бесплатный, остальные платные
+            test_courses.append({
+                "title": f"Test Course {i+1}",
+                "description": f"Тестовый курс по {purposes[i % len(purposes)]}",
+                "purpose": purposes[i % len(purposes)],
+                "price": price,
+                "preview_index": i,
+                "video_index": i if i < len(video_files) else None,
+            })
+        
+        for course_data in test_courses:
+            preview_url = f"/static/course_previews/{preview_files[course_data['preview_index']]}" if course_data['preview_index'] < len(preview_files) else None
+            full_url = f"/static/course_videos/{video_files[course_data['video_index']]}" if course_data['video_index'] is not None and course_data['video_index'] < len(video_files) else None
+            
+            course = Course(
+                title=course_data["title"],
+                description=course_data["description"],
+                purpose=course_data["purpose"],
+                price=course_data["price"],
+                preview_video_url=preview_url,
+                full_video_url=full_url
+            )
+            db.add(course)
+            print(f"✅ Создан курс: {course_data['title']} ({course_data['price']}₽)")
+        
+        # Создаем тестового пользователя для заявок
+        test_user = db.query(User).filter(User.username == "test_user").first()
+        if not test_user:
+            test_user = User(
+                username="test_user",
+                email="test@example.com",
+                password_hash=None,
+                is_active=True
+            )
+            db.add(test_user)
+            db.flush()
+            print("✅ Создан тестовый пользователь")
+        
+        # Создаем тестовые заявки (старые и новые)
+        now = datetime.utcnow()
+        
+        # Старые заявки (2-3 недели назад)
+        old_orders = [
+            {
+                "order_type": "know",
+                "service_categories": json.dumps(["бит", "сведение"]),
+                "deadline_days": 14,
+                "prepayment_percent": 50,
+                "price": 55000.0,
+                "status": "completed",
+                "description": "Старая заявка - знаю что хочу",
+                "created_at": now - timedelta(days=20),
+            },
+            {
+                "order_type": "dont_know",
+                "service_categories": None,
+                "deadline_days": None,
+                "prepayment_percent": None,
+                "price": 30000.0,
+                "status": "completed",
+                "description": "Старая заявка - не знаю что хочу",
+                "created_at": now - timedelta(days=15),
+            },
+        ]
+        
+        # Новые заявки (несколько дней назад и сегодня)
+        new_orders = [
+            {
+                "order_type": "know",
+                "service_categories": json.dumps(["бит в стиле трэп", "бит"]),
+                "deadline_days": 7,
+                "prepayment_percent": 100,
+                "price": 45000.0,
+                "status": "confirmed",
+                "description": "Новая заявка - знаю что хочу",
+                "created_at": now - timedelta(days=3),
+            },
+            {
+                "order_type": "dont_know",
+                "service_categories": None,
+                "deadline_days": None,
+                "prepayment_percent": None,
+                "price": None,
+                "status": "pending",
+                "description": "Новая заявка - не знаю что хочу, нужна консультация",
+                "created_at": now - timedelta(days=1),
+            },
+            {
+                "order_type": "know",
+                "service_categories": json.dumps(["трек под ключ"]),
+                "deadline_days": 21,
+                "prepayment_percent": 50,
+                "price": 25000.0,
+                "status": "paid",
+                "description": "Заявка в работе",
+                "created_at": now - timedelta(days=5),
+            },
+        ]
+        
+        all_orders = old_orders + new_orders
+        
+        for order_data in all_orders:
+            order = ServiceOrder(
+                user_id=test_user.id,
+                order_type=order_data["order_type"],
+                service_categories=order_data["service_categories"],
+                deadline_days=order_data["deadline_days"],
+                prepayment_percent=order_data["prepayment_percent"],
+                price=order_data["price"],
+                status=order_data["status"],
+                description=order_data["description"],
+                created_at=order_data["created_at"],
+                updated_at=order_data["created_at"]
+            )
+            db.add(order)
+            print(f"✅ Создана заявка: {order_data['order_type']} ({order_data['status']})")
+        
+        db.commit()
+        print("✅ Тестовые данные успешно созданы!")
+        
+    except Exception as e:
+        print(f"❌ Ошибка при создании тестовых данных: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+    finally:
+        db.close()
+
+if __name__ == "__main__":
+    seed_test_data()
+
