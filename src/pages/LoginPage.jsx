@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Lock, ArrowLeft } from 'lucide-react';
 import { api } from '../utils/api';
-import YandexIDButton from '../components/YandexIDButton';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -228,51 +227,17 @@ const LoginPage = () => {
             )}
             
             {!oauthSettings.yandex?.is_hidden && (
-              <YandexIDButton
-                clientId={import.meta.env.VITE_YANDEX_CLIENT_ID}
-                redirectUri={`${window.location.origin}/oauth/yandex/callback`}
-                onSuccess={async (data) => {
-                  try {
-                    setLoading(true);
-                    setError('');
-                    
-                    // Обрабатываем данные от Yandex ID
-                    // data содержит access_token и информацию о пользователе
-                    const yandexData = {
-                      provider: 'yandex',
-                      access_token: data.access_token,
-                      provider_user_id: data.id || data.user_id || data.uid,
-                      email: data.default_email,
-                      username: data.login || data.default_email?.split('@')[0],
-                      first_name: data.first_name,
-                      last_name: data.last_name
-                    };
-                    
-                    const response = await api.post('/oauth/login', yandexData);
-                    
-                    if (response.data.access_token) {
-                      localStorage.setItem('token', response.data.access_token);
-                      navigate('/');
-                    } else {
-                      setError('Не удалось авторизоваться через Yandex');
-                    }
-                  } catch (err) {
-                    console.error('Yandex ID auth error:', err);
-                    setError(err.response?.data?.detail || 'Ошибка авторизации через Yandex ID');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                onError={(error) => {
-                  // Показываем ошибку только если кнопка видна и не скрыта
-                  if (!oauthSettings.yandex?.is_hidden) {
-                    setError(error);
-                  }
-                  setLoading(false);
-                }}
+              <button
+                onClick={() => handleOAuthLogin('yandex')}
                 disabled={loading || oauthSettings.yandex?.is_disabled}
-                size="L"
-              />
+                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5 mr-2 flex-shrink-0" viewBox="0 0 512 512">
+                  <circle cx="256" cy="256" r="251.408" fill="#FC3F1D"/>
+                  <path d="M313.475,105.366h-45.648c-44.854,0-82.892,34.142-82.892,100.427  c0,39.765,18.42,69.084,51.25,83.547l-61.262,110.869c-2.005,3.619,0,6.426,3.202,6.426h28.433c2.4,0,4.01-0.801,4.81-2.807  l55.659-108.863h20.021v108.863c0,1.197,1.197,2.807,2.799,2.807h24.832c2.4,0,3.203-1.205,3.203-3.205V109.383  C317.881,106.571,316.279,105.366,313.475,105.366z M287.047,269.26h-16.818c-26.427,0-52.053-19.281-52.053-67.483  c0-50.22,24.024-70.705,48.448-70.705h20.424V269.26z" fill="#FFFFFF"/>
+                </svg>
+                Войти через Yandex
+              </button>
             )}
             
             {/* Кнопка авторизации через Telegram - всегда видна */}

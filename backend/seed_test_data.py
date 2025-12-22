@@ -118,6 +118,9 @@ def seed_test_data():
         
         db.commit()  # Сохраняем биты и курсы перед созданием покупок
         
+        # Определяем текущее время для использования в покупках и заявках
+        now = datetime.utcnow()
+        
         # Создаем тестового пользователя для заявок и покупок
         test_user = db.query(User).filter(User.username == "test_user").first()
         if not test_user:
@@ -166,7 +169,6 @@ def seed_test_data():
         db.commit()  # Сохраняем покупки
         
         # Создаем тестовые заявки (старые и новые)
-        now = datetime.utcnow()
         
         # Старые заявки (2-3 недели назад)
         old_orders = [

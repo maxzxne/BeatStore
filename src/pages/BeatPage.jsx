@@ -261,7 +261,7 @@ const BeatPage = () => {
                 <img
                   src={`${API_URL}${beat.cover_url}`}
                   alt={beat.title}
-                  className="w-full h-64 object-cover rounded-lg mb-6"
+                  className="w-full h-48 object-cover rounded-lg mb-6"
                 />
               )}
               

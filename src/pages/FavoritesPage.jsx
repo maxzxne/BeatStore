@@ -45,9 +45,9 @@ const FavoritesPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
-          <Heart className="h-16 w-16 text-dark-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Sign in to view favorites</h1>
-          <p className="text-dark-400">You need to be logged in to see your favorite beats.</p>
+          <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-black mb-2">Войдите, чтобы просмотреть избранное</h1>
+          <p className="text-gray-600">Вам нужно войти в систему, чтобы увидеть избранные биты.</p>
         </div>
       </div>
     );
@@ -66,18 +66,18 @@ const FavoritesPage = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Избранное</h1>
-        <p className="text-dark-400">
+        <h1 className="text-3xl font-bold text-black mb-2">Избранное</h1>
+        <p className="text-gray-600">
           {favorites.length} избранных битов
         </p>
       </div>
 
       {favorites.length === 0 ? (
         <div className="text-center py-12">
-          <Heart className="h-16 w-16 text-dark-400 mx-auto mb-4" />
-          <div className="text-dark-400 text-lg">No favorites yet</div>
-          <p className="text-dark-500 mt-2">
-            Start adding beats to your favorites to see them here
+          <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <div className="text-gray-600 text-lg">Пока нет избранных</div>
+          <p className="text-gray-500 mt-2">
+            Начните добавлять биты в избранное, чтобы увидеть их здесь
           </p>
         </div>
       ) : (

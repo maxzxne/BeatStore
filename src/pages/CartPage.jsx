@@ -296,7 +296,7 @@ const CartPage = () => {
                       navigate(`/test-payment?${params.toString()}`);
                     }}
                     className="btn btn-primary w-full h-12 text-base"
-                    disabled={cartItems.length === 0 || totalPrice === 0}
+                    disabled={cartItems.length === 0}
                   >
                     {totalPrice > 0 ? `Оформить заказ на ${totalPrice.toLocaleString('ru-RU')} ₽` : "Перейти к оплате"}
                   </button>
