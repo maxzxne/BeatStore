@@ -848,6 +848,21 @@ def get_beats(
     key: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
+    # Сначала проверяем и скрываем одноразовые биты, которые уже куплены
+    # Это нужно для случаев, когда биты были куплены до добавления логики скрытия
+    exclusive_beats = db.query(Beat).filter(
+        Beat.is_available == True,
+        Beat.allow_multiple_purchases == False
+    ).all()
+    
+    for beat in exclusive_beats:
+        purchase_exists = db.query(Purchase).filter(Purchase.beat_id == beat.id).first()
+        if purchase_exists:
+            beat.is_available = False
+    
+    if exclusive_beats:
+        db.commit()
+    
     query = db.query(Beat).filter(Beat.is_available == True)
     
     if genre:
@@ -1045,6 +1060,10 @@ def purchase_beat(beat_id: int,
         ).first()
         
         if any_purchase:
+            # Если бит уже куплен, скрываем его из каталога (на случай если это не было сделано ранее)
+            beat.is_available = False
+            db.commit()
+            db.refresh(beat)
             raise HTTPException(status_code=400, detail="Beat already purchased by another user. This is an exclusive beat.")
     else:
         # Множественные покупки разрешены - проверяем только, не купил ли этот пользователь уже этот тип

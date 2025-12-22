@@ -32,12 +32,12 @@ const LoginPage = () => {
         setOauthSettings(settingsObj);
       } catch (error) {
         console.error('Error fetching OAuth settings:', error);
-        // В случае ошибки показываем все кнопки
+        // В случае ошибки скрываем все кнопки (кроме Telegram, который должен работать)
         setOauthSettings({
-          google: { is_hidden: false, is_disabled: false },
-          vk: { is_hidden: false, is_disabled: false },
-          yandex: { is_hidden: false, is_disabled: false },
-          telegram: { is_hidden: false, is_disabled: false }
+          google: { is_hidden: true, is_disabled: false },
+          vk: { is_hidden: true, is_disabled: false },
+          yandex: { is_hidden: true, is_disabled: false },
+          telegram: { is_hidden: false, is_disabled: false } // Telegram всегда доступен
         });
       } finally {
         setOauthSettingsLoading(false);
@@ -206,10 +206,10 @@ const LoginPage = () => {
           
           {/* OAuth разделитель - показываем только если есть видимые кнопки */}
           {!oauthSettingsLoading && (
-            (oauthSettings.google && !oauthSettings.google.is_hidden) ||
-            (oauthSettings.vk && !oauthSettings.vk.is_hidden) ||
-            (oauthSettings.yandex && !oauthSettings.yandex.is_hidden) ||
-            (oauthSettings.telegram && !oauthSettings.telegram.is_hidden)
+            (oauthSettings.google && oauthSettings.google.is_hidden === false) ||
+            (oauthSettings.vk && oauthSettings.vk.is_hidden === false) ||
+            (oauthSettings.yandex && oauthSettings.yandex.is_hidden === false) ||
+            (oauthSettings.telegram && oauthSettings.telegram.is_hidden === false)
           ) && (
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
@@ -221,10 +221,10 @@ const LoginPage = () => {
             </div>
           )}
           
-          {/* OAuth кнопки - показываем только после загрузки настроек */}
+          {/* OAuth кнопки - показываем только после загрузки настроек и только если не скрыты */}
           {!oauthSettingsLoading && (
             <div className="space-y-3">
-            {oauthSettings.google && !oauthSettings.google.is_hidden && (
+            {oauthSettings.google && oauthSettings.google.is_hidden === false && (
               <button
                 onClick={() => handleOAuthLogin('google')}
                 disabled={loading || oauthSettings.google?.is_disabled}
@@ -240,7 +240,7 @@ const LoginPage = () => {
               </button>
             )}
             
-            {oauthSettings.vk && !oauthSettings.vk.is_hidden && (
+            {oauthSettings.vk && oauthSettings.vk.is_hidden === false && (
               <button
                 onClick={() => handleOAuthLogin('vk')}
                 disabled={loading || oauthSettings.vk?.is_disabled}
@@ -253,7 +253,7 @@ const LoginPage = () => {
               </button>
             )}
             
-            {oauthSettings.yandex && !oauthSettings.yandex.is_hidden && (
+            {oauthSettings.yandex && oauthSettings.yandex.is_hidden === false && (
               <button
                 onClick={() => handleOAuthLogin('yandex')}
                 disabled={loading || oauthSettings.yandex?.is_disabled}
@@ -268,7 +268,7 @@ const LoginPage = () => {
             )}
             
             {/* Кнопка авторизации через Telegram - всегда видна */}
-            {oauthSettings.telegram && !oauthSettings.telegram.is_hidden && (
+            {oauthSettings.telegram && oauthSettings.telegram.is_hidden === false && (
               <button
                 onClick={() => {
                   const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'XWinnerbeatpleasebot';
