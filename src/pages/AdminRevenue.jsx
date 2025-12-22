@@ -94,10 +94,11 @@ const AdminRevenue = () => {
                     strokeDasharray="4 4"
                   />
                   <text
-                    x="10"
-                    y={y + 4}
-                    fontSize="10"
-                    fill="#6b7280"
+                    x="15"
+                    y={y + 5}
+                    fontSize="12"
+                    fill="#000"
+                    fontWeight="500"
                     textAnchor="end"
                   >
                     {formatCurrency(value)}
@@ -138,34 +139,69 @@ const AdminRevenue = () => {
                   {/* Подпись даты */}
                   <text
                     x={point.x}
-                    y={chartHeight - 5}
-                    fontSize="10"
-                    fill="#6b7280"
+                    y={chartHeight - 8}
+                    fontSize="11"
+                    fill="#000"
+                    fontWeight="500"
                     textAnchor="middle"
-                    transform={`rotate(-45 ${point.x} ${chartHeight - 5})`}
+                    transform={`rotate(-45 ${point.x} ${chartHeight - 8})`}
                   >
                     {dayLabel} {monthLabel}
                   </text>
 
                   {/* Tooltip при наведении */}
-                  <g className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <rect
-                      x={point.x - 40}
-                      y={point.y - 30}
-                      width="80"
-                      height="20"
-                      fill="#000"
-                      rx="4"
-                    />
-                    <text
-                      x={point.x}
-                      y={point.y - 15}
-                      fontSize="10"
-                      fill="#fff"
-                      textAnchor="middle"
-                    >
-                      {formatCurrency(point.value)}
-                    </text>
+                  <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    {(() => {
+                      // Вычисляем позицию tooltip, чтобы он не выходил за границы
+                      const tooltipWidth = 90;
+                      const tooltipHeight = 24;
+                      const padding = 5;
+                      
+                      let tooltipX = point.x - tooltipWidth / 2;
+                      let tooltipY = point.y - tooltipHeight - 8;
+                      
+                      // Проверяем левую границу
+                      if (tooltipX < padding) {
+                        tooltipX = padding;
+                      }
+                      // Проверяем правую границу
+                      if (tooltipX + tooltipWidth > chartWidth - padding) {
+                        tooltipX = chartWidth - tooltipWidth - padding;
+                      }
+                      // Проверяем верхнюю границу
+                      if (tooltipY < padding) {
+                        tooltipY = point.y + 8; // Показываем снизу от точки
+                      }
+                      // Проверяем нижнюю границу
+                      if (tooltipY + tooltipHeight > chartHeight - padding) {
+                        tooltipY = chartHeight - tooltipHeight - padding;
+                      }
+                      
+                      return (
+                        <>
+                          <rect
+                            x={tooltipX}
+                            y={tooltipY}
+                            width={tooltipWidth}
+                            height={tooltipHeight}
+                            fill="#000"
+                            rx="4"
+                            stroke="#fff"
+                            strokeWidth="1"
+                          />
+                          <text
+                            x={tooltipX + tooltipWidth / 2}
+                            y={tooltipY + tooltipHeight / 2 + 4}
+                            fontSize="11"
+                            fill="#fff"
+                            fontWeight="600"
+                            textAnchor="middle"
+                          >
+                            {formatCurrency(point.value)}
+                          </text>
+                        </>
+                      );
+                    })()}
                   </g>
                 </g>
               );
