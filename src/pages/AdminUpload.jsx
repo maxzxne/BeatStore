@@ -347,9 +347,8 @@ const AdminUpload = () => {
                   <input
                     type="file"
                     id="beat_demo_file"
-                    accept="audio/*"
-                    name="demo_file"
-                    accept="audio/*"
+                      accept="audio/*"
+                      name="demo_file"
                     onChange={handleBeatFileChange}
                     className="input flex-1"
                     required

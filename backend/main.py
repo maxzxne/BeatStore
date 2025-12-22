@@ -130,16 +130,16 @@ def update_database_schema():
             from models import OAuthSettings
             db = SessionLocal()
             try:
-                   providers = ['google', 'vk', 'yandex', 'telegram']
-                   for provider in providers:
-                       existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
-                       if not existing:
-                           oauth_setting = OAuthSettings(
-                               provider=provider,
-                               is_hidden=(provider in ['google', 'vk', 'yandex']),  # По умолчанию Google, VK, Yandex скрыты
-                               is_disabled=False
-                           )
-                           db.add(oauth_setting)
+                providers = ['google', 'vk', 'yandex', 'telegram']
+                for provider in providers:
+                    existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
+                    if not existing:
+                        oauth_setting = OAuthSettings(
+                            provider=provider,
+                            is_hidden=(provider in ['google', 'vk', 'yandex']),  # По умолчанию Google, VK, Yandex скрыты
+                            is_disabled=False
+                        )
+                        db.add(oauth_setting)
                 db.commit()
                 print("Настройки OAuth созданы")
             except Exception as e:
@@ -152,16 +152,16 @@ def update_database_schema():
             from models import OAuthSettings
             db = SessionLocal()
             try:
-                   providers = ['google', 'vk', 'yandex', 'telegram']
-                   for provider in providers:
-                       existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
-                       if not existing:
-                           oauth_setting = OAuthSettings(
-                               provider=provider,
-                               is_hidden=(provider in ['google', 'vk', 'yandex']),  # По умолчанию Google, VK, Yandex скрыты
-                               is_disabled=False
-                           )
-                           db.add(oauth_setting)
+                providers = ['google', 'vk', 'yandex', 'telegram']
+                for provider in providers:
+                    existing = db.query(OAuthSettings).filter(OAuthSettings.provider == provider).first()
+                    if not existing:
+                        oauth_setting = OAuthSettings(
+                            provider=provider,
+                            is_hidden=(provider in ['google', 'vk', 'yandex']),  # По умолчанию Google, VK, Yandex скрыты
+                            is_disabled=False
+                        )
+                        db.add(oauth_setting)
                 db.commit()
             except Exception as e:
                 print(f"Ошибка проверки настроек OAuth: {e}")
