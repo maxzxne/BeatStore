@@ -48,6 +48,16 @@ const RegisterPage = () => {
       }
     };
     fetchOAuthSettings();
+    
+    // Обновляем настройки каждые 30 секунд и при фокусе окна
+    const interval = setInterval(fetchOAuthSettings, 30000);
+    const handleFocus = () => fetchOAuthSettings();
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
   
   // Автоматическая авторизация при возврате из Telegram

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
 import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Plus, X, HelpCircle } from 'lucide-react';
 
 const OrderPage = () => {
+  const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useNotification();
   const [orderType, setOrderType] = useState(null); // null, "know", "dont_know"
@@ -261,23 +263,38 @@ const OrderPage = () => {
         customer_email: !isAuthenticated ? formData.customer_email : null
       };
 
-      await api.post('/service-orders', orderData);
-      showSuccess('Заказ успешно создан!');
+      const response = await api.post('/service-orders', orderData);
+      const orderId = response.data.id;
       
-      // Сбрасываем форму
-      setFormData({
-        customer_name: isAuthenticated && user ? user.username || '' : '',
-        customer_email: isAuthenticated && user ? user.email || '' : '',
-        contact_info: '',
-        service_categories: [],
-        materials: [],
-        reference_links: '',
-        reference_files: [],
-        description: '',
-        deadline_days: '',
-        prepayment_percent: 50
-      });
-      setOrderType(null);
+      // Вычисляем цену и предоплату
+      const calculatedTotalPrice = calculateTotalPrice();
+      const calculatedPrepaymentAmount = calculatedTotalPrice * (formData.prepayment_percent / 100);
+      
+      // Если есть цена, переходим на тестовую страницу оплаты
+      if (calculatedTotalPrice > 0) {
+        const params = new URLSearchParams();
+        params.append('type', 'order');
+        params.append('order_id', orderId.toString());
+        params.append('total_price', calculatedPrepaymentAmount.toString());
+        navigate(`/test-payment?${params.toString()}`);
+      } else {
+        showSuccess('Заказ успешно создан!');
+        
+        // Сбрасываем форму
+        setFormData({
+          customer_name: isAuthenticated && user ? user.username || '' : '',
+          customer_email: isAuthenticated && user ? user.email || '' : '',
+          contact_info: '',
+          service_categories: [],
+          materials: [],
+          reference_links: '',
+          reference_files: [],
+          description: '',
+          deadline_days: '',
+          prepayment_percent: 50
+        });
+        setOrderType(null);
+      }
     } catch (error) {
       console.error('Error creating order:', error);
       showError(error.response?.data?.detail || 'Ошибка при создании заказа');
