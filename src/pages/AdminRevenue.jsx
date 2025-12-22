@@ -54,37 +54,123 @@ const AdminRevenue = () => {
     const values = days.map(day => stats.revenue_by_day[day]);
     const maxValue = Math.max(...values, 1);
     const chartHeight = 300;
+    const chartWidth = Math.max(600, days.length * 60); // Минимальная ширина 600px, или 60px на день
+
+    // Вычисляем координаты точек
+    const points = days.map((day, index) => {
+      const value = stats.revenue_by_day[day];
+      const x = (index / (days.length - 1 || 1)) * (chartWidth - 40) + 20; // Отступы по 20px с каждой стороны
+      const y = chartHeight - (value / maxValue) * (chartHeight - 40) - 20; // Отступы по 20px снизу и сверху
+      return { x, y, value, day };
+    });
+
+    // Создаем путь для линии
+    const pathData = points.map((point, index) => {
+      return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
+    }).join(' ');
 
     return (
       <div className="space-y-2">
-        <div className="flex items-end gap-2 h-[300px] border-b border-l border-gray-300 pb-4 pl-4">
-          {days.map((day, index) => {
-            const value = stats.revenue_by_day[day];
-            const height = (value / maxValue) * chartHeight;
-            const date = new Date(day);
-            const dayLabel = date.getDate();
-            const monthLabel = date.toLocaleDateString('ru-RU', { month: 'short' });
-            
-            return (
-              <div key={day} className="flex-1 flex flex-col items-center group relative">
-                <div
-                  className="w-full bg-black rounded-t transition-all hover:bg-gray-800 cursor-pointer"
-                  style={{ height: `${height}px` }}
-                  title={`${day}: ${formatCurrency(value)}`}
-                />
-                <div className="mt-2 text-xs text-gray-600 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
-                  {dayLabel} {monthLabel}
-                </div>
-                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-xs px-2 py-1 rounded pointer-events-none z-10">
-                  {formatCurrency(value)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex justify-between text-xs text-gray-500 px-4">
-          <span>0 ₽</span>
-          <span>{formatCurrency(maxValue)}</span>
+        <div className="relative" style={{ height: `${chartHeight}px`, width: '100%', overflowX: 'auto' }}>
+          <svg 
+            width={chartWidth} 
+            height={chartHeight} 
+            className="border-b border-l border-gray-300"
+            style={{ minWidth: '100%' }}
+          >
+            {/* Сетка (опционально) */}
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+              const y = chartHeight - (ratio * (chartHeight - 40)) - 20;
+              const value = maxValue * ratio;
+              return (
+                <g key={ratio}>
+                  <line
+                    x1="20"
+                    y1={y}
+                    x2={chartWidth - 20}
+                    y2={y}
+                    stroke="#e5e7eb"
+                    strokeWidth="1"
+                    strokeDasharray="4 4"
+                  />
+                  <text
+                    x="10"
+                    y={y + 4}
+                    fontSize="10"
+                    fill="#6b7280"
+                    textAnchor="end"
+                  >
+                    {formatCurrency(value)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Линия графика */}
+            <path
+              d={pathData}
+              fill="none"
+              stroke="#000"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Точки */}
+            {points.map((point, index) => {
+              const date = new Date(point.day);
+              const dayLabel = date.getDate();
+              const monthLabel = date.toLocaleDateString('ru-RU', { month: 'short' });
+              
+              return (
+                <g key={point.day} className="group">
+                  {/* Точка */}
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r="4"
+                    fill="#000"
+                    stroke="#fff"
+                    strokeWidth="2"
+                    className="cursor-pointer hover:r-6 transition-all"
+                  />
+                  
+                  {/* Подпись даты */}
+                  <text
+                    x={point.x}
+                    y={chartHeight - 5}
+                    fontSize="10"
+                    fill="#6b7280"
+                    textAnchor="middle"
+                    transform={`rotate(-45 ${point.x} ${chartHeight - 5})`}
+                  >
+                    {dayLabel} {monthLabel}
+                  </text>
+
+                  {/* Tooltip при наведении */}
+                  <g className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <rect
+                      x={point.x - 40}
+                      y={point.y - 30}
+                      width="80"
+                      height="20"
+                      fill="#000"
+                      rx="4"
+                    />
+                    <text
+                      x={point.x}
+                      y={point.y - 15}
+                      fontSize="10"
+                      fill="#fff"
+                      textAnchor="middle"
+                    >
+                      {formatCurrency(point.value)}
+                    </text>
+                  </g>
+                </g>
+              );
+            })}
+          </svg>
         </div>
       </div>
     );

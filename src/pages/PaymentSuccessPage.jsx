@@ -52,7 +52,19 @@ const PaymentSuccessPage = () => {
         setProcessing(false);
       } catch (err) {
         console.error('Error processing payment:', err);
-        setError(err.response?.data?.detail || 'Ошибка обработки оплаты');
+        // Преобразуем ошибку в строку, чтобы избежать проблем с рендерингом объектов
+        let errorMessage = 'Ошибка обработки оплаты';
+        if (err.response?.data) {
+          if (typeof err.response.data.detail === 'string') {
+            errorMessage = err.response.data.detail;
+          } else if (Array.isArray(err.response.data.detail)) {
+            // Ошибки валидации Pydantic
+            errorMessage = err.response.data.detail.map(e => e.msg || JSON.stringify(e)).join(', ');
+          } else if (typeof err.response.data.detail === 'object') {
+            errorMessage = JSON.stringify(err.response.data.detail);
+          }
+        }
+        setError(errorMessage);
         setProcessing(false);
       }
     };

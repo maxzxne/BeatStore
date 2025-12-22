@@ -1382,14 +1382,17 @@ def download_course_video(course_id: int,
         media_type='video/mp4'
     )
 
+class ProcessCartPaymentRequest(BaseModel):
+    success: bool
+
 @app.post("/payment/process-cart")
 def process_cart_payment(
-    success: bool,
+    request: ProcessCartPaymentRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Обработка оплаты всех товаров из корзины"""
-    if not success:
+    if not request.success:
         raise HTTPException(status_code=400, detail="Payment was not successful")
     
     # Получаем все товары из корзины
