@@ -644,6 +644,66 @@ class ServiceOrderResponse(BaseModel):
     """Схема ответа с информацией о заказе услуги"""
     id: int
     user_id: Optional[int]
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    order_type: str = "know"
+    service_category: Optional[str] = None
+    service_categories: Optional[List[str]] = None
+    materials_url: Optional[str] = None
+    reference_links: Optional[str] = None
+    reference_files_url: Optional[str] = None
+    description: Optional[str] = None
+    deadline_min: Optional[int] = None
+    deadline_max: Optional[int] = None
+    deadline_days: Optional[int] = None
+    price: Optional[float] = None
+    prepayment_percent: Optional[int] = None
+    contact_info: Optional[str] = None
+    status: str = "pending"
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    @classmethod
+    def from_orm(cls, obj):
+        """Преобразует объект БД в ответ, парся service_categories из JSON"""
+        import json
+        data = {
+            "id": obj.id,
+            "user_id": obj.user_id,
+            "customer_name": obj.customer_name,
+            "customer_email": obj.customer_email,
+            "order_type": obj.order_type or "know",
+            "service_category": obj.service_category,
+            "service_categories": None,
+            "materials_url": obj.materials_url,
+            "reference_links": obj.reference_links,
+            "reference_files_url": obj.reference_files_url,
+            "description": obj.description,
+            "deadline_min": obj.deadline_min,
+            "deadline_max": obj.deadline_max,
+            "deadline_days": obj.deadline_days,
+            "price": obj.price,
+            "prepayment_percent": obj.prepayment_percent,
+            "contact_info": obj.contact_info,
+            "status": obj.status or "pending",
+            "created_at": obj.created_at,
+            "updated_at": obj.updated_at
+        }
+        
+        # Парсим service_categories из JSON
+        if obj.service_categories:
+            try:
+                data["service_categories"] = json.loads(obj.service_categories)
+            except:
+                data["service_categories"] = []
+        elif obj.service_category:
+            # Для обратной совместимости
+            data["service_categories"] = [obj.service_category]
+        
+        return cls(**data)
+
+    class Config:
+        from_attributes = True
 
 class OAuthSettingUpdate(BaseModel):
     """Схема для обновления настроек OAuth провайдера"""
