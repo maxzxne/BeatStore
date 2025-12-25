@@ -1855,35 +1855,59 @@ def create_service_order(order: ServiceOrderCreate,
 🔗 Проверьте заявку в админ-панели"""
                     
                     # Отправляем текстовое сообщение
-                    send_message(int(admin_chat_id), message)
+                    try:
+                        send_message(int(admin_chat_id), message)
+                        print(f"Telegram notification sent to admin (chat_id={admin_chat_id})")
+                    except Exception as msg_error:
+                        print(f"Error sending Telegram message: {msg_error}")
                     
-                    # Отправляем материалы (файлы)
-                    for i, mat_url in enumerate(materials_list, 1):
-                        try:
-                            # Определяем тип файла по расширению
-                            if mat_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
-                                send_audio(int(admin_chat_id), mat_url, caption=f"📎 Материал {i}/{len(materials_list)}")
-                            else:
-                                send_document(int(admin_chat_id), mat_url, caption=f"📎 Материал {i}/{len(materials_list)}")
+                    # Отправляем материалы (файлы) - в фоне, не блокируя ответ
+                    if materials_list:
+                        import threading
+                        def send_materials():
                             import time
-                            time.sleep(0.5)  # Небольшая задержка между отправками
-                        except Exception as e:
-                            print(f"Error sending material file {i}: {e}")
+                            for i, mat_url in enumerate(materials_list, 1):
+                                try:
+                                    # Формируем полный URL
+                                    full_url = mat_url
+                                    if mat_url.startswith("/"):
+                                        frontend_url = os.getenv("FRONTEND_URL", "https://beatstore-dpym.onrender.com")
+                                        full_url = f"{frontend_url.rstrip('/')}{mat_url}"
+                                    
+                                    # Определяем тип файла по расширению
+                                    if mat_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
+                                        send_audio(int(admin_chat_id), full_url, caption=f"📎 Материал {i}/{len(materials_list)}")
+                                    else:
+                                        send_document(int(admin_chat_id), full_url, caption=f"📎 Материал {i}/{len(materials_list)}")
+                                    time.sleep(0.5)  # Небольшая задержка между отправками
+                                except Exception as e:
+                                    print(f"Error sending material file {i}: {e}")
+                        
+                        threading.Thread(target=send_materials, daemon=True).start()
                     
-                    # Отправляем референсы-файлы
-                    for i, ref_url in enumerate(reference_files_list, 1):
-                        try:
-                            # Определяем тип файла по расширению
-                            if ref_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
-                                send_audio(int(admin_chat_id), ref_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
-                            else:
-                                send_document(int(admin_chat_id), ref_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
+                    # Отправляем референсы-файлы - в фоне
+                    if reference_files_list:
+                        import threading
+                        def send_references():
                             import time
-                            time.sleep(0.5)  # Небольшая задержка между отправками
-                        except Exception as e:
-                            print(f"Error sending reference file {i}: {e}")
-                    
-                    print(f"Telegram notification sent to admin (chat_id={admin_chat_id})")
+                            for i, ref_url in enumerate(reference_files_list, 1):
+                                try:
+                                    # Формируем полный URL
+                                    full_url = ref_url
+                                    if ref_url.startswith("/"):
+                                        frontend_url = os.getenv("FRONTEND_URL", "https://beatstore-dpym.onrender.com")
+                                        full_url = f"{frontend_url.rstrip('/')}{ref_url}"
+                                    
+                                    # Определяем тип файла по расширению
+                                    if ref_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
+                                        send_audio(int(admin_chat_id), full_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
+                                    else:
+                                        send_document(int(admin_chat_id), full_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
+                                    time.sleep(0.5)  # Небольшая задержка между отправками
+                                except Exception as e:
+                                    print(f"Error sending reference file {i}: {e}")
+                        
+                        threading.Thread(target=send_references, daemon=True).start()
             except Exception as e:
                 print(f"Error sending Telegram notification: {e}")
                 import traceback
