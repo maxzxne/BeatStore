@@ -5,7 +5,7 @@ import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Setting
 const Sidebar = () => {
   // Кастомная иконка рубля
   const RubleIcon = ({ className }) => (
-    <span className={className} style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>₽</span>
+    <span className={`${className} flex items-center justify-center`} style={{ fontSize: '1rem', fontWeight: 'bold', lineHeight: '1' }}>₽</span>
   );
 
   const navItems = [

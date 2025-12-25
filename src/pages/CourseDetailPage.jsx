@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
 import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle } from 'lucide-react';
-import ReactPlayer from 'react-player';
 
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
@@ -23,22 +22,12 @@ const CourseDetailPage = () => {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
-  const [videoReady, setVideoReady] = useState(false);
-  const playerRef = useRef(null);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     fetchCourse();
   }, [id, isAuthenticated]);
 
-  // Логируем URL видео для отладки
-  useEffect(() => {
-    if (course?.preview_video_url) {
-      const videoUrl = `${API_URL}${course.preview_video_url}`;
-      console.log('Video URL:', videoUrl);
-      console.log('API_URL:', API_URL);
-      console.log('preview_video_url:', course.preview_video_url);
-    }
-  }, [course]);
 
   const fetchCourse = async () => {
     try {
@@ -185,42 +174,27 @@ const CourseDetailPage = () => {
       e.preventDefault();
       e.stopPropagation();
     }
-    const newPlayingState = !videoPlaying;
-    setVideoPlaying(newPlayingState);
     
-    // Дополнительно убеждаемся, что ReactPlayer получил команду
-    if (playerRef.current) {
-      if (newPlayingState) {
-        // Небольшая задержка для гарантии обновления состояния
-        setTimeout(() => {
-          if (playerRef.current) {
-            const internalPlayer = playerRef.current.getInternalPlayer();
-            if (internalPlayer && internalPlayer.paused) {
-              internalPlayer.play().catch(err => {
-                console.error('Error playing video:', err);
-              });
-            }
-          }
-        }, 100);
+    if (videoRef.current) {
+      if (videoPlaying) {
+        videoRef.current.pause();
       } else {
-        const internalPlayer = playerRef.current.getInternalPlayer();
-        if (internalPlayer && !internalPlayer.paused) {
-          internalPlayer.pause();
-        }
+        videoRef.current.play().catch(err => {
+          console.error('Error playing video:', err);
+        });
       }
     }
   };
 
-  const handleProgress = (state) => {
-    setVideoCurrentTime(state.playedSeconds);
-    if (state.loadedSeconds > 0 && !videoReady) {
-      setVideoReady(true);
+  const handleVideoTimeUpdate = () => {
+    if (videoRef.current) {
+      setVideoCurrentTime(videoRef.current.currentTime);
     }
   };
 
-  const handleDuration = (duration) => {
-    if (duration && isFinite(duration) && duration > 0) {
-      setVideoDuration(duration);
+  const handleVideoLoadedMetadata = () => {
+    if (videoRef.current && videoRef.current.duration) {
+      setVideoDuration(videoRef.current.duration);
     }
   };
 
@@ -228,7 +202,7 @@ const CourseDetailPage = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!playerRef.current || !videoDuration) return;
+    if (!videoRef.current || !videoDuration) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -236,7 +210,7 @@ const CourseDetailPage = () => {
     const percentage = Math.max(0, Math.min(1, clickX / width));
     const newTime = percentage * videoDuration;
     
-    playerRef.current.seekTo(newTime, 'seconds');
+    videoRef.current.currentTime = newTime;
     setVideoCurrentTime(newTime);
   };
 
@@ -290,52 +264,24 @@ const CourseDetailPage = () => {
           {course.preview_video_url ? (
             <div className="space-y-3">
               <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-                <ReactPlayer
-                  ref={playerRef}
-                  url={`${API_URL}${course.preview_video_url}`}
-                  width="100%"
-                  height="100%"
-                  playing={videoPlaying}
+                <video
+                  ref={videoRef}
+                  src={`${API_URL}${course.preview_video_url}`}
+                  className="w-full h-full object-cover"
                   controls={false}
-                  playsinline
-                  pip={false}
-                  stopOnUnmount={false}
-                  onProgress={handleProgress}
-                  onDuration={handleDuration}
-                  onPlay={() => {
-                    console.log('Video playing');
-                    setVideoPlaying(true);
-                  }}
-                  onPause={() => {
-                    console.log('Video paused');
+                  playsInline
+                  preload="metadata"
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  onLoadedMetadata={handleVideoLoadedMetadata}
+                  onPlay={() => setVideoPlaying(true)}
+                  onPause={() => setVideoPlaying(false)}
+                  onEnded={() => {
                     setVideoPlaying(false);
+                    setVideoCurrentTime(0);
                   }}
-                  onStart={() => {
-                    console.log('Video started');
-                  }}
-                  onReady={() => {
-                    console.log('Video ready');
-                    setVideoReady(true);
-                  }}
-                  onBuffer={() => {
-                    console.log('Video buffering');
-                  }}
-                  onError={(error) => {
-                    console.error('Video error:', error);
-                    console.error('Video URL:', `${API_URL}${course.preview_video_url}`);
+                  onError={(e) => {
+                    console.error('Video error:', e);
                     showError('Ошибка загрузки видео');
-                  }}
-                  config={{
-                    file: {
-                      attributes: {
-                        preload: 'metadata',
-                        playsInline: true,
-                        controls: false
-                      },
-                      forceVideo: true,
-                      forceHLS: false,
-                      forceDASH: false
-                    }
                   }}
                 />
                 

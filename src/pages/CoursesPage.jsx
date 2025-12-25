@@ -185,12 +185,19 @@ const CoursesPage = () => {
                       muted
                       loop
                       playsInline
+                      preload="metadata"
                       onMouseEnter={(e) => {
-                        e.target.play();
+                        e.target.play().catch(() => {});
                       }}
                       onMouseLeave={(e) => {
                         e.target.pause();
                         e.target.currentTime = 0;
+                      }}
+                      onLoadedMetadata={(e) => {
+                        // Устанавливаем первый кадр как превью
+                        if (e.target) {
+                          e.target.currentTime = 0.1;
+                        }
                       }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity pointer-events-none">
