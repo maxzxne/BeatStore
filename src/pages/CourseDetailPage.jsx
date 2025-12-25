@@ -30,12 +30,25 @@ const CourseDetailPage = () => {
 
   // Отслеживаем длительность видео из ref
   useEffect(() => {
-    if (videoRef.current && videoRef.current.duration && isFinite(videoRef.current.duration) && videoRef.current.duration > 0) {
-      if (!videoDuration || videoDuration === 0) {
-        setVideoDuration(videoRef.current.duration);
-      }
+    const video = videoRef.current;
+    if (video) {
+      const checkDuration = () => {
+        if (video.duration && isFinite(video.duration) && video.duration > 0) {
+          if (!videoDuration || videoDuration === 0) {
+            setVideoDuration(video.duration);
+          }
+        }
+      };
+      
+      video.addEventListener('loadedmetadata', checkDuration);
+      video.addEventListener('durationchange', checkDuration);
+      
+      return () => {
+        video.removeEventListener('loadedmetadata', checkDuration);
+        video.removeEventListener('durationchange', checkDuration);
+      };
     }
-  }, [videoRef.current?.duration, videoDuration]);
+  }, [videoDuration]);
 
   const fetchCourse = async () => {
     try {
@@ -196,25 +209,44 @@ const CourseDetailPage = () => {
   const handleVideoTimeUpdate = (e) => {
     const video = e.target;
     if (video) {
-      setVideoCurrentTime(video.currentTime);
-      // Обновляем длительность, если она доступна
-      if (video.duration && isFinite(video.duration) && video.duration > 0) {
-        setVideoDuration(video.duration);
+      const currentTime = video.currentTime || 0;
+      setVideoCurrentTime(currentTime);
+      
+      // Обновляем длительность, если она доступна и валидна
+      const duration = video.duration;
+      if (duration && isFinite(duration) && duration > 0 && (!videoDuration || videoDuration === 0)) {
+        setVideoDuration(duration);
       }
     }
   };
 
   const handleVideoLoadedMetadata = (e) => {
     const video = e.target;
-    if (video && video.duration && isFinite(video.duration) && video.duration > 0) {
-      setVideoDuration(video.duration);
+    if (video) {
+      const duration = video.duration;
+      if (duration && isFinite(duration) && duration > 0) {
+        setVideoDuration(duration);
+      }
     }
   };
 
   const handleVideoCanPlay = (e) => {
     const video = e.target;
-    if (video && video.duration && isFinite(video.duration) && video.duration > 0) {
-      setVideoDuration(video.duration);
+    if (video) {
+      const duration = video.duration;
+      if (duration && isFinite(duration) && duration > 0) {
+        setVideoDuration(duration);
+      }
+    }
+  };
+  
+  const handleVideoLoadedData = (e) => {
+    const video = e.target;
+    if (video) {
+      const duration = video.duration;
+      if (duration && isFinite(duration) && duration > 0) {
+        setVideoDuration(duration);
+      }
     }
   };
 
@@ -222,18 +254,21 @@ const CourseDetailPage = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!videoRef.current) return;
-    
     const video = videoRef.current;
+    if (!video || video.readyState < 2) return;
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const width = rect.width;
     const percentage = Math.max(0, Math.min(1, clickX / width));
     
     // Используем длительность из состояния или из элемента video
-    const duration = videoDuration || (video.duration && isFinite(video.duration) ? video.duration : 0);
+    let duration = videoDuration;
+    if (!duration || duration === 0) {
+      duration = video.duration;
+    }
     
-    if (duration > 0) {
+    if (duration && isFinite(duration) && duration > 0) {
       const newTime = percentage * duration;
       video.currentTime = newTime;
       setVideoCurrentTime(newTime);
@@ -299,12 +334,17 @@ const CourseDetailPage = () => {
                   preload="metadata"
                   onTimeUpdate={handleVideoTimeUpdate}
                   onLoadedMetadata={handleVideoLoadedMetadata}
+                  onLoadedData={handleVideoLoadedData}
                   onCanPlay={handleVideoCanPlay}
                   onPlay={() => setVideoPlaying(true)}
                   onPause={() => setVideoPlaying(false)}
                   onEnded={() => {
                     setVideoPlaying(false);
                     setVideoCurrentTime(0);
+                  }}
+                  onError={(e) => {
+                    console.error('Video error:', e);
+                    showError('Ошибка загрузки видео');
                   }}
                 />
                 {!videoPlaying && (
@@ -318,45 +358,47 @@ const CourseDetailPage = () => {
                   </button>
                 )}
                 
-                {/* Кастомные контролы видео */}
-                {videoPlaying && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={toggleVideo}
-                        className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+                {/* Кастомные контролы видео - показываем всегда */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={toggleVideo}
+                      className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+                    >
+                      {videoPlaying ? (
+                        <Pause className="h-5 w-5 text-white" />
+                      ) : (
+                        <Play className="h-5 w-5 text-white" />
+                      )}
+                    </button>
+                    
+                    <div className="flex-1">
+                      {/* Прогресс-бар */}
+                      <div
+                        className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-1 relative"
+                        onClick={handleVideoSeek}
                       >
-                        {videoPlaying ? (
-                          <Pause className="h-5 w-5 text-white" />
-                        ) : (
-                          <Play className="h-5 w-5 text-white" />
-                        )}
-                      </button>
-                      
-                      <div className="flex-1">
-                        {/* Прогресс-бар */}
                         <div
-                          className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-1 relative"
-                          onClick={handleVideoSeek}
-                        >
-                          <div
-                            className="h-full bg-white rounded-full transition-all"
-                            style={{ 
-                              width: `${videoDuration && videoDuration > 0 
-                                ? Math.min((videoCurrentTime / videoDuration) * 100, 100) 
-                                : 0}%` 
-                            }}
-                          />
-                        </div>
-                        {/* Время */}
-                        <div className="flex justify-between text-xs text-white">
-                          <span>{formatTime(videoCurrentTime)}</span>
-                          <span>{formatTime(videoDuration || videoRef.current?.duration || 0)}</span>
-                        </div>
+                          className="h-full bg-white rounded-full transition-all"
+                          style={{ 
+                            width: `${(() => {
+                              const duration = videoDuration || (videoRef.current?.duration || 0);
+                              if (duration && duration > 0) {
+                                return Math.min((videoCurrentTime / duration) * 100, 100);
+                              }
+                              return 0;
+                            })()}%` 
+                          }}
+                        />
+                      </div>
+                      {/* Время */}
+                      <div className="flex justify-between text-xs text-white">
+                        <span>{formatTime(videoCurrentTime)}</span>
+                        <span>{formatTime(videoDuration || (videoRef.current?.duration || 0))}</span>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           ) : (

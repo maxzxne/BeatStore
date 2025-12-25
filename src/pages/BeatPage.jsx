@@ -170,37 +170,13 @@ const BeatPage = () => {
       actualPrice = beat.price_exclusive;
     }
     
-    // Если бит бесплатный, покупаем сразу
-    if (actualPrice === 0) {
-      try {
-        const formData = new FormData();
-        formData.append('purchase_type', selectedPurchaseType);
-        
-        await api.post(`/beats/${id}/purchase`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        
-        // Обновляем статус после покупки
-        await checkBeatStatus();
-        setIsInCart(false);
-        showSuccess(`Бит успешно приобретен как ${selectedPurchaseType.toUpperCase()}!`);
-        setTimeout(() => {
-          navigate('/success');
-        }, 1500);
-      } catch (error) {
-        console.error('Error purchasing beat:', error);
-        const errorMessage = error.response?.data?.detail || 'Ошибка при покупке';
-        showError(errorMessage);
-      }
-    } else {
-      // Для платных битов всегда переходим на тестовую страницу оплаты
-      const params = new URLSearchParams();
-      params.append('type', 'beat');
-      params.append('item_id', id.toString());
-      params.append('purchase_type', selectedPurchaseType);
-      params.append('total_price', actualPrice.toString());
-      navigate(`/test-payment?${params.toString()}`);
-    }
+    // Всегда переходим на тестовую страницу оплаты (даже для бесплатных)
+    const params = new URLSearchParams();
+    params.append('type', 'beat');
+    params.append('item_id', id.toString());
+    params.append('purchase_type', selectedPurchaseType);
+    params.append('total_price', actualPrice.toString());
+    navigate(`/test-payment?${params.toString()}`);
   };
 
   const handleDownload = async (downloadType = null) => {
@@ -387,64 +363,65 @@ const BeatPage = () => {
             <div className="card-footer">
               {/* Кнопки покупки/скачивания */}
               {isPurchased ? (
-                <div className="space-y-2">
-                    {/* Кнопки скачивания для каждого типа */}
-                    <div className="flex gap-2">
-                      {purchasedTypes.includes('wav') && (
-                        <button
-                          onClick={() => handleDownload('wav')}
-                          className="btn btn-outline btn-sm flex-1 h-9"
-                          title="Скачать WAV"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          WAV
-                        </button>
-                      )}
-                      {purchasedTypes.includes('mp3') && (
-                        <button
-                          onClick={() => handleDownload('mp3')}
-                          className="btn btn-outline btn-sm flex-1 h-9"
-                          title="Скачать MP3"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          MP3
-                        </button>
-                      )}
-                      {purchasedTypes.includes('exclusive') && (
-                        <button
-                          onClick={() => handleDownload('exclusive')}
-                          className="btn btn-outline btn-sm flex-1 h-9"
-                          title="Скачать эксклюзив"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          ZIP
-                        </button>
-                      )}
-                    </div>
-                    {/* Кнопка плей - компактная */}
-                    <button
-                      onClick={async () => {
-                        if (isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id)) {
-                          pauseTrack();
-                        } else {
-                          const fullUrl = `${API_URL}${beat.demo_url}`;
-                          playTrack(beat.id, fullUrl, beat.title);
-                        }
-                      }}
-                      className="btn btn-primary btn-sm w-full h-9"
-                    >
-                      {isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id) ? (
-                        <>
-                          <Pause className="h-4 w-4 mr-2" />
-                          Пауза
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-4 w-4 mr-2" />
-                          Плей
-                        </>
-                      )}
-                    </button>
+                <div className="flex items-center justify-between w-full">
+                  {/* Слева - кнопки скачивания без очертаний */}
+                  <div className="flex gap-2">
+                    {purchasedTypes.includes('wav') && (
+                      <button
+                        onClick={() => handleDownload('wav')}
+                        className="border-none bg-transparent text-black hover:text-gray-600 transition-colors flex items-center gap-1 px-2 py-1"
+                        title="Скачать WAV"
+                      >
+                        <Download className="h-4 w-4" />
+                        WAV
+                      </button>
+                    )}
+                    {purchasedTypes.includes('mp3') && (
+                      <button
+                        onClick={() => handleDownload('mp3')}
+                        className="border-none bg-transparent text-black hover:text-gray-600 transition-colors flex items-center gap-1 px-2 py-1"
+                        title="Скачать MP3"
+                      >
+                        <Download className="h-4 w-4" />
+                        MP3
+                      </button>
+                    )}
+                    {purchasedTypes.includes('exclusive') && (
+                      <button
+                        onClick={() => handleDownload('exclusive')}
+                        className="border-none bg-transparent text-black hover:text-gray-600 transition-colors flex items-center gap-1 px-2 py-1"
+                        title="Скачать эксклюзив"
+                      >
+                        <Download className="h-4 w-4" />
+                        ZIP
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Справа - кнопка плей */}
+                  <button
+                    onClick={async () => {
+                      if (isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id)) {
+                        pauseTrack();
+                      } else {
+                        const fullUrl = `${API_URL}${beat.demo_url}`;
+                        playTrack(beat.id, fullUrl, beat.title);
+                      }
+                    }}
+                    className="btn btn-primary btn-sm h-9 ml-auto"
+                  >
+                    {isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id) ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-2" />
+                        Пауза
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Плей
+                      </>
+                    )}
+                  </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between w-full">
