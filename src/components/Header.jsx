@@ -15,7 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, ShoppingCart, Heart, LogOut, Music, Music2, ShoppingBag, GraduationCap, Settings, Menu, X } from 'lucide-react';
+import { User, ShoppingCart, Heart, LogOut, Music, Settings } from 'lucide-react';
 import { api } from '../utils/api';
 
 /**
@@ -107,219 +107,205 @@ const Header = ({ admin = false }) => {
     <header className="bg-white border-b border-gray-300 sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="text-xl sm:text-2xl font-bold text-black" onClick={() => setMobileMenuOpen(false)}>
-            XWinner.beats.please
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-4">
-            {/* Основные разделы */}
-            <Link
-              to="/"
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                location.pathname === '/' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
-              }`}
-            >
-              Каталог
+          {/* Logo and Desktop Navigation (left side) */}
+          <div className="flex items-center space-x-6">
+            <Link to="/" className="text-xl sm:text-2xl font-bold text-black" onClick={() => setMobileMenuOpen(false)}>
+              XWinner.beats.please
             </Link>
-            <Link
-              to="/courses"
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                location.pathname === '/courses' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
-              }`}
-            >
-              Обучение
-            </Link>
-            <Link
-              to="/order"
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
-              }`}
-            >
-              Заказ
-            </Link>
-            
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to="/favorites"
-                  className="p-2 text-gray-600 hover:text-black transition-colors relative"
-                  title="Избранное"
-                >
-                  <Heart className="h-5 w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
-                  {favoritesCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {favoritesCount}
-                    </span>
-                  )}
-                </Link>
-                <Link
-                  to="/cart"
-                  className="p-2 text-gray-600 hover:text-black transition-colors relative"
-                  title="Корзина"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-                <Link
-                  to="/purchases"
-                  className="p-2 text-gray-600 hover:text-black transition-colors"
-                  title="Покупки"
-                >
-                  <Music className="h-5 w-5" />
-                </Link>
-                <Link
-                  to="/profile"
-                  className="p-2 text-gray-600 hover:text-black transition-colors"
-                  title="Профиль"
-                >
-                  <User className="h-5 w-5" />
-                </Link>
-                {/* Кнопка админки для админов */}
-                {(user?.is_admin || isAdminAuthenticated) && (
-                  <Link
-                    to="/admin"
-                    className="btn btn-primary btn-sm flex items-center gap-2"
-                    title="Админ-панель"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span className="hidden xl:inline">Админка</span>
-                  </Link>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="btn btn-outline btn-sm"
-                >
-                  Выйти
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className="btn btn-outline btn-sm">
-                  Войти
-                </Link>
-                <Link to="/register" className="btn btn-primary btn-sm">
-                  Регистрация
-                </Link>
-              </>
-            )}
-          </nav>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-gray-600 hover:text-black transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
-
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <nav className="lg:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
-            <div className="flex flex-col space-y-3">
-              {/* Основные разделы */}
+            {/* Desktop Navigation - moved to left */}
+            <nav className="hidden lg:flex items-center space-x-4">
               <Link
                 to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`px-3 py-2 text-base font-medium transition-colors ${
-                  location.pathname === '/' ? 'text-black border-l-4 border-black' : 'text-gray-600'
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
                 }`}
               >
-                Каталог
+                Магазин
               </Link>
               <Link
                 to="/courses"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`px-3 py-2 text-base font-medium transition-colors ${
-                  location.pathname === '/courses' ? 'text-black border-l-4 border-black' : 'text-gray-600'
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/courses' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
                 }`}
               >
-                Обучение
+                Академия
               </Link>
               <Link
                 to="/order"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`px-3 py-2 text-base font-medium transition-colors ${
-                  location.pathname === '/order' ? 'text-black border-l-4 border-black' : 'text-gray-600'
+                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
                 }`}
               >
-                Заказ
+                Заказ битов
               </Link>
-              
+            </nav>
+          </div>
+
+          {/* Right side - icons and auth */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Desktop - icons and buttons */}
+            <div className="hidden lg:flex items-center space-x-2">
               {isAuthenticated ? (
                 <>
                   <Link
                     to="/favorites"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-base font-medium text-gray-600 flex items-center gap-2"
+                    className="p-2 text-gray-600 hover:text-black transition-colors relative"
+                    title="Избранное"
                   >
                     <Heart className="h-5 w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
-                    Избранное {favoritesCount > 0 && `(${favoritesCount})`}
+                    {favoritesCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {favoritesCount}
+                      </span>
+                    )}
                   </Link>
                   <Link
                     to="/cart"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-base font-medium text-gray-600 flex items-center gap-2"
+                    className="p-2 text-gray-600 hover:text-black transition-colors relative"
+                    title="Корзина"
                   >
                     <ShoppingCart className="h-5 w-5" />
-                    Корзина {cartCount > 0 && `(${cartCount})`}
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cartCount}
+                      </span>
+                    )}
                   </Link>
                   <Link
                     to="/purchases"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-base font-medium text-gray-600 flex items-center gap-2"
+                    className="p-2 text-gray-600 hover:text-black transition-colors"
+                    title="Покупки"
                   >
                     <Music className="h-5 w-5" />
-                    Покупки
                   </Link>
                   <Link
                     to="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-3 py-2 text-base font-medium text-gray-600 flex items-center gap-2"
+                    className="btn btn-outline btn-sm flex items-center gap-2"
+                    title="Профиль"
                   >
-                    <User className="h-5 w-5" />
-                    Профиль
+                    <User className="h-4 w-4" />
+                    <span className="hidden xl:inline">Профиль</span>
                   </Link>
                   {/* Кнопка админки для админов */}
                   {(user?.is_admin || isAdminAuthenticated) && (
                     <Link
                       to="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="btn btn-primary btn-sm flex items-center gap-2 w-full justify-center"
+                      className="btn btn-primary btn-sm flex items-center gap-2"
+                      title="Админ-панель"
                     >
                       <Settings className="h-4 w-4" />
-                      Админка
+                      <span className="hidden xl:inline">Админка</span>
                     </Link>
                   )}
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="btn btn-outline btn-sm w-full"
-                  >
-                    Выйти
-                  </button>
                 </>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="btn btn-outline btn-sm w-full text-center">
+                  <Link to="/login" className="btn btn-outline btn-sm">
                     Войти
                   </Link>
-                  <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="btn btn-primary btn-sm w-full text-center">
+                  <Link to="/register" className="btn btn-primary btn-sm">
                     Регистрация
                   </Link>
                 </>
               )}
             </div>
-          </nav>
+
+            {/* Mobile - navigation and auth button */}
+            <div className="lg:hidden flex items-center space-x-2">
+              {/* Mobile Navigation - always visible */}
+              <nav className="flex items-center space-x-2 sm:space-x-3">
+                <Link
+                  to="/"
+                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+                    location.pathname === '/' ? 'text-black border-b-2 border-black' : 'text-gray-600'
+                  }`}
+                >
+                  Магазин
+                </Link>
+                <Link
+                  to="/courses"
+                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+                    location.pathname === '/courses' ? 'text-black border-b-2 border-black' : 'text-gray-600'
+                  }`}
+                >
+                  Академия
+                </Link>
+                <Link
+                  to="/order"
+                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+                    location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600'
+                  }`}
+                >
+                  Заказ битов
+                </Link>
+              </nav>
+
+              {/* Mobile Auth Button */}
+              {isAuthenticated ? (
+                <Link
+                  to="/profile"
+                  className="btn btn-outline btn-sm flex items-center gap-1.5 px-2 sm:px-3"
+                  title="Профиль"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs">Профиль</span>
+                </Link>
+              ) : (
+                <Link to="/login" className="btn btn-outline btn-sm px-2 sm:px-3 text-xs sm:text-sm">
+                  Войти
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile - Additional menu items (if authenticated) */}
+        {isAuthenticated && (
+          <div className="lg:hidden mt-3 pt-3 border-t border-gray-200 flex items-center justify-center space-x-4">
+            <Link
+              to="/favorites"
+              className="p-2 text-gray-600 hover:text-black transition-colors relative"
+              title="Избранное"
+            >
+              <Heart className="h-5 w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
+              {favoritesCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {favoritesCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              to="/cart"
+              className="p-2 text-gray-600 hover:text-black transition-colors relative"
+              title="Корзина"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              to="/purchases"
+              className="p-2 text-gray-600 hover:text-black transition-colors"
+              title="Покупки"
+            >
+              <Music className="h-5 w-5" />
+            </Link>
+            {/* Кнопка админки для админов */}
+            {(user?.is_admin || isAdminAuthenticated) && (
+              <Link
+                to="/admin"
+                className="btn btn-primary btn-sm flex items-center gap-2"
+                title="Админ-панель"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="text-xs">Админка</span>
+              </Link>
+            )}
+          </div>
         )}
       </div>
     </header>
