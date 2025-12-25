@@ -293,14 +293,6 @@ async def log_errors_middleware(request: Request, call_next):
             finally:
                 if db:
                     db.close()
-            except Exception as e:
-                print(f"Ошибка при логировании ошибки: {e}")
-                try:
-                    if db:
-                        db.rollback()
-                        db.close()
-                except:
-                    pass
         
         return response
     except Exception as e:
