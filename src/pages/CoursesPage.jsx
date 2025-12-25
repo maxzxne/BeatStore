@@ -222,12 +222,12 @@ const CoursesPage = () => {
                 </div>
                 
                 <div className="flex items-center justify-between gap-2">
-                  <div className="btn btn-primary btn-sm flex-1 h-10 flex items-center justify-center">
+                  <span className="text-gray-600 hover:text-black transition-colors text-sm font-medium">
                     Подробнее
-                  </div>
+                  </span>
                   
                   {isAuthenticated && (
-                    <>
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -255,7 +255,7 @@ const CoursesPage = () => {
                       >
                         <ShoppingCart className="h-4 w-4" fill={course.is_in_cart ? 'currentColor' : 'none'} />
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
