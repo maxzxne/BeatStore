@@ -22,7 +22,7 @@ const CourseDetailPage = () => {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
-  const videoRef = React.useRef(null);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     fetchCourse();
@@ -169,7 +169,19 @@ const CourseDetailPage = () => {
   };
 
   const toggleVideo = () => {
-    setVideoPlaying(!videoPlaying);
+    const newPlayingState = !videoPlaying;
+    setVideoPlaying(newPlayingState);
+    
+    if (videoRef.current) {
+      if (newPlayingState) {
+        videoRef.current.play().catch(error => {
+          console.error('Error playing video:', error);
+          setVideoPlaying(false);
+        });
+      } else {
+        videoRef.current.pause();
+      }
+    }
   };
 
   const handleVideoTimeUpdate = (e) => {
@@ -258,11 +270,11 @@ const CourseDetailPage = () => {
                   src={`${API_URL}${course.preview_video_url}`}
                   className="w-full h-full object-cover"
                   controls={false}
-                  autoPlay={videoPlaying}
-                  muted={!videoPlaying}
                   playsInline
                   onTimeUpdate={handleVideoTimeUpdate}
                   onLoadedMetadata={handleVideoLoadedMetadata}
+                  onPlay={() => setVideoPlaying(true)}
+                  onPause={() => setVideoPlaying(false)}
                   onEnded={() => {
                     setVideoPlaying(false);
                     setVideoCurrentTime(0);

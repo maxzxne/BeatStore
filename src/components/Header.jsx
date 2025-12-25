@@ -181,11 +181,10 @@ const Header = ({ admin = false }) => {
                   </Link>
                   <Link
                     to="/profile"
-                    className="btn btn-outline btn-sm flex items-center gap-2"
+                    className="p-2 text-gray-600 hover:text-black transition-colors"
                     title="Профиль"
                   >
-                    <User className="h-4 w-4" />
-                    <span className="hidden xl:inline">Профиль</span>
+                    <User className="h-5 w-5" />
                   </Link>
                   {/* Кнопка админки для админов */}
                   {(user?.is_admin || isAdminAuthenticated) && (
@@ -200,7 +199,7 @@ const Header = ({ admin = false }) => {
                   )}
                 </>
               ) : (
-                <Link to="/login" className="btn btn-outline btn-sm">
+                <Link to="/login" className="text-gray-600 hover:text-black transition-colors font-medium">
                   Войти
                 </Link>
               )}
@@ -259,14 +258,13 @@ const Header = ({ admin = false }) => {
               {isAuthenticated ? (
                 <Link
                   to="/profile"
-                  className="btn btn-outline btn-sm flex items-center gap-1.5 px-2 sm:px-3"
+                  className="p-2 text-gray-600 hover:text-black transition-colors"
                   title="Профиль"
                 >
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline text-xs">Профиль</span>
+                  <User className="h-5 w-5" />
                 </Link>
               ) : (
-                <Link to="/login" className="btn btn-outline btn-sm px-2 sm:px-3 text-xs sm:text-sm">
+                <Link to="/login" className="text-gray-600 hover:text-black transition-colors font-medium text-sm sm:text-base">
                   Войти
                 </Link>
               )}

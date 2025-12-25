@@ -64,6 +64,9 @@ const AdminOAuthSettings = () => {
       
       // Обновляем настройки с сервера для синхронизации
       await fetchSettings();
+      
+      // Принудительно обновляем настройки на всех открытых страницах через событие
+      window.dispatchEvent(new CustomEvent('oauthSettingsUpdated'));
     } catch (error) {
       console.error('Error updating OAuth setting:', error);
       // Откатываем изменения при ошибке

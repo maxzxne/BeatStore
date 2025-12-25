@@ -25,14 +25,8 @@ const RegisterPage = () => {
       try {
         setOauthSettingsLoading(true);
         const response = await api.get('/oauth-settings');
-        // Преобразуем массив в объект для удобства
-        const settingsObj = {};
-        response.data.forEach(setting => {
-          settingsObj[setting.provider] = {
-            is_hidden: setting.is_hidden,
-            is_disabled: setting.is_disabled
-          };
-        });
+        // Backend возвращает объект напрямую: {provider: {is_hidden, is_disabled}}
+        const settingsObj = response.data || {};
         setOauthSettings(settingsObj);
       } catch (error) {
         console.error('Error fetching OAuth settings:', error);
@@ -49,14 +43,22 @@ const RegisterPage = () => {
     };
     fetchOAuthSettings();
     
-    // Обновляем настройки каждые 30 секунд и при фокусе окна
-    const interval = setInterval(fetchOAuthSettings, 30000);
+    // Обновляем настройки каждые 5 секунд и при фокусе окна
+    const interval = setInterval(fetchOAuthSettings, 5000);
     const handleFocus = () => fetchOAuthSettings();
     window.addEventListener('focus', handleFocus);
+    
+    // Слушаем событие обновления настроек из админки
+    const handleSettingsUpdate = () => {
+      console.log('OAuth settings update event received');
+      fetchOAuthSettings();
+    };
+    window.addEventListener('oauthSettingsUpdated', handleSettingsUpdate);
     
     return () => {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('oauthSettingsUpdated', handleSettingsUpdate);
     };
   }, []);
   
