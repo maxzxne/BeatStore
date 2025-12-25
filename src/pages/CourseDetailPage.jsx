@@ -30,6 +30,15 @@ const CourseDetailPage = () => {
     fetchCourse();
   }, [id, isAuthenticated]);
 
+  // Логируем URL видео для отладки
+  useEffect(() => {
+    if (course?.preview_video_url) {
+      const videoUrl = `${API_URL}${course.preview_video_url}`;
+      console.log('Video URL:', videoUrl);
+      console.log('API_URL:', API_URL);
+      console.log('preview_video_url:', course.preview_video_url);
+    }
+  }, [course]);
 
   const fetchCourse = async () => {
     try {
@@ -289,30 +298,43 @@ const CourseDetailPage = () => {
                   playing={videoPlaying}
                   controls={false}
                   playsinline
+                  pip={false}
+                  stopOnUnmount={false}
                   onProgress={handleProgress}
                   onDuration={handleDuration}
-                  onPlay={() => setVideoPlaying(true)}
-                  onPause={() => setVideoPlaying(false)}
-                  onEnded={() => {
+                  onPlay={() => {
+                    console.log('Video playing');
+                    setVideoPlaying(true);
+                  }}
+                  onPause={() => {
+                    console.log('Video paused');
                     setVideoPlaying(false);
-                    setVideoCurrentTime(0);
+                  }}
+                  onStart={() => {
+                    console.log('Video started');
+                  }}
+                  onReady={() => {
+                    console.log('Video ready');
+                    setVideoReady(true);
+                  }}
+                  onBuffer={() => {
+                    console.log('Video buffering');
                   }}
                   onError={(error) => {
                     console.error('Video error:', error);
+                    console.error('Video URL:', `${API_URL}${course.preview_video_url}`);
                     showError('Ошибка загрузки видео');
-                  }}
-                  onReady={() => {
-                    setVideoReady(true);
-                    const internalPlayer = playerRef.current?.getInternalPlayer();
-                    if (internalPlayer && internalPlayer.duration) {
-                      setVideoDuration(internalPlayer.duration);
-                    }
                   }}
                   config={{
                     file: {
                       attributes: {
-                        preload: 'metadata'
-                      }
+                        preload: 'metadata',
+                        playsInline: true,
+                        controls: false
+                      },
+                      forceVideo: true,
+                      forceHLS: false,
+                      forceDASH: false
                     }
                   }}
                 />
