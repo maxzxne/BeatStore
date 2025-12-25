@@ -270,7 +270,7 @@ const BeatPage = () => {
     <div className="container mx-auto px-6 py-8">
       <button
         onClick={() => navigate(-1)}
-        className="btn btn-outline btn-sm mb-6"
+        className="flex items-center text-gray-600 hover:text-black mb-6 transition-colors border-none bg-transparent p-0"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Назад
@@ -447,56 +447,46 @@ const BeatPage = () => {
                     </button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
                   {/* Слева - текст "Купить в один клик" */}
                   <span 
-                    className="text-gray-600 hover:text-black transition-colors text-sm font-medium cursor-pointer block" 
+                    className="text-gray-600 hover:text-black transition-colors text-sm font-medium cursor-pointer" 
                     onClick={handlePurchase}
                   >
                     Купить в один клик
                   </span>
                   
-                  {/* Справа - кнопки избранного, корзины и покупки */}
-                  <div className="flex items-center justify-end gap-2">
-                    {isAuthenticated && (
-                      <>
-                        <button
-                          onClick={handleFavorite}
-                          className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${
-                            isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
-                          }`}
-                          title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
-                        >
-                          <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
-                        </button>
-                        
-                        <button
-                          onClick={handleAddToCart}
-                          className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors relative ${
-                            isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
-                          }`}
-                          title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
-                        >
-                          {isInCart ? (
-                            <div className="relative">
-                              <ShoppingCart className="h-5 w-5" fill="currentColor" />
-                              <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
-                            </div>
-                          ) : (
-                            <ShoppingCart className="h-5 w-5" fill="none" />
-                          )}
-                        </button>
-                      </>
-                    )}
-                    
-                    <button
-                      onClick={handlePurchase}
-                      className="btn btn-primary h-12 px-4 text-sm"
-                      disabled={!isAuthenticated || (!beat.wav_url && !beat.mp3_url && !beat.exclusive_url)}
-                    >
-                      Купить
-                    </button>
-                  </div>
+                  {/* Справа - кнопки избранного и корзины */}
+                  {isAuthenticated && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleFavorite}
+                        className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${
+                          isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                        }`}
+                        title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                      >
+                        <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                      </button>
+                      
+                      <button
+                        onClick={handleAddToCart}
+                        className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors relative ${
+                          isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                        }`}
+                        title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
+                      >
+                        {isInCart ? (
+                          <div className="relative">
+                            <ShoppingCart className="h-5 w-5" fill="currentColor" />
+                            <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
+                          </div>
+                        ) : (
+                          <ShoppingCart className="h-5 w-5" fill="none" />
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

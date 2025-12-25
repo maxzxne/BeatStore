@@ -188,9 +188,11 @@ const CourseDetailPage = () => {
     const video = e.target;
     if (video) {
       setVideoCurrentTime(video.currentTime);
-      // Обновляем длительность, если она еще не установлена
-      if (video.duration && !isNaN(video.duration) && isFinite(video.duration) && (!videoDuration || videoDuration === 0)) {
-        setVideoDuration(video.duration);
+      // Обновляем длительность, если она еще не установлена или равна 0
+      if (video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
+        if (!videoDuration || videoDuration === 0 || isNaN(videoDuration)) {
+          setVideoDuration(video.duration);
+        }
       }
     }
   };
@@ -198,16 +200,20 @@ const CourseDetailPage = () => {
   const handleVideoLoadedMetadata = (e) => {
     const video = e.target;
     console.log('Video metadata loaded:', video.duration);
-    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
       setVideoDuration(video.duration);
+      console.log('Set duration from metadata:', video.duration);
     }
   };
 
   const handleVideoCanPlay = (e) => {
     const video = e.target;
     console.log('Video can play:', video.duration);
-    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration) && !videoDuration) {
-      setVideoDuration(video.duration);
+    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
+      if (!videoDuration || videoDuration === 0 || isNaN(videoDuration)) {
+        setVideoDuration(video.duration);
+        console.log('Set duration from canplay:', video.duration);
+      }
     }
   };
 
@@ -217,27 +223,30 @@ const CourseDetailPage = () => {
     
     if (!videoRef.current) return;
     
+    const video = videoRef.current;
+    
+    // Получаем длительность из видео элемента
+    let duration = videoDuration;
+    if (!duration || duration === 0 || isNaN(duration)) {
+      if (video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
+        duration = video.duration;
+        setVideoDuration(duration);
+      } else {
+        console.log('Cannot seek: no duration available', video.duration);
+        return; // Не можем перематывать без длительности
+      }
+    }
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const width = rect.width;
     const percentage = Math.max(0, Math.min(1, clickX / width));
     
-    // Получаем длительность из видео элемента
-    const video = videoRef.current;
-    let duration = videoDuration;
-    if (!duration || duration === 0) {
-      if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
-        duration = video.duration;
-        setVideoDuration(duration);
-      } else {
-        return; // Не можем перематывать без длительности
-      }
-    }
-    
     if (duration && duration > 0) {
       const newTime = percentage * duration;
       video.currentTime = Math.max(0, Math.min(newTime, duration));
       setVideoCurrentTime(video.currentTime);
+      console.log('Seeked to:', newTime, 'of', duration);
     }
   };
 
@@ -278,7 +287,7 @@ const CourseDetailPage = () => {
     <div className="container mx-auto px-6 py-8">
       <button
         onClick={() => navigate('/courses')}
-        className="flex items-center text-gray-600 hover:text-black mb-6 transition-colors"
+        className="flex items-center text-gray-600 hover:text-black mb-6 transition-colors border-none bg-transparent p-0"
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
         Назад к курсам
@@ -352,7 +361,7 @@ const CourseDetailPage = () => {
                         {/* Время */}
                         <div className="flex justify-between text-xs text-white">
                           <span>{formatTime(videoCurrentTime)}</span>
-                          <span>{formatTime(videoDuration || (videoRef.current?.duration || 0) || 0)}</span>
+                          <span>{formatTime(videoDuration || (videoRef.current?.duration || 0))}</span>
                         </div>
                       </div>
                     </div>

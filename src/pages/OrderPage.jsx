@@ -350,7 +350,7 @@ const OrderPage = () => {
         <div className="mb-8">
           <button
             onClick={() => setOrderType(null)}
-            className="text-gray-600 hover:text-black mb-4 flex items-center"
+            className="text-gray-600 hover:text-black mb-4 flex items-center border-none bg-transparent p-0"
           >
             ← Назад к выбору типа заказа
           </button>
