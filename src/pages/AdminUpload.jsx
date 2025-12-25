@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { Upload, Music, Image, FileAudio, Video, GraduationCap } from 'lucide-react';
+import { Upload, Music, Image, FileAudio, Video, GraduationCap, X, CheckCircle } from 'lucide-react';
 
 const AdminUpload = () => {
   const [activeTab, setActiveTab] = useState('beat'); // 'beat' или 'course'
@@ -69,6 +69,52 @@ const AdminUpload = () => {
       ...prev,
       [name]: files[0] || null
     }));
+  };
+
+  const handleFileDrop = (e, name, fileType) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      if (fileType === 'beat') {
+        setBeatFiles(prev => ({
+          ...prev,
+          [name]: file
+        }));
+      } else {
+        setCourseFiles(prev => ({
+          ...prev,
+          [name]: file
+        }));
+      }
+    }
+  };
+
+  const handleFileRemove = (name, fileType) => {
+    if (fileType === 'beat') {
+      setBeatFiles(prev => ({
+        ...prev,
+        [name]: null
+      }));
+      // Сброс input
+      const input = document.getElementById(name);
+      if (input) input.value = '';
+    } else {
+      setCourseFiles(prev => ({
+        ...prev,
+        [name]: null
+      }));
+      const input = document.getElementById(name);
+      if (input) input.value = '';
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
   const handleBeatSubmit = async (e) => {
@@ -401,19 +447,56 @@ const AdminUpload = () => {
                 <label htmlFor="beat_demo_file" className="block text-sm font-medium text-black mb-2">
                   Демо файл (для прослушивания) *
                 </label>
-                <div className="flex items-center space-x-3">
-                  <FileAudio className="h-5 w-5 text-dark-400" />
+                <div
+                  onDrop={(e) => handleFileDrop(e, 'demo_file', 'beat')}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="relative"
+                >
                   <input
                     type="file"
                     id="beat_demo_file"
-                      accept="audio/*"
-                      name="demo_file"
+                    accept="audio/*"
+                    name="demo_file"
                     onChange={handleBeatFileChange}
-                    className="input flex-1"
+                    className="hidden"
                     required
                   />
+                  {beatFiles.demo_file ? (
+                    <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="bg-green-100 rounded-full p-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-black truncate">{beatFiles.demo_file.name}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(beatFiles.demo_file.size)}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove('demo_file', 'beat')}
+                        className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="beat_demo_file"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
+                        </p>
+                        <p className="text-xs text-gray-400">AUDIO файлы</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
-                <p className="text-xs text-dark-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   Короткая превью версия вашего бита
                 </p>
               </div>
@@ -422,19 +505,56 @@ const AdminUpload = () => {
                 <label htmlFor="beat_wav_file" className="block text-sm font-medium text-black mb-2">
                   WAV файл *
                 </label>
-                <div className="flex items-center space-x-3">
-                  <FileAudio className="h-5 w-5 text-dark-400" />
+                <div
+                  onDrop={(e) => handleFileDrop(e, 'wav_file', 'beat')}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="relative"
+                >
                   <input
                     type="file"
                     id="beat_wav_file"
                     name="wav_file"
                     accept="audio/wav,audio/*"
                     onChange={handleBeatFileChange}
-                    className="input flex-1"
+                    className="hidden"
                     required
                   />
+                  {beatFiles.wav_file ? (
+                    <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="bg-green-100 rounded-full p-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-black truncate">{beatFiles.wav_file.name}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(beatFiles.wav_file.size)}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove('wav_file', 'beat')}
+                        className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="beat_wav_file"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
+                        </p>
+                        <p className="text-xs text-gray-400">WAV файлы</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
-                <p className="text-xs text-dark-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   WAV версия для покупки
                 </p>
               </div>
@@ -443,19 +563,56 @@ const AdminUpload = () => {
                 <label htmlFor="beat_mp3_file" className="block text-sm font-medium text-black mb-2">
                   MP3 файл *
                 </label>
-                <div className="flex items-center space-x-3">
-                  <FileAudio className="h-5 w-5 text-dark-400" />
+                <div
+                  onDrop={(e) => handleFileDrop(e, 'mp3_file', 'beat')}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="relative"
+                >
                   <input
                     type="file"
                     id="beat_mp3_file"
                     name="mp3_file"
                     accept="audio/mpeg,audio/mp3,audio/*"
                     onChange={handleBeatFileChange}
-                    className="input flex-1"
+                    className="hidden"
                     required
                   />
+                  {beatFiles.mp3_file ? (
+                    <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="bg-green-100 rounded-full p-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-black truncate">{beatFiles.mp3_file.name}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(beatFiles.mp3_file.size)}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove('mp3_file', 'beat')}
+                        className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="beat_mp3_file"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
+                        </p>
+                        <p className="text-xs text-gray-400">MP3 файлы</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
-                <p className="text-xs text-dark-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   MP3 версия для покупки
                 </p>
               </div>
@@ -464,19 +621,56 @@ const AdminUpload = () => {
                 <label htmlFor="beat_exclusive_file" className="block text-sm font-medium text-black mb-2">
                   Эксклюзивный файл (ZIP) *
                 </label>
-                <div className="flex items-center space-x-3">
-                  <FileAudio className="h-5 w-5 text-dark-400" />
+                <div
+                  onDrop={(e) => handleFileDrop(e, 'exclusive_file', 'beat')}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="relative"
+                >
                   <input
                     type="file"
                     id="beat_exclusive_file"
                     name="exclusive_file"
                     accept=".zip,application/zip"
                     onChange={handleBeatFileChange}
-                    className="input flex-1"
+                    className="hidden"
                     required
                   />
+                  {beatFiles.exclusive_file ? (
+                    <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="bg-green-100 rounded-full p-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-black truncate">{beatFiles.exclusive_file.name}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(beatFiles.exclusive_file.size)}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove('exclusive_file', 'beat')}
+                        className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="beat_exclusive_file"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
+                        </p>
+                        <p className="text-xs text-gray-400">ZIP архивы</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
-                <p className="text-xs text-dark-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   ZIP архив с FL-проектом, дорожками и другими файлами
                 </p>
               </div>
@@ -519,16 +713,53 @@ const AdminUpload = () => {
                 <label htmlFor="beat_cover_file" className="block text-sm font-medium text-black mb-2">
                   Обложка
                 </label>
-                <div className="flex items-center space-x-3">
-                  <Image className="h-5 w-5 text-dark-400" />
+                <div
+                  onDrop={(e) => handleFileDrop(e, 'cover_file', 'beat')}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  className="relative"
+                >
                   <input
                     type="file"
                     id="beat_cover_file"
                     name="cover_file"
                     accept="image/*"
                     onChange={handleBeatFileChange}
-                    className="input flex-1"
+                    className="hidden"
                   />
+                  {beatFiles.cover_file ? (
+                    <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="bg-green-100 rounded-full p-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-black truncate">{beatFiles.cover_file.name}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(beatFiles.cover_file.size)}</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove('cover_file', 'beat')}
+                        className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="beat_cover_file"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Image className="h-8 w-8 text-gray-400 mb-2" />
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
+                        </p>
+                        <p className="text-xs text-gray-400">Изображения (JPG, PNG, etc.)</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
                 <p className="text-xs text-gray-600 mt-1">
                   Опциональная обложка для вашего бита
@@ -654,19 +885,56 @@ const AdminUpload = () => {
                   <label htmlFor="course_preview_video" className="block text-sm font-medium text-black mb-2">
                     Превью видео * (для просмотра на сайте)
                   </label>
-                  <div className="flex items-center space-x-3">
-                    <Video className="h-5 w-5 text-gray-400" />
+                  <div
+                    onDrop={(e) => handleFileDrop(e, 'preview_video_file', 'course')}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="relative"
+                  >
                     <input
                       type="file"
                       id="course_preview_video"
                       name="preview_video_file"
                       accept="video/*"
                       onChange={handleCourseFileChange}
-                      className="input flex-1"
+                      className="hidden"
                       required
                     />
+                    {courseFiles.preview_video_file ? (
+                      <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="bg-green-100 rounded-full p-2">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-black truncate">{courseFiles.preview_video_file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(courseFiles.preview_video_file.size)}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleFileRemove('preview_video_file', 'course')}
+                          className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
+                        >
+                          <X className="h-4 w-4 text-red-600" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="course_preview_video"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Video className="h-8 w-8 text-gray-400 mb-2" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
+                          </p>
+                          <p className="text-xs text-gray-400">Видео файлы</p>
+                        </div>
+                      </label>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     Короткое превью для просмотра на сайте
                   </p>
                 </div>
@@ -675,19 +943,56 @@ const AdminUpload = () => {
                   <label htmlFor="course_full_video" className="block text-sm font-medium text-black mb-2">
                     Полное видео * (для скачивания после покупки)
                   </label>
-                  <div className="flex items-center space-x-3">
-                    <Video className="h-5 w-5 text-gray-400" />
+                  <div
+                    onDrop={(e) => handleFileDrop(e, 'full_video_file', 'course')}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="relative"
+                  >
                     <input
                       type="file"
                       id="course_full_video"
                       name="full_video_file"
                       accept="video/*"
                       onChange={handleCourseFileChange}
-                      className="input flex-1"
+                      className="hidden"
                       required
                     />
+                    {courseFiles.full_video_file ? (
+                      <div className="border-2 border-green-500 bg-green-50 rounded-lg p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="bg-green-100 rounded-full p-2">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-black truncate">{courseFiles.full_video_file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(courseFiles.full_video_file.size)}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleFileRemove('full_video_file', 'course')}
+                          className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
+                        >
+                          <X className="h-4 w-4 text-red-600" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="course_full_video"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Video className="h-8 w-8 text-gray-400 mb-2" />
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
+                          </p>
+                          <p className="text-xs text-gray-400">Видео файлы</p>
+                        </div>
+                      </label>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     Полное видео для скачивания после покупки
                   </p>
                 </div>

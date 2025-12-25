@@ -329,9 +329,9 @@ const AdminRevenue = () => {
                   {stats ? formatCurrency(stats.total_revenue) : '0 ₽'}
                 </p>
               </div>
-                    <div className="bg-black rounded-full p-3 flex items-center justify-center">
-                      <span className="text-white text-xl font-bold">₽</span>
-                    </div>
+              <div className="bg-black rounded-full p-3 flex items-center justify-center self-center">
+                <span className="text-white text-xl font-bold leading-none">₽</span>
+              </div>
             </div>
           </div>
         </div>
