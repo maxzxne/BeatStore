@@ -447,7 +447,7 @@ const BeatPage = () => {
                     </button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between w-full">
                   {/* Слева - текст "Купить в один клик" */}
                   <span 
                     className="text-gray-600 hover:text-black transition-colors text-sm font-medium cursor-pointer" 
@@ -458,7 +458,7 @@ const BeatPage = () => {
                   
                   {/* Справа - кнопки избранного и корзины */}
                   {isAuthenticated && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-auto">
                       <button
                         onClick={handleFavorite}
                         className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${

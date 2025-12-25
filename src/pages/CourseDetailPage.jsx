@@ -28,6 +28,15 @@ const CourseDetailPage = () => {
     fetchCourse();
   }, [id, isAuthenticated]);
 
+  // Отслеживаем длительность видео из ref
+  useEffect(() => {
+    if (videoRef.current && videoRef.current.duration && isFinite(videoRef.current.duration) && videoRef.current.duration > 0) {
+      if (!videoDuration || videoDuration === 0) {
+        setVideoDuration(videoRef.current.duration);
+      }
+    }
+  }, [videoRef.current?.duration, videoDuration]);
+
   const fetchCourse = async () => {
     try {
       setLoading(true);
@@ -188,32 +197,24 @@ const CourseDetailPage = () => {
     const video = e.target;
     if (video) {
       setVideoCurrentTime(video.currentTime);
-      // Обновляем длительность, если она еще не установлена или равна 0
-      if (video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
-        if (!videoDuration || videoDuration === 0 || isNaN(videoDuration)) {
-          setVideoDuration(video.duration);
-        }
+      // Обновляем длительность, если она доступна
+      if (video.duration && isFinite(video.duration) && video.duration > 0) {
+        setVideoDuration(video.duration);
       }
     }
   };
 
   const handleVideoLoadedMetadata = (e) => {
     const video = e.target;
-    console.log('Video metadata loaded:', video.duration);
-    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
+    if (video && video.duration && isFinite(video.duration) && video.duration > 0) {
       setVideoDuration(video.duration);
-      console.log('Set duration from metadata:', video.duration);
     }
   };
 
   const handleVideoCanPlay = (e) => {
     const video = e.target;
-    console.log('Video can play:', video.duration);
-    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
-      if (!videoDuration || videoDuration === 0 || isNaN(videoDuration)) {
-        setVideoDuration(video.duration);
-        console.log('Set duration from canplay:', video.duration);
-      }
+    if (video && video.duration && isFinite(video.duration) && video.duration > 0) {
+      setVideoDuration(video.duration);
     }
   };
 
@@ -224,29 +225,18 @@ const CourseDetailPage = () => {
     if (!videoRef.current) return;
     
     const video = videoRef.current;
-    
-    // Получаем длительность из видео элемента
-    let duration = videoDuration;
-    if (!duration || duration === 0 || isNaN(duration)) {
-      if (video.duration && !isNaN(video.duration) && isFinite(video.duration) && video.duration > 0) {
-        duration = video.duration;
-        setVideoDuration(duration);
-      } else {
-        console.log('Cannot seek: no duration available', video.duration);
-        return; // Не можем перематывать без длительности
-      }
-    }
-    
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const width = rect.width;
     const percentage = Math.max(0, Math.min(1, clickX / width));
     
-    if (duration && duration > 0) {
+    // Используем длительность из состояния или из элемента video
+    const duration = videoDuration || (video.duration && isFinite(video.duration) ? video.duration : 0);
+    
+    if (duration > 0) {
       const newTime = percentage * duration;
-      video.currentTime = Math.max(0, Math.min(newTime, duration));
-      setVideoCurrentTime(video.currentTime);
-      console.log('Seeked to:', newTime, 'of', duration);
+      video.currentTime = newTime;
+      setVideoCurrentTime(newTime);
     }
   };
 
@@ -361,7 +351,7 @@ const CourseDetailPage = () => {
                         {/* Время */}
                         <div className="flex justify-between text-xs text-white">
                           <span>{formatTime(videoCurrentTime)}</span>
-                          <span>{formatTime(videoDuration || (videoRef.current?.duration || 0))}</span>
+                          <span>{formatTime(videoDuration || videoRef.current?.duration || 0)}</span>
                         </div>
                       </div>
                     </div>
