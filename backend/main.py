@@ -35,7 +35,7 @@ import uuid
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, cart_table, course_cart_table, course_favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, ErrorLog, cart_table, course_cart_table, course_favorites_table
 print("Импорт database и models завершен")
 # Убираем Cloudinary - используем локальное хранение на Render
 
@@ -236,6 +236,104 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Middleware для логирования ошибок
+@app.middleware("http")
+async def log_errors_middleware(request: Request, call_next):
+    """Логирует ошибки в базу данных"""
+    try:
+        response = await call_next(request)
+        # Логируем только ошибки (4xx и 5xx)
+        if response.status_code >= 400:
+            try:
+                db = SessionLocal()
+                # Определяем тип ошибки по endpoint
+                error_type = "unknown"
+                endpoint = request.url.path
+                if "/register" in endpoint:
+                    error_type = "registration"
+                elif "/login" in endpoint:
+                    error_type = "auth"
+                elif "/purchase" in endpoint or ("/beats" in endpoint and "/purchase" in endpoint):
+                    error_type = "purchase"
+                elif "/payment" in endpoint or "/test-payment" in endpoint:
+                    error_type = "payment"
+                
+                # Получаем тело ответа для деталей ошибки
+                error_message = f"HTTP {response.status_code}"
+                
+                # Получаем информацию о пользователе
+                user_id = None
+                try:
+                    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+                    if token:
+                        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                        user_id = payload.get("sub")
+                except:
+                    pass
+                
+                # Создаем запись об ошибке
+                error_log = ErrorLog(
+                    error_type=error_type,
+                    error_message=error_message,
+                    endpoint=endpoint,
+                    user_id=user_id,
+                    ip_address=request.client.host if request.client else None,
+                    user_agent=request.headers.get("user-agent")
+                )
+                db.add(error_log)
+                db.commit()
+            except Exception as e:
+                print(f"Ошибка при логировании ошибки: {e}")
+                try:
+                    if db:
+                        db.rollback()
+                except:
+                    pass
+            finally:
+                if db:
+                    db.close()
+            except Exception as e:
+                print(f"Ошибка при логировании ошибки: {e}")
+                try:
+                    if db:
+                        db.rollback()
+                        db.close()
+                except:
+                    pass
+        
+        return response
+    except Exception as e:
+        # Логируем необработанные исключения
+        try:
+            db = SessionLocal()
+            import traceback
+            error_type = "unknown"
+            endpoint = request.url.path
+            if "/register" in endpoint:
+                error_type = "registration"
+            elif "/login" in endpoint:
+                error_type = "auth"
+            elif "/purchase" in endpoint:
+                error_type = "purchase"
+            elif "/payment" in endpoint:
+                error_type = "payment"
+            
+            error_log = ErrorLog(
+                error_type=error_type,
+                error_message=str(e),
+                error_details=traceback.format_exc(),
+                endpoint=endpoint,
+                ip_address=request.client.host if request.client else None,
+                user_agent=request.headers.get("user-agent")
+            )
+            db.add(error_log)
+            db.commit()
+            db.close()
+        except:
+            pass
+        
+        raise
 
 print("FastAPI приложение создано, CORS настроен")
 
@@ -2363,6 +2461,111 @@ def get_public_oauth_settings(db: Session = Depends(get_db)):
     """Получение настроек OAuth для публичного использования (без авторизации)"""
     settings = db.query(OAuthSettings).all()
     return {s.provider: {"is_hidden": s.is_hidden, "is_disabled": s.is_disabled} for s in settings}
+
+# Error Logs Management
+@app.get("/api/admin/errors")
+def get_error_logs(
+    error_type: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    limit: int = 100,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Получение логов ошибок для админа"""
+    query = db.query(ErrorLog)
+    
+    # Фильтр по типу ошибки
+    if error_type:
+        query = query.filter(ErrorLog.error_type == error_type)
+    
+    # Фильтр по дате
+    if start_date:
+        try:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(ErrorLog.created_at >= start_dt)
+        except:
+            pass
+    
+    if end_date:
+        try:
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            # Добавляем один день, чтобы включить весь день
+            end_dt = end_dt + timedelta(days=1)
+            query = query.filter(ErrorLog.created_at < end_dt)
+        except:
+            pass
+    
+    # Сортировка по дате (новые сначала)
+    query = query.order_by(ErrorLog.created_at.desc())
+    
+    # Лимит
+    errors = query.limit(limit).all()
+    
+    return [{
+        "id": e.id,
+        "error_type": e.error_type,
+        "error_message": e.error_message,
+        "error_details": e.error_details,
+        "endpoint": e.endpoint,
+        "user_id": e.user_id,
+        "ip_address": e.ip_address,
+        "user_agent": e.user_agent,
+        "created_at": e.created_at.isoformat() if e.created_at else None
+    } for e in errors]
+
+@app.get("/api/admin/errors/stats")
+def get_error_stats(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Получение статистики ошибок для графика"""
+    query = db.query(ErrorLog)
+    
+    # Фильтр по дате
+    if start_date:
+        try:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(ErrorLog.created_at >= start_dt)
+        except:
+            pass
+    
+    if end_date:
+        try:
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+            end_dt = end_dt + timedelta(days=1)
+            query = query.filter(ErrorLog.created_at < end_dt)
+        except:
+            pass
+    
+    errors = query.all()
+    
+    # Группируем по типу ошибки
+    errors_by_type = {}
+    errors_by_day = {}
+    
+    for error in errors:
+        # По типам
+        if error.error_type not in errors_by_type:
+            errors_by_type[error.error_type] = 0
+        errors_by_type[error.error_type] += 1
+        
+        # По дням
+        day_key = error.created_at.strftime("%Y-%m-%d") if error.created_at else "unknown"
+        if day_key not in errors_by_day:
+            errors_by_day[day_key] = 0
+        errors_by_day[day_key] += 1
+    
+    # Общее количество
+    total_errors = len(errors)
+    
+    return {
+        "total_errors": total_errors,
+        "errors_by_type": errors_by_type,
+        "errors_by_day": errors_by_day
+    }
 
 @app.get("/api/admin/courses")
 def get_courses_admin(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):

@@ -261,3 +261,23 @@ class OAuthSettings(Base):
     is_disabled = Column(Boolean, default=False)  # Дизейблить кнопку (но показывать)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class ErrorLog(Base):
+    """
+    Модель логов ошибок
+    Записывает ошибки авторизации, регистрации, покупок и оплаты
+    """
+    __tablename__ = "error_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    error_type = Column(String, nullable=False, index=True)  # auth, registration, purchase, payment
+    error_message = Column(Text, nullable=False)  # Сообщение об ошибке
+    error_details = Column(Text, nullable=True)  # Дополнительные детали (traceback, stack trace)
+    endpoint = Column(String, nullable=True)  # API endpoint, где произошла ошибка
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)  # ID пользователя (если известен)
+    ip_address = Column(String, nullable=True)  # IP адрес пользователя
+    user_agent = Column(String, nullable=True)  # User-Agent браузера
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # Время ошибки
+    
+    # Связь с пользователем (опционально)
+    user = relationship("User", foreign_keys=[user_id])

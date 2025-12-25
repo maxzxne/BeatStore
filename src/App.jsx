@@ -39,6 +39,7 @@ import RegisterPage from './pages/RegisterPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminBeats from './pages/AdminBeats';
+import AdminErrors from './pages/AdminErrors';
 import AdminCourses from './pages/AdminCourses';
 import AdminUpload from './pages/AdminUpload';
 import AdminPurchases from './pages/AdminPurchases';
@@ -95,6 +96,7 @@ function App() {
                 <Route path="purchases" element={<AdminPurchases />} />   {/* История всех покупок */}
                 <Route path="orders" element={<AdminOrders />} />         {/* Заявки на услуги */}
                 <Route path="revenue" element={<AdminRevenue />} />       {/* Доходы */}
+                <Route path="errors" element={<AdminErrors />} />         {/* Мониторинг ошибок */}
                 <Route path="oauth-settings" element={<AdminOAuthSettings />} /> {/* Настройки OAuth */}
               </Route>
               

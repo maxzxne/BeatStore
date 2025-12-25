@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Settings } from 'lucide-react';
+import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Settings, AlertTriangle } from 'lucide-react';
 
 const Sidebar = () => {
   // Кастомная иконка рубля
@@ -16,6 +16,7 @@ const Sidebar = () => {
     { path: '/admin/upload', label: 'Загрузка', icon: Upload },
     { path: '/admin/purchases', label: 'Покупки', icon: ShoppingBag },
     { path: '/admin/orders', label: 'Заявки', icon: FileText },
+    { path: '/admin/errors', label: 'Ошибки', icon: AlertTriangle },
     { path: '/admin/oauth-settings', label: 'OAuth', icon: Settings },
   ];
 
