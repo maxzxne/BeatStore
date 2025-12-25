@@ -38,6 +38,14 @@ print("Импорт database и models...")
 from database import SessionLocal, engine
 from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, ErrorLog, cart_table, course_cart_table, course_favorites_table
 print("Импорт database и models завершен")
+
+# Импорт функции отправки сообщений в Telegram
+try:
+    from telegram_bot import send_message
+    TELEGRAM_BOT_AVAILABLE = True
+except ImportError:
+    print("⚠️  Telegram bot module not available")
+    TELEGRAM_BOT_AVAILABLE = False
 # Убираем Cloudinary - используем локальное хранение на Render
 
 # Настройка кодировки для Windows
@@ -1711,6 +1719,38 @@ def create_service_order(order: ServiceOrderCreate,
         db.refresh(service_order)
         
         print(f"Service order created successfully: id={service_order.id}")
+        
+        # Отправляем уведомление админу в Telegram
+        if TELEGRAM_BOT_AVAILABLE:
+            try:
+                admin_chat_id = os.getenv("ADMIN_TELEGRAM_CHAT_ID")
+                if admin_chat_id:
+                    import json
+                    categories = json.loads(service_categories_json) if service_categories_json else []
+                    categories_text = ", ".join(categories) if categories else "Не указано"
+                    
+                    customer_info = ""
+                    if current_user:
+                        customer_info = f"👤 Пользователь: {current_user.username} ({current_user.email or 'без email'})"
+                    else:
+                        customer_info = f"👤 Гость: {order.customer_name or 'не указано'} ({order.customer_email or 'не указано'})"
+                    
+                    message = f"""🔔 <b>Новая заявка на заказ услуги</b>
+
+📋 Заявка #{service_order.id}
+{customer_info}
+📂 Категории: {categories_text}
+📅 Дедлайн: {order.deadline_days or 'не указан'} дней
+💰 Предоплата: {order.prepayment_percent or 'не указано'}%
+📝 Описание: {order.description[:200] if order.description else 'нет описания'}...
+
+🔗 Проверьте заявку в админ-панели"""
+                    
+                    send_message(int(admin_chat_id), message)
+                    print(f"Telegram notification sent to admin (chat_id={admin_chat_id})")
+            except Exception as e:
+                print(f"Error sending Telegram notification: {e}")
+        
         return ServiceOrderResponse.from_orm(service_order)
     except HTTPException:
         raise
@@ -2100,6 +2140,164 @@ def update_beat_admin(beat_id: int, beat_data: dict, current_admin: User = Depen
     db.commit()
     db.refresh(beat)
     return {"message": "Beat updated successfully"}
+
+@app.put("/api/admin/beats/{beat_id}/files")
+async def replace_beat_files(
+    beat_id: int,
+    demo_file: UploadFile = File(None),
+    wav_file: UploadFile = File(None),
+    mp3_file: UploadFile = File(None),
+    exclusive_file: UploadFile = File(None),
+    cover_file: UploadFile = File(None),
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Замена файлов бита"""
+    beat = db.query(Beat).filter(Beat.id == beat_id).first()
+    if not beat:
+        raise HTTPException(status_code=404, detail="Beat not found")
+    
+    try:
+        # Заменяем демо файл
+        if demo_file:
+            # Удаляем старый файл
+            if beat.demo_url:
+                old_path = beat.demo_url.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except:
+                        pass
+            
+            # Валидация и загрузка нового файла
+            is_valid, error_msg = validate_file(demo_file, ALLOWED_AUDIO_TYPES, MAX_FILE_SIZE, "audio")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(demo_file.filename or "")
+            demo_filename = f"demo_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
+            demo_path = f"static/demos/{demo_filename}"
+            os.makedirs(os.path.dirname(demo_path), exist_ok=True)
+            
+            with open(demo_path, "wb") as buffer:
+                shutil.copyfileobj(demo_file.file, buffer)
+            
+            beat.demo_url = f"/static/demos/{demo_filename}"
+        
+        # Заменяем WAV файл
+        if wav_file:
+            if beat.wav_url:
+                old_path = beat.wav_url.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except:
+                        pass
+            
+            is_valid, error_msg = validate_file(wav_file, ALLOWED_AUDIO_TYPES, MAX_FILE_SIZE, "audio")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(wav_file.filename or "")
+            wav_filename = f"wav_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
+            wav_path = f"static/audio/{wav_filename}"
+            os.makedirs(os.path.dirname(wav_path), exist_ok=True)
+            
+            with open(wav_path, "wb") as buffer:
+                shutil.copyfileobj(wav_file.file, buffer)
+            
+            beat.wav_url = f"/static/audio/{wav_filename}"
+        
+        # Заменяем MP3 файл
+        if mp3_file:
+            if beat.mp3_url:
+                old_path = beat.mp3_url.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except:
+                        pass
+            
+            is_valid, error_msg = validate_file(mp3_file, ALLOWED_AUDIO_TYPES, MAX_FILE_SIZE, "audio")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(mp3_file.filename or "")
+            mp3_filename = f"mp3_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
+            mp3_path = f"static/audio/{mp3_filename}"
+            os.makedirs(os.path.dirname(mp3_path), exist_ok=True)
+            
+            with open(mp3_path, "wb") as buffer:
+                shutil.copyfileobj(mp3_file.file, buffer)
+            
+            beat.mp3_url = f"/static/audio/{mp3_filename}"
+        
+        # Заменяем эксклюзивный файл
+        if exclusive_file:
+            if beat.exclusive_url:
+                old_path = beat.exclusive_url.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except:
+                        pass
+            
+            is_valid, error_msg = validate_file(exclusive_file, ALLOWED_ARCHIVE_TYPES, MAX_FILE_SIZE, "archive")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(exclusive_file.filename or "")
+            exclusive_filename = f"exclusive_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
+            exclusive_path = f"static/audio/{exclusive_filename}"
+            os.makedirs(os.path.dirname(exclusive_path), exist_ok=True)
+            
+            with open(exclusive_path, "wb") as buffer:
+                shutil.copyfileobj(exclusive_file.file, buffer)
+            
+            beat.exclusive_url = f"/static/audio/{exclusive_filename}"
+        
+        # Заменяем обложку
+        if cover_file:
+            if beat.cover_url:
+                old_path = beat.cover_url.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except:
+                        pass
+            
+            is_valid, error_msg = validate_file(cover_file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, "image")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(cover_file.filename or "")
+            cover_filename = f"cover_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
+            cover_path = f"static/covers/{cover_filename}"
+            os.makedirs(os.path.dirname(cover_path), exist_ok=True)
+            
+            with open(cover_path, "wb") as buffer:
+                shutil.copyfileobj(cover_file.file, buffer)
+            
+            beat.cover_url = f"/static/covers/{cover_filename}"
+        
+        db.commit()
+        db.refresh(beat)
+        
+        return {
+            "message": "Files replaced successfully",
+            "beat_id": beat.id,
+            "demo_url": beat.demo_url,
+            "wav_url": beat.wav_url,
+            "mp3_url": beat.mp3_url,
+            "exclusive_url": beat.exclusive_url,
+            "cover_url": beat.cover_url
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error replacing files: {str(e)}")
 
 @app.delete("/api/admin/beats/{beat_id}")
 def delete_beat_admin(beat_id: int, current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
@@ -2664,6 +2862,86 @@ def update_course_admin(course_id: int, course_data: dict, current_admin: User =
     db.commit()
     db.refresh(course)
     return {"message": "Course updated successfully"}
+
+@app.put("/api/admin/courses/{course_id}/files")
+async def replace_course_files(
+    course_id: int,
+    preview_video_file: UploadFile = File(None),
+    full_video_file: UploadFile = File(None),
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """Замена файлов курса"""
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    try:
+        # Заменяем превью видео
+        if preview_video_file:
+            # Удаляем старый файл
+            if course.preview_video_url:
+                old_path = course.preview_video_url.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except:
+                        pass
+            
+            # Валидация и загрузка нового файла
+            is_valid, error_msg = validate_file(preview_video_file, ALLOWED_VIDEO_TYPES, MAX_FILE_SIZE, "video")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(preview_video_file.filename or "")
+            preview_filename = f"preview_{course.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
+            preview_path = f"static/course_previews/{preview_filename}"
+            os.makedirs(os.path.dirname(preview_path), exist_ok=True)
+            
+            with open(preview_path, "wb") as buffer:
+                shutil.copyfileobj(preview_video_file.file, buffer)
+            
+            course.preview_video_url = f"/static/course_previews/{preview_filename}"
+        
+        # Заменяем полное видео
+        if full_video_file:
+            if course.full_video_url:
+                old_path = course.full_video_url.lstrip("/")
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except:
+                        pass
+            
+            is_valid, error_msg = validate_file(full_video_file, ALLOWED_VIDEO_TYPES, MAX_FILE_SIZE, "video")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(full_video_file.filename or "")
+            full_filename = f"full_{course.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
+            full_path = f"static/course_videos/{full_filename}"
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            
+            with open(full_path, "wb") as buffer:
+                shutil.copyfileobj(full_video_file.file, buffer)
+            
+            course.full_video_url = f"/static/course_videos/{full_filename}"
+        
+        db.commit()
+        db.refresh(course)
+        
+        return {
+            "message": "Files replaced successfully",
+            "course_id": course.id,
+            "preview_video_url": course.preview_video_url,
+            "full_video_url": course.full_video_url
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error replacing files: {str(e)}")
 
 @app.delete("/api/admin/courses/{course_id}")
 def delete_course_admin(course_id: int, current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
