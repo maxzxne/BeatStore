@@ -27,13 +27,13 @@ const OrderPage = () => {
 
   // Категории услуг с описаниями
   const serviceCategories = [
-    { value: 'бит', label: 'бит', description: null },
-    { value: 'бит в стиле трэп', label: 'бит в стиле трэп (15K)', description: 'Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др.' },
-    { value: 'сведение', label: 'сведение', description: null },
-    { value: 'саунддизайн', label: 'саунддизайн', description: null },
-    { value: 'топлайны', label: 'топлайны', description: null },
-    { value: 'трек под ключ', label: 'трек под ключ', description: 'Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!' },
-    { value: 'запись индивидуального курса с объяснениями по проделанной работе', label: 'запись индивидуального курса с объяснениями по проделанной работе', description: null }
+    { value: 'бит', label: 'Бит', description: null },
+    { value: 'бит в стиле трэп', label: 'Бит (Type)', description: 'Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др.' },
+    { value: 'сведение', label: 'Сведение', description: null },
+    { value: 'саунддизайн', label: 'Саунд-дизайн', description: null },
+    { value: 'топлайны', label: 'Топ-лайны', description: null },
+    { value: 'трек под ключ', label: 'Трек под ключ', description: 'Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!' },
+    { value: 'запись индивидуального курса с объяснениями по проделанной работе', label: 'Запись индивидуального курса с объяснениями по проделанной работе', description: null }
   ];
 
   // Цены согласно сообщению

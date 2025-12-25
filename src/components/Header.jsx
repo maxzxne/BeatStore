@@ -137,7 +137,7 @@ const Header = ({ admin = false }) => {
                   location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
                 }`}
               >
-                Заказ битов
+                Заказ услуг
               </Link>
             </nav>
           </div>

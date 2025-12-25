@@ -188,7 +188,8 @@ const CourseDetailPage = () => {
     const video = e.target;
     if (video) {
       setVideoCurrentTime(video.currentTime);
-      if (video.duration && !isNaN(video.duration)) {
+      // Обновляем длительность, если она еще не установлена
+      if (video.duration && !isNaN(video.duration) && isFinite(video.duration) && (!videoDuration || videoDuration === 0)) {
         setVideoDuration(video.duration);
       }
     }
@@ -196,7 +197,16 @@ const CourseDetailPage = () => {
 
   const handleVideoLoadedMetadata = (e) => {
     const video = e.target;
-    if (video && video.duration && !isNaN(video.duration)) {
+    console.log('Video metadata loaded:', video.duration);
+    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+      setVideoDuration(video.duration);
+    }
+  };
+
+  const handleVideoCanPlay = (e) => {
+    const video = e.target;
+    console.log('Video can play:', video.duration);
+    if (video && video.duration && !isNaN(video.duration) && isFinite(video.duration) && !videoDuration) {
       setVideoDuration(video.duration);
     }
   };
@@ -205,14 +215,25 @@ const CourseDetailPage = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!videoRef.current || !videoDuration) return;
+    if (!videoRef.current) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
-    const newTime = (clickX / rect.width) * videoDuration;
+    const width = rect.width;
+    const percentage = clickX / width;
     
-    videoRef.current.currentTime = Math.max(0, Math.min(newTime, videoDuration));
-    setVideoCurrentTime(videoRef.current.currentTime);
+    // Если длительность еще не загружена, пытаемся получить ее из видео
+    let duration = videoDuration;
+    if (!duration && videoRef.current.duration && !isNaN(videoRef.current.duration)) {
+      duration = videoRef.current.duration;
+      setVideoDuration(duration);
+    }
+    
+    if (duration && duration > 0) {
+      const newTime = percentage * duration;
+      videoRef.current.currentTime = Math.max(0, Math.min(newTime, duration));
+      setVideoCurrentTime(videoRef.current.currentTime);
+    }
   };
 
   const formatTime = (time) => {
@@ -271,8 +292,10 @@ const CourseDetailPage = () => {
                   className="w-full h-full object-cover"
                   controls={false}
                   playsInline
+                  preload="metadata"
                   onTimeUpdate={handleVideoTimeUpdate}
                   onLoadedMetadata={handleVideoLoadedMetadata}
+                  onCanPlay={handleVideoCanPlay}
                   onPlay={() => setVideoPlaying(true)}
                   onPause={() => setVideoPlaying(false)}
                   onEnded={() => {
@@ -309,18 +332,22 @@ const CourseDetailPage = () => {
                       <div className="flex-1">
                         {/* Прогресс-бар */}
                         <div
-                          className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-1"
+                          className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-1 relative"
                           onClick={handleVideoSeek}
                         >
                           <div
                             className="h-full bg-white rounded-full transition-all"
-                            style={{ width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%` }}
+                            style={{ 
+                              width: `${videoDuration && videoDuration > 0 
+                                ? Math.min((videoCurrentTime / videoDuration) * 100, 100) 
+                                : 0}%` 
+                            }}
                           />
                         </div>
                         {/* Время */}
                         <div className="flex justify-between text-xs text-white">
                           <span>{formatTime(videoCurrentTime)}</span>
-                          <span>{formatTime(videoDuration)}</span>
+                          <span>{formatTime(videoDuration || (videoRef.current?.duration || 0))}</span>
                         </div>
                       </div>
                     </div>

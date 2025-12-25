@@ -147,7 +147,7 @@ const CoursesPage = () => {
             <option value="">Все категории</option>
             <option value="сведение">Сведение</option>
             <option value="битмэйкинг">Битмэйкинг</option>
-            <option value="саунддизайн">Саунддизайн</option>
+            <option value="саунддизайн">Саунд-дизайн</option>
           </select>
           
           <input

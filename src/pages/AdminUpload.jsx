@@ -592,7 +592,7 @@ const AdminUpload = () => {
                     <option value="">Выберите предназначение</option>
                     <option value="сведение">Сведение</option>
                     <option value="битмэйкинг">Битмэйкинг</option>
-                    <option value="саунддизайн">Саунддизайн</option>
+                    <option value="саунддизайн">Саунд-дизайн</option>
                   </select>
                 </div>
                 
@@ -607,7 +607,7 @@ const AdminUpload = () => {
                     value={courseFormData.tags}
                     onChange={handleCourseInputChange}
                     className="input w-full"
-                    placeholder="компрессия, эквализация, саунддизайн"
+                    placeholder="компрессия, эквализация, саунд-дизайн"
                   />
                 </div>
                 
