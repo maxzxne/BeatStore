@@ -79,6 +79,71 @@ def send_message(chat_id: int, text: str, reply_markup: Optional[dict] = None):
         return None
 
 
+def send_document(chat_id: int, file_url: str, caption: Optional[str] = None):
+    """Отправляет документ (файл) пользователю по URL"""
+    # Формируем полный URL если передан относительный путь
+    if file_url.startswith("/"):
+        frontend_url = os.getenv("FRONTEND_URL", "")
+        if frontend_url:
+            file_url = f"{frontend_url.rstrip('/')}{file_url}"
+        else:
+            # Если нет FRONTEND_URL, используем базовый URL сервера
+            file_url = f"https://beatstore-dpym.onrender.com{file_url}"
+    
+    url = f"{TELEGRAM_API_URL}/sendDocument"
+    data = {
+        "chat_id": chat_id,
+        "document": file_url
+    }
+    if caption:
+        data["caption"] = caption
+    
+    try:
+        print(f"Отправка файла chat_id={chat_id}, url='{file_url[:50]}...'")
+        response = requests.post(url, json=data, timeout=30)
+        response.raise_for_status()
+        result = response.json()
+        print(f"Файл отправлен успешно: {result.get('ok')}")
+        return result
+    except Exception as e:
+        print(f"Ошибка при отправке файла: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def send_audio(chat_id: int, audio_url: str, caption: Optional[str] = None):
+    """Отправляет аудио файл пользователю по URL"""
+    # Формируем полный URL если передан относительный путь
+    if audio_url.startswith("/"):
+        frontend_url = os.getenv("FRONTEND_URL", "")
+        if frontend_url:
+            audio_url = f"{frontend_url.rstrip('/')}{audio_url}"
+        else:
+            audio_url = f"https://beatstore-dpym.onrender.com{audio_url}"
+    
+    url = f"{TELEGRAM_API_URL}/sendAudio"
+    data = {
+        "chat_id": chat_id,
+        "audio": audio_url
+    }
+    if caption:
+        data["caption"] = caption
+    
+    try:
+        print(f"Отправка аудио chat_id={chat_id}, url='{audio_url[:50]}...'")
+        response = requests.post(url, json=data, timeout=30)
+        response.raise_for_status()
+        result = response.json()
+        print(f"Аудио отправлено успешно: {result.get('ok')}")
+        return result
+    except Exception as e:
+        print(f"Ошибка при отправке аудио: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 def create_menu_button():
     """Создает кнопку для открытия Mini App"""
     if not MINI_APP_URL:

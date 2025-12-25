@@ -39,9 +39,9 @@ from database import SessionLocal, engine
 from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, ErrorLog, cart_table, course_cart_table, course_favorites_table
 print("Импорт database и models завершен")
 
-# Импорт функции отправки сообщений в Telegram
+# Импорт функций отправки сообщений и файлов в Telegram
 try:
-    from telegram_bot import send_message
+    from telegram_bot import send_message, send_document, send_audio
     TELEGRAM_BOT_AVAILABLE = True
 except ImportError:
     print("⚠️  Telegram bot module not available")
@@ -1795,21 +1795,99 @@ def create_service_order(order: ServiceOrderCreate,
                     else:
                         customer_info = f"👤 Гость: {order.customer_name or 'не указано'} ({order.customer_email or 'не указано'})"
                     
+                    # Парсим материалы для отправки файлов
+                    materials_list = []
+                    if order.materials_url:
+                        try:
+                            materials_list = json.loads(order.materials_url) if order.materials_url.startswith("[") else [order.materials_url]
+                        except:
+                            materials_list = [order.materials_url] if order.materials_url else []
+                    
+                    # Референсы (ссылки) - оставляем как ссылки
+                    reference_links_text = "Не указаны"
+                    if order.reference_links:
+                        links = [link.strip() for link in order.reference_links.split("\n") if link.strip()][:5]
+                        reference_links_text = "\n".join([f"  • {link[:80]}" for link in links])
+                        if len(order.reference_links.split("\n")) > 5:
+                            reference_links_text += f"\n  ... и еще ссылок"
+                    
+                    # Референсы (файлы) - для отправки файлов
+                    reference_files_list = []
+                    if order.reference_files_url:
+                        try:
+                            reference_files_list = json.loads(order.reference_files_url) if order.reference_files_url.startswith("[") else [order.reference_files_url]
+                        except:
+                            reference_files_list = [order.reference_files_url] if order.reference_files_url else []
+                    
+                    # Дополнительная информация
+                    contact_info_text = order.contact_info if order.contact_info else "Не указана"
+                    
+                    # Описание
+                    description_text = order.description if order.description else "Нет описания"
+                    if len(description_text) > 500:
+                        description_text = description_text[:500] + "..."
+                    
+                    # Формируем сообщение с информацией
+                    materials_info = f"Загружено файлов: {len(materials_list)}" if materials_list else "Не загружены"
+                    ref_files_info = f"Загружено файлов: {len(reference_files_list)}" if reference_files_list else "Не загружены"
+                    
                     message = f"""🔔 <b>Новая заявка на заказ услуги</b>
 
-📋 Заявка #{service_order.id}
+📋 <b>Заявка #{service_order.id}</b>
+
 {customer_info}
-📂 Категории: {categories_text}
-📅 Дедлайн: {order.deadline_days or 'не указан'} дней
-💰 Предоплата: {order.prepayment_percent or 'не указано'}%
-📝 Описание: {order.description[:200] if order.description else 'нет описания'}...
+📂 <b>Категории:</b> {categories_text}
+📅 <b>Дедлайн:</b> {order.deadline_days or 'не указан'} дней
+💰 <b>Предоплата:</b> {order.prepayment_percent or 'не указано'}%
+
+📝 <b>Описание:</b>
+{description_text}
+
+📎 <b>Материалы:</b> {materials_info}
+
+🔗 <b>Референсы (ссылки):</b>
+{reference_links_text}
+
+📁 <b>Референсы (файлы):</b> {ref_files_info}
+
+📞 <b>Доп. контакты:</b> {contact_info_text}
 
 🔗 Проверьте заявку в админ-панели"""
                     
+                    # Отправляем текстовое сообщение
                     send_message(int(admin_chat_id), message)
+                    
+                    # Отправляем материалы (файлы)
+                    for i, mat_url in enumerate(materials_list, 1):
+                        try:
+                            # Определяем тип файла по расширению
+                            if mat_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
+                                send_audio(int(admin_chat_id), mat_url, caption=f"📎 Материал {i}/{len(materials_list)}")
+                            else:
+                                send_document(int(admin_chat_id), mat_url, caption=f"📎 Материал {i}/{len(materials_list)}")
+                            import time
+                            time.sleep(0.5)  # Небольшая задержка между отправками
+                        except Exception as e:
+                            print(f"Error sending material file {i}: {e}")
+                    
+                    # Отправляем референсы-файлы
+                    for i, ref_url in enumerate(reference_files_list, 1):
+                        try:
+                            # Определяем тип файла по расширению
+                            if ref_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
+                                send_audio(int(admin_chat_id), ref_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
+                            else:
+                                send_document(int(admin_chat_id), ref_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
+                            import time
+                            time.sleep(0.5)  # Небольшая задержка между отправками
+                        except Exception as e:
+                            print(f"Error sending reference file {i}: {e}")
+                    
                     print(f"Telegram notification sent to admin (chat_id={admin_chat_id})")
             except Exception as e:
                 print(f"Error sending Telegram notification: {e}")
+                import traceback
+                traceback.print_exc()
         
         return ServiceOrderResponse.from_orm(service_order)
     except HTTPException:
