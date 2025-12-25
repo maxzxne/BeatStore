@@ -220,19 +220,24 @@ const CourseDetailPage = () => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const width = rect.width;
-    const percentage = clickX / width;
+    const percentage = Math.max(0, Math.min(1, clickX / width));
     
-    // Если длительность еще не загружена, пытаемся получить ее из видео
+    // Получаем длительность из видео элемента
+    const video = videoRef.current;
     let duration = videoDuration;
-    if (!duration && videoRef.current.duration && !isNaN(videoRef.current.duration)) {
-      duration = videoRef.current.duration;
-      setVideoDuration(duration);
+    if (!duration || duration === 0) {
+      if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+        duration = video.duration;
+        setVideoDuration(duration);
+      } else {
+        return; // Не можем перематывать без длительности
+      }
     }
     
     if (duration && duration > 0) {
       const newTime = percentage * duration;
-      videoRef.current.currentTime = Math.max(0, Math.min(newTime, duration));
-      setVideoCurrentTime(videoRef.current.currentTime);
+      video.currentTime = Math.max(0, Math.min(newTime, duration));
+      setVideoCurrentTime(video.currentTime);
     }
   };
 
@@ -347,7 +352,7 @@ const CourseDetailPage = () => {
                         {/* Время */}
                         <div className="flex justify-between text-xs text-white">
                           <span>{formatTime(videoCurrentTime)}</span>
-                          <span>{formatTime(videoDuration || (videoRef.current?.duration || 0))}</span>
+                          <span>{formatTime(videoDuration || (videoRef.current?.duration || 0) || 0)}</span>
                         </div>
                       </div>
                     </div>

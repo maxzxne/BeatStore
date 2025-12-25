@@ -155,10 +155,23 @@ const BeatPage = () => {
   };
 
   const handlePurchase = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      showError('Войдите, чтобы купить бит');
+      return;
+    }
+    
+    // Определяем цену в зависимости от типа покупки
+    let actualPrice = beat.price;
+    if (selectedPurchaseType === 'mp3' && beat.price_mp3 !== null && beat.price_mp3 !== undefined) {
+      actualPrice = beat.price_mp3;
+    } else if (selectedPurchaseType === 'wav' && beat.price_wav !== null && beat.price_wav !== undefined) {
+      actualPrice = beat.price_wav;
+    } else if (selectedPurchaseType === 'exclusive' && beat.price_exclusive !== null && beat.price_exclusive !== undefined) {
+      actualPrice = beat.price_exclusive;
+    }
     
     // Если бит бесплатный, покупаем сразу
-    if (beat.price === 0) {
+    if (actualPrice === 0) {
       try {
         const formData = new FormData();
         formData.append('purchase_type', selectedPurchaseType);
@@ -180,17 +193,7 @@ const BeatPage = () => {
         showError(errorMessage);
       }
     } else {
-      // Для платных битов переходим на тестовую страницу оплаты
-      // Определяем цену в зависимости от типа покупки
-      let actualPrice = beat.price;
-      if (selectedPurchaseType === 'mp3' && beat.price_mp3 !== null && beat.price_mp3 !== undefined) {
-        actualPrice = beat.price_mp3;
-      } else if (selectedPurchaseType === 'wav' && beat.price_wav !== null && beat.price_wav !== undefined) {
-        actualPrice = beat.price_wav;
-      } else if (selectedPurchaseType === 'exclusive' && beat.price_exclusive !== null && beat.price_exclusive !== undefined) {
-        actualPrice = beat.price_exclusive;
-      }
-      
+      // Для платных битов всегда переходим на тестовую страницу оплаты
       const params = new URLSearchParams();
       params.append('type', 'beat');
       params.append('item_id', id.toString());
@@ -444,28 +447,51 @@ const BeatPage = () => {
                     </button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-3">
+                <div className="space-y-4">
                   {/* Слева - текст "Купить в один клик" */}
-                  <span className="text-gray-600 hover:text-black transition-colors text-sm font-medium cursor-pointer" onClick={handlePurchase}>
+                  <span 
+                    className="text-gray-600 hover:text-black transition-colors text-sm font-medium cursor-pointer block" 
+                    onClick={handlePurchase}
+                  >
                     Купить в один клик
                   </span>
                   
-                  {/* Справа - кнопки "Купить" и "Избранное" */}
-                  <div className="flex items-center gap-2">
+                  {/* Справа - кнопки избранного, корзины и покупки */}
+                  <div className="flex items-center justify-end gap-2">
                     {isAuthenticated && (
-                      <button
-                        onClick={handleFavorite}
-                        className={`h-10 w-10 flex items-center justify-center rounded-full border transition-colors ${
-                          isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
-                        }`}
-                        title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
-                      >
-                        <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
-                      </button>
+                      <>
+                        <button
+                          onClick={handleFavorite}
+                          className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${
+                            isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                          }`}
+                          title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
+                        >
+                          <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                        </button>
+                        
+                        <button
+                          onClick={handleAddToCart}
+                          className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors relative ${
+                            isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                          }`}
+                          title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
+                        >
+                          {isInCart ? (
+                            <div className="relative">
+                              <ShoppingCart className="h-5 w-5" fill="currentColor" />
+                              <Check className="h-2 w-2 absolute -top-1 -right-1 bg-green-600 text-white rounded-full" />
+                            </div>
+                          ) : (
+                            <ShoppingCart className="h-5 w-5" fill="none" />
+                          )}
+                        </button>
+                      </>
                     )}
+                    
                     <button
                       onClick={handlePurchase}
-                      className="btn btn-primary h-10 px-4 text-sm"
+                      className="btn btn-primary h-12 px-4 text-sm"
                       disabled={!isAuthenticated || (!beat.wav_url && !beat.mp3_url && !beat.exclusive_url)}
                     >
                       Купить

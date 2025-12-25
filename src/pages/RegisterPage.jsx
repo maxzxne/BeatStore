@@ -275,10 +275,10 @@ const RegisterPage = () => {
           
           {/* OAuth разделитель - показываем только если есть видимые кнопки */}
           {!oauthSettingsLoading && (
-            (oauthSettings.google && oauthSettings.google.is_hidden === false) ||
-            (oauthSettings.vk && oauthSettings.vk.is_hidden === false) ||
-            (oauthSettings.yandex && oauthSettings.yandex.is_hidden === false) ||
-            (oauthSettings.telegram && oauthSettings.telegram.is_hidden === false)
+            (oauthSettings.google && !oauthSettings.google.is_hidden) ||
+            (oauthSettings.vk && !oauthSettings.vk.is_hidden) ||
+            (oauthSettings.yandex && !oauthSettings.yandex.is_hidden) ||
+            (oauthSettings.telegram && !oauthSettings.telegram.is_hidden)
           ) && (
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
@@ -293,7 +293,7 @@ const RegisterPage = () => {
           {/* OAuth кнопки - показываем только после загрузки настроек */}
           {!oauthSettingsLoading && (
             <div className="space-y-3">
-            {oauthSettings.google && oauthSettings.google.is_hidden === false && (
+            {oauthSettings.google && !oauthSettings.google.is_hidden && (
               <button
                 onClick={() => handleOAuthLogin('google')}
                 disabled={loading || oauthSettings.google?.is_disabled}
@@ -309,7 +309,7 @@ const RegisterPage = () => {
               </button>
             )}
             
-            {oauthSettings.vk && oauthSettings.vk.is_hidden === false && (
+            {oauthSettings.vk && !oauthSettings.vk.is_hidden && (
               <button
                 onClick={() => handleOAuthLogin('vk')}
                 disabled={loading || oauthSettings.vk?.is_disabled}
@@ -322,7 +322,7 @@ const RegisterPage = () => {
               </button>
             )}
             
-            {oauthSettings.yandex && oauthSettings.yandex.is_hidden === false && (
+            {oauthSettings.yandex && !oauthSettings.yandex.is_hidden && (
               <button
                 onClick={() => handleOAuthLogin('yandex')}
                 disabled={loading || oauthSettings.yandex?.is_disabled}
@@ -337,7 +337,7 @@ const RegisterPage = () => {
             )}
             
             {/* Кнопка авторизации через Telegram - всегда видна */}
-            {oauthSettings.telegram && oauthSettings.telegram.is_hidden === false && (
+            {oauthSettings.telegram && !oauthSettings.telegram.is_hidden && (
               <button
                 onClick={() => {
                   const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'XWinnerbeatpleasebot';
