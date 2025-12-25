@@ -497,17 +497,27 @@ class ServiceOrderResponse(BaseModel):
     """Схема ответа с информацией о заказе услуги"""
     id: int
     user_id: Optional[int]
-    customer_name: Optional[str]
-    customer_email: Optional[str]
-    order_type: str
-    service_category: Optional[str] = None  # Старое поле
-    service_categories: Optional[List[str]] = None  # Массив категорий
+
+class OAuthSettingUpdate(BaseModel):
+    """Схема для обновления настроек OAuth провайдера"""
+    is_hidden: Optional[bool] = None
+    is_disabled: Optional[bool] = None
+
+class ServiceOrderResponseFull(BaseModel):
+    """Схема ответа с полной информацией о заказе услуги"""
+    id: int
+    user_id: Optional[int]
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    order_type: str = "know"
+    service_category: Optional[str] = None
+    service_categories: Optional[List[str]] = None
     materials_url: Optional[str] = None
     reference_links: Optional[str] = None
     reference_files_url: Optional[str] = None
     description: Optional[str] = None
-    deadline_min: Optional[int] = None  # Старое поле
-    deadline_max: Optional[int] = None  # Старое поле
+    deadline_min: Optional[int] = None
+    deadline_max: Optional[int] = None
     deadline_days: Optional[int] = None
     price: Optional[float] = None
     prepayment_percent: Optional[int] = None
@@ -2328,8 +2338,7 @@ def get_oauth_settings(current_admin: User = Depends(get_current_admin_user), db
 @app.put("/api/admin/oauth-settings/{provider}")
 def update_oauth_setting(
     provider: str,
-    is_hidden: Optional[bool] = Form(None),
-    is_disabled: Optional[bool] = Form(None),
+    update_data: OAuthSettingUpdate,
     current_admin: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -2338,10 +2347,10 @@ def update_oauth_setting(
     if not setting:
         raise HTTPException(status_code=404, detail="OAuth provider not found")
     
-    if is_hidden is not None:
-        setting.is_hidden = is_hidden
-    if is_disabled is not None:
-        setting.is_disabled = is_disabled
+    if update_data.is_hidden is not None:
+        setting.is_hidden = update_data.is_hidden
+    if update_data.is_disabled is not None:
+        setting.is_disabled = update_data.is_disabled
     
     setting.updated_at = datetime.utcnow()
     db.commit()

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
-import { User, Mail, Lock, Save, Phone, X } from 'lucide-react';
+import { User, Mail, Lock, Save, Phone, X, LogOut } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user, fetchUser } = useAuth();
+  const { user, fetchUser, logout } = useAuth();
   const { showSuccess, showError } = useNotification();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -154,6 +156,20 @@ const ProfilePage = () => {
           {loading ? 'Сохранение...' : 'Сохранить изменения'}
         </button>
       </form>
+
+      {/* Кнопка выхода */}
+      <div className="mt-8 pt-6 border-t border-gray-200">
+        <button
+          onClick={() => {
+            logout();
+            navigate('/');
+          }}
+          className="w-full btn btn-outline h-12 text-base flex items-center justify-center text-red-600 hover:text-red-700 hover:border-red-600"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Выйти из аккаунта
+        </button>
+      </div>
 
       {/* Модалка изменения пароля */}
       {showPasswordModal && (

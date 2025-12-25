@@ -37,7 +37,8 @@ const MiniPlayer = () => {
     stopTrack
   } = useAudioPlayer();
 
-  if (!currentTrack && !currentTrackTitle) {
+  // Показываем плеер только если есть активный трек
+  if (!currentTrack || !currentTrackTitle) {
     return null;
   }
 
@@ -78,7 +79,7 @@ const MiniPlayer = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 p-3 sm:p-4 z-50 safe-area-bottom">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 p-3 sm:p-4 z-[60] safe-area-bottom shadow-lg">
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex items-center space-x-2 sm:space-x-4">
           <button

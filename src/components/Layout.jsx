@@ -41,7 +41,7 @@ const Layout = ({ admin = false }) => {
         <>
           <WelcomePopup />
           <Header />
-          <main className="w-full min-h-[calc(100vh-64px)]">
+          <main className="w-full min-h-[calc(100vh-64px)] pb-20 sm:pb-24">
             <Outlet />
           </main>
         </>

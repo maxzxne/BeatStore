@@ -97,7 +97,17 @@ export const AudioPlayerProvider = ({ children }) => {
     };
 
     audio.ontimeupdate = () => {
-      setCurrentTime(audio.currentTime);
+      if (!isSeekingRef.current && audioRef.current) {
+        setCurrentTime(audioRef.current.currentTime);
+      }
+    };
+    
+    // Обработка для мобильных устройств
+    audio.oncanplay = () => {
+      // Убеждаемся, что длительность установлена
+      if (audio.duration && !duration) {
+        setDuration(audio.duration);
+      }
     };
 
     audio.onended = () => {
@@ -158,25 +168,14 @@ export const AudioPlayerProvider = ({ children }) => {
   }, [currentTrack]);
 
   const seekTo = useCallback((time) => {
-    if (audioRef.current && !isNaN(time) && isFinite(time)) {
-      const clampedTime = Math.max(0, Math.min(time, duration || 0));
-      
-      console.log('seekTo called:', {
-        time,
-        clampedTime,
-        currentTime: audioRef.current.currentTime,
-        duration: audioRef.current.duration,
-        currentTrack,
-        src: audioRef.current.src
-      });
+    if (audioRef.current && !isNaN(time) && isFinite(time) && audioRef.current.readyState >= 2) {
+      const clampedTime = Math.max(0, Math.min(time, duration || audioRef.current.duration || 0));
       
       // Устанавливаем время в аудио элементе
       audioRef.current.currentTime = clampedTime;
       
       // Обновляем состояние сразу
       setCurrentTime(clampedTime);
-      
-      console.log('after seekTo:', audioRef.current.currentTime);
     }
   }, [duration, currentTrack]);
 

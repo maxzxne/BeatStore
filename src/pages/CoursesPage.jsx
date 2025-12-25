@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
@@ -18,10 +18,7 @@ const CoursesPage = () => {
     minPrice: '',
     maxPrice: ''
   });
-
-  useEffect(() => {
-    fetchCourses();
-  }, []);
+  const isFirstLoad = useRef(true);
 
   const fetchCourses = async () => {
     try {
@@ -40,23 +37,25 @@ const CoursesPage = () => {
     }
   };
 
-  // Используем debounce для фильтров цены, чтобы не терять фокус при вводе
+  // Объединенный useEffect с debounce для всех фильтров
   useEffect(() => {
+    // При первой загрузке делаем запрос сразу без задержки
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      fetchCourses();
+      return;
+    }
+
+    // Для purpose - небольшая задержка, для цен - большая
+    const delay = filters.minPrice || filters.maxPrice ? 800 : 300;
+    
     const timer = setTimeout(() => {
       fetchCourses();
-    }, 500); // Задержка 500мс перед обновлением
+    }, delay);
     
     return () => clearTimeout(timer);
-  }, [filters.purpose]); // Обновляем сразу только для purpose
-  
-  // Отдельный эффект для ценовых фильтров с debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCourses();
-    }, 800); // Большая задержка для цен
-    
-    return () => clearTimeout(timer);
-  }, [filters.minPrice, filters.maxPrice]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.purpose, filters.minPrice, filters.maxPrice]);
 
   const handlePlay = async (course, e) => {
     e.preventDefault();

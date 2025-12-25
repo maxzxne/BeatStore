@@ -30,21 +30,46 @@ const AdminOAuthSettings = () => {
   const updateSetting = async (provider, field, value) => {
     try {
       setSaving(prev => ({ ...prev, [provider]: true }));
-      const formData = new FormData();
-      if (field === 'is_hidden') {
-        formData.append('is_hidden', value.toString());
-      } else if (field === 'is_disabled') {
-        formData.append('is_disabled', value.toString());
+      
+      // Находим текущую настройку
+      const currentSetting = settings.find(s => s.provider === provider);
+      if (!currentSetting) {
+        throw new Error('Настройка не найдена');
       }
       
-      await api.put(`/api/admin/oauth-settings/${provider}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      // Оптимистичное обновление UI
+      setSettings(prevSettings => 
+        prevSettings.map(setting => 
+          setting.provider === provider
+            ? { ...setting, [field]: value }
+            : setting
+        )
+      );
       
+      // Подготавливаем данные для отправки (JSON)
+      const updateData = {};
+      
+      // Отправляем обновленное значение для изменяемого поля
+      if (field === 'is_hidden') {
+        updateData.is_hidden = value;
+        updateData.is_disabled = currentSetting.is_disabled;
+      } else if (field === 'is_disabled') {
+        updateData.is_disabled = value;
+        updateData.is_hidden = currentSetting.is_hidden;
+      }
+      
+      const response = await api.put(`/api/admin/oauth-settings/${provider}`, updateData);
+      
+      console.log('OAuth setting updated:', response.data);
+      
+      // Обновляем настройки с сервера для синхронизации
       await fetchSettings();
     } catch (error) {
       console.error('Error updating OAuth setting:', error);
-      alert('Ошибка обновления настройки');
+      // Откатываем изменения при ошибке
+      await fetchSettings();
+      const errorMessage = error.response?.data?.detail || error.message || 'Ошибка обновления настройки';
+      alert(errorMessage);
     } finally {
       setSaving(prev => ({ ...prev, [provider]: false }));
     }

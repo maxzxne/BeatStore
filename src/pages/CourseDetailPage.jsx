@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
@@ -20,6 +20,9 @@ const CourseDetailPage = () => {
   const [isInCart, setIsInCart] = useState(false);
   const [isPurchased, setIsPurchased] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const videoRef = React.useRef(null);
 
   useEffect(() => {
     fetchCourse();
@@ -169,6 +172,44 @@ const CourseDetailPage = () => {
     setVideoPlaying(!videoPlaying);
   };
 
+  const handleVideoTimeUpdate = (e) => {
+    const video = e.target;
+    if (video) {
+      setVideoCurrentTime(video.currentTime);
+      if (video.duration && !isNaN(video.duration)) {
+        setVideoDuration(video.duration);
+      }
+    }
+  };
+
+  const handleVideoLoadedMetadata = (e) => {
+    const video = e.target;
+    if (video && video.duration && !isNaN(video.duration)) {
+      setVideoDuration(video.duration);
+    }
+  };
+
+  const handleVideoSeek = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!videoRef.current || !videoDuration) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const newTime = (clickX / rect.width) * videoDuration;
+    
+    videoRef.current.currentTime = Math.max(0, Math.min(newTime, videoDuration));
+    setVideoCurrentTime(videoRef.current.currentTime);
+  };
+
+  const formatTime = (time) => {
+    if (isNaN(time) || !isFinite(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-6 py-8">
@@ -210,37 +251,70 @@ const CourseDetailPage = () => {
         <div className="space-y-4">
           {/* Видео превью */}
           {course.preview_video_url ? (
-            <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-              <video
-                src={`${API_URL}${course.preview_video_url}`}
-                className="w-full h-full object-cover"
-                controls={videoPlaying}
-                autoPlay={videoPlaying}
-                muted={!videoPlaying}
-                playsInline
-                onEnded={() => {
-                  setVideoPlaying(false);
-                }}
-                ref={(video) => {
-                  if (video) {
-                    if (videoPlaying) {
-                      video.play();
-                    } else {
-                      video.pause();
-                    }
-                  }
-                }}
-              />
-              {!videoPlaying && (
-                <button
-                  onClick={toggleVideo}
-                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 hover:bg-opacity-60 transition-opacity"
-                >
-                  <div className="bg-black rounded-full p-4">
-                    <Play className="h-12 w-12 text-white" />
+            <div className="space-y-3">
+              <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+                <video
+                  ref={videoRef}
+                  src={`${API_URL}${course.preview_video_url}`}
+                  className="w-full h-full object-cover"
+                  controls={false}
+                  autoPlay={videoPlaying}
+                  muted={!videoPlaying}
+                  playsInline
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  onLoadedMetadata={handleVideoLoadedMetadata}
+                  onEnded={() => {
+                    setVideoPlaying(false);
+                    setVideoCurrentTime(0);
+                  }}
+                />
+                {!videoPlaying && (
+                  <button
+                    onClick={toggleVideo}
+                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 hover:bg-opacity-60 transition-opacity z-10"
+                  >
+                    <div className="bg-black rounded-full p-4">
+                      <Play className="h-12 w-12 text-white" />
+                    </div>
+                  </button>
+                )}
+                
+                {/* Кастомные контролы видео */}
+                {videoPlaying && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={toggleVideo}
+                        className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+                      >
+                        {videoPlaying ? (
+                          <Pause className="h-5 w-5 text-white" />
+                        ) : (
+                          <Play className="h-5 w-5 text-white" />
+                        )}
+                      </button>
+                      
+                      <div className="flex-1">
+                        {/* Прогресс-бар */}
+                        <div
+                          className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-1"
+                          onClick={handleVideoSeek}
+                        >
+                          <div
+                            className="h-full bg-white rounded-full transition-all"
+                            style={{ width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%` }}
+                          />
+                        </div>
+                        {/* Время */}
+                        <div className="flex justify-between text-xs text-white">
+                          <span>{formatTime(videoCurrentTime)}</span>
+                          <span>{formatTime(videoDuration)}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </button>
-              )}
+                )}
+              </div>
             </div>
           ) : (
             <div className="w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-300 rounded-lg flex items-center justify-center">

@@ -83,13 +83,13 @@ const Header = ({ admin = false }) => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <span className="text-gray-600">Добро пожаловать, {adminUser?.username}</span>
             <Link
               to="/"
               className="btn btn-outline btn-sm"
             >
               На сайт
             </Link>
-            <span className="text-gray-600">Добро пожаловать, {adminUser?.username}</span>
             <button
               onClick={handleLogout}
               className="btn btn-outline btn-sm"
@@ -200,46 +200,60 @@ const Header = ({ admin = false }) => {
                   )}
                 </>
               ) : (
-                <>
-                  <Link to="/login" className="btn btn-outline btn-sm">
-                    Войти
-                  </Link>
-                  <Link to="/register" className="btn btn-primary btn-sm">
-                    Регистрация
-                  </Link>
-                </>
+                <Link to="/login" className="btn btn-outline btn-sm">
+                  Войти
+                </Link>
               )}
             </div>
 
-            {/* Mobile - navigation and auth button */}
+            {/* Mobile - icons and auth button */}
             <div className="lg:hidden flex items-center space-x-2">
-              {/* Mobile Navigation - always visible */}
-              <nav className="flex items-center space-x-2 sm:space-x-3">
-                <Link
-                  to="/"
-                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-                    location.pathname === '/' ? 'text-black border-b-2 border-black' : 'text-gray-600'
-                  }`}
-                >
-                  Магазин
-                </Link>
-                <Link
-                  to="/courses"
-                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-                    location.pathname === '/courses' ? 'text-black border-b-2 border-black' : 'text-gray-600'
-                  }`}
-                >
-                  Академия
-                </Link>
-                <Link
-                  to="/order"
-                  className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-                    location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600'
-                  }`}
-                >
-                  Заказ битов
-                </Link>
-              </nav>
+              {/* Mobile Icons (if authenticated) */}
+              {isAuthenticated && (
+                <>
+                  <Link
+                    to="/favorites"
+                    className="p-2 text-gray-600 hover:text-black transition-colors relative"
+                    title="Избранное"
+                  >
+                    <Heart className="h-5 w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
+                    {favoritesCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {favoritesCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    to="/cart"
+                    className="p-2 text-gray-600 hover:text-black transition-colors relative"
+                    title="Корзина"
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                  <Link
+                    to="/purchases"
+                    className="p-2 text-gray-600 hover:text-black transition-colors"
+                    title="Покупки"
+                  >
+                    <Music className="h-5 w-5" />
+                  </Link>
+                  {/* Кнопка админки для админов */}
+                  {(user?.is_admin || isAdminAuthenticated) && (
+                    <Link
+                      to="/admin"
+                      className="p-2 text-gray-600 hover:text-black transition-colors"
+                      title="Админ-панель"
+                    >
+                      <Settings className="h-5 w-5" />
+                    </Link>
+                  )}
+                </>
+              )}
 
               {/* Mobile Auth Button */}
               {isAuthenticated ? (
@@ -260,53 +274,33 @@ const Header = ({ admin = false }) => {
           </div>
         </div>
 
-        {/* Mobile - Additional menu items (if authenticated) */}
-        {isAuthenticated && (
-          <div className="lg:hidden mt-3 pt-3 border-t border-gray-200 flex items-center justify-center space-x-4">
-            <Link
-              to="/favorites"
-              className="p-2 text-gray-600 hover:text-black transition-colors relative"
-              title="Избранное"
-            >
-              <Heart className="h-5 w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
-              {favoritesCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {favoritesCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              to="/cart"
-              className="p-2 text-gray-600 hover:text-black transition-colors relative"
-              title="Корзина"
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              to="/purchases"
-              className="p-2 text-gray-600 hover:text-black transition-colors"
-              title="Покупки"
-            >
-              <Music className="h-5 w-5" />
-            </Link>
-            {/* Кнопка админки для админов */}
-            {(user?.is_admin || isAdminAuthenticated) && (
-              <Link
-                to="/admin"
-                className="btn btn-primary btn-sm flex items-center gap-2"
-                title="Админ-панель"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="text-xs">Админка</span>
-              </Link>
-            )}
-          </div>
-        )}
+        {/* Mobile Navigation - под шапкой, всегда видимо */}
+        <nav className="lg:hidden mt-3 pt-3 border-t border-gray-200 flex items-center justify-center space-x-4 sm:space-x-6">
+          <Link
+            to="/"
+            className={`px-2 sm:px-3 py-1.5 text-sm sm:text-base font-medium transition-colors ${
+              location.pathname === '/' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            Магазин
+          </Link>
+          <Link
+            to="/courses"
+            className={`px-2 sm:px-3 py-1.5 text-sm sm:text-base font-medium transition-colors ${
+              location.pathname === '/courses' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            Академия
+          </Link>
+          <Link
+            to="/order"
+            className={`px-2 sm:px-3 py-1.5 text-sm sm:text-base font-medium transition-colors ${
+              location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+            }`}
+          >
+            Заказ битов
+          </Link>
+        </nav>
       </div>
     </header>
   );

@@ -101,7 +101,7 @@ const AdminDashboard = () => {
                     <p className="text-gray-600 text-sm mb-1">{stat.title}</p>
                     <p className="text-2xl font-bold text-black">{stat.value}</p>
                   </div>
-                  <div className={`p-3 rounded-full ${stat.bgColor} flex items-center justify-center`}>
+                  <div className={`p-3 rounded-full ${stat.bgColor} flex items-center justify-center self-center`}>
                     <Icon className={`h-6 w-6 ${stat.color}`} />
                   </div>
                 </div>

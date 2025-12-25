@@ -11,13 +11,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import BeatCard from '../components/BeatCard';
 import Filters from '../components/Filters';
-import MiniPlayer from '../components/MiniPlayer';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { ShoppingBag, GraduationCap, Music2, ArrowRight } from 'lucide-react';
 
 /**
  * Компонент главной страницы
@@ -149,66 +147,6 @@ const HomePage = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
-      {/* Hero Section - 3 blocks */}
-      <div className="mb-8 sm:mb-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
-          {/* Магазин */}
-          <Link
-            to="/"
-            className="group relative bg-gradient-to-br from-black to-gray-800 rounded-lg p-6 sm:p-8 text-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <ShoppingBag className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-              <ArrowRight className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">Магазин</h2>
-            <p className="text-gray-300 text-sm sm:text-base mb-4">
-              Каталог готовых битов для ваших треков. Выберите идеальный инструментал и скачайте в высоком качестве.
-            </p>
-            <div className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
-              Смотреть каталог →
-            </div>
-          </Link>
-
-          {/* Академия */}
-          <Link
-            to="/courses"
-            className="group relative bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-6 sm:p-8 text-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <GraduationCap className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-              <ArrowRight className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">Академия</h2>
-            <p className="text-gray-200 text-sm sm:text-base mb-4">
-              Обучающие курсы по битмейкингу. Изучите создание битов от основ до продвинутых техник.
-            </p>
-            <div className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
-              Смотреть курсы →
-            </div>
-          </Link>
-
-          {/* Заказ битов */}
-          <Link
-            to="/order"
-            className="group relative bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg p-6 sm:p-8 text-white hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <Music2 className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-              <ArrowRight className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">Заказ битов</h2>
-            <p className="text-gray-200 text-sm sm:text-base mb-4">
-              Закажите эксклюзивный бит под ваш проект. Сведение, мастеринг и другие услуги под ключ.
-            </p>
-            <div className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
-              Оформить заказ →
-            </div>
-          </Link>
-        </div>
-      </div>
-
-      {/* Catalog Section */}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Биты</h1>
         <p className="text-gray-600 text-sm sm:text-base">
@@ -240,8 +178,6 @@ const HomePage = () => {
           })}
         </div>
       )}
-      
-      <MiniPlayer />
       
       {/* Bottom padding to prevent overlap with mini player */}
       <div className="h-20 sm:h-24"></div>

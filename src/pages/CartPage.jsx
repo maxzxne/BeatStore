@@ -19,6 +19,8 @@ const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
+  // Состояние выбранных форматов для каждого бита: { beatId: 'mp3' | 'wav' | 'exclusive' }
+  const [selectedFormats, setSelectedFormats] = useState({});
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -41,6 +43,19 @@ const CartPage = () => {
       const beats = beatsResponse.data.map(item => ({ ...item, type: 'beat' }));
       const courses = coursesResponse.data.map(item => ({ ...item, type: 'course' }));
       setCartItems([...beats, ...courses]);
+      
+      // Инициализируем выбранные форматы для битов (по умолчанию mp3, если доступен)
+      const formats = {};
+      beats.forEach(beat => {
+        if (beat.mp3_url) {
+          formats[beat.id] = 'mp3';
+        } else if (beat.wav_url) {
+          formats[beat.id] = 'wav';
+        } else if (beat.exclusive_url) {
+          formats[beat.id] = 'exclusive';
+        }
+      });
+      setSelectedFormats(formats);
     } catch (error) {
       console.error('Error fetching cart:', error);
     } finally {
@@ -56,6 +71,14 @@ const CartPage = () => {
         await api.delete(`/beats/${itemId}/cart`);
       }
       setCartItems(cartItems.filter(item => item.id !== itemId));
+      
+      // Удаляем формат из состояния, если это бит
+      if (itemType === 'beat') {
+        const newFormats = { ...selectedFormats };
+        delete newFormats[itemId];
+        setSelectedFormats(newFormats);
+      }
+      
       showSuccess('Удалено из корзины');
     } catch (error) {
       console.error('Error removing from cart:', error);
@@ -74,19 +97,45 @@ const CartPage = () => {
     
     setPurchasing(true);
     try {
-      const freeItems = cartItems.filter(item => item.price === 0);
+      const freeItems = cartItems.filter(item => {
+        if (item.type === 'beat' && (item.price_mp3 !== null || item.price_wav !== null || item.price_exclusive !== null)) {
+          const format = selectedFormats[item.id] || 'mp3';
+          let price = 0;
+          if (format === 'mp3' && item.price_mp3 !== null) price = item.price_mp3;
+          else if (format === 'wav' && item.price_wav !== null) price = item.price_wav;
+          else if (format === 'exclusive' && item.price_exclusive !== null) price = item.price_exclusive;
+          return price === 0;
+        }
+        return item.price === 0;
+      });
+      
       const purchasePromises = freeItems.map(item => {
         if (item.type === 'course') {
           return api.post(`/courses/${item.id}/purchase`);
         } else {
-          return api.post(`/beats/${item.id}/purchase`);
+          const formData = new FormData();
+          const format = selectedFormats[item.id] || 'mp3';
+          formData.append('purchase_type', format);
+          return api.post(`/beats/${item.id}/purchase`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
         }
       });
       
       await Promise.all(purchasePromises);
       
       // Remove purchased items from cart
-      setCartItems(cartItems.filter(item => item.price > 0));
+      setCartItems(cartItems.filter(item => {
+        if (item.type === 'beat' && (item.price_mp3 !== null || item.price_wav !== null || item.price_exclusive !== null)) {
+          const format = selectedFormats[item.id] || 'mp3';
+          let price = 0;
+          if (format === 'mp3' && item.price_mp3 !== null) price = item.price_mp3;
+          else if (format === 'wav' && item.price_wav !== null) price = item.price_wav;
+          else if (format === 'exclusive' && item.price_exclusive !== null) price = item.price_exclusive;
+          return price > 0;
+        }
+        return item.price > 0;
+      }));
       
       const beatsCount = freeItems.filter(item => item.type === 'beat').length;
       const coursesCount = freeItems.filter(item => item.type === 'course').length;
@@ -108,7 +157,18 @@ const CartPage = () => {
     }
   };
 
-  const totalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+  // Пересчитываем общую цену с учетом выбранных форматов
+  const totalPrice = cartItems.reduce((sum, item) => {
+    if (item.type === 'beat' && (item.price_mp3 !== null || item.price_wav !== null || item.price_exclusive !== null)) {
+      const format = selectedFormats[item.id] || 'mp3';
+      let price = 0;
+      if (format === 'mp3' && item.price_mp3 !== null) price = item.price_mp3;
+      else if (format === 'wav' && item.price_wav !== null) price = item.price_wav;
+      else if (format === 'exclusive' && item.price_exclusive !== null) price = item.price_exclusive;
+      return sum + price;
+    }
+    return sum + item.price;
+  }, 0);
   const freeItemsCount = cartItems.filter(item => item.price === 0).length;
 
   if (!isAuthenticated) {
@@ -231,6 +291,87 @@ const CartPage = () => {
                       </div>
                       
                       <div className="text-right flex flex-col justify-center">
+                        {item.type === 'beat' && (item.price_mp3 !== null || item.price_wav !== null || item.price_exclusive !== null) ? (
+                          <div className="space-y-2">
+                            {/* Выбор формата для бита */}
+                            <div className="text-xs text-gray-600 mb-2">Формат:</div>
+                            <div className="space-y-1">
+                              {item.mp3_url && (item.price_mp3 !== null && item.price_mp3 !== undefined) && (
+                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 transition-colors text-xs">
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      name={`format-${item.id}`}
+                                      value="mp3"
+                                      checked={selectedFormats[item.id] === 'mp3'}
+                                      onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'mp3' })}
+                                      className="w-3 h-3 text-black border-gray-300 focus:ring-black"
+                                    />
+                                    <span className="text-black">MP3</span>
+                                  </div>
+                                  <span className="text-black font-semibold">
+                                    {item.price_mp3 === 0 ? '0₽' : `${item.price_mp3.toFixed(0)}₽`}
+                                  </span>
+                                </label>
+                              )}
+                              {item.wav_url && (item.price_wav !== null && item.price_wav !== undefined) && (
+                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 transition-colors text-xs">
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      name={`format-${item.id}`}
+                                      value="wav"
+                                      checked={selectedFormats[item.id] === 'wav'}
+                                      onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'wav' })}
+                                      className="w-3 h-3 text-black border-gray-300 focus:ring-black"
+                                    />
+                                    <span className="text-black">WAV</span>
+                                  </div>
+                                  <span className="text-black font-semibold">
+                                    {item.price_wav === 0 ? '0₽' : `${item.price_wav.toFixed(0)}₽`}
+                                  </span>
+                                </label>
+                              )}
+                              {item.exclusive_url && (item.price_exclusive !== null && item.price_exclusive !== undefined) && (
+                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 transition-colors text-xs">
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      name={`format-${item.id}`}
+                                      value="exclusive"
+                                      checked={selectedFormats[item.id] === 'exclusive'}
+                                      onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'exclusive' })}
+                                      className="w-3 h-3 text-black border-gray-300 focus:ring-black"
+                                    />
+                                    <span className="text-black">Exclusive</span>
+                                  </div>
+                                  <span className="text-black font-semibold">
+                                    {item.price_exclusive === 0 ? '0₽' : `${item.price_exclusive.toFixed(0)}₽`}
+                                  </span>
+                                </label>
+                              )}
+                            </div>
+                            {/* Цена выбранного формата */}
+                            <div className="text-lg font-bold text-black mt-2">
+                              {(() => {
+                                const format = selectedFormats[item.id] || 'mp3';
+                                let price = 0;
+                                if (format === 'mp3' && item.price_mp3 !== null) price = item.price_mp3;
+                                else if (format === 'wav' && item.price_wav !== null) price = item.price_wav;
+                                else if (format === 'exclusive' && item.price_exclusive !== null) price = item.price_exclusive;
+                                return price === 0 ? 'Бесплатно' : `${price.toFixed(0)} ₽`;
+                              })()}
+                            </div>
+                            <button
+                              onClick={() => removeFromCart(item.id, item.type)}
+                              className="text-dark-400 hover:text-red-500 mt-1"
+                              title="Удалить из корзины"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
                         <div className="text-lg font-bold text-black">
                           {item.price === 0 ? 'Бесплатно' : `${item.price.toFixed(0)} ₽`}
                         </div>
@@ -241,6 +382,8 @@ const CartPage = () => {
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -293,6 +436,18 @@ const CartPage = () => {
                       const params = new URLSearchParams();
                       params.append('type', 'cart');
                       params.append('total_price', totalPrice.toString());
+                      
+                      // Передаем выбранные форматы для битов в корзине
+                      const beatsWithFormats = cartItems
+                        .filter(item => item.type === 'beat')
+                        .map(item => ({
+                          id: item.id,
+                          format: selectedFormats[item.id] || 'mp3'
+                        }));
+                      if (beatsWithFormats.length > 0) {
+                        params.append('beats_formats', JSON.stringify(beatsWithFormats));
+                      }
+                      
                       navigate(`/test-payment?${params.toString()}`);
                     }}
                     className="btn btn-primary w-full h-12 text-base"
