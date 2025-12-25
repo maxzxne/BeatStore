@@ -1949,6 +1949,37 @@ def get_service_order(order_id: int,
         raise HTTPException(status_code=404, detail="Order not found")
     return ServiceOrderResponse.from_orm(order)
 
+@app.post("/service-orders/{order_id}/payment")
+def process_service_order_payment(
+    order_id: int,
+    payment_data: dict,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """Обработка оплаты заказа услуги"""
+    order = db.query(ServiceOrder).filter(ServiceOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Проверяем права доступа
+    if current_user and current_user.is_admin:
+        pass
+    elif current_user and order.user_id == current_user.id:
+        pass
+    elif not current_user and order.customer_email:
+        pass
+    else:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Обновляем статус заказа на "paid" при успешной оплате
+    if payment_data.get("success"):
+        order.status = "paid"
+        db.commit()
+        db.refresh(order)
+        return {"message": "Payment processed successfully", "order": ServiceOrderResponse.from_orm(order)}
+    else:
+        raise HTTPException(status_code=400, detail="Payment failed")
+
 @app.post("/upload-materials")
 async def upload_materials(
     file: UploadFile = File(...),
