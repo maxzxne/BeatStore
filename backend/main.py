@@ -32,6 +32,7 @@ import os
 import sys
 import re
 import uuid
+from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
@@ -229,12 +230,16 @@ print("FastAPI приложение создано")
 
 # Настройка CORS для взаимодействия с frontend
 # ДОЛЖНО БЫТЬ ПЕРЕД ВСЕМИ ЭНДПОИНТАМИ
+# CORS настройки - для продакшена указать конкретные домены
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",") if os.getenv("CORS_ORIGINS") else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Для продакшена можно ограничить домены
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    max_age=3600,  # Кеш preflight запросов на 1 час
 )
 
 # Middleware для логирования ошибок
@@ -464,6 +469,50 @@ import os
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")  # В продакшене должен быть сложный ключ
 ALGORITHM = "HS256"  # Алгоритм подписи JWT
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # Время жизни токена
+
+# Настройки безопасности для загрузки файлов
+ALLOWED_AUDIO_TYPES = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/wave"]
+ALLOWED_VIDEO_TYPES = ["video/mp4", "video/mpeg", "video/quicktime"]
+ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+ALLOWED_ARCHIVE_TYPES = ["application/zip", "application/x-zip-compressed"]
+MAX_FILE_SIZE = 500 * 1024 * 1024  # 500 MB
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+def validate_file(file: UploadFile, allowed_types: list, max_size: int, file_type: str) -> tuple[bool, str]:
+    """Валидация загружаемого файла"""
+    if not file:
+        return True, ""
+    
+    # Проверка типа файла
+    if file.content_type not in allowed_types:
+        return False, f"Недопустимый тип файла. Разрешены: {', '.join(allowed_types)}"
+    
+    # Проверка расширения
+    filename = file.filename or ""
+    ext = Path(filename).suffix.lower()
+    allowed_extensions = {
+        "audio": [".mp3", ".wav"],
+        "video": [".mp4", ".mov"],
+        "image": [".jpg", ".jpeg", ".png", ".webp"],
+        "archive": [".zip"]
+    }
+    
+    if file_type in allowed_extensions and ext not in allowed_extensions[file_type]:
+        return False, f"Недопустимое расширение файла. Разрешены: {', '.join(allowed_extensions[file_type])}"
+    
+    # Проверка размера (нужно прочитать файл)
+    # В FastAPI размер файла проверяется при чтении
+    return True, ""
+
+def sanitize_filename(filename: str) -> str:
+    """Санитизация имени файла для безопасности"""
+    if not filename:
+        return ""
+    # Удаляем опасные символы
+    filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+    # Ограничиваем длину
+    filename = filename[:200]
+    return filename
 
 # Контекст для хеширования паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -2117,7 +2166,12 @@ async def upload_beat_admin(
     try:
         # Загружаем демо файл локально
         if demo_file:
-            demo_filename = f"demo_{beat.id}_{demo_file.filename}"
+            is_valid, error_msg = validate_file(demo_file, ALLOWED_AUDIO_TYPES, MAX_FILE_SIZE, "audio")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(demo_file.filename or "")
+            demo_filename = f"demo_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
             demo_path = f"static/demos/{demo_filename}"
             os.makedirs(os.path.dirname(demo_path), exist_ok=True)
             
@@ -2129,7 +2183,12 @@ async def upload_beat_admin(
         
         # Загружаем WAV файл
         if wav_file:
-            wav_filename = f"wav_{beat.id}_{wav_file.filename}"
+            is_valid, error_msg = validate_file(wav_file, ALLOWED_AUDIO_TYPES, MAX_FILE_SIZE, "audio")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(wav_file.filename or "")
+            wav_filename = f"wav_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
             wav_path = f"static/audio/{wav_filename}"
             os.makedirs(os.path.dirname(wav_path), exist_ok=True)
             
@@ -2141,7 +2200,12 @@ async def upload_beat_admin(
         
         # Загружаем MP3 файл
         if mp3_file:
-            mp3_filename = f"mp3_{beat.id}_{mp3_file.filename}"
+            is_valid, error_msg = validate_file(mp3_file, ALLOWED_AUDIO_TYPES, MAX_FILE_SIZE, "audio")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(mp3_file.filename or "")
+            mp3_filename = f"mp3_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
             mp3_path = f"static/audio/{mp3_filename}"
             os.makedirs(os.path.dirname(mp3_path), exist_ok=True)
             
@@ -2153,7 +2217,12 @@ async def upload_beat_admin(
         
         # Загружаем эксклюзивный ZIP файл
         if exclusive_file:
-            exclusive_filename = f"exclusive_{beat.id}_{exclusive_file.filename}"
+            is_valid, error_msg = validate_file(exclusive_file, ALLOWED_ARCHIVE_TYPES, MAX_FILE_SIZE, "archive")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(exclusive_file.filename or "")
+            exclusive_filename = f"exclusive_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
             exclusive_path = f"static/audio/{exclusive_filename}"
             os.makedirs(os.path.dirname(exclusive_path), exist_ok=True)
             
@@ -2165,7 +2234,12 @@ async def upload_beat_admin(
         
         # Загружаем обложку локально
         if cover_file:
-            cover_filename = f"cover_{beat.id}_{cover_file.filename}"
+            is_valid, error_msg = validate_file(cover_file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, "image")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(cover_file.filename or "")
+            cover_filename = f"cover_{beat.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
             cover_path = f"static/covers/{cover_filename}"
             os.makedirs(os.path.dirname(cover_path), exist_ok=True)
             
@@ -2227,7 +2301,12 @@ async def upload_course_admin(
         
         # Загружаем превью видео локально
         if preview_video_file:
-            preview_filename = f"preview_{course.id}_{preview_video_file.filename}"
+            is_valid, error_msg = validate_file(preview_video_file, ALLOWED_VIDEO_TYPES, MAX_FILE_SIZE, "video")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(preview_video_file.filename or "")
+            preview_filename = f"preview_{course.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
             preview_path = f"static/course_previews/{preview_filename}"
             
             with open(preview_path, "wb") as buffer:
@@ -2238,7 +2317,12 @@ async def upload_course_admin(
         
         # Загружаем полное видео локально
         if full_video_file:
-            full_filename = f"full_{course.id}_{full_video_file.filename}"
+            is_valid, error_msg = validate_file(full_video_file, ALLOWED_VIDEO_TYPES, MAX_FILE_SIZE, "video")
+            if not is_valid:
+                raise HTTPException(status_code=400, detail=error_msg)
+            
+            safe_filename = sanitize_filename(full_video_file.filename or "")
+            full_filename = f"full_{course.id}_{uuid.uuid4().hex[:8]}_{safe_filename}"
             full_path = f"static/course_videos/{full_filename}"
             
             with open(full_path, "wb") as buffer:
