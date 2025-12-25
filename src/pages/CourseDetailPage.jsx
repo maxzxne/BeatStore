@@ -171,12 +171,33 @@ const CourseDetailPage = () => {
     }
   };
 
-  const toggleVideo = () => {
+  const toggleVideo = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const newPlayingState = !videoPlaying;
+    setVideoPlaying(newPlayingState);
+    
+    // Дополнительно убеждаемся, что ReactPlayer получил команду
     if (playerRef.current) {
-      if (videoPlaying) {
-        playerRef.current.getInternalPlayer()?.pause();
+      if (newPlayingState) {
+        // Небольшая задержка для гарантии обновления состояния
+        setTimeout(() => {
+          if (playerRef.current) {
+            const internalPlayer = playerRef.current.getInternalPlayer();
+            if (internalPlayer && internalPlayer.paused) {
+              internalPlayer.play().catch(err => {
+                console.error('Error playing video:', err);
+              });
+            }
+          }
+        }, 100);
       } else {
-        playerRef.current.getInternalPlayer()?.play();
+        const internalPlayer = playerRef.current.getInternalPlayer();
+        if (internalPlayer && !internalPlayer.paused) {
+          internalPlayer.pause();
+        }
       }
     }
   };
@@ -298,8 +319,13 @@ const CourseDetailPage = () => {
                 
                 {!videoPlaying && (
                   <button
-                    onClick={toggleVideo}
-                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 hover:bg-opacity-60 transition-opacity z-10"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleVideo();
+                    }}
+                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 hover:bg-opacity-60 transition-opacity z-10 cursor-pointer"
+                    type="button"
                   >
                     <div className="bg-black rounded-full p-4">
                       <Play className="h-12 w-12 text-white" />
@@ -311,8 +337,13 @@ const CourseDetailPage = () => {
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20">
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={toggleVideo}
-                      className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleVideo();
+                      }}
+                      className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors cursor-pointer"
+                      type="button"
                     >
                       {videoPlaying ? (
                         <Pause className="h-5 w-5 text-white" />
