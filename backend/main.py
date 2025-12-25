@@ -452,9 +452,9 @@ else:
 
 # Тестовый эндпоинт для проверки работы API
 @app.get("/health")
-def health_check():
-    """Проверка работоспособности API"""
-    return {"status": "ok", "message": "API is running"}
+async def health_check():
+    """Проверка работоспособности API - быстрый ответ для Render"""
+    return {"status": "ok", "message": "API is running", "timestamp": datetime.utcnow().isoformat()}
 
 # Эндпоинт для главной страницы фронтенда
 @app.get("/")
@@ -2827,50 +2827,55 @@ except Exception as e:
     traceback.print_exc()
 
 # Запуск Telegram бота в фоновом потоке
-print("=" * 50)
-print("Запуск Telegram бота...")
-print("=" * 50)
-try:
-    import threading
-    import os
-    
-    # Проверяем наличие токена
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if bot_token:
-        try:
-            from telegram_bot import main as telegram_bot_main
-            
-            def run_telegram_bot():
-                try:
-                    print("🤖 Запуск Telegram бота в фоновом потоке...")
-                    telegram_bot_main()
-                except Exception as e:
-                    print(f"❌ Ошибка в Telegram боте: {e}")
-                    import traceback
-                    traceback.print_exc()
-            
-            # Запускаем бота в отдельном потоке
-            bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
-            bot_thread.start()
-            print("✅ Telegram бот запущен в фоновом потоке")
-        except ImportError as e:
-            print(f"⚠️  Не удалось импортировать telegram_bot: {e}")
-        except Exception as e:
-            print(f"⚠️  Не удалось запустить Telegram бота: {e}")
-            import traceback
-            traceback.print_exc()
-    else:
-        print("⚠️  TELEGRAM_BOT_TOKEN не установлен, бот не запущен")
-except Exception as e:
-    print(f"⚠️  Ошибка при попытке запуска Telegram бота: {e}")
-    import traceback
-    traceback.print_exc()
-
+# Telegram bot будет запущен в startup event для более быстрого старта сервера
 print("=" * 50)
 print("Приложение готово к работе!")
 print("=" * 50)
 print("КОНЕЦ ЗАГРУЗКИ МОДУЛЯ main.py")
 print("=" * 50)
+
+# Startup event для запуска Telegram бота после старта сервера
+@app.on_event("startup")
+async def startup_event():
+    """Запускает Telegram бота после старта сервера"""
+    print("=" * 50)
+    print("Запуск Telegram бота...")
+    print("=" * 50)
+    try:
+        import threading
+        import os
+        
+        # Проверяем наличие токена
+        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+        if bot_token:
+            try:
+                from telegram_bot import main as telegram_bot_main
+                
+                def run_telegram_bot():
+                    try:
+                        print("🤖 Запуск Telegram бота в фоновом потоке...")
+                        telegram_bot_main()
+                    except Exception as e:
+                        print(f"❌ Ошибка в Telegram боте: {e}")
+                        import traceback
+                        traceback.print_exc()
+                
+                # Запускаем бота в отдельном потоке
+                bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
+                bot_thread.start()
+                print("✅ Telegram бот запущен в фоновом потоке")
+            except ImportError as e:
+                print(f"⚠️  Не удалось импортировать telegram_bot: {e}")
+            except Exception as e:
+                print(f"⚠️  Не удалось запустить Telegram бота: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print("⚠️  TELEGRAM_BOT_TOKEN не установлен, бот не запущен")
+    except Exception as e:
+        print(f"⚠️  Ошибка при попытке запуска Telegram бота: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     import uvicorn
