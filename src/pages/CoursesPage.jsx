@@ -175,7 +175,7 @@ const CoursesPage = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {courses.map(course => (
-            <Link key={course.id} to={`/course/${course.id}`} className="card group relative hover:border-black transition-colors">
+            <Link key={course.id} to={`/course/${course.id}`} className="card group relative hover:border-black dark:hover:border-white transition-colors">
               <div className="relative">
                 {course.preview_video_url ? (
                   <div className="w-full h-48 bg-black rounded-t-lg flex items-center justify-center relative overflow-hidden">
@@ -207,7 +207,7 @@ const CoursesPage = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 rounded-t-lg flex items-center justify-center">
+                  <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-t-lg flex items-center justify-center">
                     <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">Курс</span>
                   </div>
                 )}
@@ -242,7 +242,7 @@ const CoursesPage = () => {
                           handleFavorite(course.id, e);
                         }}
                         className={`h-10 w-10 flex items-center justify-center rounded-full border transition-colors ${
-                          course.is_favorite ? 'text-black dark:text-white border-black bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 hover:border-black'
+                          course.is_favorite ? 'text-black dark:text-white border-black dark:border-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white'
                         }`}
                         title="Избранное"
                       >
@@ -256,7 +256,7 @@ const CoursesPage = () => {
                           handleAddToCart(course.id, e);
                         }}
                         className={`h-10 w-10 flex items-center justify-center rounded-full border transition-colors ${
-                          course.is_in_cart ? 'text-black dark:text-white border-black bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 hover:border-black'
+                          course.is_in_cart ? 'text-black dark:text-white border-black dark:border-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white'
                         }`}
                         title="Корзина"
                       >

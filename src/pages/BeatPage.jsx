@@ -294,7 +294,7 @@ const BeatPage = () => {
                     <span className="text-gray-600 dark:text-neutral-400 block mb-3">Формат:</span>
                     <div className="space-y-2">
                       {beat.mp3_url && (beat.price_mp3 !== null && beat.price_mp3 !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:bg-neutral-800 transition-colors">
+                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
                           <div className="flex items-center space-x-3">
                             <input
                               type="radio"
@@ -312,7 +312,7 @@ const BeatPage = () => {
                         </label>
                       )}
                       {beat.wav_url && (beat.price_wav !== null && beat.price_wav !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:bg-neutral-800 transition-colors">
+                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
                           <div className="flex items-center space-x-3">
                             <input
                               type="radio"
@@ -330,7 +330,7 @@ const BeatPage = () => {
                         </label>
                       )}
                       {beat.exclusive_url && (beat.price_exclusive !== null && beat.price_exclusive !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:bg-neutral-800 transition-colors">
+                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
                           <div className="flex items-center space-x-3">
                             <input
                               type="radio"

@@ -231,7 +231,7 @@ const CartPage = () => {
                               />
                             </div>
                           ) : (
-                            <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 rounded flex items-center justify-center">
+                            <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded flex items-center justify-center">
                               <span className="text-gray-600 dark:text-neutral-400 text-xs font-medium">Курс</span>
                             </div>
                           )
@@ -244,7 +244,7 @@ const CartPage = () => {
                             className="w-16 h-16 object-cover rounded"
                           />
                         ) : (
-                          <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 rounded flex items-center justify-center relative overflow-hidden">
+                          <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded flex items-center justify-center relative overflow-hidden">
                             <div className="absolute inset-0 bg-black bg-opacity-5"></div>
                             <div className="relative z-10">
                               <span className="text-gray-600 dark:text-neutral-400 text-xs font-medium">BeatStore</span>

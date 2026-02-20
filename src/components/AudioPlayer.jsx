@@ -63,7 +63,7 @@ const AudioPlayer = ({ src, title, trackId }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-300 rounded-lg p-4">
+    <div className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-lg p-4">
       <div className="flex items-center space-x-4">
         <button
           onClick={togglePlay}

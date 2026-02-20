@@ -346,7 +346,7 @@ const CourseDetailPage = () => {
               </div>
             </div>
           ) : (
-            <div className="w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-300 rounded-lg flex items-center justify-center">
+            <div className="w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-lg flex items-center justify-center">
               <span className="text-gray-600 dark:text-neutral-400 text-lg">Превью недоступно</span>
             </div>
           )}
@@ -375,7 +375,7 @@ const CourseDetailPage = () => {
                 <button
                   onClick={handleFavorite}
                   className={`btn btn-outline flex-1 h-12 flex items-center justify-center gap-2 ${
-                    isFavorite ? 'bg-gray-50 dark:bg-neutral-800 border-black' : ''
+                    isFavorite ? 'bg-gray-50 dark:bg-neutral-800 border-black dark:border-white' : ''
                   }`}
                 >
                   <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
@@ -385,7 +385,7 @@ const CourseDetailPage = () => {
                 <button
                   onClick={handleAddToCart}
                   className={`btn btn-outline flex-1 h-12 flex items-center justify-center gap-2 ${
-                    isInCart ? 'bg-gray-50 dark:bg-neutral-800 border-black' : ''
+                    isInCart ? 'bg-gray-50 dark:bg-neutral-800 border-black dark:border-white' : ''
                   }`}
                 >
                   <ShoppingCart className="h-5 w-5" fill={isInCart ? 'currentColor' : 'none'} />
@@ -409,7 +409,7 @@ const CourseDetailPage = () => {
               {course.tags.split(',').map((tag, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-gray-100 dark:bg-neutral-900 text-gray-700 rounded-full text-sm"
+                  className="px-3 py-1 bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-neutral-300 rounded-full text-sm"
                 >
                   {tag.trim()}
                 </span>

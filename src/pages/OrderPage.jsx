@@ -315,27 +315,27 @@ const OrderPage = () => {
         <div className="space-y-4">
           <button
             onClick={() => setOrderType("know")}
-            className="w-full p-6 border-2 border-gray-300 rounded-lg hover:border-black transition-colors text-left"
+            className="w-full p-6 border-2 border-gray-300 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white transition-colors text-left"
           >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold text-black dark:text-white mb-4">Я знаю, что я хочу!</h3>
                 <p className="text-gray-600 dark:text-neutral-400 mb-4">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
               </div>
-              <div className="text-2xl">→</div>
+              <div className="text-2xl text-black dark:text-white">→</div>
             </div>
           </button>
 
           <button
             onClick={() => setOrderType("dont_know")}
-            className="w-full p-6 border-2 border-gray-300 rounded-lg hover:border-black transition-colors text-left"
+            className="w-full p-6 border-2 border-gray-300 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white transition-colors text-left"
           >
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold text-black dark:text-white mb-2">Я не знаю, что я хочу!</h3>
                 <p className="text-gray-600 dark:text-neutral-400">Отправьте простую заявку, мы свяжемся с вами для обсуждения</p>
               </div>
-              <div className="text-2xl">→</div>
+              <div className="text-2xl text-black dark:text-white">→</div>
             </div>
           </button>
         </div>
@@ -371,7 +371,7 @@ const OrderPage = () => {
               value={formData.customer_name}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
               placeholder="Введите ваше имя"
             />
           </div>
@@ -388,7 +388,7 @@ const OrderPage = () => {
               value={formData.customer_email}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
               placeholder="Введите ваш email"
             />
           </div>
@@ -405,7 +405,7 @@ const OrderPage = () => {
               onChange={handleInputChange}
               placeholder="Расскажите, что вас интересует..."
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
             />
           </div>
 
@@ -421,7 +421,7 @@ const OrderPage = () => {
               value={formData.contact_info}
               onChange={handleInputChange}
               placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
             />
             <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
               Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
@@ -484,7 +484,7 @@ const OrderPage = () => {
                 value={formData.customer_name}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
                 placeholder="Введите ваше имя"
               />
             </div>
@@ -501,7 +501,7 @@ const OrderPage = () => {
                 value={formData.customer_email}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
                 placeholder="Введите ваш email"
               />
             </div>
@@ -547,7 +547,7 @@ const OrderPage = () => {
             <button
               type="button"
               onClick={() => setShowCategorySelector(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-black transition-colors w-full"
+              className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white transition-colors w-full"
             >
               <Plus className="h-5 w-5" />
               <span>Добавить категорию услуги</span>
@@ -556,13 +556,13 @@ const OrderPage = () => {
 
           {/* Список категорий для выбора */}
           {showCategorySelector && (
-            <div className="border border-gray-300 rounded-lg p-4 space-y-2">
+            <div className="border border-gray-300 dark:border-neutral-700 rounded-lg p-4 space-y-2">
               {serviceCategories.map(category => (
                 <button
                   key={category.value}
                   type="button"
                   onClick={() => addCategory(category)}
-                  className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:bg-neutral-900 border border-transparent hover:border-gray-300 dark:border-neutral-700"
+                  className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800 dark:bg-neutral-900 border border-transparent hover:border-gray-300 dark:border-neutral-700"
                 >
                   <div className="font-medium text-black dark:text-white">{category.label}</div>
                   {category.description && (
@@ -593,7 +593,7 @@ const OrderPage = () => {
             <div className="mb-3 space-y-2">
               {formData.materials.map((file, index) => (
                 <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
+                  <span className="text-sm text-gray-700 dark:text-neutral-300 truncate flex-1">{file.name}</span>
                   <button
                     type="button"
                     onClick={() => removeFile(formData.materials, index, 'materials')}
@@ -608,7 +608,7 @@ const OrderPage = () => {
           
           {/* Красивая кнопка загрузки с drag and drop */}
           <label 
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 dark:bg-neutral-800 transition-colors"
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-lg cursor-pointer hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 dark:bg-neutral-800 transition-colors"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -654,7 +654,7 @@ const OrderPage = () => {
             onChange={handleInputChange}
             placeholder="Введите ссылки на референсы (каждая ссылка с новой строки)"
             rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           />
         </div>
 
@@ -670,7 +670,7 @@ const OrderPage = () => {
             <div className="mb-3 space-y-2">
               {formData.reference_files.map((file, index) => (
                 <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
+                  <span className="text-sm text-gray-700 dark:text-neutral-300 truncate flex-1">{file.name}</span>
                   <button
                     type="button"
                     onClick={() => removeFile(formData.reference_files, index, 'reference_files')}
@@ -685,7 +685,7 @@ const OrderPage = () => {
           
           {/* Красивая кнопка загрузки с drag and drop */}
           <label 
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 dark:bg-neutral-800 transition-colors"
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-lg cursor-pointer hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 dark:bg-neutral-800 transition-colors"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -731,7 +731,7 @@ const OrderPage = () => {
             onChange={handleInputChange}
             placeholder="Опишите ваши требования..."
             rows={6}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           />
         </div>
 
@@ -748,7 +748,7 @@ const OrderPage = () => {
             value={formData.contact_info}
             onChange={handleInputChange}
             placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           />
           <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
             Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
@@ -770,7 +770,7 @@ const OrderPage = () => {
             required
             min="1"
             placeholder="Укажите количество дней"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           />
           <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
             Примеры: 1 день (24 часа), 2-3 дня, 7 дней (1 неделя), 14-21 день (2-3 недели)
@@ -809,7 +809,7 @@ const OrderPage = () => {
         </div>
 
         {/* Калькулятор стоимости - всегда отображается */}
-        <div className="bg-gray-50 dark:bg-neutral-800 border border-gray-300 rounded-lg p-6">
+        <div className="bg-gray-50 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 rounded-lg p-6">
           <h3 className="text-lg font-bold text-black dark:text-white mb-4">Расчет стоимости</h3>
           <div className="space-y-2">
             {formData.service_categories.length === 0 ? (

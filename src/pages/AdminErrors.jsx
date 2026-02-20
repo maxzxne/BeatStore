@@ -324,7 +324,7 @@ const AdminErrors = () => {
               {errors.map((error) => (
                 <div
                   key={error.id}
-                  className="border border-gray-200 dark:border-neutral-700 rounded-lg p-4 hover:bg-gray-50 dark:bg-neutral-800 cursor-pointer transition-colors"
+                  className="border border-gray-200 dark:border-neutral-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer transition-colors"
                   onClick={() => setSelectedError(selectedError?.id === error.id ? null : error)}
                 >
                   <div className="flex items-start justify-between">

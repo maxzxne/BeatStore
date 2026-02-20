@@ -341,7 +341,7 @@ const AdminOrders = () => {
                               type="number"
                               placeholder="Изменить стоимость"
                               defaultValue={selectedOrder.price}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white rounded-lg"
                               onBlur={(e) => {
                                 const price = parseFloat(e.target.value);
                                 if (price > 0 && price !== selectedOrder.price) {
@@ -358,7 +358,7 @@ const AdminOrders = () => {
                         <input
                           type="number"
                           placeholder="Укажите стоимость"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white rounded-lg"
                           onBlur={(e) => {
                             const price = parseFloat(e.target.value);
                             if (price > 0) {

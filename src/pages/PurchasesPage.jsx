@@ -235,7 +235,7 @@ const PurchasesPage = () => {
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 rounded-t-lg flex items-center justify-center relative overflow-hidden">
+                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-t-lg flex items-center justify-center relative overflow-hidden">
                       <div className="absolute inset-0 bg-black bg-opacity-5"></div>
                       <div className="relative z-10 text-center">
                         <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">BeatStore</span>
@@ -328,7 +328,7 @@ const PurchasesPage = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 rounded-t-lg flex items-center justify-center relative overflow-hidden">
+                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-t-lg flex items-center justify-center relative overflow-hidden">
                       <div className="absolute inset-0 bg-black bg-opacity-5"></div>
                       <div className="relative z-10 text-center">
                         <Video className="h-8 w-8 text-gray-600 dark:text-neutral-400 mx-auto mb-2" />
@@ -406,7 +406,7 @@ const PurchasesPage = () => {
                 confirmed: 'bg-blue-100 text-blue-800',
                 paid: 'bg-green-100 text-green-800',
                 in_progress: 'bg-purple-100 text-purple-800',
-                completed: 'bg-gray-100 dark:bg-neutral-900 text-gray-800',
+                completed: 'bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-neutral-200',
                 cancelled: 'bg-red-100 text-red-800'
               };
               
@@ -422,7 +422,7 @@ const PurchasesPage = () => {
               const categories = order.service_categories || (order.service_category ? [order.service_category] : []);
               
               return (
-                <div key={order.id} className="border border-gray-300 rounded-lg p-6">
+                <div key={order.id} className="border border-gray-300 dark:border-neutral-700 rounded-lg p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-bold text-black dark:text-white mb-2">
@@ -433,7 +433,7 @@ const PurchasesPage = () => {
                           {statusLabels[order.status] || order.status}
                         </span>
                         {order.order_type === 'dont_know' && (
-                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-neutral-900 text-gray-800">
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-neutral-200">
                             Требует обсуждения
                           </span>
                         )}
@@ -461,7 +461,7 @@ const PurchasesPage = () => {
                   
                   {categories.length > 0 && (
                     <div className="mb-3">
-                      <div className="text-sm font-medium text-gray-700 mb-1">Категории услуг:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Категории услуг:</div>
                       <div className="flex flex-wrap gap-2">
                         {categories.map((cat, idx) => (
                           <span key={idx} className="px-3 py-1 bg-gray-100 dark:bg-neutral-900 rounded-lg text-sm">
@@ -481,7 +481,7 @@ const PurchasesPage = () => {
                   
                   {order.description && (
                     <div className="mb-3">
-                      <div className="text-sm font-medium text-gray-700 mb-1">Описание:</div>
+                      <div className="text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Описание:</div>
                       <p className="text-sm text-gray-600 dark:text-neutral-400">{order.description}</p>
                     </div>
                   )}
@@ -492,7 +492,7 @@ const PurchasesPage = () => {
                   
                   {/* Информация о стоимости для заказов типа "знаю" */}
                   {order.order_type === 'know' && (
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-700 flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-700 dark:border-neutral-700 flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
                       <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
                       <div className="relative group">
                         <HelpCircle className="h-4 w-4 text-gray-400 cursor-help flex-shrink-0" />
@@ -569,11 +569,11 @@ const PurchasesPage = () => {
                       <div className="space-y-3">
                         {/* MP3 файл с возможностью прослушивания */}
                         {order.result_mp3_url && (
-                          <div className="bg-white p-3 rounded border border-green-200">
+                          <div className="bg-white dark:bg-neutral-800 p-3 rounded border border-green-200 dark:border-green-800">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <Music className="h-4 w-4 text-green-700" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300">MP3 файл</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300 dark:text-neutral-300">MP3 файл</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <button
@@ -615,11 +615,11 @@ const PurchasesPage = () => {
                         
                         {/* WAV файл с возможностью прослушивания */}
                         {order.result_wav_url && (
-                          <div className="bg-white p-3 rounded border border-green-200">
+                          <div className="bg-white dark:bg-neutral-800 p-3 rounded border border-green-200 dark:border-green-800">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <FileAudio className="h-4 w-4 text-green-700" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300">WAV файл</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300 dark:text-neutral-300">WAV файл</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <button
@@ -661,11 +661,11 @@ const PurchasesPage = () => {
                         
                         {/* ZIP архив */}
                         {order.result_zip_url && (
-                          <div className="bg-white p-3 rounded border border-green-200">
+                          <div className="bg-white dark:bg-neutral-800 p-3 rounded border border-green-200 dark:border-green-800">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <FileText className="h-4 w-4 text-green-700" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300">ZIP архив</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300 dark:text-neutral-300">ZIP архив</span>
                               </div>
                               <a
                                 href={`${API_URL}${order.result_zip_url}`}

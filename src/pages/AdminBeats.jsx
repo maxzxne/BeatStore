@@ -112,7 +112,7 @@ const AdminBeats = () => {
                       className="w-16 h-16 object-cover rounded"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 rounded flex items-center justify-center relative overflow-hidden">
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded flex items-center justify-center relative overflow-hidden">
                       <div className="absolute inset-0 bg-black bg-opacity-5"></div>
                       <div className="relative z-10">
                         <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
@@ -166,7 +166,7 @@ const AdminBeats = () => {
       {/* Edit Modal */}
       {editingBeat && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300 dark:border-neutral-700">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300 dark:border-neutral-700">
             <h2 className="text-xl font-bold text-black dark:text-white mb-4">Редактировать бит</h2>
             
             <div className="space-y-4">

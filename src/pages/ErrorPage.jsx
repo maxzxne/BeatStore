@@ -45,7 +45,7 @@ const ErrorPage = () => {
   const Icon = errorInfo.icon;
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         {/* Error Icon */}
         <div className="mb-8">
@@ -56,7 +56,7 @@ const ErrorPage = () => {
 
         {/* Error Content */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             {errorInfo.title}
           </h1>
           <p className="text-gray-600 dark:text-neutral-400 mb-4">
@@ -70,7 +70,7 @@ const ErrorPage = () => {
         {/* Error Details (for development) */}
         {process.env.NODE_ENV === 'development' && error && (
           <div className="mb-8 p-4 bg-gray-100 dark:bg-neutral-900 rounded-lg text-left">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Детали ошибки:</h3>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-neutral-300 mb-2">Детали ошибки:</h3>
             <pre className="text-xs text-gray-600 dark:text-neutral-400 overflow-auto">
               {JSON.stringify(error, null, 2)}
             </pre>
@@ -89,7 +89,7 @@ const ErrorPage = () => {
           
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center justify-center w-full px-6 py-3 bg-gray-100 dark:bg-neutral-900 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center justify-center w-full px-6 py-3 bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-neutral-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-800 transition-colors"
           >
             <RefreshCw className="w-5 h-5 mr-2" />
             Обновить страницу

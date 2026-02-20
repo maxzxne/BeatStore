@@ -484,7 +484,7 @@ const AdminUpload = () => {
                   ) : (
                     <label
                       htmlFor="beat_demo_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <Upload className="h-8 w-8 text-gray-400 mb-2" />
@@ -542,7 +542,7 @@ const AdminUpload = () => {
                   ) : (
                     <label
                       htmlFor="beat_wav_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <Upload className="h-8 w-8 text-gray-400 mb-2" />
@@ -600,7 +600,7 @@ const AdminUpload = () => {
                   ) : (
                     <label
                       htmlFor="beat_mp3_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <Upload className="h-8 w-8 text-gray-400 mb-2" />
@@ -658,7 +658,7 @@ const AdminUpload = () => {
                   ) : (
                     <label
                       htmlFor="beat_exclusive_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <Upload className="h-8 w-8 text-gray-400 mb-2" />
@@ -689,7 +689,7 @@ const AdminUpload = () => {
                   id="allow_multiple_purchases"
                   checked={allowMultiplePurchases}
                   onChange={(e) => setAllowMultiplePurchases(e.target.checked)}
-                  className="w-4 h-4 text-black dark:text-white border-gray-300 rounded focus:ring-black"
+                  className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-700 rounded focus:ring-black"
                 />
                 <label htmlFor="allow_multiple_purchases" className="text-sm font-medium text-black dark:text-white">
                   Разрешить множественные покупки
@@ -749,7 +749,7 @@ const AdminUpload = () => {
                   ) : (
                     <label
                       htmlFor="beat_cover_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <Image className="h-8 w-8 text-gray-400 mb-2" />
@@ -922,7 +922,7 @@ const AdminUpload = () => {
                     ) : (
                       <label
                         htmlFor="course_preview_video"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Video className="h-8 w-8 text-gray-400 mb-2" />
@@ -980,7 +980,7 @@ const AdminUpload = () => {
                     ) : (
                       <label
                         htmlFor="course_full_video"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Video className="h-8 w-8 text-gray-400 mb-2" />
