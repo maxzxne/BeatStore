@@ -41,7 +41,7 @@ const WelcomePopup = () => {
             onClick={() => handleNavigate('/')}
             className="w-full px-6 py-4 border border-black rounded-lg hover:bg-gray-50 transition-colors focus:outline-none text-center"
           >
-            <span className="text-lg font-semibold text-black">
+            <span className="text-lg font-semibold text-black dark:text-white">
               КАТАЛОГ
             </span>
           </button>
@@ -50,7 +50,7 @@ const WelcomePopup = () => {
             onClick={() => handleNavigate('/order')}
             className="w-full px-6 py-4 border border-black rounded-lg hover:bg-gray-50 transition-colors focus:outline-none text-center"
           >
-            <span className="text-lg font-semibold text-black">
+            <span className="text-lg font-semibold text-black dark:text-white">
               ЗАКАЗАТЬ
             </span>
           </button>
@@ -59,7 +59,7 @@ const WelcomePopup = () => {
             onClick={() => handleNavigate('/courses')}
             className="w-full px-6 py-4 border border-black rounded-lg hover:bg-gray-50 transition-colors focus:outline-none text-center"
           >
-            <span className="text-lg font-semibold text-black">
+            <span className="text-lg font-semibold text-black dark:text-white">
               НАУЧИТЬСЯ
             </span>
           </button>

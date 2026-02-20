@@ -46,8 +46,8 @@ const FavoritesPage = () => {
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
           <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-black mb-2">Войдите, чтобы просмотреть избранное</h1>
-          <p className="text-gray-600">Вам нужно войти в систему, чтобы увидеть избранные биты.</p>
+          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Войдите, чтобы просмотреть избранное</h1>
+          <p className="text-gray-600 dark:text-neutral-400">Вам нужно войти в систему, чтобы увидеть избранные биты.</p>
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ const FavoritesPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Загрузка избранного...</div>
+          <div className="text-gray-600 dark:text-neutral-400">Загрузка избранного...</div>
         </div>
       </div>
     );
@@ -66,8 +66,8 @@ const FavoritesPage = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Избранное</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Избранное</h1>
+        <p className="text-gray-600 dark:text-neutral-400">
           {favorites.length} избранных битов
         </p>
       </div>
@@ -75,8 +75,8 @@ const FavoritesPage = () => {
       {favorites.length === 0 ? (
         <div className="text-center py-12">
           <Heart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <div className="text-gray-600 text-lg">Пока нет избранных</div>
-          <p className="text-gray-500 mt-2">
+          <div className="text-gray-600 dark:text-neutral-400 text-lg">Пока нет избранных</div>
+          <p className="text-gray-500 dark:text-neutral-500 mt-2">
             Начните добавлять биты в избранное, чтобы увидеть их здесь
           </p>
         </div>
@@ -105,3 +105,4 @@ const FavoritesPage = () => {
 };
 
 export default FavoritesPage;
+

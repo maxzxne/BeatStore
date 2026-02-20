@@ -153,7 +153,7 @@ const AdminOrders = () => {
   if (!isAdminAuthenticated) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-600">Доступ запрещен. Войдите как администратор.</div>
+        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
       </div>
     );
   }
@@ -161,7 +161,7 @@ const AdminOrders = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Загрузка заявок...</div>
+        <div className="text-gray-600 dark:text-neutral-400">Загрузка заявок...</div>
       </div>
     );
   }
@@ -169,9 +169,9 @@ const AdminOrders = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Заявки на услуги</h1>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Заявки на услуги</h1>
         <div className="flex items-center justify-between mt-4">
-          <p className="text-gray-600">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
+          <p className="text-gray-600 dark:text-neutral-400">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -191,7 +191,7 @@ const AdminOrders = () => {
       {filteredOrders.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <div className="text-gray-600 text-lg">Заявок пока нет</div>
+          <div className="text-gray-600 dark:text-neutral-400 text-lg">Заявок пока нет</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -208,17 +208,17 @@ const AdminOrders = () => {
                 <div className="card-content">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-black mb-1">
+                      <h3 className="font-semibold text-black dark:text-white mb-1">
                         {order.service_categories && order.service_categories.length > 0
                           ? order.service_categories.join(', ')
                           : order.service_category || 'Заказ'}
                       </h3>
                       {order.order_type === 'dont_know' && (
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded mb-2 inline-block">
+                        <span className="text-xs bg-gray-100 text-gray-600 dark:text-neutral-400 px-2 py-1 rounded mb-2 inline-block">
                           Требует обсуждения
                         </span>
                       )}
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
                         <User className="h-4 w-4" />
                         <span>
                           {order.user_username || order.customer_name} 
@@ -229,7 +229,7 @@ const AdminOrders = () => {
                     {getStatusBadge(order.status)}
                   </div>
                   
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-neutral-500">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       <span>{formatDate(order.created_at)}</span>
@@ -238,12 +238,12 @@ const AdminOrders = () => {
                       <span>Дедлайн: {order.deadline_days} {order.deadline_days === 1 ? 'день' : order.deadline_days < 5 ? 'дня' : 'дней'}</span>
                     )}
                     {order.price && (
-                      <span className="font-semibold text-black">{order.price.toLocaleString('ru-RU')} ₽</span>
+                      <span className="font-semibold text-black dark:text-white">{order.price.toLocaleString('ru-RU')} ₽</span>
                     )}
                   </div>
                   
                   {order.description && (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                    <p className="text-sm text-gray-600 dark:text-neutral-400 mt-2 line-clamp-2">
                       {order.description}
                     </p>
                   )}
@@ -257,12 +257,12 @@ const AdminOrders = () => {
             {selectedOrder ? (
               <div className="card sticky top-4">
                 <div className="card-header">
-                  <h2 className="text-lg font-semibold text-black">Детали заявки</h2>
+                  <h2 className="text-lg font-semibold text-black dark:text-white">Детали заявки</h2>
                 </div>
                 
                 <div className="card-content space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Категории услуг</label>
+                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Категории услуг</label>
                     {selectedOrder.service_categories && selectedOrder.service_categories.length > 0 ? (
                       <div className="flex flex-wrap gap-2 mt-1">
                         {selectedOrder.service_categories.map((cat, idx) => (
@@ -272,44 +272,44 @@ const AdminOrders = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-black font-semibold">{selectedOrder.service_category || 'Не указано'}</p>
+                      <p className="text-black dark:text-white font-semibold">{selectedOrder.service_category || 'Не указано'}</p>
                     )}
                   </div>
                   
                   {selectedOrder.order_type && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Тип заказа</label>
-                      <p className="text-black">
+                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Тип заказа</label>
+                      <p className="text-black dark:text-white">
                         {selectedOrder.order_type === 'know' ? 'Я знаю, что хочу' : 'Требует обсуждения'}
                       </p>
                     </div>
                   )}
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Пользователь</label>
-                    <p className="text-black">{selectedOrder.user_username || selectedOrder.customer_name || 'Не указано'}</p>
-                    <p className="text-sm text-gray-600">{selectedOrder.user_email || selectedOrder.customer_email || 'Не указано'}</p>
+                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Пользователь</label>
+                    <p className="text-black dark:text-white">{selectedOrder.user_username || selectedOrder.customer_name || 'Не указано'}</p>
+                    <p className="text-sm text-gray-600 dark:text-neutral-400">{selectedOrder.user_email || selectedOrder.customer_email || 'Не указано'}</p>
                     {!selectedOrder.user_id && (
-                      <p className="text-xs text-gray-500 mt-1">Неавторизованный пользователь</p>
+                      <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Неавторизованный пользователь</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Статус</label>
+                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Статус</label>
                     <div className="mt-1">{getStatusBadge(selectedOrder.status)}</div>
                   </div>
                   
                   {selectedOrder.description && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Описание (ТЗ)</label>
-                      <p className="text-black whitespace-pre-wrap">{selectedOrder.description}</p>
+                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Описание (ТЗ)</label>
+                      <p className="text-black dark:text-white whitespace-pre-wrap">{selectedOrder.description}</p>
                     </div>
                   )}
                   
                   {selectedOrder.deadline_days && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Дедлайн</label>
-                      <p className="text-black">
+                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Дедлайн</label>
+                      <p className="text-black dark:text-white">
                         {selectedOrder.deadline_days} {selectedOrder.deadline_days === 1 ? 'день' : selectedOrder.deadline_days < 5 ? 'дня' : 'дней'}
                       </p>
                     </div>
@@ -317,19 +317,19 @@ const AdminOrders = () => {
                   
                   {selectedOrder.prepayment_percent && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600">Процент предоплаты</label>
-                      <p className="text-black">{selectedOrder.prepayment_percent}%</p>
+                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Процент предоплаты</label>
+                      <p className="text-black dark:text-white">{selectedOrder.prepayment_percent}%</p>
                     </div>
                   )}
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Стоимость</label>
+                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Стоимость</label>
                     {selectedOrder.price ? (
                       <div>
-                        <p className="text-black font-semibold text-lg mb-2">
+                        <p className="text-black dark:text-white font-semibold text-lg mb-2">
                           {selectedOrder.price.toLocaleString('ru-RU')} ₽
                           {selectedOrder.prepayment_percent && (
-                            <span className="text-sm text-gray-600 block mt-1">
+                            <span className="text-sm text-gray-600 dark:text-neutral-400 block mt-1">
                               Предоплата ({selectedOrder.prepayment_percent}%): {(selectedOrder.price * selectedOrder.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
                             </span>
                           )}
@@ -349,7 +349,7 @@ const AdminOrders = () => {
                                 }
                               }}
                             />
-                            <p className="text-xs text-gray-500 mt-1">Можно изменить стоимость до подтверждения заказа</p>
+                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Можно изменить стоимость до подтверждения заказа</p>
                           </div>
                         )}
                       </div>
@@ -367,7 +367,7 @@ const AdminOrders = () => {
                           }}
                         />
                         {selectedOrder.order_type === 'dont_know' && (
-                          <p className="text-xs text-gray-500 mt-1">Укажите стоимость для заявки</p>
+                          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Укажите стоимость для заявки</p>
                         )}
                       </div>
                     )}
@@ -375,7 +375,7 @@ const AdminOrders = () => {
                   
                   {selectedOrder.reference_links && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 flex items-center gap-1">
                         <LinkIcon className="h-4 w-4" />
                         Ссылки на референсы
                       </label>
@@ -397,7 +397,7 @@ const AdminOrders = () => {
                   
                   {selectedOrder.materials_url && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 flex items-center gap-1">
                         <Upload className="h-4 w-4" />
                         Материалы
                       </label>
@@ -414,7 +414,7 @@ const AdminOrders = () => {
                   
                   {selectedOrder.reference_files_url && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 flex items-center gap-1">
                         <Upload className="h-4 w-4" />
                         Референсы (файлы)
                       </label>
@@ -430,23 +430,23 @@ const AdminOrders = () => {
                   )}
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Дата создания</label>
-                    <p className="text-black text-sm">{formatDate(selectedOrder.created_at)}</p>
+                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Дата создания</label>
+                    <p className="text-black dark:text-white text-sm">{formatDate(selectedOrder.created_at)}</p>
                   </div>
                   
                   {/* Загрузка файлов результата (только для заказов типа "не знаю" после оплаты) */}
                   {selectedOrder.order_type === 'dont_know' && (selectedOrder.status === 'paid' || selectedOrder.status === 'in_progress' || selectedOrder.status === 'completed') && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <h3 className="text-md font-semibold text-black mb-3">Файлы результата</h3>
+                    <div className="pt-4 border-t border-gray-200 dark:border-neutral-700">
+                      <h3 className="text-md font-semibold text-black dark:text-white mb-3">Файлы результата</h3>
                       
                       {/* Текущие файлы */}
                       {(selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url) && (
                         <div className="mb-4 space-y-2">
                           {selectedOrder.result_wav_url && (
-                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-2 rounded">
                               <div className="flex items-center gap-2">
-                                <FileAudio className="h-4 w-4 text-gray-600" />
-                                <span className="text-sm text-gray-700">WAV файл</span>
+                                <FileAudio className="h-4 w-4 text-gray-600 dark:text-neutral-400" />
+                                <span className="text-sm text-gray-700 dark:text-neutral-300">WAV файл</span>
                               </div>
                               <a
                                 href={`${API_URL}${selectedOrder.result_wav_url}`}
@@ -459,10 +459,10 @@ const AdminOrders = () => {
                             </div>
                           )}
                           {selectedOrder.result_mp3_url && (
-                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-2 rounded">
                               <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-gray-600" />
-                                <span className="text-sm text-gray-700">MP3 файл</span>
+                                <Music className="h-4 w-4 text-gray-600 dark:text-neutral-400" />
+                                <span className="text-sm text-gray-700 dark:text-neutral-300">MP3 файл</span>
                               </div>
                               <a
                                 href={`${API_URL}${selectedOrder.result_mp3_url}`}
@@ -475,10 +475,10 @@ const AdminOrders = () => {
                             </div>
                           )}
                           {selectedOrder.result_zip_url && (
-                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-2 rounded">
                               <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-gray-600" />
-                                <span className="text-sm text-gray-700">ZIP архив</span>
+                                <FileText className="h-4 w-4 text-gray-600 dark:text-neutral-400" />
+                                <span className="text-sm text-gray-700 dark:text-neutral-300">ZIP архив</span>
                               </div>
                               <a
                                 href={`${API_URL}${selectedOrder.result_zip_url}`}
@@ -496,7 +496,7 @@ const AdminOrders = () => {
                       {/* Форма загрузки файлов */}
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">WAV файл</label>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">WAV файл</label>
                           <div className="flex items-center gap-2">
                             <input
                               type="file"
@@ -515,12 +515,12 @@ const AdminOrders = () => {
                             )}
                           </div>
                           {resultFiles.wav && (
-                            <p className="text-xs text-gray-500 mt-1">{resultFiles.wav.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">{resultFiles.wav.name}</p>
                           )}
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">MP3 файл</label>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">MP3 файл</label>
                           <div className="flex items-center gap-2">
                             <input
                               type="file"
@@ -539,12 +539,12 @@ const AdminOrders = () => {
                             )}
                           </div>
                           {resultFiles.mp3 && (
-                            <p className="text-xs text-gray-500 mt-1">{resultFiles.mp3.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">{resultFiles.mp3.name}</p>
                           )}
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">ZIP архив</label>
+                          <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">ZIP архив</label>
                           <div className="flex items-center gap-2">
                             <input
                               type="file"
@@ -563,7 +563,7 @@ const AdminOrders = () => {
                             )}
                           </div>
                           {resultFiles.zip && (
-                            <p className="text-xs text-gray-500 mt-1">{resultFiles.zip.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">{resultFiles.zip.name}</p>
                           )}
                         </div>
                         
@@ -574,15 +574,15 @@ const AdminOrders = () => {
                         >
                           {uploadingResult ? 'Загрузка...' : selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url ? 'Заменить файлы' : 'Загрузить файлы'}
                         </button>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-neutral-500">
                           Можно загрузить от 1 до 3 файлов. При повторной загрузке файлы будут заменены.
                         </p>
                       </div>
                     </div>
                   )}
                   
-                  <div className="pt-4 border-t border-gray-200">
-                    <label className="text-sm font-medium text-gray-600 mb-2 block">Изменить статус</label>
+                  <div className="pt-4 border-t border-gray-200 dark:border-neutral-700">
+                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 mb-2 block">Изменить статус</label>
                     <div className="space-y-2">
                       {selectedOrder.status !== 'pending' && (
                         <button
@@ -638,7 +638,7 @@ const AdminOrders = () => {
               </div>
             ) : (
               <div className="card">
-                <div className="card-content text-center text-gray-500">
+                <div className="card-content text-center text-gray-500 dark:text-neutral-500">
                   Выберите заявку для просмотра деталей
                 </div>
               </div>
@@ -651,4 +651,5 @@ const AdminOrders = () => {
 };
 
 export default AdminOrders;
+
 

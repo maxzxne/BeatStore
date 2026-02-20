@@ -88,9 +88,9 @@ const MiniPlayer = () => {
             aria-label={isPlaying ? 'Пауза' : 'Воспроизведение'}
           >
             {isPlaying ? (
-              <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-white dark:text-black" />
+              <Pause className="h-4 w-4 sm:h-5 sm:w-5 text-white dark:text-black dark:text-white" />
             ) : (
-              <Play className="h-4 w-4 sm:h-5 sm:w-5 text-white dark:text-black" />
+              <Play className="h-4 w-4 sm:h-5 sm:w-5 text-white dark:text-black dark:text-white" />
             )}
           </button>
           

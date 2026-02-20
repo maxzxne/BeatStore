@@ -24,15 +24,15 @@ const PaymentFailurePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-neutral-800 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="card">
           <div className="card-header text-center">
             <div className="bg-red-100 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
               <XCircle className="h-10 w-10 text-red-600" />
             </div>
-            <h1 className="text-2xl font-bold text-black mb-2">Оплата не прошла</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Оплата не прошла</h1>
+            <p className="text-gray-600 dark:text-neutral-400">
               К сожалению, произошла ошибка при обработке платежа
             </p>
           </div>
@@ -61,7 +61,7 @@ const PaymentFailurePage = () => {
               
               <Link
                 to="/"
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gray-200 hover:bg-gray-300 text-black rounded-lg font-medium transition-colors h-14 text-base"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gray-200 hover:bg-gray-300 text-black dark:text-white rounded-lg font-medium transition-colors h-14 text-base"
               >
                 <Home className="h-5 w-5" />
                 На главную
@@ -75,4 +75,5 @@ const PaymentFailurePage = () => {
 };
 
 export default PaymentFailurePage;
+
 

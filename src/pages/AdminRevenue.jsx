@@ -44,7 +44,7 @@ const AdminRevenue = () => {
   const renderChart = () => {
     if (!stats || !stats.revenue_by_day || Object.keys(stats.revenue_by_day).length === 0) {
       return (
-        <div className="flex items-center justify-center h-64 text-gray-500">
+        <div className="flex items-center justify-center h-64 text-gray-500 dark:text-neutral-500">
           Нет данных для отображения графика
         </div>
       );
@@ -80,7 +80,7 @@ const AdminRevenue = () => {
           <svg 
             width={chartWidth} 
             height={chartHeight} 
-            className="border-b border-l border-gray-300"
+            className="border-b border-l border-gray-300 dark:border-neutral-700"
             style={{ minWidth: '100%' }}
           >
             {/* Сетка (опционально) */}
@@ -257,7 +257,7 @@ const AdminRevenue = () => {
   if (!isAdminAuthenticated) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-600">Доступ запрещен. Войдите как администратор.</div>
+        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
       </div>
     );
   }
@@ -265,7 +265,7 @@ const AdminRevenue = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Загрузка статистики...</div>
+        <div className="text-gray-600 dark:text-neutral-400">Загрузка статистики...</div>
       </div>
     );
   }
@@ -273,8 +273,8 @@ const AdminRevenue = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Доходы</h1>
-        <p className="text-gray-600">Статистика продаж и доходов</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Доходы</h1>
+        <p className="text-gray-600 dark:text-neutral-400">Статистика продаж и доходов</p>
       </div>
 
       {/* Фильтр по датам */}
@@ -282,11 +282,11 @@ const AdminRevenue = () => {
         <div className="card-content">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-gray-600" />
-              <label className="text-sm font-medium text-gray-700">Период:</label>
+              <Calendar className="h-5 w-5 text-gray-600 dark:text-neutral-400" />
+              <label className="text-sm font-medium text-gray-700 dark:text-neutral-300">Период:</label>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">С</label>
+              <label className="text-sm text-gray-600 dark:text-neutral-400">С</label>
               <input
                 type="date"
                 value={startDate}
@@ -295,7 +295,7 @@ const AdminRevenue = () => {
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">По</label>
+              <label className="text-sm text-gray-600 dark:text-neutral-400">По</label>
               <input
                 type="date"
                 value={endDate}
@@ -324,8 +324,8 @@ const AdminRevenue = () => {
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Общий доход</p>
-                <p className="text-2xl font-bold text-black">
+                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Общий доход</p>
+                <p className="text-2xl font-bold text-black dark:text-white">
                   {stats ? formatCurrency(stats.total_revenue) : '0 ₽'}
                 </p>
               </div>
@@ -340,11 +340,11 @@ const AdminRevenue = () => {
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Продано битов</p>
-                <p className="text-2xl font-bold text-black">
+                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Продано битов</p>
+                <p className="text-2xl font-bold text-black dark:text-white">
                   {stats ? stats.beat_count : 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
                   {stats ? formatCurrency(stats.beat_revenue) : '0 ₽'}
                 </p>
               </div>
@@ -359,11 +359,11 @@ const AdminRevenue = () => {
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Продано курсов</p>
-                <p className="text-2xl font-bold text-black">
+                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Продано курсов</p>
+                <p className="text-2xl font-bold text-black dark:text-white">
                   {stats ? stats.course_count : 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
                   {stats ? formatCurrency(stats.course_revenue) : '0 ₽'}
                 </p>
               </div>
@@ -378,11 +378,11 @@ const AdminRevenue = () => {
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Выполнено заказов</p>
-                <p className="text-2xl font-bold text-black">
+                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Выполнено заказов</p>
+                <p className="text-2xl font-bold text-black dark:text-white">
                   {stats ? stats.order_count : 0}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
                   {stats ? formatCurrency(stats.order_revenue) : '0 ₽'}
                 </p>
               </div>
@@ -398,8 +398,8 @@ const AdminRevenue = () => {
       <div className="card">
         <div className="card-header">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-black" />
-            <h2 className="text-lg font-semibold text-black">График доходов</h2>
+            <TrendingUp className="h-5 w-5 text-black dark:text-white" />
+            <h2 className="text-lg font-semibold text-black dark:text-white">График доходов</h2>
           </div>
         </div>
         <div className="card-content">
@@ -411,4 +411,5 @@ const AdminRevenue = () => {
 };
 
 export default AdminRevenue;
+
 

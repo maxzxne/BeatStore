@@ -68,7 +68,7 @@ const AdminCourses = () => {
   if (!isAdminAuthenticated) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-600">Доступ запрещен. Войдите как администратор.</div>
+        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
       </div>
     );
   }
@@ -76,7 +76,7 @@ const AdminCourses = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Загрузка курсов...</div>
+        <div className="text-gray-600 dark:text-neutral-400">Загрузка курсов...</div>
       </div>
     );
   }
@@ -84,15 +84,15 @@ const AdminCourses = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Управление курсами</h1>
-        <p className="text-gray-600">{courses.length} курсов в каталоге</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Управление курсами</h1>
+        <p className="text-gray-600 dark:text-neutral-400">{courses.length} курсов в каталоге</p>
       </div>
 
       {courses.length === 0 ? (
         <div className="text-center py-12">
           <GraduationCap className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <div className="text-gray-600 text-lg">Курсы не найдены</div>
-          <p className="text-gray-500 mt-2">
+          <div className="text-gray-600 dark:text-neutral-400 text-lg">Курсы не найдены</div>
+          <p className="text-gray-500 dark:text-neutral-500 mt-2">
             Загрузите первый курс для начала работы
           </p>
         </div>
@@ -112,21 +112,21 @@ const AdminCourses = () => {
                     </div>
                   ) : (
                     <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-300 rounded flex items-center justify-center flex-shrink-0">
-                      <GraduationCap className="h-8 w-8 text-gray-400" />
+                      <GraduationCap className="h-8 w-8 text-gray-400 dark:text-neutral-500" />
                     </div>
                   )}
                   
                   <div className="flex-1">
-                    <h3 className="font-semibold text-black">{course.title}</h3>
+                    <h3 className="font-semibold text-black dark:text-white">{course.title}</h3>
                     {course.purpose && (
-                      <p className="text-gray-600 text-sm">{course.purpose}</p>
+                      <p className="text-gray-600 dark:text-neutral-400 text-sm">{course.purpose}</p>
                     )}
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 dark:text-neutral-400 text-sm">
                       {course.tags && `${course.tags.split(',')[0]} • `}
                       {course.price === 0 ? 'Бесплатно' : `${course.price.toFixed(0)} ₽`}
                     </p>
                     {course.description && (
-                      <p className="text-gray-500 text-xs mt-1 line-clamp-2">{course.description}</p>
+                      <p className="text-gray-500 dark:text-neutral-500 text-xs mt-1 line-clamp-2">{course.description}</p>
                     )}
                   </div>
                   
@@ -155,12 +155,12 @@ const AdminCourses = () => {
       {/* Edit Modal */}
       {editingCourse && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300">
-            <h2 className="text-xl font-bold text-black mb-4">Редактировать курс</h2>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300 dark:border-neutral-700">
+            <h2 className="text-xl font-bold text-black dark:text-white mb-4">Редактировать курс</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Название
                 </label>
                 <input
@@ -172,7 +172,7 @@ const AdminCourses = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Назначение
                 </label>
                 <input
@@ -184,7 +184,7 @@ const AdminCourses = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Теги (через запятую)
                 </label>
                 <input
@@ -197,7 +197,7 @@ const AdminCourses = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Цена (₽)
                 </label>
                 <input
@@ -210,7 +210,7 @@ const AdminCourses = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Описание
                 </label>
                 <textarea
@@ -244,4 +244,5 @@ const AdminCourses = () => {
 };
 
 export default AdminCourses;
+
 

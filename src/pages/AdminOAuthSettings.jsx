@@ -126,7 +126,7 @@ const AdminOAuthSettings = () => {
   if (!isAdminAuthenticated) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-600">Доступ запрещен. Войдите как администратор.</div>
+        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
       </div>
     );
   }
@@ -134,7 +134,7 @@ const AdminOAuthSettings = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Загрузка настроек...</div>
+        <div className="text-gray-600 dark:text-neutral-400">Загрузка настроек...</div>
       </div>
     );
   }
@@ -142,37 +142,37 @@ const AdminOAuthSettings = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Настройки OAuth авторизации</h1>
-        <p className="text-gray-600">Управление видимостью и доступностью кнопок авторизации</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Настройки OAuth авторизации</h1>
+        <p className="text-gray-600 dark:text-neutral-400">Управление видимостью и доступностью кнопок авторизации</p>
       </div>
 
       <div className="card">
         <div className="card-content">
           <div className="space-y-6">
             {settings.map((setting) => (
-              <div key={setting.id} className="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+              <div key={setting.id} className="border-b border-gray-200 dark:border-neutral-700 pb-6 last:border-b-0 last:pb-0">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-neutral-900">
                     {getProviderIcon(setting.provider)}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-black">{getProviderName(setting.provider)}</h3>
-                    <p className="text-sm text-gray-600">Провайдер: {setting.provider}</p>
+                    <h3 className="text-lg font-semibold text-black dark:text-white">{getProviderName(setting.provider)}</h3>
+                    <p className="text-sm text-gray-600 dark:text-neutral-400">Провайдер: {setting.provider}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Скрыть кнопку */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg">
                     <div className="flex items-center gap-3">
                       {setting.is_hidden ? (
-                        <EyeOff className="h-5 w-5 text-gray-500" />
+                        <EyeOff className="h-5 w-5 text-gray-500 dark:text-neutral-500" />
                       ) : (
                         <Eye className="h-5 w-5 text-green-600" />
                       )}
                       <div>
-                        <label className="text-sm font-medium text-black">Скрыть кнопку</label>
-                        <p className="text-xs text-gray-500">Убрать кнопку с форм авторизации</p>
+                        <label className="text-sm font-medium text-black dark:text-white">Скрыть кнопку</label>
+                        <p className="text-xs text-gray-500 dark:text-neutral-500">Убрать кнопку с форм авторизации</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -188,7 +188,7 @@ const AdminOAuthSettings = () => {
                   </div>
 
                   {/* Дизейблить кнопку */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg">
                     <div className="flex items-center gap-3">
                       {setting.is_disabled ? (
                         <Lock className="h-5 w-5 text-red-600" />
@@ -196,8 +196,8 @@ const AdminOAuthSettings = () => {
                         <Unlock className="h-5 w-5 text-green-600" />
                       )}
                       <div>
-                        <label className="text-sm font-medium text-black">Отключить кнопку</label>
-                        <p className="text-xs text-gray-500">Показать кнопку, но сделать неактивной</p>
+                        <label className="text-sm font-medium text-black dark:text-white">Отключить кнопку</label>
+                        <p className="text-xs text-gray-500 dark:text-neutral-500">Показать кнопку, но сделать неактивной</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -214,7 +214,7 @@ const AdminOAuthSettings = () => {
                 </div>
 
                 {saving[setting.provider] && (
-                  <p className="text-xs text-gray-500 mt-2">Сохранение...</p>
+                  <p className="text-xs text-gray-500 dark:text-neutral-500 mt-2">Сохранение...</p>
                 )}
               </div>
             ))}
@@ -226,4 +226,5 @@ const AdminOAuthSettings = () => {
 };
 
 export default AdminOAuthSettings;
+
 

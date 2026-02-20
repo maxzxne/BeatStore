@@ -226,7 +226,7 @@ const BeatPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Загрузка бита...</div>
+          <div className="text-gray-600 dark:text-neutral-400">Загрузка бита...</div>
         </div>
       </div>
     );
@@ -246,7 +246,7 @@ const BeatPage = () => {
     <div className="container mx-auto px-6 py-8">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-gray-600 hover:text-black mb-6 transition-colors border-none bg-transparent p-0"
+        className="flex items-center text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-6 transition-colors border-none bg-transparent p-0"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Назад
@@ -257,8 +257,8 @@ const BeatPage = () => {
         <div className="flex flex-col">
           <div className="card flex-1">
             <div className="card-header">
-              <h1 className="text-2xl font-bold text-black">{beat.title}</h1>
-              <p className="text-gray-600">{beat.artist}</p>
+              <h1 className="text-2xl font-bold text-black dark:text-white">{beat.title}</h1>
+              <p className="text-gray-600 dark:text-neutral-400">{beat.artist}</p>
             </div>
             
             <div className="card-content">
@@ -266,35 +266,35 @@ const BeatPage = () => {
                 <img
                   src={`${API_URL}${beat.cover_url}`}
                   alt={beat.title}
-                  className="w-full max-w-md mx-auto h-48 object-contain rounded-lg mb-6 bg-gray-50"
+                  className="w-full max-w-md mx-auto h-48 object-contain rounded-lg mb-6 bg-gray-50 dark:bg-neutral-800"
                 />
               )}
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Жанр:</span>
-                  <span className="text-black">{beat.genre}</span>
+                  <span className="text-gray-600 dark:text-neutral-400">Жанр:</span>
+                  <span className="text-black dark:text-white">{beat.genre}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">BPM:</span>
-                  <span className="text-black">{beat.bpm}</span>
+                  <span className="text-gray-600 dark:text-neutral-400">BPM:</span>
+                  <span className="text-black dark:text-white">{beat.bpm}</span>
                 </div>
                 
                 {beat.key && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Тональность:</span>
-                    <span className="text-black">{beat.key}</span>
+                    <span className="text-gray-600 dark:text-neutral-400">Тональность:</span>
+                    <span className="text-black dark:text-white">{beat.key}</span>
                   </div>
                 )}
                 
                 {/* Выбор формата с радиокнопками */}
                 {(beat.price_mp3 !== null || beat.price_wav !== null || beat.price_exclusive !== null) && (
                   <div>
-                    <span className="text-gray-600 block mb-3">Формат:</span>
+                    <span className="text-gray-600 dark:text-neutral-400 block mb-3">Формат:</span>
                     <div className="space-y-2">
                       {beat.mp3_url && (beat.price_mp3 !== null && beat.price_mp3 !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
+                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:bg-neutral-800 transition-colors">
                           <div className="flex items-center space-x-3">
                             <input
                               type="radio"
@@ -302,17 +302,17 @@ const BeatPage = () => {
                               value="mp3"
                               checked={selectedPurchaseType === 'mp3'}
                               onChange={() => setSelectedPurchaseType('mp3')}
-                              className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                              className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-600 focus:ring-black dark:focus:ring-white"
                             />
-                            <span className="text-black font-medium">MP3</span>
+                            <span className="text-black dark:text-white font-medium">MP3</span>
                           </div>
-                          <span className="text-black font-semibold">
+                          <span className="text-black dark:text-white font-semibold">
                             {beat.price_mp3 === 0 ? 'Бесплатно' : `${beat.price_mp3.toFixed(0)} ₽`}
                           </span>
                         </label>
                       )}
                       {beat.wav_url && (beat.price_wav !== null && beat.price_wav !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
+                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:bg-neutral-800 transition-colors">
                           <div className="flex items-center space-x-3">
                             <input
                               type="radio"
@@ -320,17 +320,17 @@ const BeatPage = () => {
                               value="wav"
                               checked={selectedPurchaseType === 'wav'}
                               onChange={() => setSelectedPurchaseType('wav')}
-                              className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                              className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-600 focus:ring-black dark:focus:ring-white"
                             />
-                            <span className="text-black font-medium">WAV</span>
+                            <span className="text-black dark:text-white font-medium">WAV</span>
                           </div>
-                          <span className="text-black font-semibold">
+                          <span className="text-black dark:text-white font-semibold">
                             {beat.price_wav === 0 ? 'Бесплатно' : `${beat.price_wav.toFixed(0)} ₽`}
                           </span>
                         </label>
                       )}
                       {beat.exclusive_url && (beat.price_exclusive !== null && beat.price_exclusive !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
+                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:bg-neutral-800 transition-colors">
                           <div className="flex items-center space-x-3">
                             <input
                               type="radio"
@@ -338,11 +338,11 @@ const BeatPage = () => {
                               value="exclusive"
                               checked={selectedPurchaseType === 'exclusive'}
                               onChange={() => setSelectedPurchaseType('exclusive')}
-                              className="w-4 h-4 text-black border-gray-300 focus:ring-black"
+                              className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-600 focus:ring-black dark:focus:ring-white"
                             />
-                            <span className="text-black font-medium">Exclusive</span>
+                            <span className="text-black dark:text-white font-medium">Exclusive</span>
                           </div>
-                          <span className="text-black font-semibold">
+                          <span className="text-black dark:text-white font-semibold">
                             {beat.price_exclusive === 0 ? 'Бесплатно' : `${beat.price_exclusive.toFixed(0)} ₽`}
                           </span>
                         </label>
@@ -353,8 +353,8 @@ const BeatPage = () => {
                 
                 {beat.description && (
                   <div>
-                    <span className="text-gray-600 block mb-2">Описание:</span>
-                    <p className="text-black">{beat.description}</p>
+                    <span className="text-gray-600 dark:text-neutral-400 block mb-2">Описание:</span>
+                    <p className="text-black dark:text-white">{beat.description}</p>
                   </div>
                 )}
               </div>
@@ -369,7 +369,7 @@ const BeatPage = () => {
                     {purchasedTypes.includes('wav') && (
                       <button
                         onClick={() => handleDownload('wav')}
-                        className="border-none bg-transparent text-black hover:text-gray-600 transition-colors flex items-center gap-1 px-2 py-1"
+                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors flex items-center gap-1 px-2 py-1"
                         title="Скачать WAV"
                       >
                         <Download className="h-4 w-4" />
@@ -379,7 +379,7 @@ const BeatPage = () => {
                     {purchasedTypes.includes('mp3') && (
                       <button
                         onClick={() => handleDownload('mp3')}
-                        className="border-none bg-transparent text-black hover:text-gray-600 transition-colors flex items-center gap-1 px-2 py-1"
+                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors flex items-center gap-1 px-2 py-1"
                         title="Скачать MP3"
                       >
                         <Download className="h-4 w-4" />
@@ -389,7 +389,7 @@ const BeatPage = () => {
                     {purchasedTypes.includes('exclusive') && (
                       <button
                         onClick={() => handleDownload('exclusive')}
-                        className="border-none bg-transparent text-black hover:text-gray-600 transition-colors flex items-center gap-1 px-2 py-1"
+                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors flex items-center gap-1 px-2 py-1"
                         title="Скачать эксклюзив"
                       >
                         <Download className="h-4 w-4" />
@@ -427,7 +427,7 @@ const BeatPage = () => {
                 <div className="flex items-center justify-between w-full">
                   {/* Слева - текст "Купить в один клик" */}
                   <span 
-                    className="text-gray-600 hover:text-black transition-colors text-sm font-medium cursor-pointer" 
+                    className="text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white transition-colors text-sm font-medium cursor-pointer" 
                     onClick={handlePurchase}
                   >
                     Купить в один клик
@@ -439,7 +439,7 @@ const BeatPage = () => {
                       <button
                         onClick={handleFavorite}
                         className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors ${
-                          isFavorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                          isFavorite ? 'text-black dark:text-white border-black dark:border-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white'
                         }`}
                         title={isFavorite ? 'Удалить из избранного' : 'Добавить в избранное'}
                       >
@@ -449,7 +449,7 @@ const BeatPage = () => {
                       <button
                         onClick={handleAddToCart}
                         className={`h-12 w-12 flex items-center justify-center rounded-full border transition-colors relative ${
-                          isInCart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                          isInCart ? 'text-black dark:text-white border-black dark:border-white bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white'
                         }`}
                         title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
                       >
@@ -474,7 +474,7 @@ const BeatPage = () => {
         <div className="flex flex-col">
           <div className="card flex-1">
             <div className="card-header">
-              <h2 className="text-lg font-semibold text-black">Превью</h2>
+              <h2 className="text-lg font-semibold text-black dark:text-white">Превью</h2>
             </div>
             
             <div className="card-content">
@@ -494,7 +494,7 @@ const BeatPage = () => {
                         seekTo(newTime);
                       }}
                       disabled={!isCurrentTrack(beat.id)}
-                      className="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black dark:text-white"
                       title="Назад на 10 секунд"
                     >
                       <span className="text-sm font-medium">-10</span>
@@ -510,7 +510,7 @@ const BeatPage = () => {
                         seekTo(newTime);
                       }}
                       disabled={!isCurrentTrack(beat.id)}
-                      className="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black dark:text-white"
                       title="Вперед на 10 секунд"
                     >
                       <span className="text-sm font-medium">+10</span>
@@ -518,7 +518,7 @@ const BeatPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-600">
+                <div className="text-center py-8 text-gray-600 dark:text-neutral-400">
                   Превью недоступно
                 </div>
               )}
@@ -536,3 +536,4 @@ const BeatPage = () => {
 };
 
 export default BeatPage;
+

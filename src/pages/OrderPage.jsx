@@ -308,8 +308,8 @@ const OrderPage = () => {
     return (
       <div className="container mx-auto px-6 py-8 max-w-2xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">Форма заказа услуг</h1>
-          <p className="text-gray-600">Выберите тип заказа</p>
+          <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Форма заказа услуг</h1>
+          <p className="text-gray-600 dark:text-neutral-400">Выберите тип заказа</p>
         </div>
 
         <div className="space-y-4">
@@ -319,8 +319,8 @@ const OrderPage = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-black mb-4">Я знаю, что я хочу!</h3>
-                <p className="text-gray-600 mb-4">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
+                <h3 className="text-xl font-bold text-black dark:text-white mb-4">Я знаю, что я хочу!</h3>
+                <p className="text-gray-600 dark:text-neutral-400 mb-4">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
               </div>
               <div className="text-2xl">→</div>
             </div>
@@ -332,8 +332,8 @@ const OrderPage = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-bold text-black mb-2">Я не знаю, что я хочу!</h3>
-                <p className="text-gray-600">Отправьте простую заявку, мы свяжемся с вами для обсуждения</p>
+                <h3 className="text-xl font-bold text-black dark:text-white mb-2">Я не знаю, что я хочу!</h3>
+                <p className="text-gray-600 dark:text-neutral-400">Отправьте простую заявку, мы свяжемся с вами для обсуждения</p>
               </div>
               <div className="text-2xl">→</div>
             </div>
@@ -350,17 +350,17 @@ const OrderPage = () => {
         <div className="mb-8">
           <button
             onClick={() => setOrderType(null)}
-            className="text-gray-600 hover:text-black mb-4 flex items-center border-none bg-transparent p-0"
+            className="text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-4 flex items-center border-none bg-transparent p-0"
           >
             ← Назад к выбору типа заказа
           </button>
-          <h1 className="text-3xl font-bold text-black mb-2">Простая заявка</h1>
-          <p className="text-gray-600">Заполните форму, и мы свяжемся с вами для обсуждения заказа</p>
+          <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Простая заявка</h1>
+          <p className="text-gray-600 dark:text-neutral-400">Заполните форму, и мы свяжемся с вами для обсуждения заказа</p>
         </div>
 
         <form onSubmit={handleSimpleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="customer_name" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">
               <User className="h-4 w-4 inline mr-2" />
               Ваше имя *
             </label>
@@ -377,7 +377,7 @@ const OrderPage = () => {
           </div>
 
           <div>
-            <label htmlFor="customer_email" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">
               <Mail className="h-4 w-4 inline mr-2" />
               Email *
             </label>
@@ -394,7 +394,7 @@ const OrderPage = () => {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-black dark:text-white mb-2">
               <FileText className="h-4 w-4 inline mr-2" />
               Дополнительная информация (необязательно)
             </label>
@@ -410,7 +410,7 @@ const OrderPage = () => {
           </div>
 
           <div>
-            <label htmlFor="contact_info" className="block text-sm font-medium text-black mb-2">
+            <label htmlFor="contact_info" className="block text-sm font-medium text-black dark:text-white mb-2">
               <Mail className="h-4 w-4 inline mr-2" />
               Дополнительная информация для обратной связи
             </label>
@@ -423,7 +423,7 @@ const OrderPage = () => {
               placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
               Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
             </p>
           </div>
@@ -460,12 +460,12 @@ const OrderPage = () => {
       <div className="mb-8">
         <button
           onClick={() => setOrderType(null)}
-          className="text-gray-600 hover:text-black mb-4 flex items-center"
+          className="text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-4 flex items-center"
         >
           ← Назад к выбору типа заказа
         </button>
-        <h1 className="text-3xl font-bold text-black mb-2">Подробная форма заказа</h1>
-        <p className="text-gray-600">Заполните форму для расчета стоимости и оформления заказа</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Подробная форма заказа</h1>
+        <p className="text-gray-600 dark:text-neutral-400">Заполните форму для расчета стоимости и оформления заказа</p>
       </div>
 
       <form onSubmit={handleDetailedSubmit} className="space-y-6">
@@ -473,7 +473,7 @@ const OrderPage = () => {
         {!isAuthenticated && (
           <>
             <div>
-              <label htmlFor="customer_name" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">
                 <User className="h-4 w-4 inline mr-2" />
                 Ваше имя *
               </label>
@@ -490,7 +490,7 @@ const OrderPage = () => {
             </div>
 
             <div>
-              <label htmlFor="customer_email" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">
                 <Mail className="h-4 w-4 inline mr-2" />
                 Email *
               </label>
@@ -510,7 +510,7 @@ const OrderPage = () => {
 
         {/* Категории услуг с множественным выбором */}
         <div>
-          <label className="block text-sm font-medium text-black mb-2">
+          <label className="block text-sm font-medium text-black dark:text-white mb-2">
             Категории услуг *
           </label>
           
@@ -562,18 +562,18 @@ const OrderPage = () => {
                   key={category.value}
                   type="button"
                   onClick={() => addCategory(category)}
-                  className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 border border-transparent hover:border-gray-300"
+                  className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:bg-neutral-900 border border-transparent hover:border-gray-300 dark:border-neutral-700"
                 >
-                  <div className="font-medium text-black">{category.label}</div>
+                  <div className="font-medium text-black dark:text-white">{category.label}</div>
                   {category.description && (
-                    <div className="text-xs text-gray-600 mt-1">{category.description}</div>
+                    <div className="text-xs text-gray-600 dark:text-neutral-400 mt-1">{category.description}</div>
                   )}
                 </button>
               ))}
               <button
                 type="button"
                 onClick={() => setShowCategorySelector(false)}
-                className="w-full mt-2 px-4 py-2 text-gray-600 hover:text-black"
+                className="w-full mt-2 px-4 py-2 text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white"
               >
                 Отмена
               </button>
@@ -583,7 +583,7 @@ const OrderPage = () => {
 
         {/* Загрузка материалов */}
         <div>
-          <label className="block text-sm font-medium text-black mb-2">
+          <label className="block text-sm font-medium text-black dark:text-white mb-2">
             <Upload className="h-4 w-4 inline mr-2" />
             Загрузка материалов
           </label>
@@ -592,7 +592,7 @@ const OrderPage = () => {
           {formData.materials.length > 0 && (
             <div className="mb-3 space-y-2">
               {formData.materials.map((file, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
+                <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-4 py-2">
                   <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
                   <button
                     type="button"
@@ -608,7 +608,7 @@ const OrderPage = () => {
           
           {/* Красивая кнопка загрузки с drag and drop */}
           <label 
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 transition-colors"
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 dark:bg-neutral-800 transition-colors"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -625,10 +625,10 @@ const OrderPage = () => {
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <Upload className="h-8 w-8 text-gray-400 mb-2" />
-              <p className="mb-2 text-sm text-gray-500">
+              <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
                 <span className="font-semibold">Нажмите для загрузки</span> или перетащите файлы
               </p>
-              <p className="text-xs text-gray-500">Можно выбрать несколько файлов</p>
+              <p className="text-xs text-gray-500 dark:text-neutral-500">Можно выбрать несколько файлов</p>
             </div>
             <input
               type="file"
@@ -643,7 +643,7 @@ const OrderPage = () => {
 
         {/* Ссылки на референсы */}
         <div>
-          <label htmlFor="reference_links" className="block text-sm font-medium text-black mb-2">
+          <label htmlFor="reference_links" className="block text-sm font-medium text-black dark:text-white mb-2">
             <LinkIcon className="h-4 w-4 inline mr-2" />
             Ссылки на референсы
           </label>
@@ -660,7 +660,7 @@ const OrderPage = () => {
 
         {/* Загрузка референсов файлами */}
         <div>
-          <label className="block text-sm font-medium text-black mb-2">
+          <label className="block text-sm font-medium text-black dark:text-white mb-2">
             <Upload className="h-4 w-4 inline mr-2" />
             Загрузка референсов файлами
           </label>
@@ -669,7 +669,7 @@ const OrderPage = () => {
           {formData.reference_files.length > 0 && (
             <div className="mb-3 space-y-2">
               {formData.reference_files.map((file, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
+                <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-4 py-2">
                   <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
                   <button
                     type="button"
@@ -685,7 +685,7 @@ const OrderPage = () => {
           
           {/* Красивая кнопка загрузки с drag and drop */}
           <label 
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 transition-colors"
+            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-black hover:bg-gray-50 dark:bg-neutral-800 transition-colors"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -702,10 +702,10 @@ const OrderPage = () => {
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <Upload className="h-8 w-8 text-gray-400 mb-2" />
-              <p className="mb-2 text-sm text-gray-500">
+              <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
                 <span className="font-semibold">Нажмите для загрузки</span> или перетащите файлы
               </p>
-              <p className="text-xs text-gray-500">Можно выбрать несколько файлов</p>
+              <p className="text-xs text-gray-500 dark:text-neutral-500">Можно выбрать несколько файлов</p>
             </div>
             <input
               type="file"
@@ -720,7 +720,7 @@ const OrderPage = () => {
 
         {/* Описание (Техническое задание) */}
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-black mb-2">
+          <label htmlFor="description" className="block text-sm font-medium text-black dark:text-white mb-2">
             <FileText className="h-4 w-4 inline mr-2" />
             Описание (Техническое задание)
           </label>
@@ -737,7 +737,7 @@ const OrderPage = () => {
 
         {/* Дополнительная информация для обратной связи */}
         <div>
-          <label htmlFor="contact_info" className="block text-sm font-medium text-black mb-2">
+          <label htmlFor="contact_info" className="block text-sm font-medium text-black dark:text-white mb-2">
             <Mail className="h-4 w-4 inline mr-2" />
             Дополнительная информация для обратной связи
           </label>
@@ -750,14 +750,14 @@ const OrderPage = () => {
             placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
             Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
           </p>
         </div>
 
         {/* Дедлайн */}
         <div>
-          <label htmlFor="deadline_days" className="block text-sm font-medium text-black mb-2">
+          <label htmlFor="deadline_days" className="block text-sm font-medium text-black dark:text-white mb-2">
             <Calendar className="h-4 w-4 inline mr-2" />
             Срок выполнения (в днях) *
           </label>
@@ -772,14 +772,14 @@ const OrderPage = () => {
             placeholder="Укажите количество дней"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
             Примеры: 1 день (24 часа), 2-3 дня, 7 дней (1 неделя), 14-21 день (2-3 недели)
           </p>
         </div>
 
         {/* Процент предоплаты */}
         <div>
-          <label className="block text-sm font-medium text-black mb-2">
+          <label className="block text-sm font-medium text-black dark:text-white mb-2">
             Процент предоплаты *
           </label>
           <div className="flex gap-4">
@@ -809,11 +809,11 @@ const OrderPage = () => {
         </div>
 
         {/* Калькулятор стоимости - всегда отображается */}
-        <div className="bg-gray-50 border border-gray-300 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-black mb-4">Расчет стоимости</h3>
+        <div className="bg-gray-50 dark:bg-neutral-800 border border-gray-300 rounded-lg p-6">
+          <h3 className="text-lg font-bold text-black dark:text-white mb-4">Расчет стоимости</h3>
           <div className="space-y-2">
             {formData.service_categories.length === 0 ? (
-              <p className="text-gray-500 text-sm">Выберите услуги для расчета стоимости</p>
+              <p className="text-gray-500 dark:text-neutral-500 text-sm">Выберите услуги для расчета стоимости</p>
             ) : (
               <>
                 {Object.entries(serviceCounts).map(([category, count]) => {
@@ -823,7 +823,7 @@ const OrderPage = () => {
                   
                   if (!servicePrice && !isTrap) {
                     return (
-                      <div key={category} className="flex justify-between text-gray-500">
+                      <div key={category} className="flex justify-between text-gray-500 dark:text-neutral-500">
                         <span>{category} × {count}:</span>
                         <span className="text-sm">Укажите срок выполнения</span>
                       </div>
@@ -845,7 +845,7 @@ const OrderPage = () => {
                       <span>Итого:</span>
                       <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
                     </div>
-                    <div className="flex justify-between text-sm text-gray-600 border-t pt-2 mt-2">
+                    <div className="flex justify-between text-sm text-gray-600 dark:text-neutral-400 border-t pt-2 mt-2">
                       <span>Предоплата ({formData.prepayment_percent}%):</span>
                       <span className="font-medium">{prepaymentAmount.toLocaleString('ru-RU')} ₽</span>
                     </div>
@@ -856,7 +856,7 @@ const OrderPage = () => {
           </div>
           
           {/* Информация о стоимости */}
-          <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-sm text-gray-600">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-700 flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
             <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
             <div className="relative group">
               <HelpCircle className="h-4 w-4 text-gray-400 cursor-help flex-shrink-0" />
@@ -910,3 +910,4 @@ const OrderPage = () => {
 };
 
 export default OrderPage;
+

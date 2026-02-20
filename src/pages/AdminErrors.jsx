@@ -87,7 +87,7 @@ const AdminErrors = () => {
   const renderChart = () => {
     if (!stats || !stats.errors_by_day || Object.keys(stats.errors_by_day).length === 0) {
       return (
-        <div className="flex items-center justify-center h-64 text-gray-500">
+        <div className="flex items-center justify-center h-64 text-gray-500 dark:text-neutral-500">
           Нет данных для отображения графика
         </div>
       );
@@ -121,7 +121,7 @@ const AdminErrors = () => {
           <svg 
             width={chartWidth} 
             height={chartHeight} 
-            className="border-b border-l border-gray-300"
+            className="border-b border-l border-gray-300 dark:border-neutral-700"
             style={{ minWidth: '100%' }}
           >
             {/* Сетка */}
@@ -208,7 +208,7 @@ const AdminErrors = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Загрузка ошибок...</div>
+          <div className="text-gray-600 dark:text-neutral-400">Загрузка ошибок...</div>
         </div>
       </div>
     );
@@ -216,15 +216,15 @@ const AdminErrors = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-black mb-2">Мониторинг ошибок</h1>
-      <p className="text-gray-600 mb-6">Статистика ошибок авторизации, регистрации, покупок и оплаты</p>
+      <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Мониторинг ошибок</h1>
+      <p className="text-gray-600 dark:text-neutral-400 mb-6">Статистика ошибок авторизации, регистрации, покупок и оплаты</p>
 
       {/* Фильтры */}
       <div className="card mb-6">
         <div className="card-content">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm text-gray-600 mb-1">Период:</label>
+              <label className="block text-sm text-gray-600 dark:text-neutral-400 mb-1">Период:</label>
               <div className="flex gap-2">
                 <input
                   type="date"
@@ -244,7 +244,7 @@ const AdminErrors = () => {
             </div>
             
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm text-gray-600 mb-1">Тип ошибки:</label>
+              <label className="block text-sm text-gray-600 dark:text-neutral-400 mb-1">Тип ошибки:</label>
               <select
                 value={errorTypeFilter}
                 onChange={(e) => setErrorTypeFilter(e.target.value)}
@@ -269,8 +269,8 @@ const AdminErrors = () => {
             <div className="card-content">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Всего ошибок</p>
-                  <p className="text-2xl font-bold text-black">
+                  <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Всего ошибок</p>
+                  <p className="text-2xl font-bold text-black dark:text-white">
                     {stats.total_errors || 0}
                   </p>
                 </div>
@@ -286,8 +286,8 @@ const AdminErrors = () => {
               <div className="card-content">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">{getErrorTypeLabel(type)}</p>
-                    <p className="text-2xl font-bold text-black">{count}</p>
+                    <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">{getErrorTypeLabel(type)}</p>
+                    <p className="text-2xl font-bold text-black dark:text-white">{count}</p>
                   </div>
                   <div className={`rounded-full p-3 flex items-center justify-center self-center ${getErrorTypeColor(type)}`}>
                     <AlertTriangle className="h-6 w-6" />
@@ -303,8 +303,8 @@ const AdminErrors = () => {
       <div className="card mb-6">
         <div className="card-content">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="h-5 w-5 text-gray-600" />
-            <h2 className="text-xl font-semibold text-black">График ошибок</h2>
+            <Filter className="h-5 w-5 text-gray-600 dark:text-neutral-400" />
+            <h2 className="text-xl font-semibold text-black dark:text-white">График ошибок</h2>
           </div>
           {renderChart()}
         </div>
@@ -313,10 +313,10 @@ const AdminErrors = () => {
       {/* Список ошибок */}
       <div className="card">
         <div className="card-content">
-          <h2 className="text-xl font-semibold text-black mb-4">Последние ошибки</h2>
+          <h2 className="text-xl font-semibold text-black dark:text-white mb-4">Последние ошибки</h2>
           
           {errors.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-neutral-500">
               Ошибок не найдено
             </div>
           ) : (
@@ -324,7 +324,7 @@ const AdminErrors = () => {
               {errors.map((error) => (
                 <div
                   key={error.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="border border-gray-200 dark:border-neutral-700 rounded-lg p-4 hover:bg-gray-50 dark:bg-neutral-800 cursor-pointer transition-colors"
                   onClick={() => setSelectedError(selectedError?.id === error.id ? null : error)}
                 >
                   <div className="flex items-start justify-between">
@@ -333,30 +333,30 @@ const AdminErrors = () => {
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getErrorTypeColor(error.error_type)}`}>
                           {getErrorTypeLabel(error.error_type)}
                         </span>
-                        <span className="text-sm text-gray-600">{formatDate(error.created_at)}</span>
+                        <span className="text-sm text-gray-600 dark:text-neutral-400">{formatDate(error.created_at)}</span>
                       </div>
-                      <p className="text-black font-medium mb-1">{error.error_message}</p>
+                      <p className="text-black dark:text-white font-medium mb-1">{error.error_message}</p>
                       {error.endpoint && (
-                        <p className="text-sm text-gray-600">Endpoint: {error.endpoint}</p>
+                        <p className="text-sm text-gray-600 dark:text-neutral-400">Endpoint: {error.endpoint}</p>
                       )}
                       {selectedError?.id === error.id && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-neutral-700">
                           {error.error_details && (
                             <div className="mb-2">
-                              <p className="text-xs text-gray-500 mb-1">Детали:</p>
+                              <p className="text-xs text-gray-500 dark:text-neutral-500 mb-1">Детали:</p>
                               <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
                                 {error.error_details}
                               </pre>
                             </div>
                           )}
                           {error.user_id && (
-                            <p className="text-xs text-gray-600">User ID: {error.user_id}</p>
+                            <p className="text-xs text-gray-600 dark:text-neutral-400">User ID: {error.user_id}</p>
                           )}
                           {error.ip_address && (
-                            <p className="text-xs text-gray-600">IP: {error.ip_address}</p>
+                            <p className="text-xs text-gray-600 dark:text-neutral-400">IP: {error.ip_address}</p>
                           )}
                           {error.user_agent && (
-                            <p className="text-xs text-gray-600 truncate">User-Agent: {error.user_agent}</p>
+                            <p className="text-xs text-gray-600 dark:text-neutral-400 truncate">User-Agent: {error.user_agent}</p>
                           )}
                         </div>
                       )}
@@ -373,4 +373,5 @@ const AdminErrors = () => {
 };
 
 export default AdminErrors;
+
 

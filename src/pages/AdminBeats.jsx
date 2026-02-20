@@ -71,7 +71,7 @@ const AdminBeats = () => {
   if (!isAdminAuthenticated) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-600">Доступ запрещен. Войдите как администратор.</div>
+        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
       </div>
     );
   }
@@ -79,7 +79,7 @@ const AdminBeats = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Загрузка битов...</div>
+        <div className="text-gray-600 dark:text-neutral-400">Загрузка битов...</div>
       </div>
     );
   }
@@ -87,15 +87,15 @@ const AdminBeats = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Управление битами</h1>
-        <p className="text-gray-600">{beats.length} битов в каталоге</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Управление битами</h1>
+        <p className="text-gray-600 dark:text-neutral-400">{beats.length} битов в каталоге</p>
       </div>
 
       {beats.length === 0 ? (
         <div className="text-center py-12">
           <Music className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <div className="text-gray-600 text-lg">Биты не найдены</div>
-          <p className="text-gray-500 mt-2">
+          <div className="text-gray-600 dark:text-neutral-400 text-lg">Биты не найдены</div>
+          <p className="text-gray-500 dark:text-neutral-500 mt-2">
             Загрузите первый бит для начала работы
           </p>
         </div>
@@ -125,9 +125,9 @@ const AdminBeats = () => {
                   )}
                   
                   <div className="flex-1">
-                    <h3 className="font-semibold text-black">{beat.title}</h3>
-                    <p className="text-gray-600 text-sm">{beat.artist}</p>
-                    <p className="text-gray-600 text-sm">
+                    <h3 className="font-semibold text-black dark:text-white">{beat.title}</h3>
+                    <p className="text-gray-600 dark:text-neutral-400 text-sm">{beat.artist}</p>
+                    <p className="text-gray-600 dark:text-neutral-400 text-sm">
                       {beat.genre} • {beat.bpm} BPM • {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
                     </p>
                     <div className="flex items-center space-x-2 mt-2">
@@ -166,12 +166,12 @@ const AdminBeats = () => {
       {/* Edit Modal */}
       {editingBeat && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300">
-            <h2 className="text-xl font-bold text-black mb-4">Редактировать бит</h2>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300 dark:border-neutral-700">
+            <h2 className="text-xl font-bold text-black dark:text-white mb-4">Редактировать бит</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Название
                 </label>
                 <input
@@ -183,7 +183,7 @@ const AdminBeats = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Исполнитель
                 </label>
                 <input
@@ -195,7 +195,7 @@ const AdminBeats = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Жанр
                 </label>
                 <input
@@ -208,7 +208,7 @@ const AdminBeats = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">
+                  <label className="block text-sm font-medium text-black dark:text-white mb-2">
                     BPM
                   </label>
                   <input
@@ -220,7 +220,7 @@ const AdminBeats = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">
+                  <label className="block text-sm font-medium text-black dark:text-white mb-2">
                     Цена (₽)
                   </label>
                   <input
@@ -234,7 +234,7 @@ const AdminBeats = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Тональность
                 </label>
                 <input
@@ -246,7 +246,7 @@ const AdminBeats = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Описание
                 </label>
                 <textarea
@@ -264,7 +264,7 @@ const AdminBeats = () => {
                   onChange={(e) => setEditForm({...editForm, is_available: e.target.checked})}
                   className="rounded"
                 />
-                <label htmlFor="is_available" className="text-black text-sm">
+                <label htmlFor="is_available" className="text-black dark:text-white text-sm">
                   Доступен для покупки
                 </label>
               </div>
@@ -293,3 +293,4 @@ const AdminBeats = () => {
 };
 
 export default AdminBeats;
+

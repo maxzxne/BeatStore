@@ -126,7 +126,7 @@ const CoursesPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Загрузка курсов...</div>
+          <div className="text-gray-600 dark:text-neutral-400">Загрузка курсов...</div>
         </div>
       </div>
     );
@@ -135,7 +135,7 @@ const CoursesPage = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-4">Курсы</h1>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-4">Курсы</h1>
         
         {/* Фильтры */}
         <div className="flex flex-wrap gap-4 mb-6">
@@ -170,7 +170,7 @@ const CoursesPage = () => {
 
       {courses.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-gray-600 text-lg">Курсы не найдены</div>
+          <div className="text-gray-600 dark:text-neutral-400 text-lg">Курсы не найдены</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -208,28 +208,28 @@ const CoursesPage = () => {
                   </div>
                 ) : (
                   <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 rounded-t-lg flex items-center justify-center">
-                    <span className="text-gray-600 text-sm font-medium">Курс</span>
+                    <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">Курс</span>
                   </div>
                 )}
               </div>
               
               <div className="card-content">
-                <h3 className="font-semibold text-black mb-1 truncate">{course.title}</h3>
+                <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{course.title}</h3>
                 {course.purpose && (
-                  <p className="text-gray-600 text-sm mb-2">{course.purpose}</p>
+                  <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{course.purpose}</p>
                 )}
                 
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-neutral-500 mb-3">
                   {course.tags && (
                     <span className="truncate">{course.tags.split(',')[0]}</span>
                   )}
-                  <span className="text-black font-semibold">
+                  <span className="text-black dark:text-white font-semibold">
                     {course.price === 0 ? 'Бесплатно' : `${course.price.toFixed(0)} ₽`}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-gray-600 hover:text-black transition-colors text-sm font-medium">
+                  <span className="text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white transition-colors text-sm font-medium">
                     Подробнее
                   </span>
                   
@@ -242,7 +242,7 @@ const CoursesPage = () => {
                           handleFavorite(course.id, e);
                         }}
                         className={`h-10 w-10 flex items-center justify-center rounded-full border transition-colors ${
-                          course.is_favorite ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                          course.is_favorite ? 'text-black dark:text-white border-black bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 hover:border-black'
                         }`}
                         title="Избранное"
                       >
@@ -256,7 +256,7 @@ const CoursesPage = () => {
                           handleAddToCart(course.id, e);
                         }}
                         className={`h-10 w-10 flex items-center justify-center rounded-full border transition-colors ${
-                          course.is_in_cart ? 'text-black border-black bg-gray-50' : 'text-gray-500 border-gray-300 hover:border-black'
+                          course.is_in_cart ? 'text-black dark:text-white border-black bg-gray-50 dark:bg-neutral-800' : 'text-gray-500 dark:text-neutral-500 border-gray-300 hover:border-black'
                         }`}
                         title="Корзина"
                       >
@@ -278,4 +278,5 @@ const CoursesPage = () => {
 };
 
 export default CoursesPage;
+
 

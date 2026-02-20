@@ -88,7 +88,7 @@ const AudioPlayer = ({ src, title, trackId }) => {
               />
             </div>
             {/* Время на отдельной строке */}
-            <div className="flex justify-between text-xs text-gray-600">
+            <div className="flex justify-between text-xs text-gray-600 dark:text-neutral-400">
               <span>{formatTime(isCurrent ? currentTime : 0)}</span>
               <span>{formatTime(isCurrent ? duration : 0)}</span>
             </div>

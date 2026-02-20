@@ -32,7 +32,7 @@ const AdminPurchases = () => {
   if (!isAdminAuthenticated) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-600">Доступ запрещен. Войдите как администратор.</div>
+        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
       </div>
     );
   }
@@ -40,7 +40,7 @@ const AdminPurchases = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Загрузка покупок...</div>
+        <div className="text-gray-600 dark:text-neutral-400">Загрузка покупок...</div>
       </div>
     );
   }
@@ -48,15 +48,15 @@ const AdminPurchases = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">История покупок</h1>
-        <p className="text-gray-600">{purchases.length} всего покупок</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">История покупок</h1>
+        <p className="text-gray-600 dark:text-neutral-400">{purchases.length} всего покупок</p>
       </div>
 
       {purchases.length === 0 ? (
         <div className="text-center py-12">
           <ShoppingBag className="h-16 w-16 text-dark-400 mx-auto mb-4" />
-          <div className="text-gray-600 text-lg">Покупок пока нет</div>
-          <p className="text-gray-500 mt-2">
+          <div className="text-gray-600 dark:text-neutral-400 text-lg">Покупок пока нет</div>
+          <p className="text-gray-500 dark:text-neutral-500 mt-2">
             Покупки появятся здесь, когда клиенты начнут покупать биты
           </p>
         </div>
@@ -68,10 +68,10 @@ const AdminPurchases = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-black">{purchase.beat_title}</h3>
+                      <h3 className="font-semibold text-black dark:text-white">{purchase.beat_title}</h3>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-neutral-400">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4" />
                         <span>{purchase.user_username} ({purchase.user_email})</span>
@@ -82,7 +82,7 @@ const AdminPurchases = () => {
                         <span>
                           {purchase.price_paid === 0 ? 'Бесплатно' : `${purchase.price_paid.toFixed(0)} ₽`}
                           {purchase.beat_price > 0 && (
-                        <span className="text-gray-500"> / {purchase.beat_price === 0 ? 'Бесплатно' : `${purchase.beat_price.toFixed(0)} ₽`}</span>
+                        <span className="text-gray-500 dark:text-neutral-500"> / {purchase.beat_price === 0 ? 'Бесплатно' : `${purchase.beat_price.toFixed(0)} ₽`}</span>
                           )}
                         </span>
                       </div>
@@ -104,3 +104,4 @@ const AdminPurchases = () => {
 };
 
 export default AdminPurchases;
+

@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   if (!isAdminAuthenticated) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-600">Доступ запрещен. Войдите как администратор.</div>
+        <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
       </div>
     );
   }
@@ -38,7 +38,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Загрузка аналитики...</div>
+        <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Загрузка аналитики...</div>
       </div>
     );
   }
@@ -46,7 +46,7 @@ const AdminDashboard = () => {
   if (!analytics) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600">Ошибка загрузки аналитики</div>
+        <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Ошибка загрузки аналитики</div>
       </div>
     );
   }
@@ -85,8 +85,8 @@ const AdminDashboard = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Панель управления</h1>
-        <p className="text-gray-600">Обзор вашего BeatStore</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white dark:text-white mb-2">Панель управления</h1>
+        <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Обзор вашего BeatStore</p>
       </div>
 
       {/* Stats Grid */}
@@ -98,8 +98,8 @@ const AdminDashboard = () => {
               <div className="card-content h-full flex items-center">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex flex-col">
-                    <p className="text-gray-600 text-sm mb-1">{stat.title}</p>
-                    <p className="text-2xl font-bold text-black">{stat.value}</p>
+                    <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400 text-sm mb-1">{stat.title}</p>
+                    <p className="text-2xl font-bold text-black dark:text-white dark:text-white">{stat.value}</p>
                   </div>
                   <div className={`p-3 rounded-full ${stat.bgColor} flex items-center justify-center self-center`}>
                     <Icon className={`h-6 w-6 ${stat.color}`} />
@@ -115,24 +115,24 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
           <div className="card-header">
-            <h2 className="text-lg font-semibold text-black">Типы покупок</h2>
+            <h2 className="text-lg font-semibold text-black dark:text-white dark:text-white">Типы покупок</h2>
           </div>
           <div className="card-content">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-black">Бесплатные покупки</span>
+                  <span className="text-black dark:text-white dark:text-white">Бесплатные покупки</span>
                 </div>
-                <span className="text-black font-semibold">{analytics.free_purchases}</span>
+                <span className="text-black dark:text-white dark:text-white font-semibold">{analytics.free_purchases}</span>
               </div>
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-black">Платные покупки</span>
+                  <span className="text-black dark:text-white dark:text-white">Платные покупки</span>
                 </div>
-                <span className="text-black font-semibold">{analytics.paid_purchases}</span>
+                <span className="text-black dark:text-white dark:text-white font-semibold">{analytics.paid_purchases}</span>
               </div>
             </div>
           </div>
@@ -140,20 +140,20 @@ const AdminDashboard = () => {
 
         <div className="card">
           <div className="card-header">
-            <h2 className="text-lg font-semibold text-black">Статистика по дням</h2>
+            <h2 className="text-lg font-semibold text-black dark:text-white dark:text-white">Статистика по дням</h2>
           </div>
           <div className="card-content">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-black">Регистрации за последние дни:</span>
-                <span className="text-black font-semibold">
+                <span className="text-black dark:text-white dark:text-white">Регистрации за последние дни:</span>
+                <span className="text-black dark:text-white dark:text-white font-semibold">
                   {Object.values(analytics.registrations_by_day).reduce((a, b) => a + b, 0)}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-black">Покупки за последние дни:</span>
-                <span className="text-black font-semibold">
+                <span className="text-black dark:text-white dark:text-white">Покупки за последние дни:</span>
+                <span className="text-black dark:text-white dark:text-white font-semibold">
                   {Object.values(analytics.purchases_by_day).reduce((a, b) => a + b, 0)}
                 </span>
               </div>
@@ -166,4 +166,5 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
 

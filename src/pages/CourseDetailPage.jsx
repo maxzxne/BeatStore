@@ -225,7 +225,7 @@ const CourseDetailPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Загрузка курса...</div>
+          <div className="text-gray-600 dark:text-neutral-400">Загрузка курса...</div>
         </div>
       </div>
     );
@@ -235,7 +235,7 @@ const CourseDetailPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center py-12">
-          <div className="text-gray-600 text-lg">Курс не найден</div>
+          <div className="text-gray-600 dark:text-neutral-400 text-lg">Курс не найден</div>
           <button
             onClick={() => navigate('/courses')}
             className="btn btn-outline mt-4"
@@ -251,7 +251,7 @@ const CourseDetailPage = () => {
     <div className="container mx-auto px-6 py-8">
       <button
         onClick={() => navigate('/courses')}
-        className="flex items-center text-gray-600 hover:text-black mb-6 transition-colors border-none bg-transparent p-0"
+        className="flex items-center text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-6 transition-colors border-none bg-transparent p-0"
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
         Назад к курсам
@@ -347,7 +347,7 @@ const CourseDetailPage = () => {
             </div>
           ) : (
             <div className="w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-300 rounded-lg flex items-center justify-center">
-              <span className="text-gray-600 text-lg">Превью недоступно</span>
+              <span className="text-gray-600 dark:text-neutral-400 text-lg">Превью недоступно</span>
             </div>
           )}
 
@@ -375,7 +375,7 @@ const CourseDetailPage = () => {
                 <button
                   onClick={handleFavorite}
                   className={`btn btn-outline flex-1 h-12 flex items-center justify-center gap-2 ${
-                    isFavorite ? 'bg-gray-50 border-black' : ''
+                    isFavorite ? 'bg-gray-50 dark:bg-neutral-800 border-black' : ''
                   }`}
                 >
                   <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
@@ -385,7 +385,7 @@ const CourseDetailPage = () => {
                 <button
                   onClick={handleAddToCart}
                   className={`btn btn-outline flex-1 h-12 flex items-center justify-center gap-2 ${
-                    isInCart ? 'bg-gray-50 border-black' : ''
+                    isInCart ? 'bg-gray-50 dark:bg-neutral-800 border-black' : ''
                   }`}
                 >
                   <ShoppingCart className="h-5 w-5" fill={isInCart ? 'currentColor' : 'none'} />
@@ -398,10 +398,10 @@ const CourseDetailPage = () => {
 
         {/* Правая колонка - Информация о курсе */}
         <div>
-          <h1 className="text-3xl font-bold text-black mb-4">{course.title}</h1>
+          <h1 className="text-3xl font-bold text-black dark:text-white mb-4">{course.title}</h1>
           
           {course.purpose && (
-            <p className="text-lg text-gray-600 mb-4">{course.purpose}</p>
+            <p className="text-lg text-gray-600 dark:text-neutral-400 mb-4">{course.purpose}</p>
           )}
 
           {course.tags && (
@@ -409,7 +409,7 @@ const CourseDetailPage = () => {
               {course.tags.split(',').map((tag, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                  className="px-3 py-1 bg-gray-100 dark:bg-neutral-900 text-gray-700 rounded-full text-sm"
                 >
                   {tag.trim()}
                 </span>
@@ -417,14 +417,14 @@ const CourseDetailPage = () => {
             </div>
           )}
 
-          <div className="text-2xl font-bold text-black mb-6">
+          <div className="text-2xl font-bold text-black dark:text-white mb-6">
             {course.price === 0 ? 'Бесплатно' : `${course.price.toFixed(0)} ₽`}
           </div>
 
           {course.description && (
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-black mb-2">Описание</h2>
-              <p className="text-gray-600 whitespace-pre-wrap">{course.description}</p>
+              <h2 className="text-xl font-semibold text-black dark:text-white mb-2">Описание</h2>
+              <p className="text-gray-600 dark:text-neutral-400 whitespace-pre-wrap">{course.description}</p>
             </div>
           )}
 
@@ -441,4 +441,5 @@ const CourseDetailPage = () => {
 };
 
 export default CourseDetailPage;
+
 
