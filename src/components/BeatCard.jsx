@@ -128,10 +128,10 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
               className="w-full h-48 object-cover rounded-t-lg"
             />
           ) : (
-            <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-t-lg flex items-center justify-center relative overflow-hidden">
+            <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-t-lg flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-black bg-opacity-5"></div>
               <div className="relative z-20 text-center">
-                <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">BeatStore</span>
+                <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">BeatStore</span>
               </div>
             </div>
           )}
@@ -160,9 +160,9 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
         
         <div className="card-content">
           <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{beat.title}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{beat.artist}</p>
+          <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{beat.artist}</p>
           
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-neutral-500 mb-3">
             <span>{beat.genre}</span>
             <span>{beat.bpm} BPM</span>
             {beat.key && <span>{beat.key}</span>}
@@ -180,8 +180,8 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
                     onClick={handleFavorite}
                     className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${
                       isFavorite
-                        ? 'text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                        ? 'text-black dark:text-white hover:text-gray-700 dark:hover:text-neutral-300'
+                        : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                     }`}
                   >
                     <Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
@@ -192,8 +192,8 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
                       onClick={handleAddToCart}
                       className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors relative ${
                         isInCart
-                          ? 'text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300'
-                          : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                          ? 'text-black dark:text-white hover:text-gray-700 dark:hover:text-neutral-300'
+                          : 'text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                       }`}
                       title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
                     >

@@ -24,13 +24,13 @@ const Layout = ({ admin = false }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 w-full transition-colors">
+    <div className="min-h-screen bg-white dark:bg-black w-full transition-colors">
       {isAdminRoute ? (
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header admin />
-            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 transition-colors">
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white dark:bg-black transition-colors">
               <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
                 <Outlet />
               </div>

@@ -21,7 +21,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 bg-gray-100 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700 h-full transition-colors">
+    <aside className="w-64 bg-gray-100 dark:bg-neutral-900 border-r border-gray-300 dark:border-neutral-800 h-full transition-colors">
       <div className="p-6">
         <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Админ панель</h2>
         <nav className="space-y-2">
@@ -34,8 +34,8 @@ const Sidebar = () => {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
                     isActive
-                      ? 'bg-black dark:bg-white text-white dark:text-black'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-white dark:bg-white text-black dark:text-black'
+                      : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-neutral-800'
                   }`
                 }
               >

@@ -60,14 +60,14 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300"
+                  className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400"
                 >
                   Очистить все
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="md:hidden text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                className="md:hidden text-gray-500 dark:text-neutral-400 hover:text-black dark:hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>

@@ -69,7 +69,7 @@ const ProfilePage = () => {
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Войдите для просмотра профиля</h1>
-          <p className="text-gray-600 dark:text-gray-400">Вам нужно войти в систему, чтобы просмотреть профиль.</p>
+          <p className="text-gray-600 dark:text-neutral-400">Вам нужно войти в систему, чтобы просмотреть профиль.</p>
         </div>
       </div>
     );
@@ -79,22 +79,22 @@ const ProfilePage = () => {
     <div className="container mx-auto px-6 py-8 max-w-2xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Личный кабинет</h1>
-        <p className="text-gray-600 dark:text-gray-400">Управление вашим профилем</p>
+        <p className="text-gray-600 dark:text-neutral-400">Управление вашим профилем</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Настройки темы */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="p-4 bg-gray-50 dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               {isDarkMode ? (
-                <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300 mr-3" />
+                <Moon className="h-5 w-5 text-gray-600 dark:text-neutral-300 mr-3" />
               ) : (
                 <Sun className="h-5 w-5 text-yellow-500 mr-3" />
               )}
               <div>
                 <p className="text-sm font-medium text-black dark:text-white">Тема оформления</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-neutral-500">
                   {isDarkMode ? 'Тёмная тема' : 'Светлая тема'}
                 </p>
               </div>
@@ -106,8 +106,8 @@ const ProfilePage = () => {
                 onChange={toggleTheme}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black dark:peer-focus:ring-white rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-yellow-400"></div>
-              <span className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-300">
+              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black dark:peer-focus:ring-white rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-yellow-400"></div>
+              <span className="ml-3 text-sm font-medium text-gray-600 dark:text-neutral-400">
                 {isDarkMode ? 'Включить светлую' : 'Светлая'}
               </span>
             </label>
@@ -127,7 +127,7 @@ const ProfilePage = () => {
             value={formData.username}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-800 text-black dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-900 text-black dark:text-white"
           />
         </div>
 
@@ -144,7 +144,7 @@ const ProfilePage = () => {
             value={formData.email}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-800 text-black dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-900 text-black dark:text-white"
           />
         </div>
 
@@ -160,10 +160,10 @@ const ProfilePage = () => {
             name="additional_contact"
             value={formData.additional_contact}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-800 text-black dark:text-white"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-900 text-black dark:text-white"
             placeholder="Например: @mytelegram, +79991234567"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
             Эта информация будет автоматически добавляться в ваши заявки
           </p>
         </div>
@@ -191,7 +191,7 @@ const ProfilePage = () => {
       </form>
 
       {/* Кнопка выхода */}
-      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-neutral-800">
         <button
           onClick={() => {
             logout();
@@ -207,7 +207,7 @@ const ProfilePage = () => {
       {/* Модалка изменения пароля */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg p-6 max-w-md w-full mx-4 border dark:border-neutral-800">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-black dark:text-white">Изменить пароль</h2>
               <button
@@ -215,7 +215,7 @@ const ProfilePage = () => {
                   setShowPasswordModal(false);
                   setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 }}
-                className="text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                className="text-gray-500 hover:text-black dark:text-neutral-400 dark:hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -263,7 +263,7 @@ const ProfilePage = () => {
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-700 text-black dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-800 text-black dark:text-white"
                 />
               </div>
 
@@ -278,7 +278,7 @@ const ProfilePage = () => {
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-700 text-black dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-800 text-black dark:text-white"
                 />
               </div>
 
@@ -293,7 +293,7 @@ const ProfilePage = () => {
                   onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-700 text-black dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-800 text-black dark:text-white"
                 />
               </div>
 
