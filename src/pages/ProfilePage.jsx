@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../utils/api';
-import { User, Mail, Lock, Save, Phone, X, LogOut } from 'lucide-react';
+import { User, Mail, Lock, Save, Phone, X, LogOut, Sun, Moon } from 'lucide-react';
 
 const ProfilePage = () => {
   const { user, fetchUser, logout } = useAuth();
   const { showSuccess, showError } = useNotification();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -66,8 +68,8 @@ const ProfilePage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-black mb-2">Войдите для просмотра профиля</h1>
-          <p className="text-gray-600">Вам нужно войти в систему, чтобы просмотреть профиль.</p>
+          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Войдите для просмотра профиля</h1>
+          <p className="text-gray-600 dark:text-gray-400">Вам нужно войти в систему, чтобы просмотреть профиль.</p>
         </div>
       </div>
     );
@@ -76,14 +78,45 @@ const ProfilePage = () => {
   return (
     <div className="container mx-auto px-6 py-8 max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Личный кабинет</h1>
-        <p className="text-gray-600">Управление вашим профилем</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Личный кабинет</h1>
+        <p className="text-gray-600 dark:text-gray-400">Управление вашим профилем</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Настройки темы */}
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              {isDarkMode ? (
+                <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300 mr-3" />
+              ) : (
+                <Sun className="h-5 w-5 text-yellow-500 mr-3" />
+              )}
+              <div>
+                <p className="text-sm font-medium text-black dark:text-white">Тема оформления</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {isDarkMode ? 'Тёмная тема' : 'Светлая тема'}
+                </p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!isDarkMode}
+                onChange={toggleTheme}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black dark:peer-focus:ring-white rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-yellow-400"></div>
+              <span className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-300">
+                {isDarkMode ? 'Включить светлую' : 'Светлая'}
+              </span>
+            </label>
+          </div>
+        </div>
+
         {/* Имя пользователя */}
         <div>
-          <label htmlFor="profile_username" className="block text-sm font-medium text-black mb-2">
+          <label htmlFor="profile_username" className="block text-sm font-medium text-black dark:text-white mb-2">
             <User className="h-4 w-4 inline mr-2" />
             Имя пользователя
           </label>
@@ -94,13 +127,13 @@ const ProfilePage = () => {
             value={formData.username}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-800 text-black dark:text-white"
           />
         </div>
 
         {/* Email */}
         <div>
-          <label htmlFor="profile_email" className="block text-sm font-medium text-black mb-2">
+          <label htmlFor="profile_email" className="block text-sm font-medium text-black dark:text-white mb-2">
             <Mail className="h-4 w-4 inline mr-2" />
             Email
           </label>
@@ -111,13 +144,13 @@ const ProfilePage = () => {
             value={formData.email}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-800 text-black dark:text-white"
           />
         </div>
 
         {/* Дополнительная связь */}
         <div>
-          <label htmlFor="profile_additional_contact" className="block text-sm font-medium text-black mb-2">
+          <label htmlFor="profile_additional_contact" className="block text-sm font-medium text-black dark:text-white mb-2">
             <Phone className="h-4 w-4 inline mr-2" />
             Дополнительная связь (Telegram, WhatsApp и т.д.)
           </label>
@@ -127,10 +160,10 @@ const ProfilePage = () => {
             name="additional_contact"
             value={formData.additional_contact}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-800 text-black dark:text-white"
             placeholder="Например: @mytelegram, +79991234567"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Эта информация будет автоматически добавляться в ваши заявки
           </p>
         </div>
@@ -158,13 +191,13 @@ const ProfilePage = () => {
       </form>
 
       {/* Кнопка выхода */}
-      <div className="mt-8 pt-6 border-t border-gray-200">
+      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={() => {
             logout();
             navigate('/');
           }}
-          className="w-full btn btn-outline h-12 text-base flex items-center justify-center text-red-600 hover:text-red-700 hover:border-red-600"
+          className="w-full btn btn-outline h-12 text-base flex items-center justify-center text-red-600 hover:text-red-700 hover:border-red-600 dark:text-red-400 dark:hover:text-red-300 dark:hover:border-red-400"
         >
           <LogOut className="h-4 w-4 mr-2" />
           Выйти из аккаунта
@@ -174,15 +207,15 @@ const ProfilePage = () => {
       {/* Модалка изменения пароля */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-black">Изменить пароль</h2>
+              <h2 className="text-xl font-bold text-black dark:text-white">Изменить пароль</h2>
               <button
                 onClick={() => {
                   setShowPasswordModal(false);
                   setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 }}
-                className="text-gray-500 hover:text-black"
+                className="text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -221,7 +254,7 @@ const ProfilePage = () => {
               }
             }} className="space-y-4">
               <div>
-                <label htmlFor="current_password" className="block text-sm font-medium text-black mb-2">
+                <label htmlFor="current_password" className="block text-sm font-medium text-black dark:text-white mb-2">
                   Текущий пароль *
                 </label>
                 <input
@@ -230,12 +263,12 @@ const ProfilePage = () => {
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-700 text-black dark:text-white"
                 />
               </div>
 
               <div>
-                <label htmlFor="new_password" className="block text-sm font-medium text-black mb-2">
+                <label htmlFor="new_password" className="block text-sm font-medium text-black dark:text-white mb-2">
                   Новый пароль *
                 </label>
                 <input
@@ -245,12 +278,12 @@ const ProfilePage = () => {
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-700 text-black dark:text-white"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirm_new_password" className="block text-sm font-medium text-black mb-2">
+                <label htmlFor="confirm_new_password" className="block text-sm font-medium text-black dark:text-white mb-2">
                   Подтверждение нового пароля *
                 </label>
                 <input
@@ -260,7 +293,7 @@ const ProfilePage = () => {
                   onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-gray-700 text-black dark:text-white"
                 />
               </div>
 

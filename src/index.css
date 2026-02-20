@@ -4,7 +4,7 @@
 
 @layer base {
   * {
-    @apply border-gray-300;
+    @apply border-gray-300 dark:border-gray-700;
   }
   
   html {
@@ -15,6 +15,7 @@
   
   body {
     @apply bg-white text-black font-sans;
+    @apply dark:bg-gray-900 dark:text-white;
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
     min-height: 100dvh; /* Динамическая высота viewport для мобильных */
@@ -28,6 +29,7 @@
     -webkit-overflow-scrolling: touch;
     /* Для Telegram Web App - убираем bounce эффект на iOS */
     overscroll-behavior: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   #root {
@@ -68,12 +70,14 @@
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-white;
+    @apply dark:focus-visible:ring-white dark:ring-offset-gray-900;
     /* Увеличиваем размер кнопок на мобильных */
     @apply min-h-[44px] px-4;
   }
   
   .btn-primary {
     @apply bg-black text-white hover:bg-gray-800;
+    @apply dark:bg-white dark:text-black dark:hover:bg-gray-200;
   }
   
   /* Адаптивные контейнеры */
@@ -141,10 +145,12 @@
   
   .btn-secondary {
     @apply bg-gray-200 text-black hover:bg-gray-300;
+    @apply dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600;
   }
   
   .btn-outline {
     @apply border border-black text-black hover:bg-gray-100;
+    @apply dark:border-white dark:text-white dark:hover:bg-gray-800;
   }
   
   .btn-sm {
@@ -161,6 +167,7 @@
   
   .input {
     @apply flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black focus:border-black disabled:cursor-not-allowed disabled:opacity-50;
+    @apply dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400 dark:focus:ring-white dark:focus:border-white;
   }
   
   /* По умолчанию input занимает всю ширину, но можно переопределить через w-auto */
@@ -176,13 +183,22 @@
     padding-right: 2.5rem !important;
   }
   
+  .dark select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  }
+  
   select:focus {
     @apply outline-none ring-2 ring-black border-black;
+    @apply dark:ring-white dark:border-white;
   }
   
   /* Убираем синий цвет выделения в браузерах */
   select:focus {
     color: black;
+  }
+  
+  .dark select:focus {
+    color: white;
   }
   
   /* Черное выделение для option при выборе */
@@ -191,10 +207,21 @@
     color: black;
   }
   
+  .dark select option {
+    background-color: #1f2937;
+    color: white;
+  }
+  
   select option:hover,
   select option:focus {
     background-color: black !important;
     color: white !important;
+  }
+  
+  .dark select option:hover,
+  .dark select option:focus {
+    background-color: white !important;
+    color: black !important;
   }
   
   select option:checked {
@@ -202,10 +229,20 @@
     color: white !important;
   }
   
+  .dark select option:checked {
+    background-color: white !important;
+    color: black !important;
+  }
+  
   /* Для открытого select - черный фон для выбранного элемента */
   select:focus option:checked {
     background-color: black !important;
     color: white !important;
+  }
+  
+  .dark select:focus option:checked {
+    background-color: white !important;
+    color: black !important;
   }
   
   /* Убираем синий цвет при активации select в некоторых браузерах */
@@ -220,6 +257,7 @@
   
   .card {
     @apply rounded-lg border border-gray-300 bg-white text-black;
+    @apply dark:border-gray-700 dark:bg-gray-800 dark:text-white;
   }
   
   .card-header {

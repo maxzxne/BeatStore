@@ -175,9 +175,9 @@ const CartPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center">
-          <ShoppingCart className="h-16 w-16 text-dark-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Войдите для просмотра корзины</h1>
-          <p className="text-dark-400">Вам нужно войти в систему, чтобы увидеть корзину.</p>
+          <ShoppingCart className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Войдите для просмотра корзины</h1>
+          <p className="text-gray-600 dark:text-gray-400">Вам нужно войти в систему, чтобы увидеть корзину.</p>
         </div>
       </div>
     );
@@ -187,7 +187,7 @@ const CartPage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Загрузка корзины...</div>
+          <div className="text-gray-600 dark:text-gray-400">Загрузка корзины...</div>
         </div>
       </div>
     );
@@ -196,17 +196,17 @@ const CartPage = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Корзина</h1>
-        <p className="text-dark-400">
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Корзина</h1>
+        <p className="text-gray-600 dark:text-gray-400">
           {cartItems.length} товаров в корзине
         </p>
       </div>
 
       {cartItems.length === 0 ? (
         <div className="text-center py-12">
-          <ShoppingCart className="h-16 w-16 text-dark-400 mx-auto mb-4" />
-          <div className="text-dark-400 text-lg">Ваша корзина пуста</div>
-          <p className="text-dark-500 mt-2">
+          <ShoppingCart className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <div className="text-gray-600 dark:text-gray-400 text-lg">Ваша корзина пуста</div>
+          <p className="text-gray-500 dark:text-gray-500 mt-2">
             Добавьте биты в корзину, чтобы начать
           </p>
         </div>
@@ -273,19 +273,19 @@ const CartPage = () => {
                       <div className="flex-1 flex flex-col justify-center">
                         <Link 
                           to={item.type === 'course' ? `/course/${item.id}` : `/beat/${item.id}`}
-                          className="font-semibold text-black hover:text-gray-700 transition-colors"
+                          className="font-semibold text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                         >
                           {item.title}
                         </Link>
                         {item.type === 'beat' ? (
                           <>
-                            <p className="text-gray-600 text-sm">{item.artist}</p>
-                            <p className="text-gray-600 text-sm">{item.genre} • {item.bpm} BPM</p>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm">{item.artist}</p>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm">{item.genre} • {item.bpm} BPM</p>
                           </>
                         ) : (
                           <>
-                            {item.purpose && <p className="text-gray-600 text-sm">{item.purpose}</p>}
-                            {item.tags && <p className="text-gray-600 text-sm">{item.tags.split(',')[0]}</p>}
+                            {item.purpose && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.purpose}</p>}
+                            {item.tags && <p className="text-gray-600 dark:text-gray-400 text-sm">{item.tags.split(',')[0]}</p>}
                           </>
                         )}
                       </div>
@@ -294,10 +294,10 @@ const CartPage = () => {
                         {item.type === 'beat' && (item.price_mp3 !== null || item.price_wav !== null || item.price_exclusive !== null) ? (
                           <div className="space-y-2">
                             {/* Выбор формата для бита */}
-                            <div className="text-xs text-gray-600 mb-2">Формат:</div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Формат:</div>
                             <div className="space-y-1">
                               {item.mp3_url && (item.price_mp3 !== null && item.price_mp3 !== undefined) && (
-                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 transition-colors text-xs">
+                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs">
                                   <div className="flex items-center space-x-2">
                                     <input
                                       type="radio"
@@ -305,17 +305,17 @@ const CartPage = () => {
                                       value="mp3"
                                       checked={selectedFormats[item.id] === 'mp3'}
                                       onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'mp3' })}
-                                      className="w-3 h-3 text-black border-gray-300 focus:ring-black"
+                                      className="w-3 h-3 text-black dark:text-white border-gray-300 dark:border-gray-600 focus:ring-black dark:focus:ring-white"
                                     />
-                                    <span className="text-black">MP3</span>
+                                    <span className="text-black dark:text-white">MP3</span>
                                   </div>
-                                  <span className="text-black font-semibold">
+                                  <span className="text-black dark:text-white font-semibold">
                                     {item.price_mp3 === 0 ? '0₽' : `${item.price_mp3.toFixed(0)}₽`}
                                   </span>
                                 </label>
                               )}
                               {item.wav_url && (item.price_wav !== null && item.price_wav !== undefined) && (
-                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 transition-colors text-xs">
+                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs">
                                   <div className="flex items-center space-x-2">
                                     <input
                                       type="radio"
@@ -323,17 +323,17 @@ const CartPage = () => {
                                       value="wav"
                                       checked={selectedFormats[item.id] === 'wav'}
                                       onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'wav' })}
-                                      className="w-3 h-3 text-black border-gray-300 focus:ring-black"
+                                      className="w-3 h-3 text-black dark:text-white border-gray-300 dark:border-gray-600 focus:ring-black dark:focus:ring-white"
                                     />
-                                    <span className="text-black">WAV</span>
+                                    <span className="text-black dark:text-white">WAV</span>
                                   </div>
-                                  <span className="text-black font-semibold">
+                                  <span className="text-black dark:text-white font-semibold">
                                     {item.price_wav === 0 ? '0₽' : `${item.price_wav.toFixed(0)}₽`}
                                   </span>
                                 </label>
                               )}
                               {item.exclusive_url && (item.price_exclusive !== null && item.price_exclusive !== undefined) && (
-                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 transition-colors text-xs">
+                                <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs">
                                   <div className="flex items-center space-x-2">
                                     <input
                                       type="radio"
@@ -341,18 +341,18 @@ const CartPage = () => {
                                       value="exclusive"
                                       checked={selectedFormats[item.id] === 'exclusive'}
                                       onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'exclusive' })}
-                                      className="w-3 h-3 text-black border-gray-300 focus:ring-black"
+                                      className="w-3 h-3 text-black dark:text-white border-gray-300 dark:border-gray-600 focus:ring-black dark:focus:ring-white"
                                     />
-                                    <span className="text-black">Exclusive</span>
+                                    <span className="text-black dark:text-white">Exclusive</span>
                                   </div>
-                                  <span className="text-black font-semibold">
+                                  <span className="text-black dark:text-white font-semibold">
                                     {item.price_exclusive === 0 ? '0₽' : `${item.price_exclusive.toFixed(0)}₽`}
                                   </span>
                                 </label>
                               )}
                             </div>
                             {/* Цена выбранного формата */}
-                            <div className="text-lg font-bold text-black mt-2">
+                            <div className="text-lg font-bold text-black dark:text-white mt-2">
                               {(() => {
                                 const format = selectedFormats[item.id] || 'mp3';
                                 let price = 0;
@@ -364,7 +364,7 @@ const CartPage = () => {
                             </div>
                             <button
                               onClick={() => removeFromCart(item.id, item.type)}
-                              className="text-dark-400 hover:text-red-500 mt-1"
+                              className="text-gray-400 dark:text-gray-500 hover:text-red-500 mt-1"
                               title="Удалить из корзины"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -372,12 +372,12 @@ const CartPage = () => {
                           </div>
                         ) : (
                           <>
-                        <div className="text-lg font-bold text-black">
+                        <div className="text-lg font-bold text-black dark:text-white">
                           {item.price === 0 ? 'Бесплатно' : `${item.price.toFixed(0)} ₽`}
                         </div>
                         <button
                           onClick={() => removeFromCart(item.id, item.type)}
-                          className="text-dark-400 hover:text-red-500 mt-2"
+                          className="text-gray-400 dark:text-gray-500 hover:text-red-500 mt-2"
                           title="Удалить из корзины"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -396,26 +396,26 @@ const CartPage = () => {
           <div>
             <div className="card">
               <div className="card-header">
-                <h2 className="text-lg font-semibold text-black">Сводка заказа</h2>
+                <h2 className="text-lg font-semibold text-black dark:text-white">Сводка заказа</h2>
               </div>
               
               <div className="card-content">
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Промежуточный итог:</span>
-                    <span className="text-black">{totalPrice === 0 ? '0 ₽' : `${totalPrice.toFixed(0)} ₽`}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Промежуточный итог:</span>
+                    <span className="text-black dark:text-white">{totalPrice === 0 ? '0 ₽' : `${totalPrice.toFixed(0)} ₽`}</span>
                   </div>
                   
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Товаров:</span>
-                    <span className="text-black">{cartItems.length}</span>
+                    <span className="text-gray-600 dark:text-gray-400">Товаров:</span>
+                    <span className="text-black dark:text-white">{cartItems.length}</span>
                   </div>
                   
-                  <hr className="border-gray-300" />
+                  <hr className="border-gray-300 dark:border-gray-600" />
                   
                   <div className="flex justify-between text-lg font-bold">
-                    <span className="text-black">Итого:</span>
-                    <span className="text-black">{totalPrice === 0 ? '0 ₽' : `${totalPrice.toFixed(0)} ₽`}</span>
+                    <span className="text-black dark:text-white">Итого:</span>
+                    <span className="text-black dark:text-white">{totalPrice === 0 ? '0 ₽' : `${totalPrice.toFixed(0)} ₽`}</span>
                   </div>
                 </div>
               </div>

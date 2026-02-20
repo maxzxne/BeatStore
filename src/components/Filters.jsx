@@ -46,7 +46,7 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
         <Filter className="h-4 w-4 mr-2" />
         Фильтры
         {hasActiveFilters && (
-          <span className="ml-2 bg-black text-white text-xs px-2 py-1 rounded-full">
+          <span className="ml-2 bg-black dark:bg-white text-white dark:text-black text-xs px-2 py-1 rounded-full">
             {Object.values(filters).filter(v => v !== '').length}
           </span>
         )}
@@ -55,19 +55,19 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
       {isOpen && (
         <div className="card p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-black">Фильтры</h3>
+            <h3 className="text-lg font-semibold text-black dark:text-white">Фильтры</h3>
             <div className="flex items-center space-x-2">
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-black hover:text-gray-600"
+                  className="text-sm text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   Очистить все
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="md:hidden text-gray-500 hover:text-black"
+                className="md:hidden text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -77,7 +77,7 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Genre */}
             <div>
-              <label className="block text-sm font-medium text-black mb-2">
+              <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Жанр
               </label>
               <select
@@ -94,7 +94,7 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
 
             {/* Key */}
             <div>
-              <label className="block text-sm font-medium text-black mb-2">
+              <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Тональность
               </label>
               <select
@@ -111,7 +111,7 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
 
             {/* BPM Range */}
             <div>
-              <label className="block text-sm font-medium text-black mb-2">
+              <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Диапазон BPM
               </label>
               <div className="flex space-x-2">
@@ -134,7 +134,7 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
 
             {/* Price Range */}
             <div>
-              <label className="block text-sm font-medium text-black mb-2">
+              <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Диапазон цен
               </label>
               <div className="flex space-x-2">
@@ -160,7 +160,7 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
             {/* Purchase Status - only show if authenticated */}
             {isAuthenticated && (
               <div>
-                <label className="block text-sm font-medium text-black mb-2">
+                <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Статус покупки
                 </label>
                 <select

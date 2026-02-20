@@ -76,14 +76,14 @@ const Header = ({ admin = false }) => {
 
   if (admin) {
     return (
-      <header className="bg-white border-b border-gray-300 px-6 py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 px-6 py-4 transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold text-black">XWinner.beats.please Админ</h1>
+            <h1 className="text-xl font-bold text-black dark:text-white">XWinner.beats.please Админ</h1>
           </div>
           
           <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Добро пожаловать, {adminUser?.username}</span>
+            <span className="text-gray-600 dark:text-gray-300">Добро пожаловать, {adminUser?.username}</span>
             <Link
               to="/"
               className="btn btn-outline btn-sm"
@@ -104,12 +104,12 @@ const Header = ({ admin = false }) => {
   }
 
   return (
-    <header className="bg-white border-b border-gray-300 sticky top-0 z-50">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 sticky top-0 z-50 transition-colors">
       <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
         <div className="flex items-center justify-between">
           {/* Logo and Desktop Navigation (left side) */}
           <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6">
-            <Link to="/" className="text-base sm:text-xl lg:text-2xl font-bold text-black truncate" onClick={() => setMobileMenuOpen(false)}>
+            <Link to="/" className="text-base sm:text-xl lg:text-2xl font-bold text-black dark:text-white truncate" onClick={() => setMobileMenuOpen(false)}>
               XWinner.beats.please
             </Link>
 
@@ -118,7 +118,7 @@ const Header = ({ admin = false }) => {
               <Link
                 to="/"
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  location.pathname === '/' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+                  location.pathname === '/' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Магазин
@@ -126,7 +126,7 @@ const Header = ({ admin = false }) => {
               <Link
                 to="/courses"
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  location.pathname === '/courses' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+                  location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Академия
@@ -134,7 +134,7 @@ const Header = ({ admin = false }) => {
               <Link
                 to="/order"
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+                  location.pathname === '/order' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
                 Заказ услуг
@@ -150,7 +150,7 @@ const Header = ({ admin = false }) => {
                 <>
                   <Link
                     to="/favorites"
-                    className="p-2 text-gray-600 hover:text-black transition-colors relative"
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors relative"
                     title="Избранное"
                   >
                     <Heart className="h-5 w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
@@ -162,26 +162,26 @@ const Header = ({ admin = false }) => {
                   </Link>
                   <Link
                     to="/cart"
-                    className="p-2 text-gray-600 hover:text-black transition-colors relative"
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors relative"
                     title="Корзина"
                   >
                     <ShoppingCart className="h-5 w-5" />
                     {cartCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-black text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-white dark:bg-gray-900 text-black dark:text-white text-xs rounded-full h-5 w-5 flex items-center justify-center border border-gray-300 dark:border-gray-600">
                         {cartCount}
                       </span>
                     )}
                   </Link>
                   <Link
                     to="/purchases"
-                    className="p-2 text-gray-600 hover:text-black transition-colors"
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                     title="Покупки"
                   >
                     <Music className="h-5 w-5" />
                   </Link>
                   <Link
                     to="/profile"
-                    className="p-2 text-gray-600 hover:text-black transition-colors"
+                    className="p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                     title="Профиль"
                   >
                     <User className="h-5 w-5" />
@@ -199,7 +199,7 @@ const Header = ({ admin = false }) => {
                   )}
                 </>
               ) : (
-                <Link to="/login" className="text-gray-600 hover:text-black transition-colors font-medium">
+                <Link to="/login" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium">
                   Войти
                 </Link>
               )}
@@ -212,7 +212,7 @@ const Header = ({ admin = false }) => {
                 <>
                   <Link
                     to="/favorites"
-                    className="p-1.5 sm:p-2 text-gray-600 hover:text-black transition-colors relative"
+                    className="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors relative"
                     title="Избранное"
                   >
                     <Heart className="h-4 w-4 sm:h-5 sm:w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
@@ -224,19 +224,19 @@ const Header = ({ admin = false }) => {
                   </Link>
                   <Link
                     to="/cart"
-                    className="p-1.5 sm:p-2 text-gray-600 hover:text-black transition-colors relative"
+                    className="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors relative"
                     title="Корзина"
                   >
                     <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
                     {cartCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[10px] rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 bg-white dark:bg-gray-900 text-black dark:text-white text-[10px] rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center border border-gray-300 dark:border-gray-600">
                         {cartCount}
                       </span>
                     )}
                   </Link>
                   <Link
                     to="/purchases"
-                    className="p-1.5 sm:p-2 text-gray-600 hover:text-black transition-colors"
+                    className="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                     title="Покупки"
                   >
                     <Music className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -245,7 +245,7 @@ const Header = ({ admin = false }) => {
                   {(user?.is_admin || isAdminAuthenticated) && (
                     <Link
                       to="/admin"
-                      className="p-1.5 sm:p-2 text-gray-600 hover:text-black transition-colors"
+                      className="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                       title="Админ-панель"
                     >
                       <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -258,13 +258,13 @@ const Header = ({ admin = false }) => {
               {isAuthenticated ? (
                 <Link
                   to="/profile"
-                  className="p-1.5 sm:p-2 text-gray-600 hover:text-black transition-colors"
+                  className="p-1.5 sm:p-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
                   title="Профиль"
                 >
                   <User className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               ) : (
-                <Link to="/login" className="text-gray-600 hover:text-black transition-colors font-medium text-xs sm:text-sm px-1 sm:px-2">
+                <Link to="/login" className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-medium text-xs sm:text-sm px-1 sm:px-2">
                   Войти
                 </Link>
               )}
@@ -273,11 +273,11 @@ const Header = ({ admin = false }) => {
         </div>
 
         {/* Mobile Navigation - под шапкой, всегда видимо */}
-        <nav className="lg:hidden mt-2 pt-2 border-t border-gray-200 flex items-center justify-center space-x-2 sm:space-x-4">
+        <nav className="lg:hidden mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center justify-center space-x-2 sm:space-x-4">
           <Link
             to="/"
             className={`px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-medium transition-colors ${
-              location.pathname === '/' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+              location.pathname === '/' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             Магазин
@@ -285,7 +285,7 @@ const Header = ({ admin = false }) => {
           <Link
             to="/courses"
             className={`px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-medium transition-colors ${
-              location.pathname === '/courses' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+              location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             Академия
@@ -293,7 +293,7 @@ const Header = ({ admin = false }) => {
           <Link
             to="/order"
             className={`px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-medium transition-colors ${
-              location.pathname === '/order' ? 'text-black border-b-2 border-black' : 'text-gray-600 hover:text-black'
+              location.pathname === '/order' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
             }`}
           >
             Заказ услуг

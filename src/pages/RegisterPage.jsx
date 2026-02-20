@@ -166,34 +166,34 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center transition-colors">
       <div className="max-w-md w-full mx-4">
-        <Link to="/" className="inline-flex items-center text-black hover:text-gray-600 mb-4 transition-colors">
+        <Link to="/" className="inline-flex items-center text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 mb-4 transition-colors">
           <ArrowLeft className="h-5 w-5 mr-1" />
           <span className="text-sm">На главную</span>
         </Link>
         <div className="card">
           <div className="card-header text-center">
-            <div className="bg-black rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <User className="h-8 w-8 text-white" />
+            <div className="bg-black dark:bg-white rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <User className="h-8 w-8 text-white dark:text-black" />
             </div>
-            <h1 className="text-2xl font-bold text-black">Регистрация</h1>
-            <p className="text-gray-600">Создайте новый аккаунт</p>
+            <h1 className="text-2xl font-bold text-black dark:text-white">Регистрация</h1>
+            <p className="text-gray-600 dark:text-gray-400">Создайте новый аккаунт</p>
           </div>
           
           <form onSubmit={handleSubmit} className="card-content space-y-4">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md">
                 {error}
               </div>
             )}
             
             <div>
-              <label htmlFor="register_email" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="register_email" className="block text-sm font-medium text-black dark:text-white mb-2">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                 <input
                   type="email"
                   id="register_email"
@@ -208,11 +208,11 @@ const RegisterPage = () => {
             </div>
             
             <div>
-              <label htmlFor="register_username" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="register_username" className="block text-sm font-medium text-black dark:text-white mb-2">
                 Имя пользователя
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                 <input
                   type="text"
                   id="register_username"
@@ -227,11 +227,11 @@ const RegisterPage = () => {
             </div>
             
             <div>
-              <label htmlFor="register_password" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="register_password" className="block text-sm font-medium text-black dark:text-white mb-2">
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                 <input
                   type="password"
                   id="register_password"
@@ -246,11 +246,11 @@ const RegisterPage = () => {
             </div>
             
             <div>
-              <label htmlFor="register_confirmPassword" className="block text-sm font-medium text-black mb-2">
+              <label htmlFor="register_confirmPassword" className="block text-sm font-medium text-black dark:text-white mb-2">
                 Подтвердите пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                 <input
                   type="password"
                   id="register_confirmPassword"
@@ -282,10 +282,10 @@ const RegisterPage = () => {
           ) && (
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Или зарегистрируйтесь через</span>
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Или зарегистрируйтесь через</span>
               </div>
             </div>
           )}
@@ -297,7 +297,7 @@ const RegisterPage = () => {
               <button
                 onClick={() => handleOAuthLogin('google')}
                 disabled={loading || oauthSettings.google?.is_disabled}
-                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black dark:text-white"
               >
                 <svg className="w-5 h-5 mr-2 flex-shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -313,7 +313,7 @@ const RegisterPage = () => {
               <button
                 onClick={() => handleOAuthLogin('vk')}
                 disabled={loading || oauthSettings.vk?.is_disabled}
-                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black dark:text-white"
               >
                 <svg className="w-5 h-5 mr-2 flex-shrink-0" viewBox="0 0 24 24" fill="#0077FF">
                 <path d="M12.785 16.241s.287-.032.435-.194c.135-.148.131-.427.131-.427s-.02-1.304.58-1.496c.593-.19 1.35.95 2.153 1.37.607.32 1.067.25 1.067.25l2.141-.03s1.118-.07.587-.95c-.044-.07-.308-.64-1.588-1.81-1.344-1.23-1.163-.516.454-1.58 1.01-.83 1.414-1.336 1.287-1.55-.12-.204-.86-.15-.86-.15l-2.207.014s-.163-.022-.284.05c-.12.07-.196.23-.196.23s-.353.94-.82 1.74c-.99 1.65-1.387 1.74-1.549 1.64-.377-.234-.283-.94-.283-1.44 0-1.565.238-2.216-.465-2.38-.234-.055-.406-.09-1.004-.096-.767-.007-1.41.002-1.777.164-.24.106-.423.344-.31.358.138.018.45.083.614.304.213.285.206.92.206.92s.123 1.82-.287 2.045c-.283.152-.673-.158-1.51-1.58-.428-.89-.752-1.87-.752-1.87s-.062-.15-.172-.23c-.133-.098-.318-.13-.318-.13l-2.09-.02s-.313.01-.428.15c-.102.124-.007.38-.007.38s1.68 3.96 3.58 5.96c1.74 1.84 3.72 1.72 3.72 1.72h.888z"/>
@@ -326,7 +326,7 @@ const RegisterPage = () => {
               <button
                 onClick={() => handleOAuthLogin('yandex')}
                 disabled={loading || oauthSettings.yandex?.is_disabled}
-                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center px-4 py-3 h-12 text-base border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black dark:text-white"
               >
                 <svg className="w-5 h-5 mr-2 flex-shrink-0" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="255.999" cy="256" r="251.408" fill="#FC3F1D"/>
@@ -370,9 +370,9 @@ const RegisterPage = () => {
           )}
           
           <div className="card-footer text-center mt-6">
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Уже есть аккаунт?{' '}
-              <Link to="/login" className="text-black hover:underline">
+              <Link to="/login" className="text-black dark:text-white hover:underline">
                 Войти
               </Link>
             </p>

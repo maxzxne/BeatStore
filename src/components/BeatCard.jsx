@@ -117,7 +117,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
 
   return (
     <Link to={`/beat/${beat.id}`} className="group">
-      <div className={`card hover:border-black transition-colors relative ${
+      <div className={`card hover:border-black dark:hover:border-white transition-colors relative ${
         isPurchased ? 'ring-2 ring-green-500 ring-opacity-50' : ''
       }`}>
         <div className="relative">
@@ -128,10 +128,10 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
               className="w-full h-48 object-cover rounded-t-lg"
             />
           ) : (
-            <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 rounded-t-lg flex items-center justify-center relative overflow-hidden">
+            <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-t-lg flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-black bg-opacity-5"></div>
               <div className="relative z-20 text-center">
-                <span className="text-gray-600 text-sm font-medium">BeatStore</span>
+                <span className="text-gray-600 dark:text-gray-300 text-sm font-medium">BeatStore</span>
               </div>
             </div>
           )}
@@ -159,17 +159,17 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
         </div>
         
         <div className="card-content">
-          <h3 className="font-semibold text-black mb-1 truncate">{beat.title}</h3>
-          <p className="text-gray-600 text-sm mb-2">{beat.artist}</p>
+          <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{beat.title}</h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{beat.artist}</p>
           
-          <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-3">
             <span>{beat.genre}</span>
             <span>{beat.bpm} BPM</span>
             {beat.key && <span>{beat.key}</span>}
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-black">
+            <span className="text-lg font-bold text-black dark:text-white">
               {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
             </span>
             
@@ -180,8 +180,8 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
                     onClick={handleFavorite}
                     className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${
                       isFavorite
-                        ? 'text-black hover:text-gray-700'
-                        : 'text-gray-500 hover:text-black'
+                        ? 'text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
                     }`}
                   >
                     <Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
@@ -192,8 +192,8 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
                       onClick={handleAddToCart}
                       className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors relative ${
                         isInCart
-                          ? 'text-black hover:text-gray-700'
-                          : 'text-gray-500 hover:text-black'
+                          ? 'text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
                       }`}
                       title={isInCart ? 'Удалить из корзины' : 'Добавить в корзину'}
                     >

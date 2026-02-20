@@ -139,7 +139,7 @@ const HomePage = () => {
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Загрузка битов...</div>
+          <div className="text-gray-600 dark:text-gray-400">Загрузка битов...</div>
         </div>
       </div>
     );
@@ -148,8 +148,8 @@ const HomePage = () => {
   return (
     <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-black mb-2">Биты</h1>
-        <p className="text-gray-600 text-sm sm:text-base">
+        <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white mb-2">Биты</h1>
+        <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
           {beats.length} битов доступно
         </p>
       </div>
@@ -158,8 +158,8 @@ const HomePage = () => {
 
       {beats.length === 0 ? (
         <div className="text-center py-8 sm:py-12">
-          <div className="text-gray-600 text-base sm:text-lg">Биты не найдены</div>
-          <p className="text-gray-500 mt-2 text-sm sm:text-base">
+          <div className="text-gray-600 dark:text-gray-400 text-base sm:text-lg">Биты не найдены</div>
+          <p className="text-gray-500 dark:text-gray-500 mt-2 text-sm sm:text-base">
             Попробуйте изменить фильтры
           </p>
         </div>

@@ -22,6 +22,7 @@ import { BrowserRouter as Router, Routes, Route, useRouteError } from 'react-rou
 import { AuthProvider } from './contexts/AuthContext';
 import { AudioPlayerProvider } from './contexts/AudioPlayerContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout';
 import TelegramInit from './components/TelegramInit';
 import HomePage from './pages/HomePage';
@@ -58,11 +59,12 @@ import ErrorPage from './pages/ErrorPage';
 function App() {
   return (
     // Провайдеры контекста для глобального состояния
-    <AuthProvider>                    {/* Управление аутентификацией пользователей и админов */}
-      <AudioPlayerProvider>           {/* Глобальный аудио плеер для воспроизведения битов */}
-        <NotificationProvider>        {/* Система уведомлений */}
-          <TelegramInit />            {/* Инициализация Telegram Web App */}
-          <Router>
+    <ThemeProvider>                   {/* Управление темой (тёмная/светлая) */}
+      <AuthProvider>                    {/* Управление аутентификацией пользователей и админов */}
+        <AudioPlayerProvider>           {/* Глобальный аудио плеер для воспроизведения битов */}
+          <NotificationProvider>        {/* Система уведомлений */}
+            <TelegramInit />            {/* Инициализация Telegram Web App */}
+            <Router>
             <Routes>
               {/* Публичные маршруты - доступны всем пользователям */}
               <Route path="/" element={<Layout />}>
@@ -103,10 +105,11 @@ function App() {
               {/* Обработка ошибок */}
               <Route path="*" element={<ErrorPage />} />                  {/* 404 и другие ошибки */}
             </Routes>
-          </Router>
-        </NotificationProvider>
-      </AudioPlayerProvider>
-    </AuthProvider>
+            </Router>
+          </NotificationProvider>
+        </AudioPlayerProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
