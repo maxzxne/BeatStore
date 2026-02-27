@@ -78,6 +78,40 @@
     background-color: rgb(82 82 91);
     color: rgb(255 255 255);
   }
+
+  /* Стилизация скроллбаров на всём сайте */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(156 163 175) rgb(243 244 246);
+  }
+  .dark * {
+    scrollbar-color: rgb(82 82 91) rgb(23 23 23);
+  }
+  /* WebKit (Chrome, Safari, Edge) */
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: rgb(243 244 246);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgb(107 114 128);
+  }
+  .dark *::-webkit-scrollbar-track {
+    background: rgb(23 23 23);
+  }
+  .dark *::-webkit-scrollbar-thumb {
+    background: rgb(82 82 91);
+  }
+  .dark *::-webkit-scrollbar-thumb:hover {
+    background: rgb(113 113 122);
+  }
   
   /* Убираем outline только для неинтерактивных элементов */
   *:not(input):not(textarea):not(select):not(button):not(a):not([tabindex]) {

@@ -267,7 +267,7 @@ const AdminOrders = () => {
                     {selectedOrder.service_categories && selectedOrder.service_categories.length > 0 ? (
                       <div className="flex flex-wrap gap-2 mt-1">
                         {selectedOrder.service_categories.map((cat, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-gray-100 rounded-lg text-sm">
+                          <span key={idx} className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-900 dark:bg-neutral-500 dark:text-white border border-gray-300 dark:border-neutral-600">
                             {cat}
                           </span>
                         ))}
@@ -499,73 +499,100 @@ const AdminOrders = () => {
                         <div>
                           <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">WAV файл</label>
                           <div className="flex items-center gap-2">
+                            <label
+                              htmlFor="result-file-wav"
+                              className="btn btn-outline btn-sm cursor-pointer shrink-0"
+                            >
+                              Выберите файл
+                            </label>
                             <input
+                              id="result-file-wav"
                               type="file"
                               accept="audio/wav,audio/*"
                               onChange={(e) => handleResultFileChange(e, 'wav')}
-                              className="flex-1 text-sm"
+                              className="hidden"
                             />
-                            {resultFiles.wav && (
-                              <button
-                                type="button"
-                                onClick={() => setResultFiles(prev => ({ ...prev, wav: null }))}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
+                            {resultFiles.wav ? (
+                              <>
+                                <span className="text-sm text-gray-600 dark:text-neutral-400 truncate flex-1">{resultFiles.wav.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setResultFiles(prev => ({ ...prev, wav: null }))}
+                                  className="text-red-600 hover:text-red-800 shrink-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-500 dark:text-neutral-500">Файл не выбран</span>
                             )}
                           </div>
-                          {resultFiles.wav && (
-                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">{resultFiles.wav.name}</p>
-                          )}
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">MP3 файл</label>
                           <div className="flex items-center gap-2">
+                            <label
+                              htmlFor="result-file-mp3"
+                              className="btn btn-outline btn-sm cursor-pointer shrink-0"
+                            >
+                              Выберите файл
+                            </label>
                             <input
+                              id="result-file-mp3"
                               type="file"
                               accept="audio/mpeg,audio/mp3,audio/*"
                               onChange={(e) => handleResultFileChange(e, 'mp3')}
-                              className="flex-1 text-sm"
+                              className="hidden"
                             />
-                            {resultFiles.mp3 && (
-                              <button
-                                type="button"
-                                onClick={() => setResultFiles(prev => ({ ...prev, mp3: null }))}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
+                            {resultFiles.mp3 ? (
+                              <>
+                                <span className="text-sm text-gray-600 dark:text-neutral-400 truncate flex-1">{resultFiles.mp3.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setResultFiles(prev => ({ ...prev, mp3: null }))}
+                                  className="text-red-600 hover:text-red-800 shrink-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-500 dark:text-neutral-500">Файл не выбран</span>
                             )}
                           </div>
-                          {resultFiles.mp3 && (
-                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">{resultFiles.mp3.name}</p>
-                          )}
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">ZIP архив</label>
                           <div className="flex items-center gap-2">
+                            <label
+                              htmlFor="result-file-zip"
+                              className="btn btn-outline btn-sm cursor-pointer shrink-0"
+                            >
+                              Выберите файл
+                            </label>
                             <input
+                              id="result-file-zip"
                               type="file"
                               accept=".zip,application/zip"
                               onChange={(e) => handleResultFileChange(e, 'zip')}
-                              className="flex-1 text-sm"
+                              className="hidden"
                             />
-                            {resultFiles.zip && (
-                              <button
-                                type="button"
-                                onClick={() => setResultFiles(prev => ({ ...prev, zip: null }))}
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
+                            {resultFiles.zip ? (
+                              <>
+                                <span className="text-sm text-gray-600 dark:text-neutral-400 truncate flex-1">{resultFiles.zip.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setResultFiles(prev => ({ ...prev, zip: null }))}
+                                  className="text-red-600 hover:text-red-800 shrink-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-500 dark:text-neutral-500">Файл не выбран</span>
                             )}
                           </div>
-                          {resultFiles.zip && (
-                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">{resultFiles.zip.name}</p>
-                          )}
                         </div>
                         
                         <button
