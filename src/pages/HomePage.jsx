@@ -138,16 +138,6 @@ const HomePage = () => {
     setFilters(newFilters);
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Загрузка битов...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
       <div className="mb-6 sm:mb-8 flex items-center justify-between gap-4">
@@ -156,7 +146,7 @@ const HomePage = () => {
             Биты
           </h1>
           <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400 text-sm sm:text-base">
-            {beats.length} битов доступно
+            {loading ? 'Загрузка...' : `${beats.length} битов доступно`}
           </p>
         </div>
 
@@ -179,7 +169,11 @@ const HomePage = () => {
         hideTrigger
       />
 
-      {beats.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[280px]">
+          <div className="text-gray-600 dark:text-neutral-400">Загрузка битов...</div>
+        </div>
+      ) : beats.length === 0 ? (
         <div className="text-center py-8 sm:py-12">
           <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400 text-base sm:text-lg">Биты не найдены</div>
           <p className="text-gray-500 dark:text-neutral-500 dark:text-neutral-500 mt-2 text-sm sm:text-base">

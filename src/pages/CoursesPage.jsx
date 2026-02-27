@@ -128,21 +128,14 @@ const CoursesPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600 dark:text-neutral-400">Загрузка курсов...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-6 sm:mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-black dark:text-white mb-1 sm:mb-2">Курсы</h1>
+          <p className="text-gray-600 dark:text-neutral-400 text-sm mt-1">
+            {loading ? 'Загрузка...' : `${courses.length} курсов`}
+          </p>
         </div>
 
         <button
@@ -188,7 +181,11 @@ const CoursesPage = () => {
         </div>
       )}
 
-      {courses.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[280px]">
+          <div className="text-gray-600 dark:text-neutral-400">Загрузка курсов...</div>
+        </div>
+      ) : courses.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-600 dark:text-neutral-400 text-lg">Курсы не найдены</div>
         </div>
