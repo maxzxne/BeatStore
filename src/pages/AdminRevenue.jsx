@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../utils/api';
 import { Music, GraduationCap, FileText, TrendingUp, Calendar } from 'lucide-react';
 import DatePicker from '../components/DatePicker';
 
 const AdminRevenue = () => {
   const { isAdminAuthenticated } = useAuth();
+  const { isDarkMode } = useTheme();
+  const isDark = isDarkMode;
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
@@ -42,6 +45,13 @@ const AdminRevenue = () => {
     }).format(amount);
   };
 
+  // Компактный формат для подписей оси (чтобы не наезжали)
+  const formatAxisLabel = (amount) => {
+    if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M ₽`;
+    if (amount >= 1000) return `${Math.round(amount / 1000)}K ₽`;
+    return `${amount} ₽`;
+  };
+
   const renderChart = () => {
     if (!stats || !stats.revenue_by_day || Object.keys(stats.revenue_by_day).length === 0) {
       return (
@@ -54,14 +64,14 @@ const AdminRevenue = () => {
     const days = Object.keys(stats.revenue_by_day).sort();
     const values = days.map(day => stats.revenue_by_day[day]);
     const maxValue = Math.max(...values, 1);
-    const chartHeight = 300;
-    const chartWidth = Math.max(600, days.length * 60); // Минимальная ширина 600px, или 60px на день
+    const chartHeight = 420;
+    const chartWidth = Math.max(800, days.length * 90); // Минимальная ширина 800px, 90px на день
 
-    // Вычисляем координаты точек с увеличенными отступами
-    const leftPadding = 60; // Отступ слева для цифр
-    const bottomPadding = 40; // Отступ снизу для дат
-    const topPadding = 20; // Отступ сверху
-    const rightPadding = 20; // Отступ справа
+    // Отступы для подписей (увеличены, чтобы текст не наезжал)
+    const leftPadding = 75;
+    const bottomPadding = 55;
+    const topPadding = 30;
+    const rightPadding = 30;
     
     const points = days.map((day, index) => {
       const value = stats.revenue_by_day[day];
@@ -77,19 +87,14 @@ const AdminRevenue = () => {
 
     return (
       <div className="space-y-2">
-        <div className="relative" style={{ height: `${chartHeight}px`, width: '100%', overflowX: 'auto' }}>
+        <div className="relative overflow-x-auto overflow-y-hidden rounded-lg" style={{ minHeight: `${chartHeight}px` }}>
           <svg 
             width={chartWidth} 
             height={chartHeight} 
-            className="border-b border-l border-gray-300 dark:border-neutral-700"
-            style={{ minWidth: '100%' }}
+            className="border-b border-l border-gray-300 dark:border-neutral-700 shrink-0"
           >
-            {/* Сетка (опционально) */}
+            {/* Сетка */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-              const leftPadding = 60;
-              const bottomPadding = 40;
-              const topPadding = 20;
-              const rightPadding = 20;
               const y = chartHeight - (ratio * (chartHeight - topPadding - bottomPadding)) - bottomPadding;
               return (
                 <line
@@ -98,105 +103,109 @@ const AdminRevenue = () => {
                   y1={y}
                   x2={chartWidth - rightPadding}
                   y2={y}
-                  stroke="#e5e7eb"
+                  stroke={isDark ? '#404040' : '#e5e7eb'}
                   strokeWidth="1"
                   strokeDasharray="4 4"
                 />
               );
             })}
 
-            {/* Линия графика - рендерим до подписей, чтобы подписи были поверх */}
+            {/* Линия графика */}
             <path
               d={pathData}
               fill="none"
-              stroke="#000"
+              stroke={isDark ? '#fff' : '#000'}
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
 
-            {/* Подписи на оси Y - рендерим после линии, чтобы были поверх */}
+            {/* Подписи на оси Y — компактный формат, увеличенные отступы */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
               const y = chartHeight - (ratio * (chartHeight - topPadding - bottomPadding)) - bottomPadding;
-              const value = maxValue * ratio;
+              const value = Math.round(maxValue * ratio);
+              const label = formatAxisLabel(value);
               return (
                 <g key={`label-${ratio}`}>
-                  {/* Фон для лучшей читаемости */}
                   <rect
-                    x="5"
-                    y={y - 8}
-                    width="50"
-                    height="16"
-                    fill="#fff"
-                    opacity="0.95"
-                    rx="2"
-                    stroke="#e5e7eb"
+                    x="2"
+                    y={y - 10}
+                    width="68"
+                    height="20"
+                    fill={isDark ? '#262626' : '#fff'}
+                    opacity="0.98"
+                    rx="3"
+                    stroke={isDark ? '#404040' : '#e5e7eb'}
                     strokeWidth="0.5"
                   />
                   <text
-                    x="50"
+                    x="65"
                     y={y + 5}
-                    fontSize="13"
-                    fill="#000"
-                    fontWeight="600"
+                    fontSize="12"
+                    fill={isDark ? '#fff' : '#000'}
+                    fontWeight="500"
                     textAnchor="end"
                   >
-                    {formatCurrency(value)}
+                    {label}
                   </text>
                 </g>
               );
             })}
 
-            {/* Точки - рендерим после линии, чтобы были поверх */}
+            {/* Точки и подписи дат */}
             {points.map((point, index) => {
               const date = new Date(point.day);
               const dayLabel = date.getDate();
               const monthLabel = date.toLocaleDateString('ru-RU', { month: 'short' });
+              const dateStr = `${dayLabel} ${monthLabel}`;
+              const isLast = index === points.length - 1;
+              const isFirst = index === 0;
+              const showLabel = points.length <= 12 || isFirst || isLast || index % Math.ceil(points.length / 6) === 0;
               
               return (
                 <g key={point.day} className="group">
-                  {/* Точка */}
                   <circle
                     cx={point.x}
                     cy={point.y}
-                    r="4"
-                    fill="#000"
-                    stroke="#fff"
+                    r="5"
+                    fill={isDark ? '#fff' : '#000'}
+                    stroke={isDark ? '#000' : '#fff'}
                     strokeWidth="2"
-                    className="cursor-pointer hover:r-6 transition-all"
+                    className="cursor-pointer transition-all"
                   />
                   
-                  {/* Подпись даты - горизонтально, рендерим после точки, чтобы была поверх линии */}
-                  <g>
-                    {/* Фон для лучшей читаемости */}
-                    <rect
-                      x={point.x - 25}
-                      y={chartHeight - 35}
-                      width="50"
-                      height="16"
-                      fill="#fff"
-                      opacity="0.95"
-                      rx="2"
-                      stroke="#e5e7eb"
-                      strokeWidth="0.5"
-                    />
-                    <text
-                      x={point.x}
-                      y={chartHeight - 22}
-                      fontSize="11"
-                      fill="#000"
-                      fontWeight="600"
-                      textAnchor="middle"
-                    >
-                      {dayLabel} {monthLabel}
-                    </text>
-                  </g>
+                  {/* Подпись даты — показываем не все при большом количестве точек */}
+                  {showLabel && (
+                    <g>
+                      <rect
+                        x={point.x - 28}
+                        y={chartHeight - bottomPadding + 5}
+                        width="56"
+                        height="18"
+                        fill={isDark ? '#262626' : '#fff'}
+                        opacity="0.98"
+                        rx="3"
+                        stroke={isDark ? '#404040' : '#e5e7eb'}
+                        strokeWidth="0.5"
+                      />
+                      <text
+                        x={point.x}
+                        y={chartHeight - bottomPadding + 17}
+                        fontSize="10"
+                        fill={isDark ? '#fff' : '#000'}
+                        fontWeight="500"
+                        textAnchor="middle"
+                      >
+                        {dateStr}
+                      </text>
+                    </g>
+                  )}
 
                   {/* Tooltip при наведении */}
                   <g className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                     {(() => {
                       // Вычисляем позицию tooltip, чтобы он не выходил за границы
-                      const tooltipWidth = 90;
+                      const tooltipWidth = 105;
                       const tooltipHeight = 24;
                       const padding = 5;
                       
@@ -227,16 +236,16 @@ const AdminRevenue = () => {
                             y={tooltipY}
                             width={tooltipWidth}
                             height={tooltipHeight}
-                            fill="#000"
+                            fill={isDark ? '#fff' : '#000'}
                             rx="4"
-                            stroke="#fff"
+                            stroke={isDark ? '#404040' : '#fff'}
                             strokeWidth="1"
                           />
                           <text
                             x={tooltipX + tooltipWidth / 2}
                             y={tooltipY + tooltipHeight / 2 + 4}
                             fontSize="11"
-                            fill="#fff"
+                            fill={isDark ? '#000' : '#fff'}
                             fontWeight="600"
                             textAnchor="middle"
                           >
@@ -403,7 +412,7 @@ const AdminRevenue = () => {
             <h2 className="text-lg font-semibold text-black dark:text-white">График доходов</h2>
           </div>
         </div>
-        <div className="card-content">
+        <div className="card-content overflow-x-auto">
           {renderChart()}
         </div>
       </div>

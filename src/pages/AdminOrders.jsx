@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
@@ -10,6 +10,8 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'confirmed', 'paid', 'in_progress', 'completed', 'cancelled'
+  const [sortBy, setSortBy] = useState('created_at'); // 'created_at', 'deadline_days', 'price'
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [resultFiles, setResultFiles] = useState({
@@ -55,6 +57,28 @@ const AdminOrders = () => {
       setFilteredOrders(orders.filter(order => order.status === statusFilter));
     }
   }, [orders, statusFilter]);
+
+  // Сортировка заявок (по умолчанию — новые первые)
+  const sortedOrders = useMemo(() => {
+    const sorted = [...filteredOrders];
+    const mult = sortOrder === 'asc' ? 1 : -1;
+
+    sorted.sort((a, b) => {
+      let valA, valB;
+      if (sortBy === 'created_at') {
+        valA = new Date(a.created_at || 0).getTime();
+        valB = new Date(b.created_at || 0).getTime();
+      } else if (sortBy === 'deadline_days') {
+        valA = a.deadline_days ?? 9999;
+        valB = b.deadline_days ?? 9999;
+      } else {
+        valA = a.price ?? 0;
+        valB = b.price ?? 0;
+      }
+      return mult * (valA - valB);
+    });
+    return sorted;
+  }, [filteredOrders, sortBy, sortOrder]);
 
   const updateOrderStatus = async (orderId, newStatus, price = null, prepaymentPercent = null) => {
     try {
@@ -170,26 +194,47 @@ const AdminOrders = () => {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Заявки на услуги</h1>
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
           <p className="text-gray-600 dark:text-neutral-400">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
-          <CustomSelect
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={[
-              { value: 'all', label: 'Все статусы' },
-              { value: 'pending', label: 'Ожидает' },
-              { value: 'confirmed', label: 'Подтверждено' },
-              { value: 'paid', label: 'Оплачено' },
-              { value: 'in_progress', label: 'В работе' },
-              { value: 'completed', label: 'Завершено' },
-              { value: 'cancelled', label: 'Отменено' }
-            ]}
-            className="w-auto min-w-[200px]"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <CustomSelect
+              value={sortBy}
+              onChange={setSortBy}
+              options={[
+                { value: 'created_at', label: 'По дате создания' },
+                { value: 'deadline_days', label: 'По дедлайну' },
+                { value: 'price', label: 'По стоимости' }
+              ]}
+              className="w-auto min-w-[180px]"
+            />
+            <CustomSelect
+              value={sortOrder}
+              onChange={setSortOrder}
+              options={[
+                { value: 'desc', label: 'По убыванию' },
+                { value: 'asc', label: 'По возрастанию' }
+              ]}
+              className="w-auto min-w-[160px]"
+            />
+            <CustomSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'all', label: 'Все статусы' },
+                { value: 'pending', label: 'Ожидает' },
+                { value: 'confirmed', label: 'Подтверждено' },
+                { value: 'paid', label: 'Оплачено' },
+                { value: 'in_progress', label: 'В работе' },
+                { value: 'completed', label: 'Завершено' },
+                { value: 'cancelled', label: 'Отменено' }
+              ]}
+              className="w-auto min-w-[180px]"
+            />
+          </div>
         </div>
       </div>
 
-      {filteredOrders.length === 0 ? (
+      {sortedOrders.length === 0 ? (
         <div className="text-center py-12">
           <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <div className="text-gray-600 dark:text-neutral-400 text-lg">Заявок пока нет</div>
@@ -198,7 +243,7 @@ const AdminOrders = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Список заявок */}
           <div className="lg:col-span-2 space-y-4">
-            {filteredOrders.map(order => (
+            {sortedOrders.map(order => (
               <div
                 key={order.id}
                 className={`card cursor-pointer transition-all ${
