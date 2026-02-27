@@ -33,8 +33,8 @@ const AdminLogin = () => {
       <div className="max-w-md w-full mx-4">
         <div className="card">
           <div className="card-header text-center">
-            <div className="bg-black dark:bg-white rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Lock className="h-8 w-8 text-white dark:text-black dark:text-white" />
+            <div className="bg-black dark:bg-neutral-700 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <Lock className="h-8 w-8 text-white dark:text-white" />
             </div>
             <h1 className="text-2xl font-bold text-black dark:text-white dark:text-white">Вход в админку</h1>
             <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Войдите для доступа к админ панели</p>
@@ -52,7 +52,7 @@ const AdminLogin = () => {
                 Имя пользователя
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-300" />
                 <input
                   type="text"
                   value={username}
@@ -69,7 +69,7 @@ const AdminLogin = () => {
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-300" />
                 <input
                   type="password"
                   value={password}
@@ -84,7 +84,7 @@ const AdminLogin = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full h-12 text-base"
+              className="btn w-full h-12 text-base bg-black text-white hover:bg-gray-800 dark:bg-neutral-700 dark:text-white dark:hover:bg-neutral-600"
             >
               {loading ? 'Вход...' : 'Войти'}
             </button>

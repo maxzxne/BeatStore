@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
-import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Plus, X, HelpCircle } from 'lucide-react';
+import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Phone, Plus, X, HelpCircle } from 'lucide-react';
 
 const OrderPage = () => {
   const navigate = useNavigate();
@@ -500,44 +500,59 @@ const OrderPage = () => {
       </div>
 
       <form onSubmit={handleDetailedSubmit} className="space-y-6">
-        {/* Контактная информация (только для неавторизованных) */}
-        {!isAuthenticated && (
-          <>
-            <div>
-              <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">
-                <User className="h-4 w-4 inline mr-2" />
-                Ваше имя *
-              </label>
-              <input
-                type="text"
-                id="customer_name"
-                name="customer_name"
-                value={formData.customer_name}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                placeholder="Введите ваше имя"
-              />
-            </div>
+        {/* Контактная информация (предзаполняется из профиля для авторизованных) */}
+        <div>
+          <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <User className="h-4 w-4 inline mr-2" />
+            Ваше имя *
+          </label>
+          <input
+            type="text"
+            id="customer_name"
+            name="customer_name"
+            value={formData.customer_name}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+            placeholder="Введите ваше имя"
+          />
+        </div>
 
-            <div>
-              <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">
-                <Mail className="h-4 w-4 inline mr-2" />
-                Email *
-              </label>
-              <input
-                type="email"
-                id="customer_email"
-                name="customer_email"
-                value={formData.customer_email}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-                placeholder="Введите ваш email"
-              />
-            </div>
-          </>
-        )}
+        <div>
+          <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <Mail className="h-4 w-4 inline mr-2" />
+            Email *
+          </label>
+          <input
+            type="email"
+            id="customer_email"
+            name="customer_email"
+            value={formData.customer_email}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+            placeholder="Введите ваш email"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="contact_info_detailed" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <Phone className="h-4 w-4 inline mr-2" />
+            Дополнительная связь (Telegram, WhatsApp и т.д.)
+          </label>
+          <input
+            type="text"
+            id="contact_info_detailed"
+            name="contact_info"
+            value={formData.contact_info}
+            onChange={handleInputChange}
+            placeholder="Например: @mytelegram, +79991234567"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+          />
+          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+            Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
+          </p>
+        </div>
 
         {/* Категории услуг с множественным выбором */}
         <div>
@@ -764,26 +779,6 @@ const OrderPage = () => {
             rows={6}
             className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
           />
-        </div>
-
-        {/* Дополнительная информация для обратной связи */}
-        <div>
-          <label htmlFor="contact_info" className="block text-sm font-medium text-black dark:text-white mb-2">
-            <Mail className="h-4 w-4 inline mr-2" />
-            Дополнительная информация для обратной связи
-          </label>
-          <input
-            type="text"
-            id="contact_info"
-            name="contact_info"
-            value={formData.contact_info}
-            onChange={handleInputChange}
-            placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-          />
-          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
-            Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
-          </p>
         </div>
 
         <div className="pt-2">
