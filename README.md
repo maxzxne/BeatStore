@@ -1,10 +1,10 @@
-# BeatStore
+# XWinner.beats.please
 
 Современная веб-платформа для продажи и распространения музыкальных битов (инструменталов) с удобным интерфейсом и системой управления контентом.
 
 ## 🎵 Описание проекта
 
-**BeatStore** - это полнофункциональная платформа для музыкантов и продюсеров, разработанная как дипломный проект по практике. Платформа позволяет:
+**XWinner.beats.please** - это полнофункциональная платформа для музыкантов и продюсеров, разработанная как дипломный проект по практике. Платформа позволяет:
 
 ### Для пользователей:
 - **Просмотр каталога** - просматривать и прослушивать демо-версии битов
@@ -52,7 +52,7 @@
 
 ### Структура файлов
 ```
-BeatStore/
+XWinner.beats.please/
 ├── backend/                    # Backend API (FastAPI)
 │   ├── main.py                # Основной файл FastAPI приложения
 │   ├── models.py              # SQLAlchemy модели данных
@@ -61,7 +61,7 @@ BeatStore/
 │   ├── update_covers.py       # Утилита обновления обложек
 │   ├── requirements.txt       # Python зависимости
 │   ├── dockerfile            # Docker образ для backend
-│   ├── beatstore.db          # SQLite база данных
+│   ├── XWinner.beats.please.db          # SQLite база данных
 │   └── static/               # Статические файлы
 │       ├── audio/            # Полные версии битов
 │       ├── demos/            # Демо-версии для прослушивания
@@ -149,8 +149,8 @@ BeatStore/
 ### Быстрый запуск
 ```bash
 # Клонирование репозитория
-git clone https://github.com/maxzxne/BeatStore.git
-cd BeatStore
+git clone https://github.com/maxzxne/XWinner.beats.please.git
+cd XWinner.beats.please
 
 # Запуск с Docker Compose
 docker-compose up --build

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { Upload, Music, Image, FileAudio, Video, GraduationCap, X, CheckCircle } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 const AdminUpload = () => {
   const [activeTab, setActiveTab] = useState('beat'); // 'beat' или 'course'
@@ -813,18 +814,19 @@ const AdminUpload = () => {
                   <label htmlFor="course_purpose" className="block text-sm font-medium text-black dark:text-white mb-2">
                     Предназначение
                   </label>
-                  <select
+                  <CustomSelect
                     id="course_purpose"
                     name="purpose"
                     value={courseFormData.purpose}
-                    onChange={handleCourseInputChange}
-                    className="input w-full"
-                  >
-                    <option value="">Выберите предназначение</option>
-                    <option value="сведение">Сведение</option>
-                    <option value="битмэйкинг">Битмэйкинг</option>
-                    <option value="саунддизайн">Саунд-дизайн</option>
-                  </select>
+                    onChange={(v) => handleCourseInputChange({ target: { name: 'purpose', value: v } })}
+                    options={[
+                      { value: '', label: 'Выберите предназначение' },
+                      { value: 'сведение', label: 'Сведение' },
+                      { value: 'битмэйкинг', label: 'Битмэйкинг' },
+                      { value: 'саунддизайн', label: 'Саунд-дизайн' }
+                    ]}
+                    placeholder="Выберите предназначение"
+                  />
                 </div>
                 
                 <div>
@@ -1021,4 +1023,5 @@ const AdminUpload = () => {
 };
 
 export default AdminUpload;
+
 

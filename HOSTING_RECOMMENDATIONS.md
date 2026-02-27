@@ -1,4 +1,4 @@
-# 🚀 Рекомендации по хостингу для BeatStore
+# 🚀 Рекомендации по хостингу для XWinner.beats.please
 
 ## 📋 Ваш стек технологий
 - **Backend**: FastAPI (Python)
@@ -139,7 +139,7 @@ sudo apt install git -y
 
 # Клонирование вашего проекта
 git clone <ваш-репозиторий>
-cd BeatStore
+cd XWinner.beats.please
 
 # Или загрузка через SFTP (FileZilla, WinSCP)
 ```
@@ -150,7 +150,7 @@ cd BeatStore
 nano .env
 
 # Добавьте необходимые переменные:
-# DATABASE_URL=sqlite:///./data/beatstore.db
+# DATABASE_URL=sqlite:///./data/XWinner.beats.please.db
 # JWT_SECRET_KEY=ваш-секретный-ключ
 # FRONTEND_URL=https://ваш-домен.ru
 ```
@@ -246,4 +246,5 @@ docker-compose logs -f
 ---
 
 **Удачи с развертыванием! 🚀**
+
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import CustomSelect from './CustomSelect';
 
 const Filters = ({
   onFilterChange,
@@ -103,16 +104,15 @@ const Filters = ({
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Жанр
               </label>
-              <select
+              <CustomSelect
                 value={filters.genre}
-                onChange={(e) => handleFilterChange('genre', e.target.value)}
-                className="input w-full min-w-0"
-              >
-                <option value="">Все жанры</option>
-                {genres.map(genre => (
-                  <option key={genre} value={genre}>{genre}</option>
-                ))}
-              </select>
+                onChange={(v) => handleFilterChange('genre', v)}
+                options={[
+                  { value: '', label: 'Все жанры' },
+                  ...genres.map(g => ({ value: g, label: g }))
+                ]}
+                placeholder="Все жанры"
+              />
             </div>
 
             {/* Key */}
@@ -120,16 +120,15 @@ const Filters = ({
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Тональность
               </label>
-              <select
+              <CustomSelect
                 value={filters.key}
-                onChange={(e) => handleFilterChange('key', e.target.value)}
-                className="input w-full min-w-0"
-              >
-                <option value="">Все тональности</option>
-                {keys.map(key => (
-                  <option key={key} value={key}>{key}</option>
-                ))}
-              </select>
+                onChange={(v) => handleFilterChange('key', v)}
+                options={[
+                  { value: '', label: 'Все тональности' },
+                  ...keys.map(k => ({ value: k, label: k }))
+                ]}
+                placeholder="Все тональности"
+              />
             </div>
 
             {/* BPM Range */}
@@ -186,15 +185,16 @@ const Filters = ({
                 <label className="block text-sm font-medium text-black dark:text-white mb-2">
                   Статус покупки
                 </label>
-                <select
+                <CustomSelect
                   value={filters.purchased}
-                  onChange={(e) => handleFilterChange('purchased', e.target.value)}
-                  className="input w-full min-w-0"
-                >
-                  <option value="">Все биты</option>
-                  <option value="purchased">Купленные</option>
-                  <option value="not_purchased">Не купленные</option>
-                </select>
+                  onChange={(v) => handleFilterChange('purchased', v)}
+                  options={[
+                    { value: '', label: 'Все биты' },
+                    { value: 'purchased', label: 'Купленные' },
+                    { value: 'not_purchased', label: 'Не купленные' }
+                  ]}
+                  placeholder="Все биты"
+                />
               </div>
             )}
           </div>
@@ -205,3 +205,4 @@ const Filters = ({
 };
 
 export default Filters;
+

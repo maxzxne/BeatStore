@@ -1,4 +1,4 @@
-# Схема базы данных BeatStore
+# Схема базы данных XWinner.beats.please
 
 ## ER-диаграмма
 
@@ -168,3 +168,4 @@ ALTER TABLE beats ADD CONSTRAINT chk_beat_bpm
 ALTER TABLE purchases ADD CONSTRAINT chk_purchase_price 
     CHECK (price_paid >= 0);
 ```
+

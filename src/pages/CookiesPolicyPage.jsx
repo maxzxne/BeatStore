@@ -27,7 +27,7 @@ const CookiesPolicyPage = () => {
 
         <section>
           <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
-            2. Какие cookie используются на BeatStore
+            2. Какие cookie используются на XWinner.beats.please
           </h2>
           <ul className="list-disc pl-5 mt-2 space-y-1">
             <li>
@@ -57,7 +57,7 @@ const CookiesPolicyPage = () => {
           <p>
             Большинство браузеров позволяют просматривать, удалять и блокировать файлы cookie. Вы можете
             изменить настройки браузера так, чтобы он блокировал все cookie или уведомлял вас об их
-            отправке. Однако в этом случае некоторые функции сайта BeatStore могут работать некорректно.
+            отправке. Однако в этом случае некоторые функции сайта XWinner.beats.please могут работать некорректно.
           </p>
           <p className="mt-2">
             Инструкции по управлению cookie обычно доступны в разделе «Помощь» вашего браузера.
@@ -69,7 +69,7 @@ const CookiesPolicyPage = () => {
             4. Согласие на использование cookie
           </h2>
           <p>
-            Продолжая использовать сайт BeatStore, вы соглашаетесь с использованием файлов cookie в
+            Продолжая использовать сайт XWinner.beats.please, вы соглашаетесь с использованием файлов cookie в
             соответствии с настоящей Политикой. Если вы не согласны с использованием cookie, пожалуйста,
             измените настройки браузера или прекратите использование сайта.
           </p>
@@ -90,4 +90,5 @@ const CookiesPolicyPage = () => {
 };
 
 export default CookiesPolicyPage;
+
 

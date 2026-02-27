@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Скрипт первоначальной настройки сервера Ubuntu для BeatStore
+# Скрипт первоначальной настройки сервера Ubuntu для XWinner.beats.please
 # Запускать с правами root или через sudo
 # Использование: sudo ./setup_server.sh
 
 set -e
 
-echo "🔧 Настройка сервера для BeatStore..."
+echo "🔧 Настройка сервера для XWinner.beats.please..."
 
 # Обновление системы
 echo "📦 Обновление системы..."
@@ -73,18 +73,19 @@ sysctl -p
 
 # Создание директории для проектов
 echo "📁 Создание директории для проектов..."
-mkdir -p /opt/beatstore
-chmod 755 /opt/beatstore
+mkdir -p /opt/XWinner.beats.please
+chmod 755 /opt/XWinner.beats.please
 
 echo ""
 echo "✅ Настройка сервера завершена!"
 echo ""
 echo "📝 Следующие шаги:"
 echo "   1. Перезайдите в систему (чтобы применились права docker)"
-echo "   2. Перейдите в директорию проекта: cd /opt/beatstore"
+echo "   2. Перейдите в директорию проекта: cd /opt/XWinner.beats.please"
 echo "   3. Загрузите проект (git clone или через SFTP)"
 echo "   4. Запустите: ./deploy.sh"
 echo ""
 echo "⚠️  ВАЖНО: Настройте SSH ключи для безопасного доступа!"
 echo "   ssh-keygen -t rsa -b 4096"
+
 

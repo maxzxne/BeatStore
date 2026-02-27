@@ -1,5 +1,5 @@
 """
-Конфигурация базы данных для BeatStore
+Конфигурация базы данных для XWinner.beats.please
 
 Настройка подключения к SQLite базе данных через SQLAlchemy:
 - Создание движка базы данных
@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # URL базы данных из переменной окружения или дефолтный путь
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/beatstore.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/XWinner.beats.please.db")
 
 # Создание движка базы данных
 # check_same_thread=False позволяет использовать SQLite в многопоточной среде
@@ -24,3 +24,4 @@ engine = create_engine(
 
 # Создание фабрики сессий для работы с базой данных
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+

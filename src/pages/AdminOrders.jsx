@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { FileText, User, Calendar, Link as LinkIcon, Upload, CheckCircle, XCircle, Clock, AlertCircle, Music, FileAudio, X } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 const AdminOrders = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -172,19 +173,20 @@ const AdminOrders = () => {
         <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Заявки на услуги</h1>
         <div className="flex items-center justify-between mt-4">
           <p className="text-gray-600 dark:text-neutral-400">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
-          <select
+          <CustomSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="input w-auto min-w-[200px]"
-          >
-            <option value="all">Все статусы</option>
-            <option value="pending">Ожидает</option>
-            <option value="confirmed">Подтверждено</option>
-            <option value="paid">Оплачено</option>
-            <option value="in_progress">В работе</option>
-            <option value="completed">Завершено</option>
-            <option value="cancelled">Отменено</option>
-          </select>
+            onChange={setStatusFilter}
+            options={[
+              { value: 'all', label: 'Все статусы' },
+              { value: 'pending', label: 'Ожидает' },
+              { value: 'confirmed', label: 'Подтверждено' },
+              { value: 'paid', label: 'Оплачено' },
+              { value: 'in_progress', label: 'В работе' },
+              { value: 'completed', label: 'Завершено' },
+              { value: 'cancelled', label: 'Отменено' }
+            ]}
+            className="w-auto min-w-[200px]"
+          />
         </div>
       </div>
 
@@ -651,5 +653,6 @@ const AdminOrders = () => {
 };
 
 export default AdminOrders;
+
 
 

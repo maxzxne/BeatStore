@@ -541,3 +541,4 @@ const BeatPage = () => {
 
 export default BeatPage;
 
+

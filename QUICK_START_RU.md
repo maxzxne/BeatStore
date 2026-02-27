@@ -46,7 +46,7 @@ ssh root@ваш-ip-адрес
 
 ```bash
 # Скачайте скрипт настройки
-wget https://raw.githubusercontent.com/ваш-репозиторий/BeatStore/main/setup_server.sh
+wget https://raw.githubusercontent.com/ваш-репозиторий/XWinner.beats.please/main/setup_server.sh
 
 # Или создайте файл вручную:
 nano setup_server.sh
@@ -73,9 +73,9 @@ sudo ./setup_server.sh
 sudo apt install git -y
 
 # Клонируйте ваш репозиторий
-cd /opt/beatstore
-git clone https://github.com/ваш-username/BeatStore.git
-cd BeatStore
+cd /opt/XWinner.beats.please
+git clone https://github.com/ваш-username/XWinner.beats.please.git
+cd XWinner.beats.please
 ```
 
 **Вариант Б: Через SFTP (FileZilla, WinSCP)**
@@ -85,12 +85,12 @@ cd BeatStore
    - Пользователь: root
    - Пароль: ваш-пароль
    - Порт: 22
-3. Загрузите всю папку BeatStore в `/opt/beatstore/`
+3. Загрузите всю папку XWinner.beats.please в `/opt/XWinner.beats.please/`
 
 ### Шаг 5: Настройка переменных окружения (3 минуты)
 
 ```bash
-cd /opt/beatstore/BeatStore
+cd /opt/XWinner.beats.please/XWinner.beats.please
 
 # Скопируйте пример файла
 cp env.example .env
@@ -275,4 +275,5 @@ docker system prune -a
 ---
 
 **Удачи с развертыванием! 🚀**
+
 

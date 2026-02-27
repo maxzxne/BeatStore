@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Скрипт для автоматического развертывания BeatStore на сервере
+# Скрипт для автоматического развертывания XWinner.beats.please на сервере
 # Использование: ./deploy.sh
 
 set -e  # Остановка при ошибке
 
-echo "🚀 Начало развертывания BeatStore..."
+echo "🚀 Начало развертывания XWinner.beats.please..."
 
 # Проверка наличия Docker
 if ! command -v docker &> /dev/null; then
@@ -29,7 +29,7 @@ if [ ! -f .env ]; then
     echo "⚠️  Файл .env не найден. Создаю шаблон..."
     cat > .env << EOF
 # Database
-DATABASE_URL=sqlite:///./data/beatstore.db
+DATABASE_URL=sqlite:///./data/XWinner.beats.please.db
 
 # JWT Secret (ОБЯЗАТЕЛЬНО ИЗМЕНИТЕ!)
 JWT_SECRET_KEY=$(openssl rand -hex 32)
@@ -98,4 +98,5 @@ echo "🤖 Telegram бот:"
 echo "   Бот запускается автоматически вместе с backend"
 echo "   Для настройки добавьте TELEGRAM_BOT_TOKEN в .env файл"
 echo "   Подробнее: см. TELEGRAM_BOT_SETUP.md"
+
 

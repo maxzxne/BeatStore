@@ -88,7 +88,7 @@ def send_document(chat_id: int, file_url: str, caption: Optional[str] = None):
             file_url = f"{frontend_url.rstrip('/')}{file_url}"
         else:
             # Если нет FRONTEND_URL, используем базовый URL сервера
-            file_url = f"https://beatstore-dpym.onrender.com{file_url}"
+            file_url = f"https://XWinner.beats.please-dpym.onrender.com{file_url}"
     
     url = f"{TELEGRAM_API_URL}/sendDocument"
     data = {
@@ -120,7 +120,7 @@ def send_audio(chat_id: int, audio_url: str, caption: Optional[str] = None):
         if frontend_url:
             audio_url = f"{frontend_url.rstrip('/')}{audio_url}"
         else:
-            audio_url = f"https://beatstore-dpym.onrender.com{audio_url}"
+            audio_url = f"https://XWinner.beats.please-dpym.onrender.com{audio_url}"
     
     url = f"{TELEGRAM_API_URL}/sendAudio"
     data = {
@@ -309,4 +309,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

@@ -123,3 +123,4 @@ VITE_TELEGRAM_BOT_USERNAME=ваш_telegram_bot_username
 - Telegram OAuth работает через виджет, который встраивается на страницу
 - Все OAuth провайдеры требуют настройки callback URL в их консоли
 
+

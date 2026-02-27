@@ -1,5 +1,5 @@
 """
-Backend API для BeatStore - платформы продажи музыкальных битов
+Backend API для XWinner.beats.please - платформы продажи музыкальных битов
 
 Основные функции:
 - RESTful API для управления битами, пользователями и покупками
@@ -226,7 +226,7 @@ def create_admin_user():
                 # Создаем нового администратора
                 admin_password = get_password_hash("admin123")
                 admin_user = User(
-                    email="admin@beatstore.com",
+                    email="admin@XWinner.beats.please.com",
                     username="admin",
                     password_hash=admin_password,
                     is_admin=True
@@ -251,7 +251,7 @@ def create_admin_user():
 
 # Создание экземпляра FastAPI приложения
 print("Создание экземпляра FastAPI...")
-app = FastAPI(title="BeatStore API", description="API для платформы продажи музыкальных битов")
+app = FastAPI(title="XWinner.beats.please API", description="API для платформы продажи музыкальных битов")
 print("FastAPI приложение создано")
 
 # Настройка CORS для взаимодействия с frontend
@@ -1919,7 +1919,7 @@ def create_service_order(order: ServiceOrderCreate,
                                     # Формируем полный URL
                                     full_url = mat_url
                                     if mat_url.startswith("/"):
-                                        frontend_url = os.getenv("FRONTEND_URL", "https://beatstore-dpym.onrender.com")
+                                        frontend_url = os.getenv("FRONTEND_URL", "https://XWinner.beats.please-dpym.onrender.com")
                                         full_url = f"{frontend_url.rstrip('/')}{mat_url}"
                                     
                                     # Определяем тип файла по расширению
@@ -1943,7 +1943,7 @@ def create_service_order(order: ServiceOrderCreate,
                                     # Формируем полный URL
                                     full_url = ref_url
                                     if ref_url.startswith("/"):
-                                        frontend_url = os.getenv("FRONTEND_URL", "https://beatstore-dpym.onrender.com")
+                                        frontend_url = os.getenv("FRONTEND_URL", "https://XWinner.beats.please-dpym.onrender.com")
                                         full_url = f"{frontend_url.rstrip('/')}{ref_url}"
                                     
                                     # Определяем тип файла по расширению

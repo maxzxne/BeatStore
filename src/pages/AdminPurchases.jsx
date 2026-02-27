@@ -105,3 +105,4 @@ const AdminPurchases = () => {
 
 export default AdminPurchases;
 
+

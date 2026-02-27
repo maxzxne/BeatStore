@@ -86,7 +86,7 @@ const AdminDashboard = () => {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-black dark:text-white dark:text-white mb-2">Панель управления</h1>
-        <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Обзор вашего BeatStore</p>
+        <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Обзор вашего XWinner.beats.please</p>
       </div>
 
       {/* Stats Grid */}
@@ -166,5 +166,6 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
 
 

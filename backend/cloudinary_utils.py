@@ -30,7 +30,7 @@ def upload_audio_file(file_path: str, beat_id: int, file_type: str = "demo") -> 
     """
     try:
         # Определяем папку в Cloudinary
-        folder = f"beatstore/{file_type}s"
+        folder = f"XWinner.beats.please/{file_type}s"
         
         # Загружаем файл
         result = cloudinary.uploader.upload(
@@ -60,7 +60,7 @@ def upload_image_file(file_path: str, beat_id: int, file_type: str = "cover") ->
     """
     try:
         # Определяем папку в Cloudinary
-        folder = f"beatstore/{file_type}s"
+        folder = f"XWinner.beats.please/{file_type}s"
         
         # Загружаем файл
         result = cloudinary.uploader.upload(
@@ -91,7 +91,7 @@ def upload_file_from_bytes(file_bytes: bytes, beat_id: int, filename: str, file_
     """
     try:
         # Определяем папку и тип ресурса
-        folder = f"beatstore/{file_type}s"
+        folder = f"XWinner.beats.please/{file_type}s"
         resource_type = "video" if file_type in ["demo", "full"] else "image"
         
         # Загружаем файл как приватный
@@ -159,3 +159,4 @@ def delete_file_from_cloudinary(public_id: str, resource_type: str = "video") ->
     except Exception as e:
         print(f"Ошибка удаления файла: {e}")
         return False
+

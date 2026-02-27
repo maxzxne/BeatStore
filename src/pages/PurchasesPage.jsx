@@ -238,7 +238,7 @@ const PurchasesPage = () => {
                     <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-t-lg flex items-center justify-center relative overflow-hidden">
                       <div className="absolute inset-0 bg-black bg-opacity-5"></div>
                       <div className="relative z-10 text-center">
-                        <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">BeatStore</span>
+                        <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">XWinner.beats.please</span>
                       </div>
                     </div>
                   )}
@@ -695,4 +695,5 @@ const PurchasesPage = () => {
 };
 
 export default PurchasesPage;
+
 

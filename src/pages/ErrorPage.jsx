@@ -101,7 +101,7 @@ const ErrorPage = () => {
           <p>
             Если проблема повторяется,{' '}
             <a 
-              href="mailto:support@beatstore.com" 
+              href="mailto:support@XWinner.beats.please.com" 
               className="text-black dark:text-white hover:underline"
             >
               свяжитесь с поддержкой
@@ -114,4 +114,5 @@ const ErrorPage = () => {
 };
 
 export default ErrorPage;
+
 

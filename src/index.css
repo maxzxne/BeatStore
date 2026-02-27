@@ -180,6 +180,17 @@
     @apply w-full;
   }
   
+  /* Убираем стрелки вверх/вниз у полей type="number" */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  
   /* Стили для select элементов */
   select {
     @apply appearance-none bg-no-repeat bg-right;

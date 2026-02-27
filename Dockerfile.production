@@ -1,4 +1,4 @@
-# Multi-stage build for BeatStore
+# Multi-stage build for XWinner.beats.please
 FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
@@ -35,9 +35,10 @@ EXPOSE 8000
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV DATABASE_URL=sqlite:///./data/beatstore.db
+ENV DATABASE_URL=sqlite:///./data/XWinner.beats.please.db
 ENV JWT_SECRET_KEY=your-secret-key-here
 ENV ENVIRONMENT=production
 
 # Start the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+

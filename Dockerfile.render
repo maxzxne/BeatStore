@@ -48,9 +48,10 @@ EXPOSE 8000
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV DATABASE_URL=sqlite:///./data/beatstore.db
+ENV DATABASE_URL=sqlite:///./data/XWinner.beats.please.db
 ENV JWT_SECRET_KEY=8164e58536b64e85ac72e6e9d895e775dd041ac7e20c4aecafeb5e7f6953906e
 ENV ENVIRONMENT=production
 
 # Start the application with timeout and workers
 CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 30 --timeout-graceful-shutdown 10
+

@@ -1,4 +1,4 @@
-# 🤖 Настройка Telegram бота для BeatStore
+# 🤖 Настройка Telegram бота для XWinner.beats.please
 
 ## ✅ Хорошие новости!
 
@@ -238,4 +238,5 @@ docker-compose logs backend 2>&1 | grep -E "бот|telegram|Telegram"
 ---
 
 **Готово! Бот работает автоматически на вашем сервере! 🎉**
+
 

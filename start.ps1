@@ -1,4 +1,4 @@
-# Скрипт для запуска BeatStore на Docker
+# Скрипт для запуска XWinner.beats.please на Docker
 
 Write-Host "Остановка существующих контейнеров..." -ForegroundColor Yellow
 docker-compose down
@@ -29,4 +29,5 @@ Write-Host "`nАдминка:" -ForegroundColor Yellow
 Write-Host "  URL: http://localhost:3000/admin/login" -ForegroundColor White
 Write-Host "  Логин: admin" -ForegroundColor White
 Write-Host "  Пароль: admin123" -ForegroundColor White
+
 

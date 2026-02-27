@@ -47,7 +47,7 @@ const Layout = ({ admin = false }) => {
           <footer className="border-t border-gray-300 dark:border-neutral-800 px-4 sm:px-6 py-4 text-xs text-gray-500 dark:text-neutral-500">
             <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
               <span className="text-center sm:text-left">
-                © {new Date().getFullYear()} BeatStore. Все права защищены.
+                © {new Date().getFullYear()} XWinner.beats.please. Все права защищены.
               </span>
               <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4">
                 <Link
@@ -86,3 +86,4 @@ const Layout = ({ admin = false }) => {
 };
 
 export default Layout;
+

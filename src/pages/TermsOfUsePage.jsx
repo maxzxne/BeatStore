@@ -19,7 +19,7 @@ const TermsOfUsePage = () => {
           </h2>
           <p>
             1.1. Настоящее Пользовательское соглашение (далее — Соглашение) регулирует отношения между
-            Оператором сервиса BeatStore,{' '}
+            Оператором сервиса XWinner.beats.please,{' '}
             <span className="font-semibold">
               «ФИО / ИП Фамилия Имя Отчество / ООО «Наименование организации»»
             </span>{' '}
@@ -178,4 +178,5 @@ const TermsOfUsePage = () => {
 };
 
 export default TermsOfUsePage;
+
 

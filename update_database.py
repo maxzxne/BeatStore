@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Скрипт для обновления базы данных BeatStore
+Скрипт для обновления базы данных XWinner.beats.please
 Добавляет недостающие колонки в таблицу beats
 """
 
@@ -9,7 +9,7 @@ import os
 
 def update_database():
     """Обновляет структуру базы данных"""
-    db_path = "backend/beatstore.db"
+    db_path = "backend/XWinner.beats.please.db"
     
     if not os.path.exists(db_path):
         print(f"База данных {db_path} не найдена")
@@ -95,3 +95,4 @@ def update_database():
 
 if __name__ == "__main__":
     update_database()
+

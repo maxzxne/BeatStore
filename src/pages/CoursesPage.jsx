@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { api } from '../utils/api';
 import { Play, Pause, Heart, ShoppingCart, Download, CheckCircle, Filter } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
@@ -19,7 +20,7 @@ const CoursesPage = () => {
     maxPrice: ''
   });
   const isFirstLoad = useRef(true);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const fetchCourses = async () => {
     try {
@@ -156,16 +157,18 @@ const CoursesPage = () => {
 
       {filtersOpen && (
         <div className="flex flex-wrap gap-4 mb-6">
-          <select
+          <CustomSelect
             value={filters.purpose}
-            onChange={(e) => setFilters({ ...filters, purpose: e.target.value })}
-            className="input w-auto min-w-[200px]"
-          >
-            <option value="">Все категории</option>
-            <option value="сведение">Сведение</option>
-            <option value="битмэйкинг">Битмэйкинг</option>
-            <option value="саунддизайн">Саунд-дизайн</option>
-          </select>
+            onChange={(v) => setFilters({ ...filters, purpose: v })}
+            options={[
+              { value: '', label: 'Все категории' },
+              { value: 'сведение', label: 'Сведение' },
+              { value: 'битмэйкинг', label: 'Битмэйкинг' },
+              { value: 'саунддизайн', label: 'Саунд-дизайн' }
+            ]}
+            placeholder="Все категории"
+            className="w-auto min-w-[200px]"
+          />
           
           <input
             type="number"
@@ -295,5 +298,6 @@ const CoursesPage = () => {
 };
 
 export default CoursesPage;
+
 
 

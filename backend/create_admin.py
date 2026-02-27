@@ -29,3 +29,4 @@ except Exception as e:
     print(f'Ошибка: {e}')
 finally:
     db.close()
+

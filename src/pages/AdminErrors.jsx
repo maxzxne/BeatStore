@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { AlertTriangle, Calendar, Filter } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 const AdminErrors = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -245,18 +246,20 @@ const AdminErrors = () => {
             
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm text-gray-600 dark:text-neutral-400 mb-1">Тип ошибки:</label>
-              <select
+              <CustomSelect
                 value={errorTypeFilter}
-                onChange={(e) => setErrorTypeFilter(e.target.value)}
-                className="input input-bordered w-full"
-              >
-                <option value="">Все типы</option>
-                <option value="auth">Авторизация</option>
-                <option value="registration">Регистрация</option>
-                <option value="purchase">Покупка</option>
-                <option value="payment">Оплата</option>
-                <option value="unknown">Неизвестно</option>
-              </select>
+                onChange={setErrorTypeFilter}
+                options={[
+                  { value: '', label: 'Все типы' },
+                  { value: 'auth', label: 'Авторизация' },
+                  { value: 'registration', label: 'Регистрация' },
+                  { value: 'purchase', label: 'Покупка' },
+                  { value: 'payment', label: 'Оплата' },
+                  { value: 'unknown', label: 'Неизвестно' }
+                ]}
+                placeholder="Все типы"
+                className="input-bordered"
+              />
             </div>
           </div>
         </div>
@@ -373,5 +376,6 @@ const AdminErrors = () => {
 };
 
 export default AdminErrors;
+
 
 

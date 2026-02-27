@@ -71,3 +71,4 @@ if __name__ == "__main__":
     print("\n3. Тест регистрации...")
     test_register()
 
+
