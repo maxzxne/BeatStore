@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Filter } from 'lucide-react';
 import BeatCard from '../components/BeatCard';
 import Filters from '../components/Filters';
 import { useAuth } from '../contexts/AuthContext';
@@ -37,6 +38,8 @@ const HomePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   // Состояние фильтров
   const [filters, setFilters] = useState({});
+  // Открытие панели фильтров
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     fetchBeats();
@@ -147,14 +150,34 @@ const HomePage = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white dark:text-white mb-2">Биты</h1>
-        <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400 text-sm sm:text-base">
-          {beats.length} битов доступно
-        </p>
+      <div className="mb-6 sm:mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white dark:text-white mb-1 sm:mb-2">
+            Биты
+          </h1>
+          <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400 text-sm sm:text-base">
+            {beats.length} битов доступно
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(prev => !prev)}
+          className="p-2 rounded-full border border-gray-300 dark:border-neutral-700 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white transition-colors flex items-center justify-center"
+          aria-label="Фильтры"
+        >
+          <Filter className="h-4 w-4" />
+        </button>
       </div>
 
-      <Filters onFilterChange={handleFilterChange} genres={genres} currentFilters={filters} />
+      <Filters
+        onFilterChange={handleFilterChange}
+        genres={genres}
+        currentFilters={filters}
+        isOpen={filtersOpen}
+        onToggle={setFiltersOpen}
+        hideTrigger
+      />
 
       {beats.length === 0 ? (
         <div className="text-center py-8 sm:py-12">

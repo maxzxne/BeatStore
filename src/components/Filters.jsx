@@ -2,12 +2,33 @@ import React, { useEffect, useState } from 'react';
 import { Filter, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
+const Filters = ({
+  onFilterChange,
+  genres = [],
+  currentFilters = {},
+  isOpen: controlledIsOpen,
+  onToggle,
+  hideTrigger = false,
+}) => {
   const { isAuthenticated } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenInternal, setIsOpenInternal] = useState(false);
   const [filters, setFilters] = useState(currentFilters);
 
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+  // Управление открытием: контролируемое или внутреннее состояние
+  const isControlled = typeof controlledIsOpen === 'boolean';
+  const isOpen = isControlled ? controlledIsOpen : isOpenInternal;
+
+  const setIsOpen = (value) => {
+    if (isControlled) {
+      if (onToggle) {
+        onToggle(value);
+      }
+    } else {
+      setIsOpenInternal(value);
+    }
+  };
 
   // Синхронизация локального состояния с переданными фильтрами
   useEffect(() => {
@@ -39,18 +60,20 @@ const Filters = ({ onFilterChange, genres = [], currentFilters = {} }) => {
 
   return (
     <div className="mb-6">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="btn btn-outline btn-sm mb-4"
-      >
-        <Filter className="h-4 w-4 mr-2" />
-        Фильтры
-        {hasActiveFilters && (
-          <span className="ml-2 bg-black dark:bg-white text-white dark:text-black text-xs px-2 py-1 rounded-full">
-            {Object.values(filters).filter(v => v !== '').length}
-          </span>
-        )}
-      </button>
+      {!hideTrigger && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="btn btn-outline btn-sm mb-4"
+        >
+          <Filter className="h-4 w-4 mr-2" />
+          Фильтры
+          {hasActiveFilters && (
+            <span className="ml-2 bg-black dark:bg-white text-white dark:text-black text-xs px-2 py-1 rounded-full">
+              {Object.values(filters).filter(v => v !== '').length}
+            </span>
+          )}
+        </button>
+      )}
 
       {isOpen && (
         <div className="card p-4">
