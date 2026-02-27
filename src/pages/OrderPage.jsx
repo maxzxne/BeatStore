@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
-import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Phone, Plus, X, HelpCircle } from 'lucide-react';
+import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Phone, Plus, X, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 const OrderPage = () => {
   const navigate = useNavigate();
@@ -24,6 +24,10 @@ const OrderPage = () => {
   });
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // Сворачиваемые блоки: пользователь свернут, если авторизован и поля предзаполнены
+  const [userBlockOpen, setUserBlockOpen] = useState(true);
+  const [orderInfoBlockOpen, setOrderInfoBlockOpen] = useState(true);
+  const [filesBlockOpen, setFilesBlockOpen] = useState(true);
 
   // Категории услуг с описаниями
   const serviceCategories = [
@@ -129,6 +133,10 @@ const OrderPage = () => {
         customer_email: prev.customer_email || user.email || '',
         contact_info: prev.contact_info || user.additional_contact || ''
       }));
+      // Если поля предзаполнены — сворачиваем блок «Пользователь»
+      if (user.username || user.email) {
+        setUserBlockOpen(false);
+      }
     }
   }, [isAuthenticated, user]);
 
@@ -500,60 +508,79 @@ const OrderPage = () => {
       </div>
 
       <form onSubmit={handleDetailedSubmit} className="space-y-6">
-        {/* Контактная информация (предзаполняется из профиля для авторизованных) */}
-        <div>
-          <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">
-            <User className="h-4 w-4 inline mr-2" />
-            Ваше имя *
-          </label>
-          <input
-            type="text"
-            id="customer_name"
-            name="customer_name"
-            value={formData.customer_name}
-            onChange={handleInputChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-            placeholder="Введите ваше имя"
-          />
+        {/* Блок 1: Пользователь */}
+        <div className="card border border-gray-300 dark:border-neutral-700">
+          <button
+            type="button"
+            onClick={() => setUserBlockOpen(!userBlockOpen)}
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors rounded-lg"
+          >
+            <h2 className="text-lg font-semibold text-black dark:text-white flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Пользователь
+            </h2>
+            {userBlockOpen ? <ChevronUp className="h-5 w-5 text-gray-600 dark:text-neutral-400" /> : <ChevronDown className="h-5 w-5 text-gray-600 dark:text-neutral-400" />}
+          </button>
+          {userBlockOpen && (
+            <div className="px-4 pb-4 space-y-4">
+              <div>
+                <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">Ваше имя *</label>
+                <input
+                  type="text"
+                  id="customer_name"
+                  name="customer_name"
+                  value={formData.customer_name}
+                  onChange={handleInputChange}
+                  required
+                  className="input w-full"
+                  placeholder="Введите ваше имя"
+                />
+              </div>
+              <div>
+                <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">Email *</label>
+                <input
+                  type="email"
+                  id="customer_email"
+                  name="customer_email"
+                  value={formData.customer_email}
+                  onChange={handleInputChange}
+                  required
+                  className="input w-full"
+                  placeholder="Введите ваш email"
+                />
+              </div>
+              <div>
+                <label htmlFor="contact_info_detailed" className="block text-sm font-medium text-black dark:text-white mb-2">Дополнительная связь (Telegram, WhatsApp и т.д.)</label>
+                <input
+                  type="text"
+                  id="contact_info_detailed"
+                  name="contact_info"
+                  value={formData.contact_info}
+                  onChange={handleInputChange}
+                  placeholder="Например: @mytelegram, +79991234567"
+                  className="input w-full"
+                />
+                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Укажите удобный способ связи</p>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div>
-          <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">
-            <Mail className="h-4 w-4 inline mr-2" />
-            Email *
-          </label>
-          <input
-            type="email"
-            id="customer_email"
-            name="customer_email"
-            value={formData.customer_email}
-            onChange={handleInputChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-            placeholder="Введите ваш email"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="contact_info_detailed" className="block text-sm font-medium text-black dark:text-white mb-2">
-            <Phone className="h-4 w-4 inline mr-2" />
-            Дополнительная связь (Telegram, WhatsApp и т.д.)
-          </label>
-          <input
-            type="text"
-            id="contact_info_detailed"
-            name="contact_info"
-            value={formData.contact_info}
-            onChange={handleInputChange}
-            placeholder="Например: @mytelegram, +79991234567"
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-          />
-          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
-            Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
-          </p>
-        </div>
-
+        {/* Блок 2: Информация о заказе */}
+        <div className="card border border-gray-300 dark:border-neutral-700">
+          <button
+            type="button"
+            onClick={() => setOrderInfoBlockOpen(!orderInfoBlockOpen)}
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors rounded-lg"
+          >
+            <h2 className="text-lg font-semibold text-black dark:text-white flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Информация о заказе
+            </h2>
+            {orderInfoBlockOpen ? <ChevronUp className="h-5 w-5 text-gray-600 dark:text-neutral-400" /> : <ChevronDown className="h-5 w-5 text-gray-600 dark:text-neutral-400" />}
+          </button>
+          {orderInfoBlockOpen && (
+            <div className="px-4 pb-4 space-y-4">
         {/* Категории услуг с множественным выбором */}
         <div>
           <label className="block text-sm font-medium text-black dark:text-white mb-2">
@@ -627,6 +654,63 @@ const OrderPage = () => {
           )}
         </div>
 
+        {/* Срок выполнения — под категориями */}
+        <div>
+          <label htmlFor="deadline_days" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <Calendar className="h-4 w-4 inline mr-2" />
+            Срок выполнения (в днях) *
+          </label>
+          <input
+            type="number"
+            id="deadline_days"
+            name="deadline_days"
+            value={formData.deadline_days}
+            onChange={handleInputChange}
+            required
+            min="1"
+            placeholder="Укажите количество дней"
+            className="input w-full"
+          />
+          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+            Примеры: 1 день (24 часа), 2-3 дня, 7 дней (1 неделя), 14-21 день (2-3 недели)
+          </p>
+        </div>
+
+        {/* Описание — после срока выполнения */}
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <FileText className="h-4 w-4 inline mr-2" />
+            Описание (Техническое задание)
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            placeholder="Опишите ваши требования..."
+            rows={6}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white dark:focus:ring-white"
+          />
+        </div>
+            </div>
+          )}
+        </div>
+
+        {/* Блок 3: Файлы и референсы */}
+        <div className="card border border-gray-300 dark:border-neutral-700">
+          <button
+            type="button"
+            onClick={() => setFilesBlockOpen(!filesBlockOpen)}
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors rounded-lg"
+          >
+            <h2 className="text-lg font-semibold text-black dark:text-white flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Файлы и референсы
+            </h2>
+            {filesBlockOpen ? <ChevronUp className="h-5 w-5 text-gray-600 dark:text-neutral-400" /> : <ChevronDown className="h-5 w-5 text-gray-600 dark:text-neutral-400" />}
+          </button>
+          {filesBlockOpen && (
+            <div className="px-4 pb-4 space-y-4">
         {/* Загрузка материалов */}
         <div>
           <label className="block text-sm font-medium text-black dark:text-white mb-2">
@@ -763,78 +847,11 @@ const OrderPage = () => {
             />
           </label>
         </div>
-
-        {/* Описание (Техническое задание) */}
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-black dark:text-white mb-2">
-            <FileText className="h-4 w-4 inline mr-2" />
-            Описание (Техническое задание)
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Опишите ваши требования..."
-            rows={6}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-          />
+            </div>
+          )}
         </div>
 
-        <div className="pt-2">
-          <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-neutral-400">
-            <input
-              type="checkbox"
-              required
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-neutral-700 text-black dark:text-white focus:ring-black dark:focus:ring-white"
-            />
-            <span>
-              Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
-              <a
-                href="/terms"
-                className="underline hover:text-black dark:hover:text-white"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Пользовательского соглашения
-              </a>{' '}
-              и{' '}
-              <a
-                href="/privacy"
-                className="underline hover:text-black dark:hover:text-white"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Политики конфиденциальности
-              </a>
-              , а также даю согласие на обработку моих персональных данных.
-            </span>
-          </label>
-        </div>
-
-        {/* Дедлайн */}
-        <div>
-          <label htmlFor="deadline_days" className="block text-sm font-medium text-black dark:text-white mb-2">
-            <Calendar className="h-4 w-4 inline mr-2" />
-            Срок выполнения (в днях) *
-          </label>
-          <input
-            type="number"
-            id="deadline_days"
-            name="deadline_days"
-            value={formData.deadline_days}
-            onChange={handleInputChange}
-            required
-            min="1"
-            placeholder="Укажите количество дней"
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
-          />
-          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
-            Примеры: 1 день (24 часа), 2-3 дня, 7 дней (1 неделя), 14-21 день (2-3 недели)
-          </p>
-        </div>
-
-        {/* Процент предоплаты */}
+        {/* Процент предоплаты и расчёт — вне блоков */}
         <div>
           <label className="block text-sm font-medium text-black dark:text-white mb-2">
             Процент предоплаты *
@@ -952,6 +969,38 @@ const OrderPage = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Чекбокс — перед кнопкой оформления */}
+        <div className="pt-2">
+          <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-neutral-400">
+            <input
+              type="checkbox"
+              required
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-neutral-700 text-black dark:text-white focus:ring-black dark:focus:ring-white"
+            />
+            <span>
+              Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
+              <a
+                href="/terms"
+                className="underline hover:text-black dark:hover:text-white"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Пользовательского соглашения
+              </a>{' '}
+              и{' '}
+              <a
+                href="/privacy"
+                className="underline hover:text-black dark:hover:text-white"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Политики конфиденциальности
+              </a>
+              , а также даю согласие на обработку моих персональных данных.
+            </span>
+          </label>
         </div>
 
         <button
