@@ -60,6 +60,24 @@
     -moz-user-select: text;
     -ms-user-select: text;
   }
+
+  /* Стилизация выделения текста под тему сайта */
+  ::selection {
+    background-color: rgb(209 213 219); /* gray-300 */
+    color: rgb(0 0 0);
+  }
+  ::-moz-selection {
+    background-color: rgb(209 213 219);
+    color: rgb(0 0 0);
+  }
+  .dark ::selection {
+    background-color: rgb(82 82 91); /* zinc-600 */
+    color: rgb(255 255 255);
+  }
+  .dark ::-moz-selection {
+    background-color: rgb(82 82 91);
+    color: rgb(255 255 255);
+  }
   
   /* Убираем outline только для неинтерактивных элементов */
   *:not(input):not(textarea):not(select):not(button):not(a):not([tabindex]) {

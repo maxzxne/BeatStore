@@ -76,6 +76,7 @@ const CourseDetailPage = () => {
         setIsFavorite(true);
         showSuccess('Добавлено в избранное');
       }
+      window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
       console.error('Error toggling favorite:', error);
       showError('Ошибка обновления избранного');
@@ -108,6 +109,7 @@ const CourseDetailPage = () => {
           }
         }
       }
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error toggling cart:', error);
       showError(error.response?.data?.detail || 'Ошибка обновления корзины');
