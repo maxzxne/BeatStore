@@ -60,6 +60,7 @@ api.interceptors.request.use(
 /**
  * Интерцептор ответов - обрабатывает ошибки авторизации
  * При 401 ошибке очищает токены и перенаправляет на главную
+ * (кроме эндпоинтов авторизации, где ошибка должна отображаться на месте)
  */
 api.interceptors.response.use(
   (response) => {
@@ -71,12 +72,23 @@ api.interceptors.response.use(
     
     // Если получили 401 (Unauthorized) - токен недействителен
     if (error.response?.status === 401) {
-      console.log('401 Unauthorized - clearing tokens');
-      // Очищаем токены из localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('adminToken');
-      // Перенаправляем на главную страницу
-      window.location.href = '/';
+      const url = error.config?.url || '';
+      // Для эндпоинтов авторизации/регистрации не делаем редирект,
+      // чтобы страница могла показать сообщение об ошибке
+      const isAuthEndpoint =
+        url.includes('/login') ||
+        url.includes('/register') ||
+        url.includes('/oauth/') ||
+        url.includes('/api/admin/login');
+
+      if (!isAuthEndpoint) {
+        console.log('401 Unauthorized (non-auth endpoint) - clearing tokens and redirecting');
+        // Очищаем токены из localStorage
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminToken');
+        // Перенаправляем на главную страницу
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }

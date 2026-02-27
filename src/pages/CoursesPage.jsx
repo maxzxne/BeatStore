@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { api } from '../utils/api';
-import { Play, Pause, Heart, ShoppingCart, Download, CheckCircle } from 'lucide-react';
+import { Play, Pause, Heart, ShoppingCart, Download, CheckCircle, Filter } from 'lucide-react';
 
 // Получаем API URL для построения полных URL файлов
 const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
@@ -19,6 +19,7 @@ const CoursesPage = () => {
     maxPrice: ''
   });
   const isFirstLoad = useRef(true);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const fetchCourses = async () => {
     try {
@@ -138,10 +139,22 @@ const CoursesPage = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-4">Курсы</h1>
-        
-        {/* Фильтры */}
+      <div className="mb-6 sm:mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-black dark:text-white mb-1 sm:mb-2">Курсы</h1>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(prev => !prev)}
+          className="p-2 rounded-full border border-gray-300 dark:border-neutral-700 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white transition-colors flex items-center justify-center"
+          aria-label="Фильтры"
+        >
+          <Filter className="h-4 w-4" />
+        </button>
+      </div>
+
+      {filtersOpen && (
         <div className="flex flex-wrap gap-4 mb-6">
           <select
             value={filters.purpose}
@@ -170,7 +183,7 @@ const CoursesPage = () => {
             className="input w-auto min-w-[150px]"
           />
         </div>
-      </div>
+      )}
 
       {courses.length === 0 ? (
         <div className="text-center py-12">
