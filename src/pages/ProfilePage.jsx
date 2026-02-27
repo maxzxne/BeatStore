@@ -99,7 +99,8 @@ const ProfilePage = () => {
                 </p>
               </div>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center gap-2 cursor-pointer">
+              <Moon className="h-5 w-5 text-gray-500 dark:text-neutral-400 shrink-0" />
               <input
                 type="checkbox"
                 checked={!isDarkMode}
@@ -107,9 +108,7 @@ const ProfilePage = () => {
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black dark:peer-focus:ring-white rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:border-neutral-700 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-yellow-400"></div>
-              <span className="ml-3 text-sm font-medium text-gray-600 dark:text-neutral-400 dark:text-neutral-400">
-                {isDarkMode ? 'Включить светлую' : 'Светлая'}
-              </span>
+              <Sun className="h-5 w-5 text-yellow-500 shrink-0" />
             </label>
           </div>
         </div>

@@ -164,8 +164,8 @@ const LoginPage = () => {
         </Link>
         <div className="card">
           <div className="card-header text-center">
-            <div className="bg-black dark:bg-white rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <User className="h-8 w-8 text-white dark:text-black dark:text-white" />
+            <div className="bg-black dark:bg-neutral-700 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <User className="h-8 w-8 text-white dark:text-white" />
             </div>
             <h1 className="text-2xl font-bold text-black dark:text-white dark:text-white">Вход</h1>
             <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Войдите в свой аккаунт</p>
@@ -217,7 +217,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full h-12 text-base"
+              className="btn w-full h-12 text-base bg-black text-white hover:bg-gray-800 dark:bg-neutral-700 dark:text-white dark:hover:bg-neutral-600"
             >
               {loading ? 'Вход...' : 'Войти'}
             </button>
