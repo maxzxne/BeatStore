@@ -51,6 +51,8 @@ import TestPaymentPage from './pages/TestPaymentPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailurePage from './pages/PaymentFailurePage';
 import ErrorPage from './pages/ErrorPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfUsePage from './pages/TermsOfUsePage';
 
 /**
  * Основной компонент приложения
@@ -81,6 +83,8 @@ function App() {
                 <Route path="test-payment" element={<TestPaymentPage />} />
                 <Route path="payment/success" element={<PaymentSuccessPage />} />
                 <Route path="payment/failure" element={<PaymentFailurePage />} />
+                <Route path="privacy" element={<PrivacyPolicyPage />} />
+                <Route path="terms" element={<TermsOfUsePage />} />
               </Route>
               
               {/* Маршруты аутентификации */}

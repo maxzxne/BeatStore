@@ -264,6 +264,33 @@ const RegisterPage = () => {
               </div>
             </div>
             
+            <div className="pt-2">
+              <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-neutral-400">
+                <input
+                  type="checkbox"
+                  required
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-neutral-700 text-black dark:text-white focus:ring-black dark:focus:ring-white"
+                />
+                <span>
+                  Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
+                  <Link
+                    to="/terms"
+                    className="underline hover:text-black dark:hover:text-white"
+                  >
+                    Пользовательского соглашения
+                  </Link>{' '}
+                  и{' '}
+                  <Link
+                    to="/privacy"
+                    className="underline hover:text-black dark:hover:text-white"
+                  >
+                    Политики конфиденциальности
+                  </Link>
+                  , а также даю согласие на обработку моих персональных данных.
+                </span>
+              </label>
+            </div>
+
             <button
               type="submit"
               disabled={loading}

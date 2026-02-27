@@ -79,7 +79,11 @@ def update_database_schema():
                 'contact_info': 'VARCHAR',
                 'result_wav_url': 'VARCHAR',
                 'result_mp3_url': 'VARCHAR',
-                'result_zip_url': 'VARCHAR'
+                'result_zip_url': 'VARCHAR',
+                'consent_personal_data': 'BOOLEAN DEFAULT 1',
+                'consent_personal_data_at': 'DATETIME',
+                'consent_personal_data_version': 'VARCHAR',
+                'consent_ip': 'VARCHAR'
             }
             
             for col_name, col_type in new_columns.items():
@@ -133,6 +137,20 @@ def update_database_schema():
                     conn.execute(text("ALTER TABLE users ADD COLUMN additional_contact VARCHAR"))
                     conn.commit()
                 print("Колонка additional_contact добавлена")
+            
+            # Колонки согласия на обработку персональных данных
+            user_new_columns = {
+                'consent_personal_data': 'BOOLEAN DEFAULT 1',
+                'consent_personal_data_at': 'DATETIME',
+                'consent_personal_data_version': 'VARCHAR'
+            }
+            for col_name, col_type in user_new_columns.items():
+                if col_name not in columns:
+                    print(f"Добавление колонки {col_name} в users...")
+                    with engine.connect() as conn:
+                        conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                        conn.commit()
+                    print(f"Колонка {col_name} добавлена")
         
         # Проверяем таблицу oauth_settings
         if 'oauth_settings' not in inspector.get_table_names():
@@ -554,6 +572,9 @@ class UserResponse(BaseModel):
     is_admin: bool
     additional_contact: Optional[str] = None
     created_at: datetime
+    consent_personal_data: Optional[bool] = None
+    consent_personal_data_at: Optional[datetime] = None
+    consent_personal_data_version: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -662,6 +683,10 @@ class ServiceOrderResponse(BaseModel):
     status: str = "pending"
     created_at: datetime
     updated_at: Optional[datetime] = None
+    consent_personal_data: Optional[bool] = None
+    consent_personal_data_at: Optional[datetime] = None
+    consent_personal_data_version: Optional[str] = None
+    consent_ip: Optional[str] = None
 
     @classmethod
     def from_orm(cls, obj):
@@ -687,7 +712,11 @@ class ServiceOrderResponse(BaseModel):
             "contact_info": obj.contact_info,
             "status": obj.status or "pending",
             "created_at": obj.created_at,
-            "updated_at": obj.updated_at
+            "updated_at": obj.updated_at,
+            "consent_personal_data": getattr(obj, "consent_personal_data", None),
+            "consent_personal_data_at": getattr(obj, "consent_personal_data_at", None),
+            "consent_personal_data_version": getattr(obj, "consent_personal_data_version", None),
+            "consent_ip": getattr(obj, "consent_ip", None),
         }
         
         # Парсим service_categories из JSON
@@ -919,7 +948,10 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db_user = User(
             email=user.email,
             username=user.username,
-            password_hash=hashed_password
+            password_hash=hashed_password,
+            consent_personal_data=True,
+            consent_personal_data_at=datetime.utcnow(),
+            consent_personal_data_version="v1"
         )
         db.add(db_user)
         db.commit()
@@ -1728,7 +1760,8 @@ def process_cart_payment(
 @app.post("/service-orders", response_model=ServiceOrderResponse)
 def create_service_order(order: ServiceOrderCreate, 
                         db: Session = Depends(get_db),
-                        current_user: Optional[User] = Depends(get_current_user_optional)):
+                        current_user: Optional[User] = Depends(get_current_user_optional),
+                        request: Request = None):
     try:
         import json
         
@@ -1754,7 +1787,17 @@ def create_service_order(order: ServiceOrderCreate,
             # Для обратной совместимости
             service_categories_json = json.dumps([order.service_category], ensure_ascii=False)
         
-        print(f"Creating ServiceOrder: user_id={user_id}, order_type={order.order_type}, categories={service_categories_json}")
+        # Определяем IP-адрес клиента для фиксации согласия
+        client_ip = None
+        if request is not None:
+            client_ip = request.headers.get("x-forwarded-for")
+            if client_ip:
+                # Берем первый IP из списка
+                client_ip = client_ip.split(",")[0].strip()
+            elif request.client:
+                client_ip = request.client.host
+        
+        print(f"Creating ServiceOrder: user_id={user_id}, order_type={order.order_type}, categories={service_categories_json}, ip={client_ip}")
         
         service_order = ServiceOrder(
             user_id=user_id,
@@ -1771,7 +1814,11 @@ def create_service_order(order: ServiceOrderCreate,
             deadline_max=order.deadline_max,  # Для обратной совместимости
             deadline_days=order.deadline_days,
             prepayment_percent=order.prepayment_percent,
-            contact_info=order.contact_info
+            contact_info=order.contact_info,
+            consent_personal_data=True,
+            consent_personal_data_at=datetime.utcnow(),
+            consent_personal_data_version="v1",
+            consent_ip=client_ip
         )
         
         db.add(service_order)

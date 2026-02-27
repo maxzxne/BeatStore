@@ -428,6 +428,37 @@ const OrderPage = () => {
             </p>
           </div>
 
+          <div className="pt-2">
+            <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-neutral-400">
+              <input
+                type="checkbox"
+                required
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-neutral-700 text-black dark:text-white focus:ring-black dark:focus:ring-white"
+              />
+              <span>
+                Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
+                <a
+                  href="/terms"
+                  className="underline hover:text-black dark:hover:text-white"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Пользовательского соглашения
+                </a>{' '}
+                и{' '}
+                <a
+                  href="/privacy"
+                  className="underline hover:text-black dark:hover:text-white"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Политики конфиденциальности
+                </a>
+                , а также даю согласие на обработку моих персональных данных.
+              </span>
+            </label>
+          </div>
+
           <button
             type="submit"
             disabled={uploading}
@@ -753,6 +784,37 @@ const OrderPage = () => {
           <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
             Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
           </p>
+        </div>
+
+        <div className="pt-2">
+          <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-neutral-400">
+            <input
+              type="checkbox"
+              required
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-neutral-700 text-black dark:text-white focus:ring-black dark:focus:ring-white"
+            />
+            <span>
+              Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
+              <a
+                href="/terms"
+                className="underline hover:text-black dark:hover:text-white"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Пользовательского соглашения
+              </a>{' '}
+              и{' '}
+              <a
+                href="/privacy"
+                className="underline hover:text-black dark:hover:text-white"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Политики конфиденциальности
+              </a>
+              , а также даю согласие на обработку моих персональных данных.
+            </span>
+          </label>
         </div>
 
         {/* Дедлайн */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -44,6 +44,27 @@ const Layout = ({ admin = false }) => {
           <main className="w-full min-h-[calc(100vh-64px)] pb-20 sm:pb-24">
             <Outlet />
           </main>
+          <footer className="border-t border-gray-300 dark:border-neutral-800 px-4 sm:px-6 py-4 text-xs text-gray-500 dark:text-neutral-500">
+            <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+              <span className="text-center sm:text-left">
+                © {new Date().getFullYear()} BeatStore. Все права защищены.
+              </span>
+              <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4">
+                <Link
+                  to="/terms"
+                  className="hover:text-black dark:hover:text-white transition-colors"
+                >
+                  Пользовательское соглашение
+                </Link>
+                <Link
+                  to="/privacy"
+                  className="hover:text-black dark:hover:text-white transition-colors"
+                >
+                  Политика конфиденциальности
+                </Link>
+              </div>
+            </div>
+          </footer>
         </>
       )}
       {/* Мини-плеер отображается на всех страницах, когда трек играет */}

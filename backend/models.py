@@ -70,6 +70,11 @@ class User(Base):
     is_admin = Column(Boolean, default=False)  # Является ли администратором
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата регистрации
     
+    # Согласие на обработку персональных данных
+    consent_personal_data = Column(Boolean, default=True)  # Флаг согласия (по умолчанию True при регистрации через сайт)
+    consent_personal_data_at = Column(DateTime, nullable=True)  # Время получения согласия
+    consent_personal_data_version = Column(String, nullable=True)  # Версия документов (политика/соглашение)
+    
     # OAuth поля
     oauth_provider = Column(String, nullable=True)  # google, vk, yandex
     oauth_provider_id = Column(String, nullable=True)  # ID пользователя в OAuth провайдере
@@ -244,6 +249,12 @@ class ServiceOrder(Base):
     
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата создания заказа
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Дата обновления
+    
+    # Согласие на обработку персональных данных при оформлении заказа
+    consent_personal_data = Column(Boolean, default=True)  # Флаг согласия
+    consent_personal_data_at = Column(DateTime, nullable=True)  # Время получения согласия
+    consent_personal_data_version = Column(String, nullable=True)  # Версия документов (политика/соглашение)
+    consent_ip = Column(String, nullable=True)  # IP-адрес клиента в момент согласия
     
     # Связи с другими таблицами
     user = relationship("User", back_populates="service_orders")
