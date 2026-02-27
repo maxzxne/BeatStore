@@ -584,6 +584,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
     password: Optional[str] = None
+    additional_contact: Optional[str] = None
 
 class BeatResponse(BaseModel):
     """Схема ответа с информацией о бите (базовая)"""
