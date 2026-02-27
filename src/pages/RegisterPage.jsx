@@ -279,19 +279,23 @@ const RegisterPage = () => {
                 />
                 <span>
                   Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
-                  <Link
-                    to="/terms"
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="underline hover:text-black dark:hover:text-white"
                   >
                     Пользовательского соглашения
-                  </Link>{' '}
+                  </a>{' '}
                   и{' '}
-                  <Link
-                    to="/privacy"
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="underline hover:text-black dark:hover:text-white"
                   >
                     Политики конфиденциальности
-                  </Link>
+                  </a>
                   , а также даю согласие на обработку моих персональных данных.
                 </span>
               </label>

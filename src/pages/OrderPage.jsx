@@ -120,17 +120,17 @@ const OrderPage = () => {
     }));
   };
 
-  // Заполняем данные пользователя, если авторизован
+  // Автозаполнение данных из профиля для авторизованного пользователя (можно менять)
   React.useEffect(() => {
-    if (isAuthenticated && user && orderType === "know") {
+    if (isAuthenticated && user) {
       setFormData(prev => ({
         ...prev,
-        customer_name: user.username || '',
-        customer_email: user.email || '',
-        contact_info: user.additional_contact || prev.contact_info || ''
+        customer_name: prev.customer_name || user.username || '',
+        customer_email: prev.customer_email || user.email || '',
+        contact_info: prev.contact_info || user.additional_contact || ''
       }));
     }
-  }, [isAuthenticated, user, orderType]);
+  }, [isAuthenticated, user]);
 
   const addCategory = (category) => {
     const categoryValue = typeof category === 'string' ? category : category.value;
@@ -180,11 +180,11 @@ const OrderPage = () => {
       await api.post('/service-orders', orderData);
       showSuccess('Заявка успешно отправлена! Мы свяжемся с вами для обсуждения заказа.');
       
-      // Сбрасываем форму
+      // Сбрасываем форму (для авторизованных сохраняем данные из профиля)
       setFormData({
-        customer_name: '',
-        customer_email: '',
-        contact_info: '',
+        customer_name: isAuthenticated && user ? user.username || '' : '',
+        customer_email: isAuthenticated && user ? user.email || '' : '',
+        contact_info: isAuthenticated && user ? user.additional_contact || '' : '',
         service_categories: [],
         materials: [],
         reference_links: '',
@@ -280,11 +280,11 @@ const OrderPage = () => {
       } else {
         showSuccess('Заказ успешно создан!');
         
-        // Сбрасываем форму
+        // Сбрасываем форму (для авторизованных сохраняем данные из профиля)
         setFormData({
           customer_name: isAuthenticated && user ? user.username || '' : '',
           customer_email: isAuthenticated && user ? user.email || '' : '',
-          contact_info: '',
+          contact_info: isAuthenticated && user ? user.additional_contact || '' : '',
           service_categories: [],
           materials: [],
           reference_links: '',
@@ -441,7 +441,7 @@ const OrderPage = () => {
                   href="/terms"
                   className="underline hover:text-black dark:hover:text-white"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   Пользовательского соглашения
                 </a>{' '}
@@ -450,7 +450,7 @@ const OrderPage = () => {
                   href="/privacy"
                   className="underline hover:text-black dark:hover:text-white"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   Политики конфиденциальности
                 </a>
@@ -799,7 +799,7 @@ const OrderPage = () => {
                 href="/terms"
                 className="underline hover:text-black dark:hover:text-white"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Пользовательского соглашения
               </a>{' '}
@@ -808,7 +808,7 @@ const OrderPage = () => {
                 href="/privacy"
                 className="underline hover:text-black dark:hover:text-white"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
               >
                 Политики конфиденциальности
               </a>

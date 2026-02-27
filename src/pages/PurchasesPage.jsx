@@ -3,12 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import BeatCard from '../components/BeatCard';
-import { api } from '../utils/api';
+import { api, buildMediaUrl } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio, HelpCircle } from 'lucide-react';
-
-// Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
 const PurchasesPage = () => {
   const { isAuthenticated } = useAuth();
@@ -118,7 +115,7 @@ const PurchasesPage = () => {
     e.stopPropagation();
     try {
       // Получаем URL полного файла
-      const fullUrl = `${API_URL}${beat.full_audio_url}`;
+      const fullUrl = buildMediaUrl(beat.full_audio_url);
       
       // Проверяем, играет ли уже этот трек
       const isPlaying = isCurrentTrackPlaying(beat.id);
@@ -138,7 +135,7 @@ const PurchasesPage = () => {
     e.stopPropagation();
     try {
       // Для курсов используем полное видео для воспроизведения
-      const fullUrl = `${API_URL}${course.full_video_url}`;
+      const fullUrl = buildMediaUrl(course.full_video_url);
       
       const isPlaying = isCurrentTrackPlaying(`course_${course.id}`);
       if (isPlaying) {
@@ -230,7 +227,7 @@ const PurchasesPage = () => {
                 <div className="relative">
                   {beat.cover_url ? (
                     <img
-                      src={`${API_URL}${beat.cover_url}`}
+                      src={buildMediaUrl(beat.cover_url)}
                       alt={beat.title}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
@@ -308,7 +305,7 @@ const PurchasesPage = () => {
                   {course.preview_video_url ? (
                     <div className="w-full h-48 bg-black rounded-t-lg flex items-center justify-center relative overflow-hidden">
                       <video
-                        src={`${API_URL}${course.preview_video_url}`}
+                        src={buildMediaUrl(course.preview_video_url)}
                         className="w-full h-full object-cover"
                         muted
                         loop
@@ -402,12 +399,12 @@ const PurchasesPage = () => {
           <div className="space-y-4">
             {serviceOrders.map(order => {
               const statusColors = {
-                pending: 'bg-yellow-100 text-yellow-800',
-                confirmed: 'bg-blue-100 text-blue-800',
-                paid: 'bg-green-100 text-green-800',
-                in_progress: 'bg-purple-100 text-purple-800',
-                completed: 'bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-neutral-200',
-                cancelled: 'bg-red-100 text-red-800'
+                pending: 'bg-amber-500 text-white',
+                confirmed: 'bg-blue-600 text-white',
+                paid: 'bg-green-600 text-white',
+                in_progress: 'bg-violet-600 text-white',
+                completed: 'bg-emerald-600 text-white',
+                cancelled: 'bg-red-600 text-white'
               };
               
               const statusLabels = {
@@ -433,7 +430,7 @@ const PurchasesPage = () => {
                           {statusLabels[order.status] || order.status}
                         </span>
                         {order.order_type === 'dont_know' && (
-                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-neutral-900 text-gray-800 dark:text-neutral-200">
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500 text-white">
                             Требует обсуждения
                           </span>
                         )}
@@ -578,7 +575,7 @@ const PurchasesPage = () => {
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => {
-                                    const audioUrl = `${API_URL}${order.result_mp3_url}`;
+                                    const audioUrl = buildMediaUrl(order.result_mp3_url);
                                     const trackId = `order_${order.id}_mp3`;
                                     if (isCurrentTrack(trackId) && isCurrentTrackPlaying(trackId)) {
                                       pauseTrack();
@@ -601,7 +598,7 @@ const PurchasesPage = () => {
                                   )}
                                 </button>
                                 <a
-                                  href={`${API_URL}${order.result_mp3_url}`}
+                                  href={buildMediaUrl(order.result_mp3_url)}
                                   download
                                   className="btn btn-sm btn-outline h-8 px-3"
                                 >
@@ -624,7 +621,7 @@ const PurchasesPage = () => {
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => {
-                                    const audioUrl = `${API_URL}${order.result_wav_url}`;
+                                    const audioUrl = buildMediaUrl(order.result_wav_url);
                                     const trackId = `order_${order.id}_wav`;
                                     if (isCurrentTrack(trackId) && isCurrentTrackPlaying(trackId)) {
                                       pauseTrack();
@@ -647,7 +644,7 @@ const PurchasesPage = () => {
                                   )}
                                 </button>
                                 <a
-                                  href={`${API_URL}${order.result_wav_url}`}
+                                  href={buildMediaUrl(order.result_wav_url)}
                                   download
                                   className="btn btn-sm btn-outline h-8 px-3"
                                 >
@@ -668,7 +665,7 @@ const PurchasesPage = () => {
                                 <span className="text-sm font-medium text-gray-700 dark:text-neutral-300 dark:text-neutral-300">ZIP архив</span>
                               </div>
                               <a
-                                href={`${API_URL}${order.result_zip_url}`}
+                                href={buildMediaUrl(order.result_zip_url)}
                                 download
                                 className="btn btn-sm btn-outline h-8 px-3"
                               >

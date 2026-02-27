@@ -2,11 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { api } from '../utils/api';
+import { api, buildMediaUrl } from '../utils/api';
 import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle } from 'lucide-react';
-
-// Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
 const CourseDetailPage = () => {
   const { id } = useParams();
@@ -266,7 +263,7 @@ const CourseDetailPage = () => {
               <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
                 <video
                   ref={videoRef}
-                  src={`${API_URL}${course.preview_video_url}`}
+                  src={buildMediaUrl(course.preview_video_url)}
                   className="w-full h-full object-cover"
                   controls={false}
                   playsInline

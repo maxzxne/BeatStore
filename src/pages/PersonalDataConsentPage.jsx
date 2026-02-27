@@ -1,5 +1,11 @@
 import React from 'react';
 
+const DocLink = ({ href, children, className = '' }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+    {children}
+  </a>
+);
+
 const PersonalDataConsentPage = () => {
   return (
     <div className="container mx-auto px-6 py-10 max-w-4xl">
@@ -105,9 +111,10 @@ const PersonalDataConsentPage = () => {
           </p>
           <p className="mt-2">
             Я подтверждаю, что ознакомился(лась) с{' '}
-            <span className="underline">Политикой конфиденциальности</span> и{' '}
-            <span className="underline">Пользовательским соглашением</span>, размещёнными на сайте, и принимаю
-            их условия.
+            <DocLink href="/privacy" className="text-black dark:text-white">Политикой конфиденциальности</DocLink>
+            {' '}и{' '}
+            <DocLink href="/terms" className="text-black dark:text-white">Пользовательским соглашением</DocLink>
+            , размещёнными на сайте, и принимаю их условия.
           </p>
         </section>
       </div>

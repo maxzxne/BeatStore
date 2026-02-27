@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../utils/api';
+import { api, buildMediaUrl } from '../utils/api';
 import { Edit, Trash2, Eye, Music } from 'lucide-react';
-
-// Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
 const AdminBeats = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -107,7 +104,7 @@ const AdminBeats = () => {
                 <div className="flex items-center space-x-4">
                   {beat.cover_url ? (
                     <img
-                      src={`${API_URL}${beat.cover_url}`}
+                      src={buildMediaUrl(beat.cover_url)}
                       alt={beat.title}
                       className="w-16 h-16 object-cover rounded"
                     />
@@ -131,10 +128,10 @@ const AdminBeats = () => {
                       {beat.genre} • {beat.bpm} BPM • {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
                     </p>
                     <div className="flex items-center space-x-2 mt-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         beat.is_available 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : 'bg-red-500/20 text-red-400'
+                          ? 'bg-emerald-600 text-white' 
+                          : 'bg-red-600 text-white'
                       }`}>
                         {beat.is_available ? 'Доступен' : 'Недоступен'}
                       </span>

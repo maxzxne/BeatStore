@@ -1,5 +1,11 @@
 import React from 'react';
 
+const DocLink = ({ href, children, className = '' }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+    {children}
+  </a>
+);
+
 const CookiesPolicyPage = () => {
   return (
     <div className="container mx-auto px-6 py-10 max-w-4xl">
@@ -81,7 +87,9 @@ const CookiesPolicyPage = () => {
           </h2>
           <p>
             Оператор оставляет за собой право вносить изменения в настоящую Политику cookie. Актуальная
-            версия Политики всегда доступна на сайте по адресу «/cookies».
+            версия Политики всегда доступна на сайте ({' '}
+            <DocLink href="/cookies" className="text-black dark:text-white">Политика cookie</DocLink>
+            ).
           </p>
         </section>
       </div>

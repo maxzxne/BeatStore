@@ -18,10 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import AudioPlayer from '../components/AudioPlayer';
-import api from '../utils/api';
-
-// Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+import api, { buildMediaUrl } from '../utils/api';
 import MiniPlayer from '../components/MiniPlayer';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check, Play, Pause } from 'lucide-react';
 
@@ -268,7 +265,7 @@ const BeatPage = () => {
             <div className="card-content">
               {beat.cover_url && (
                 <img
-                  src={`${API_URL}${beat.cover_url}`}
+                  src={buildMediaUrl(beat.cover_url)}
                   alt={beat.title}
                   className="w-full max-w-md mx-auto h-48 object-contain rounded-lg mb-6 bg-gray-50 dark:bg-neutral-800"
                 />
@@ -408,7 +405,7 @@ const BeatPage = () => {
                       if (isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id)) {
                         pauseTrack();
                       } else {
-                        const fullUrl = `${API_URL}${beat.demo_url}`;
+                        const fullUrl = buildMediaUrl(beat.demo_url);
                         playTrack(beat.id, fullUrl, beat.title);
                       }
                     }}
@@ -484,7 +481,7 @@ const BeatPage = () => {
             <div className="card-content">
               {beat.demo_url ? (
                 <div className="space-y-4">
-                  <AudioPlayer src={`${API_URL}${beat.demo_url}`} title={beat.title} trackId={beat.id} />
+                  <AudioPlayer src={buildMediaUrl(beat.demo_url)} title={beat.title} trackId={beat.id} />
                   
                   {/* Дополнительные кнопки управления */}
                   <div className="flex items-center justify-center space-x-4">

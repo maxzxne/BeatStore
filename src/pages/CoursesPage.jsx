@@ -7,7 +7,7 @@ import { Play, Pause, Heart, ShoppingCart, Download, CheckCircle, Filter } from 
 import CustomSelect from '../components/CustomSelect';
 
 // Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+import { buildMediaUrl } from '../utils/api';
 
 const CoursesPage = () => {
   const { isAuthenticated } = useAuth();
@@ -64,7 +64,7 @@ const CoursesPage = () => {
     e.stopPropagation();
     if (!course.preview_video_url) return;
     
-    const previewUrl = `${API_URL}${course.preview_video_url}`;
+    const previewUrl = buildMediaUrl(course.preview_video_url);
     const isPlaying = isCurrentTrackPlaying(course.id);
     
     if (isPlaying) {
@@ -200,7 +200,7 @@ const CoursesPage = () => {
                 {course.preview_video_url ? (
                   <div className="w-full h-48 bg-black rounded-t-lg flex items-center justify-center relative overflow-hidden">
                     <video
-                      src={`${API_URL}${course.preview_video_url}`}
+                      src={buildMediaUrl(course.preview_video_url)}
                       className="w-full h-full object-cover"
                       muted
                       loop

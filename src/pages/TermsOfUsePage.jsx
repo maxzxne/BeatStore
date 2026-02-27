@@ -1,5 +1,11 @@
 import React from 'react';
 
+const DocLink = ({ href, children, className = '' }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+    {children}
+  </a>
+);
+
 const TermsOfUsePage = () => {
   return (
     <div className="container mx-auto px-6 py-10 max-w-4xl">
@@ -120,8 +126,9 @@ const TermsOfUsePage = () => {
           </h2>
           <p>
             6.1. Обработка персональных данных Пользователя осуществляется в соответствии с Федеральным
-            законом № 152‑ФЗ «О персональных данных» и Политикой конфиденциальности, размещённой на Сайте
-            по адресу «/privacy».
+            законом № 152‑ФЗ «О персональных данных» и{' '}
+            <DocLink href="/privacy" className="text-black dark:text-white">Политикой конфиденциальности</DocLink>
+            , размещённой на Сайте.
           </p>
         </section>
 
@@ -150,8 +157,9 @@ const TermsOfUsePage = () => {
           </h2>
           <p>
             8.1. Оператор вправе в одностороннем порядке изменять условия Соглашения. Обновлённая версия
-            публикуется на Сайте по адресу «/terms» и вступает в силу с момента размещения, если иное не
-            предусмотрено текстом Соглашения.
+            публикуется на Сайте ({' '}
+            <DocLink href="/terms" className="text-black dark:text-white">актуальная версия</DocLink>
+            ) и вступает в силу с момента размещения, если иное не предусмотрено текстом Соглашения.
           </p>
           <p>
             8.2. Продолжение использования Сайта после внесения изменений означает согласие Пользователя

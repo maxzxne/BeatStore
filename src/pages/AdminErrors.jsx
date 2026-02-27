@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { AlertTriangle, Calendar, Filter } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
+import DatePicker from '../components/DatePicker';
 
 const AdminErrors = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -227,19 +228,17 @@ const AdminErrors = () => {
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm text-gray-600 dark:text-neutral-400 mb-1">Период:</label>
               <div className="flex gap-2">
-                <input
-                  type="date"
+                <DatePicker
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="input input-bordered flex-1"
+                  onChange={setStartDate}
                   placeholder="С дд.мм.гггг"
+                  className="flex-1"
                 />
-                <input
-                  type="date"
+                <DatePicker
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="input input-bordered flex-1"
+                  onChange={setEndDate}
                   placeholder="По дд.мм.гггг"
+                  className="flex-1"
                 />
               </div>
             </div>

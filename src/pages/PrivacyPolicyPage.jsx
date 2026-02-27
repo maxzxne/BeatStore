@@ -1,5 +1,11 @@
 import React from 'react';
 
+const DocLink = ({ href, children, className = '' }) => (
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+    {children}
+  </a>
+);
+
 const PrivacyPolicyPage = () => {
   return (
     <div className="container mx-auto px-6 py-10 max-w-4xl">
@@ -155,7 +161,9 @@ const PrivacyPolicyPage = () => {
           </p>
           <p>
             9.2. Оператор оставляет за собой право вносить изменения в Политику. Актуальная версия Политики
-            публикуется на Сайте по адресу «/privacy».
+            публикуется на Сайте ({' '}
+            <DocLink href="/privacy" className="text-black dark:text-white">Политика конфиденциальности</DocLink>
+            ).
           </p>
         </section>
       </div>

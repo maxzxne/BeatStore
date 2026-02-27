@@ -19,10 +19,7 @@ import { Link } from 'react-router-dom';
 import { Play, Pause, Heart, ShoppingCart, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
-import { api } from '../utils/api';
-
-// Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+import { api, buildMediaUrl } from '../utils/api';
 
 /**
  * Компонент карточки бита
@@ -75,7 +72,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
     
     if (!beat.demo_url) return;
 
-    const trackUrl = `${API_URL}${beat.demo_url}`;
+    const trackUrl = buildMediaUrl(beat.demo_url);
     playTrack(beat.id, trackUrl, beat.title);
   };
 
@@ -127,7 +124,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
         <div className="relative">
           {beat.cover_url ? (
             <img
-              src={`${API_URL}${beat.cover_url}`}
+              src={buildMediaUrl(beat.cover_url)}
               alt={beat.title}
               className="w-full h-48 object-cover rounded-t-lg"
             />

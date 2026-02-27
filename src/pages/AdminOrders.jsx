@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../utils/api';
+import { api, buildMediaUrl } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { FileText, User, Calendar, Link as LinkIcon, Upload, CheckCircle, XCircle, Clock, AlertCircle, Music, FileAudio, X } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
@@ -129,12 +129,12 @@ const AdminOrders = () => {
   const formatDate = formatMoscowDate;
 
   const statusConfig = {
-    pending: { label: 'Ожидает', color: 'bg-yellow-500/20 text-yellow-600', icon: Clock },
-    confirmed: { label: 'Подтверждено', color: 'bg-blue-500/20 text-blue-600', icon: CheckCircle },
-    paid: { label: 'Оплачено', color: 'bg-green-500/20 text-green-600', icon: CheckCircle },
-    in_progress: { label: 'В работе', color: 'bg-purple-500/20 text-purple-600', icon: AlertCircle },
-    completed: { label: 'Завершено', color: 'bg-green-500/20 text-green-600', icon: CheckCircle },
-    cancelled: { label: 'Отменено', color: 'bg-red-500/20 text-red-600', icon: XCircle }
+    pending: { label: 'Ожидает', color: 'bg-amber-500 text-white', icon: Clock },
+    confirmed: { label: 'Подтверждено', color: 'bg-blue-600 text-white', icon: CheckCircle },
+    paid: { label: 'Оплачено', color: 'bg-green-600 text-white', icon: CheckCircle },
+    in_progress: { label: 'В работе', color: 'bg-violet-600 text-white', icon: AlertCircle },
+    completed: { label: 'Завершено', color: 'bg-emerald-600 text-white', icon: CheckCircle },
+    cancelled: { label: 'Отменено', color: 'bg-red-600 text-white', icon: XCircle }
   };
 
   const getStatusBadge = (status) => {
@@ -142,14 +142,13 @@ const AdminOrders = () => {
     const Icon = config.icon;
     
     return (
-      <span className={`px-3 py-1 rounded-full text-xs flex items-center gap-1 ${config.color}`}>
-        <Icon className="h-3 w-3" />
+      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${config.color}`}>
+        <Icon className="h-3 w-3 shrink-0" />
         {config.label}
       </span>
     );
   };
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
   if (!isAdminAuthenticated) {
     return (
@@ -216,7 +215,7 @@ const AdminOrders = () => {
                           : order.service_category || 'Заказ'}
                       </h3>
                       {order.order_type === 'dont_know' && (
-                        <span className="text-xs bg-gray-100 text-gray-600 dark:text-neutral-400 px-2 py-1 rounded mb-2 inline-block">
+                        <span className="text-xs bg-slate-500 text-white px-2 py-1 rounded mb-2 inline-block">
                           Требует обсуждения
                         </span>
                       )}
@@ -404,7 +403,7 @@ const AdminOrders = () => {
                         Материалы
                       </label>
                       <a
-                        href={`${API_URL}${selectedOrder.materials_url}`}
+                        href={buildMediaUrl(selectedOrder.materials_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline text-sm"
@@ -421,7 +420,7 @@ const AdminOrders = () => {
                         Референсы (файлы)
                       </label>
                       <a
-                        href={`${API_URL}${selectedOrder.reference_files_url}`}
+                        href={buildMediaUrl(selectedOrder.reference_files_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:underline text-sm"
@@ -451,7 +450,7 @@ const AdminOrders = () => {
                                 <span className="text-sm text-gray-700 dark:text-neutral-300">WAV файл</span>
                               </div>
                               <a
-                                href={`${API_URL}${selectedOrder.result_wav_url}`}
+                                href={buildMediaUrl(selectedOrder.result_wav_url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline text-xs"
@@ -467,7 +466,7 @@ const AdminOrders = () => {
                                 <span className="text-sm text-gray-700 dark:text-neutral-300">MP3 файл</span>
                               </div>
                               <a
-                                href={`${API_URL}${selectedOrder.result_mp3_url}`}
+                                href={buildMediaUrl(selectedOrder.result_mp3_url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline text-xs"
@@ -483,7 +482,7 @@ const AdminOrders = () => {
                                 <span className="text-sm text-gray-700 dark:text-neutral-300">ZIP архив</span>
                               </div>
                               <a
-                                href={`${API_URL}${selectedOrder.result_zip_url}`}
+                                href={buildMediaUrl(selectedOrder.result_zip_url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline text-xs"

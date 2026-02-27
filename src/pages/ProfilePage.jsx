@@ -99,15 +99,17 @@ const ProfilePage = () => {
                 </p>
               </div>
             </div>
-            <label className="relative inline-flex items-center gap-2 cursor-pointer">
+            <label className="inline-flex items-center gap-3 cursor-pointer">
               <Moon className="h-5 w-5 text-gray-500 dark:text-neutral-400 shrink-0" />
-              <input
-                type="checkbox"
-                checked={!isDarkMode}
-                onChange={toggleTheme}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black dark:peer-focus:ring-white rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:border-neutral-700 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-yellow-400"></div>
+              <div className="relative w-11 h-6 flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={!isDarkMode}
+                  onChange={toggleTheme}
+                  className="sr-only peer"
+                />
+                <div className="relative w-full h-full bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black dark:peer-focus:ring-white rounded-full peer dark:bg-neutral-700 peer-checked:bg-yellow-400 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:border after:border-gray-300 dark:after:border-neutral-600 after:shadow-sm after:transition-transform after:duration-200 peer-checked:after:translate-x-5"></div>
+              </div>
               <Sun className="h-5 w-5 text-yellow-500 shrink-0" />
             </label>
           </div>

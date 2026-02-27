@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { Music, GraduationCap, FileText, TrendingUp, Calendar } from 'lucide-react';
+import DatePicker from '../components/DatePicker';
 
 const AdminRevenue = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -287,20 +288,20 @@ const AdminRevenue = () => {
             </div>
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-neutral-400">С</label>
-              <input
-                type="date"
+              <DatePicker
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="input w-auto"
+                onChange={setStartDate}
+                placeholder="ДД.ММ.ГГГГ"
+                className="w-auto min-w-[140px]"
               />
             </div>
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-neutral-400">По</label>
-              <input
-                type="date"
+              <DatePicker
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="input w-auto"
+                onChange={setEndDate}
+                placeholder="ДД.ММ.ГГГГ"
+                className="w-auto min-w-[140px]"
               />
             </div>
             {(startDate || endDate) && (

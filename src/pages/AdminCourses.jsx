@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../utils/api';
+import { api, buildMediaUrl } from '../utils/api';
 import { Edit, Trash2, GraduationCap } from 'lucide-react';
-
-// Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
 const AdminCourses = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -105,7 +102,7 @@ const AdminCourses = () => {
                   {course.preview_video_url ? (
                     <div className="w-24 h-24 bg-black rounded overflow-hidden flex-shrink-0">
                       <video
-                        src={`${API_URL}${course.preview_video_url}`}
+                        src={buildMediaUrl(course.preview_video_url)}
                         className="w-full h-full object-cover"
                         muted
                       />

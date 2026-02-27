@@ -12,8 +12,8 @@ import axios from 'axios';
 
 // URL API сервера
 // Приоритет: VITE_API_URL > window.location.origin > localhost:8000
-const API_URL = import.meta.env.VITE_API_URL || 
-                (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+export const API_URL = import.meta.env.VITE_API_URL || 
+  (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
 // Отладочная информация
 console.log('API_URL:', API_URL);
@@ -93,6 +93,19 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Собирает полный URL для медиа-файлов (видео, аудио, обложки).
+ * Кодирует имя файла для корректной работы с спецсимволами (Ґ, $, запятые, пробелы и т.д.)
+ */
+export function buildMediaUrl(path) {
+  if (!path) return null;
+  const lastSlash = path.lastIndexOf('/');
+  if (lastSlash === -1) return API_URL + path;
+  const dirPart = path.substring(0, lastSlash + 1);
+  const filename = path.substring(lastSlash + 1);
+  return API_URL + dirPart + encodeURIComponent(filename);
+}
 
 export default api;
 

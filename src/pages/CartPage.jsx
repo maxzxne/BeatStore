@@ -5,11 +5,8 @@ import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import BeatCard from '../components/BeatCard';
 import MiniPlayer from '../components/MiniPlayer';
-import { api } from '../utils/api';
+import { api, buildMediaUrl } from '../utils/api';
 import { ShoppingCart, Trash2, Play, Pause } from 'lucide-react';
-
-// Получаем API URL для построения полных URL файлов
-const API_URL = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
 const CartPage = () => {
   const { isAuthenticated } = useAuth();
@@ -88,7 +85,7 @@ const CartPage = () => {
 
   const handlePlay = (beat) => {
     if (!beat.demo_url) return;
-    const trackUrl = `${API_URL}${beat.demo_url}`;
+    const trackUrl = buildMediaUrl(beat.demo_url);
     playTrack(beat.id, trackUrl, beat.title);
   };
 
@@ -225,7 +222,7 @@ const CartPage = () => {
                           item.preview_video_url ? (
                             <div className="w-16 h-16 bg-black rounded overflow-hidden">
                               <video
-                                src={`${API_URL}${item.preview_video_url}`}
+                                src={buildMediaUrl(item.preview_video_url)}
                                 className="w-full h-full object-cover"
                                 muted
                               />
@@ -239,7 +236,7 @@ const CartPage = () => {
                           // Для битов показываем обложку
                           item.cover_url ? (
                           <img
-                              src={`${API_URL}${item.cover_url}`}
+                              src={buildMediaUrl(item.cover_url)}
                               alt={item.title}
                             className="w-16 h-16 object-cover rounded"
                           />
