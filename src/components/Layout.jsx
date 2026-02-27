@@ -62,6 +62,18 @@ const Layout = ({ admin = false }) => {
                 >
                   Политика конфиденциальности
                 </Link>
+                <Link
+                  to="/consent-personal-data"
+                  className="hover:text-black dark:hover:text-white transition-colors"
+                >
+                  Согласие на обработку ПДн
+                </Link>
+                <Link
+                  to="/cookies"
+                  className="hover:text-black dark:hover:text-white transition-colors"
+                >
+                  Политика cookie
+                </Link>
               </div>
             </div>
           </footer>

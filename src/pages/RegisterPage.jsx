@@ -21,9 +21,11 @@ const RegisterPage = () => {
   
   useEffect(() => {
     // Загружаем настройки OAuth
-    const fetchOAuthSettings = async () => {
+    const fetchOAuthSettings = async (withLoading = false) => {
       try {
-        setOauthSettingsLoading(true);
+        if (withLoading) {
+          setOauthSettingsLoading(true);
+        }
         const response = await api.get('/oauth-settings');
         // Backend возвращает объект напрямую: {provider: {is_hidden, is_disabled}}
         const settingsObj = response.data || {};
@@ -38,20 +40,24 @@ const RegisterPage = () => {
           telegram: { is_hidden: false, is_disabled: false } // Telegram всегда доступен
         });
       } finally {
-        setOauthSettingsLoading(false);
+        if (withLoading) {
+          setOauthSettingsLoading(false);
+        }
       }
     };
-    fetchOAuthSettings();
+
+    // Первичная загрузка с индикатором
+    fetchOAuthSettings(true);
     
-    // Обновляем настройки каждые 5 секунд и при фокусе окна
-    const interval = setInterval(fetchOAuthSettings, 5000);
-    const handleFocus = () => fetchOAuthSettings();
+    // Обновляем настройки каждые 5 секунд и при фокусе окна (без скрытия блока)
+    const interval = setInterval(() => fetchOAuthSettings(false), 5000);
+    const handleFocus = () => fetchOAuthSettings(false);
     window.addEventListener('focus', handleFocus);
     
     // Слушаем событие обновления настроек из админки
     const handleSettingsUpdate = () => {
       console.log('OAuth settings update event received');
-      fetchOAuthSettings();
+      fetchOAuthSettings(false);
     };
     window.addEventListener('oauthSettingsUpdated', handleSettingsUpdate);
     

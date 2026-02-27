@@ -53,6 +53,8 @@ import PaymentFailurePage from './pages/PaymentFailurePage';
 import ErrorPage from './pages/ErrorPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfUsePage from './pages/TermsOfUsePage';
+import PersonalDataConsentPage from './pages/PersonalDataConsentPage';
+import CookiesPolicyPage from './pages/CookiesPolicyPage';
 
 /**
  * Основной компонент приложения
@@ -85,6 +87,8 @@ function App() {
                 <Route path="payment/failure" element={<PaymentFailurePage />} />
                 <Route path="privacy" element={<PrivacyPolicyPage />} />
                 <Route path="terms" element={<TermsOfUsePage />} />
+                <Route path="consent-personal-data" element={<PersonalDataConsentPage />} />
+                <Route path="cookies" element={<CookiesPolicyPage />} />
               </Route>
               
               {/* Маршруты аутентификации */}

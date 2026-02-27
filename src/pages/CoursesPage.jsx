@@ -87,6 +87,8 @@ const CoursesPage = () => {
         await api.post(`/courses/${courseId}/favorite`);
       }
       fetchCourses();
+      // Уведомляем хедер об обновлении избранного
+      window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
@@ -117,6 +119,8 @@ const CoursesPage = () => {
         }
       }
       fetchCourses();
+      // Уведомляем хедер об обновлении корзины
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error toggling cart:', error);
     }

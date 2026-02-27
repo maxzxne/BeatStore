@@ -48,12 +48,32 @@ const Header = ({ admin = false }) => {
     }
   }, [isAuthenticated]);
 
-  // Обновляем счетчики при изменении маршрута
+  // Обновляем счетчики при изменении маршрута и по глобальным событиям
   useEffect(() => {
     if (isAuthenticated) {
       fetchFavoritesCount();
       fetchCartCount();
     }
+
+    const handleFavoritesUpdated = () => {
+      if (isAuthenticated) {
+        fetchFavoritesCount();
+      }
+    };
+
+    const handleCartUpdated = () => {
+      if (isAuthenticated) {
+        fetchCartCount();
+      }
+    };
+
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    window.addEventListener('cartUpdated', handleCartUpdated);
+
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
+      window.removeEventListener('cartUpdated', handleCartUpdated);
+    };
   }, [location.pathname, isAuthenticated]);
 
   const fetchFavoritesCount = async () => {
@@ -121,7 +141,7 @@ const Header = ({ admin = false }) => {
                   location.pathname === '/' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
-                Магазин
+                Биты
               </Link>
               <Link
                 to="/courses"
@@ -129,7 +149,7 @@ const Header = ({ admin = false }) => {
                   location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
-                Академия
+                Обучение
               </Link>
               <Link
                 to="/order"
@@ -137,7 +157,7 @@ const Header = ({ admin = false }) => {
                   location.pathname === '/order' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
                 }`}
               >
-                Заказ услуг
+                Услуги
               </Link>
             </nav>
           </div>
@@ -155,7 +175,7 @@ const Header = ({ admin = false }) => {
                   >
                     <Heart className="h-5 w-5" fill={favoritesCount > 0 ? 'currentColor' : 'none'} />
                     {favoritesCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-white dark:bg-black text-black dark:text-white text-xs rounded-full h-5 w-5 flex items-center justify-center border border-gray-300 dark:border-neutral-700">
                         {favoritesCount}
                       </span>
                     )}
@@ -186,15 +206,14 @@ const Header = ({ admin = false }) => {
                   >
                     <User className="h-5 w-5" />
                   </Link>
-                  {/* Кнопка админки для админов */}
+                  {/* Иконка админки для админов (как у остальных иконок) */}
                   {(user?.is_admin || isAdminAuthenticated) && (
                     <Link
                       to="/admin"
-                      className="btn btn-primary btn-sm flex items-center gap-2"
+                      className="p-2 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
                       title="Админ-панель"
                     >
-                      <Settings className="h-4 w-4" />
-                      <span className="hidden xl:inline">Админка</span>
+                      <Settings className="h-5 w-5" />
                     </Link>
                   )}
                 </>
@@ -280,7 +299,7 @@ const Header = ({ admin = false }) => {
               location.pathname === '/' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            Магазин
+            Биты
           </Link>
           <Link
             to="/courses"
@@ -288,7 +307,7 @@ const Header = ({ admin = false }) => {
               location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            Академия
+            Обучение
           </Link>
           <Link
             to="/order"
@@ -296,7 +315,7 @@ const Header = ({ admin = false }) => {
               location.pathname === '/order' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
             }`}
           >
-            Заказ услуг
+            Услуги
           </Link>
         </nav>
       </div>

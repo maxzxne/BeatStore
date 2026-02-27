@@ -134,6 +134,8 @@ const BeatPage = () => {
         await api.post(`/beats/${id}/favorite`);
       }
       setIsFavorite(!isFavorite);
+      // Уведомляем хедер об обновлении избранного
+      window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
       console.error('Error toggling favorite:', error);
     }
@@ -149,6 +151,8 @@ const BeatPage = () => {
         await api.post(`/beats/${id}/cart`);
       }
       setIsInCart(!isInCart);
+      // Уведомляем хедер об обновлении корзины
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error toggling cart:', error);
     }
