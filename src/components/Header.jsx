@@ -13,9 +13,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, ShoppingCart, Heart, LogOut, Music, Settings } from 'lucide-react';
+import { User, ShoppingCart, Heart, Music, Settings } from 'lucide-react';
 import { api } from '../utils/api';
 
 /**
@@ -26,8 +26,7 @@ import { api } from '../utils/api';
  */
 const Header = ({ admin = false }) => {
   // Контекст аутентификации
-  const { user, adminUser, logout, isAuthenticated, isAdminAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const { user, adminUser, isAuthenticated, isAdminAuthenticated } = useAuth();
   const location = useLocation();
   
   // Состояние счетчиков
@@ -35,11 +34,6 @@ const Header = ({ admin = false }) => {
   const [cartCount, setCartCount] = useState(0);
   // Состояние мобильного меню
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -98,26 +92,8 @@ const Header = ({ admin = false }) => {
     return (
       <header className="bg-white dark:bg-neutral-900 border-b border-gray-300 dark:border-neutral-800 px-6 py-4 transition-colors">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold text-black dark:text-white">XWinner.beats.please Админ</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600 dark:text-neutral-400">Добро пожаловать, {adminUser?.username}</span>
-            <Link
-              to="/"
-              className="btn btn-outline btn-sm"
-            >
-              На сайт
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="btn btn-outline btn-sm"
-            >
-              <LogOut className="h-4 w-4" />
-              Выйти
-            </button>
-          </div>
+          <h1 className="text-xl font-bold text-black dark:text-white">XWinner.beats.please Админ</h1>
+          <span className="text-gray-600 dark:text-neutral-400 text-sm">Добро пожаловать, {adminUser?.username}</span>
         </div>
       </header>
     );

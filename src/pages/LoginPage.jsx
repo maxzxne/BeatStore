@@ -183,7 +183,7 @@ const LoginPage = () => {
                 Имя пользователя
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400 z-10 pointer-events-none" />
                 <input
                   type="text"
                   id="login_username"
@@ -201,7 +201,7 @@ const LoginPage = () => {
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400 z-10 pointer-events-none" />
                 <input
                   type="password"
                   id="login_password"

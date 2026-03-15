@@ -199,7 +199,7 @@ const RegisterPage = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400 z-10 pointer-events-none" />
                 <input
                   type="email"
                   id="register_email"
@@ -218,7 +218,7 @@ const RegisterPage = () => {
                 Имя пользователя
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400 z-10 pointer-events-none shrink-0" />
                 <input
                   type="text"
                   id="register_username"
@@ -237,7 +237,7 @@ const RegisterPage = () => {
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400 z-10 pointer-events-none" />
                 <input
                   type="password"
                   id="register_password"
@@ -256,7 +256,7 @@ const RegisterPage = () => {
                 Подтвердите пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-500 dark:text-neutral-400 z-10 pointer-events-none" />
                 <input
                   type="password"
                   id="register_confirmPassword"

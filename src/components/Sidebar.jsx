@@ -1,8 +1,17 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Settings, AlertTriangle } from 'lucide-react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { BarChart3, Music, Upload, ShoppingBag, FileText, GraduationCap, Settings, AlertTriangle, ExternalLink, LogOut } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   // Кастомная иконка рубля
   const RubleIcon = ({ className }) => (
     <span className={`${className} flex items-center justify-center`} style={{ fontSize: '1rem', fontWeight: 'bold', lineHeight: '1' }}>₽</span>
@@ -21,8 +30,8 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 bg-gray-100 dark:bg-neutral-900 border-r border-gray-300 dark:border-neutral-800 h-full transition-colors">
-      <div className="p-6">
+    <aside className="w-64 bg-gray-100 dark:bg-neutral-900 border-r border-gray-300 dark:border-neutral-800 h-full flex flex-col transition-colors">
+      <div className="p-6 flex-1">
         <h2 className="text-lg font-semibold text-black dark:text-white mb-6">Админ панель</h2>
         <nav className="space-y-2">
           {navItems.map((item) => {
@@ -45,6 +54,25 @@ const Sidebar = () => {
             );
           })}
         </nav>
+      </div>
+
+      <div className="p-4 pt-0 border-t border-gray-300 dark:border-neutral-800 mt-auto">
+        <div className="space-y-1">
+          <Link
+            to="/"
+            className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-neutral-800 transition-colors text-sm"
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span>Сайт</span>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white hover:bg-gray-200 dark:hover:bg-neutral-800 transition-colors text-sm"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Выйти</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

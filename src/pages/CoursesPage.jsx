@@ -79,20 +79,23 @@ const CoursesPage = () => {
     e.stopPropagation();
     if (!isAuthenticated) return;
     
+    const course = courses.find(c => c.id === courseId);
+    const isFavorite = course?.is_favorite || false;
+    
+    // Оптимистичное обновление — сразу меняем UI без перезагрузки списка
+    setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_favorite: !isFavorite } : c));
+    
     try {
-      const course = courses.find(c => c.id === courseId);
-      const isFavorite = course?.is_favorite || false;
-      
       if (isFavorite) {
         await api.delete(`/courses/${courseId}/favorite`);
       } else {
         await api.post(`/courses/${courseId}/favorite`);
       }
-      fetchCourses();
-      // Уведомляем хедер об обновлении избранного
       window.dispatchEvent(new Event('favoritesUpdated'));
     } catch (error) {
       console.error('Error toggling favorite:', error);
+      // Откатываем при ошибке
+      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_favorite } : c));
     }
   };
 
@@ -101,30 +104,32 @@ const CoursesPage = () => {
     e.stopPropagation();
     if (!isAuthenticated) return;
     
+    const course = courses.find(c => c.id === courseId);
+    const isInCart = course?.is_in_cart || false;
+    
+    // Оптимистичное обновление — сразу меняем UI без перезагрузки списка
+    setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_in_cart: !isInCart } : c));
+    
     try {
-      const course = courses.find(c => c.id === courseId);
-      const isInCart = course?.is_in_cart || false;
-      
       if (isInCart) {
         await api.delete(`/courses/${courseId}/cart`);
       } else {
         try {
           await api.post(`/courses/${courseId}/cart`);
         } catch (error) {
-          // Если курс уже в корзине, просто обновляем список
           if (error.response?.status === 400 && error.response?.data?.detail?.includes('already in cart')) {
-            // Обновляем список курсов, чтобы получить актуальное состояние
-            fetchCourses();
+            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_in_cart: true } : c));
+            window.dispatchEvent(new Event('cartUpdated'));
             return;
           }
           throw error;
         }
       }
-      fetchCourses();
-      // Уведомляем хедер об обновлении корзины
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error toggling cart:', error);
+      // Откатываем при ошибке
+      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, is_in_cart } : c));
     }
   };
 

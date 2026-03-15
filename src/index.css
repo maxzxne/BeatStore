@@ -10,7 +10,7 @@
   html {
     /* Для Telegram Web App - убираем отступы */
     height: 100%;
-    overflow-x: hidden;
+    /* Не ставим overflow на html — это ломает скролл body. overflow-x: hidden только на body */
   }
   
   body {
@@ -41,8 +41,9 @@
     min-height: 100vh;
     min-height: 100dvh;
     width: 100%;
-    /* Разрешаем скролл в root */
+    /* overflow-x: hidden без overflow-y может ломать скролл — задаём оба явно */
     overflow-x: hidden;
+    overflow-y: visible;
   }
   
   /* Предотвращаем неожиданное редактирование */

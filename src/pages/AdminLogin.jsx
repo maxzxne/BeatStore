@@ -52,7 +52,7 @@ const AdminLogin = () => {
                 Имя пользователя
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-300" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-300 z-10 pointer-events-none" />
                 <input
                   type="text"
                   value={username}
@@ -69,7 +69,7 @@ const AdminLogin = () => {
                 Пароль
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-300" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-neutral-300 z-10 pointer-events-none" />
                 <input
                   type="password"
                   value={password}
