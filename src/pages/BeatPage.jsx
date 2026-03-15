@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Страница отдельного бита
  * 
  * Отображает детальную информацию о бите и предоставляет функции:
@@ -379,31 +379,28 @@ const BeatPage = () => {
                     {purchasedTypes.includes('wav') && (
                       <button
                         onClick={() => handleDownload('wav')}
-                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors flex items-center gap-1 px-2 py-1"
+                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors "
                         title="Скачать WAV"
                       >
                         <Download className="h-4 w-4" />
-                        WAV
                       </button>
                     )}
                     {purchasedTypes.includes('mp3') && (
                       <button
                         onClick={() => handleDownload('mp3')}
-                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors flex items-center gap-1 px-2 py-1"
+                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors "
                         title="Скачать MP3"
                       >
                         <Download className="h-4 w-4" />
-                        MP3
                       </button>
                     )}
                     {purchasedTypes.includes('exclusive') && (
                       <button
                         onClick={() => handleDownload('exclusive')}
-                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors flex items-center gap-1 px-2 py-1"
+                        className="border-none bg-transparent text-black dark:text-white hover:text-gray-600 dark:text-neutral-400 transition-colors "
                         title="Скачать эксклюзив"
                       >
                         <Download className="h-4 w-4" />
-                        ZIP
                       </button>
                     )}
                   </div>

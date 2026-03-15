@@ -160,7 +160,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
           )}
         </div>
         
-        <div className="card-content">
+        <div className="card-content !px-0">
           <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{beat.title}</h3>
           <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{beat.artist}</p>
           

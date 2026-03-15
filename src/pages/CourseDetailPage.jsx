@@ -355,10 +355,10 @@ const CourseDetailPage = () => {
             {isPurchased ? (
               <button
                 onClick={handleDownload}
-                className="btn btn-primary w-full h-12 flex items-center justify-center gap-2 text-base"
+                className="p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                title="Скачать курс"
               >
                 <Download className="h-5 w-5" />
-                Скачать курс
               </button>
             ) : (
               <button

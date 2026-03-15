@@ -261,7 +261,7 @@ const PurchasesPage = () => {
                   </button>
                 </div>
                 
-                <div className="card-content">
+                <div className="card-content !px-0">
                   <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{beat.title}</h3>
                   <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{beat.artist}</p>
                   
@@ -278,7 +278,7 @@ const PurchasesPage = () => {
                     
                     <button
                       onClick={(e) => handleDownload(beat.id, e)}
-                      className="btn btn-outline btn-sm"
+                      className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
                       title="Скачать"
                     >
                       <Download className="h-4 w-4" />
@@ -354,7 +354,7 @@ const PurchasesPage = () => {
                   </div>
                 </div>
                 
-                <div className="card-content">
+                <div className="card-content !px-0">
                   <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{course.title}</h3>
                   {course.purpose && (
                     <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{course.purpose}</p>
@@ -376,7 +376,7 @@ const PurchasesPage = () => {
                     
                     <button
                       onClick={(e) => handleDownloadCourse(course.id, e)}
-                      className="btn btn-outline btn-sm"
+                      className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
                       title="Скачать"
                     >
                       <Download className="h-4 w-4" />
@@ -601,10 +601,10 @@ const PurchasesPage = () => {
                                 <a
                                   href={buildMediaUrl(order.result_mp3_url)}
                                   download
-                                  className="btn btn-sm btn-outline h-8 px-3"
+                                  className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                                  title="Скачать"
                                 >
-                                  <Download className="h-3 w-3 mr-1" />
-                                  Скачать
+                                  <Download className="h-4 w-4" />
                                 </a>
                               </div>
                             </div>
@@ -647,10 +647,10 @@ const PurchasesPage = () => {
                                 <a
                                   href={buildMediaUrl(order.result_wav_url)}
                                   download
-                                  className="btn btn-sm btn-outline h-8 px-3"
+                                  className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                                  title="Скачать"
                                 >
-                                  <Download className="h-3 w-3 mr-1" />
-                                  Скачать
+                                  <Download className="h-4 w-4" />
                                 </a>
                               </div>
                             </div>
@@ -668,10 +668,10 @@ const PurchasesPage = () => {
                               <a
                                 href={buildMediaUrl(order.result_zip_url)}
                                 download
-                                className="btn btn-sm btn-outline h-8 px-3"
+                                className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                                title="Скачать"
                               >
-                                <Download className="h-3 w-3 mr-1" />
-                                Скачать
+                                <Download className="h-4 w-4" />
                               </a>
                             </div>
                           </div>

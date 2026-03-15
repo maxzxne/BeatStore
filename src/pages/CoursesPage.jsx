@@ -235,7 +235,7 @@ const CoursesPage = () => {
                 )}
               </div>
               
-              <div className="card-content">
+              <div className="card-content !px-0">
                 <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{course.title}</h3>
                 {course.purpose && (
                   <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{course.purpose}</p>
