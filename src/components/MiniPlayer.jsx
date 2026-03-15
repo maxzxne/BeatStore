@@ -79,11 +79,22 @@ const MiniPlayer = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-900 border-t border-gray-300 dark:border-neutral-800 z-[60] safe-area-bottom shadow-lg transition-colors">
-      <div className="max-w-6xl mx-auto px-4 py-3">
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-900 z-[60] safe-area-bottom shadow-lg transition-colors relative">
+      {/* Прогресс-бар — верхняя граница плеера, на всю ширину экрана */}
+      <div
+        className="absolute left-0 right-0 top-0 h-1.5 bg-gray-200 dark:bg-neutral-700 cursor-pointer"
+        onClick={handleSeek}
+      >
+        <div
+          className="h-full bg-black dark:bg-white transition-all min-w-0"
+          style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+        />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-3 md:pt-3">
         <div className="flex items-center gap-6">
-        {/* Слева: обложка + название */}
-        <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
+        {/* Слева: обложка + название — только на десктопе */}
+        <div className="hidden md:flex items-center gap-4 min-w-0 flex-shrink-0">
           <div className="w-14 h-14 rounded-md overflow-hidden bg-gray-200 dark:bg-neutral-700 flex-shrink-0 ring-1 ring-gray-200 dark:ring-neutral-600">
             {currentTrackCover ? (
               <img src={currentTrackCover} alt="" className="w-full h-full object-cover" />
@@ -101,8 +112,8 @@ const MiniPlayer = () => {
           </div>
         </div>
 
-        {/* Центр: прогресс-бар на всю ширину */}
-        <div className="flex-1 min-w-0 flex items-center px-2">
+        {/* Центр: прогресс-бар — только на десктопе (на мобиле он сверху) */}
+        <div className="hidden md:flex flex-1 min-w-0 items-center px-2">
           <div
             className="flex-1 h-2 bg-gray-200 dark:bg-neutral-700 rounded-full cursor-pointer overflow-hidden"
             onClick={handleSeek}
@@ -114,8 +125,8 @@ const MiniPlayer = () => {
           </div>
         </div>
 
-        {/* Справа: контролы */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Контролы: на мобиле — только кнопки проигрывателя + громкость */}
+        <div className="flex-1 md:flex-initial flex items-center justify-center md:justify-end gap-2 flex-shrink-0">
           <button
             onClick={(e) => { e.preventDefault(); seekTo(Math.max(0, currentTime - 10)); }}
             disabled={!currentTrack}
@@ -158,7 +169,7 @@ const MiniPlayer = () => {
             step="0.05"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="w-16 h-1 bg-gray-200 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black dark:[&::-moz-range-thumb]:bg-white"
+            className="w-12 md:w-16 h-1 bg-gray-200 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white [&::-moz-range-thumb]:w-2.5 [&::-moz-range-thumb]:h-2.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black dark:[&::-moz-range-thumb]:bg-white"
           />
           <button
             onClick={handleClose}
