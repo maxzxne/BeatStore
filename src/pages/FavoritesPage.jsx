@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import BeatCard from '../components/BeatCard';
-import MiniPlayer from '../components/MiniPlayer';
 import { api } from '../utils/api';
 import { Heart } from 'lucide-react';
 
@@ -95,8 +94,6 @@ const FavoritesPage = () => {
           })}
         </div>
       )}
-      
-      <MiniPlayer />
       
       {/* Bottom padding to prevent overlap with mini player */}
       <div className="h-20"></div>

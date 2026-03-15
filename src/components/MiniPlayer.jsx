@@ -79,10 +79,10 @@ const MiniPlayer = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-900 z-[60] safe-area-bottom shadow-lg transition-colors relative">
-      {/* Прогресс-бар — верхняя граница плеера, на всю ширину экрана */}
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-900 border-t border-gray-300 dark:border-neutral-800 z-[60] safe-area-bottom shadow-lg transition-colors relative">
+      {/* Прогресс-бар — верхняя граница плеера на всю ширину, только на мобиле */}
       <div
-        className="absolute left-0 right-0 top-0 h-1.5 bg-gray-200 dark:bg-neutral-700 cursor-pointer"
+        className="md:hidden absolute left-0 right-0 top-0 h-1.5 bg-gray-200 dark:bg-neutral-700 cursor-pointer"
         onClick={handleSeek}
       >
         <div

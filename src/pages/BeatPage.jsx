@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Страница отдельного бита
  * 
  * Отображает детальную информацию о бите и предоставляет функции:
@@ -18,7 +18,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import api, { buildMediaUrl } from '../utils/api';
-import MiniPlayer from '../components/MiniPlayer';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check, Play, Pause } from 'lucide-react';
 
 /**
@@ -477,8 +476,6 @@ const BeatPage = () => {
             </div>
           </div>
         </div>
-      
-      <MiniPlayer />
       
       {/* Bottom padding to prevent overlap with mini player */}
       <div className="h-20"></div>
