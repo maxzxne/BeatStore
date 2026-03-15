@@ -122,7 +122,8 @@ const PurchasesPage = () => {
       if (isPlaying) {
         pauseTrack();
       } else {
-        playTrack(beat.id, fullUrl, beat.title);
+        const coverUrl = beat.cover_url ? buildMediaUrl(beat.cover_url) : null;
+        playTrack(beat.id, fullUrl, beat.title, coverUrl);
       }
     } catch (error) {
       console.error('Error playing beat:', error);

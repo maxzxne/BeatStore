@@ -17,7 +17,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
-import AudioPlayer from '../components/AudioPlayer';
 import api, { buildMediaUrl } from '../utils/api';
 import MiniPlayer from '../components/MiniPlayer';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check, Play, Pause } from 'lucide-react';
@@ -33,7 +32,7 @@ const BeatPage = () => {
   
   // Контексты
   const { isAuthenticated } = useAuth();
-  const { seekTo, currentTime, duration, isCurrentTrack, playTrack, pauseTrack, isCurrentTrackPlaying } = useAudioPlayer();
+  const { isCurrentTrack, playTrack, pauseTrack, isCurrentTrackPlaying } = useAudioPlayer();
   const { showSuccess, showError } = useNotification();
   
   // Состояние компонента
@@ -253,22 +252,47 @@ const BeatPage = () => {
         Назад
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Beat Info */}
-        <div className="flex flex-col">
-          <div className="card flex-1">
+      <div className="max-w-2xl">
+        <div className="card">
             <div className="card-header">
               <h1 className="text-2xl font-bold text-black dark:text-white">{beat.title}</h1>
               <p className="text-gray-600 dark:text-neutral-400">{beat.artist}</p>
             </div>
             
             <div className="card-content">
-              {beat.cover_url && (
-                <img
-                  src={buildMediaUrl(beat.cover_url)}
-                  alt={beat.title}
-                  className="w-full max-w-md mx-auto h-48 object-contain rounded-lg mb-6 bg-gray-50 dark:bg-neutral-800"
-                />
+              {(beat.cover_url || beat.demo_url) && (
+                <div className="relative w-full max-w-md mx-auto mb-6 group">
+                  {beat.cover_url ? (
+                    <img
+                      src={buildMediaUrl(beat.cover_url)}
+                      alt={beat.title}
+                      className="w-full h-48 object-contain rounded-lg bg-gray-50 dark:bg-neutral-800"
+                    />
+                  ) : (
+                    <div className="w-full h-48 rounded-lg bg-gray-100 dark:bg-neutral-800 flex items-center justify-center">
+                      <Play className="h-16 w-16 text-gray-400 dark:text-neutral-500" />
+                    </div>
+                  )}
+                  {beat.demo_url && (
+                    <button
+                      onClick={() => {
+                        const fullUrl = buildMediaUrl(beat.demo_url);
+                        const coverUrl = beat.cover_url ? buildMediaUrl(beat.cover_url) : null;
+                        playTrack(beat.id, fullUrl, beat.title, coverUrl);
+                      }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
+                      title="Слушать"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-white dark:bg-black flex items-center justify-center">
+                        {isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id) ? (
+                          <Pause className="h-7 w-7 text-black dark:text-white ml-0.5" />
+                        ) : (
+                          <Play className="h-7 w-7 text-black dark:text-white ml-1" />
+                        )}
+                      </div>
+                    </button>
+                  )}
+                </div>
               )}
               
               <div className="space-y-4">
@@ -289,64 +313,49 @@ const BeatPage = () => {
                   </div>
                 )}
                 
-                {/* Выбор формата с радиокнопками */}
+                {/* Тип лицензии — кнопки как в референсе */}
                 {(beat.price_mp3 !== null || beat.price_wav !== null || beat.price_exclusive !== null) && (
                   <div>
-                    <span className="text-gray-600 dark:text-neutral-400 block mb-3">Формат:</span>
-                    <div className="space-y-2">
+                    <span className="text-gray-600 dark:text-neutral-400 block mb-3">Тип лицензии:</span>
+                    <div className="flex flex-wrap gap-2">
                       {beat.mp3_url && (beat.price_mp3 !== null && beat.price_mp3 !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="radio"
-                              name="format"
-                              value="mp3"
-                              checked={selectedPurchaseType === 'mp3'}
-                              onChange={() => setSelectedPurchaseType('mp3')}
-                              className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-600 focus:ring-black dark:focus:ring-white"
-                            />
-                            <span className="text-black dark:text-white font-medium">MP3</span>
-                          </div>
-                          <span className="text-black dark:text-white font-semibold">
-                            {beat.price_mp3 === 0 ? 'Бесплатно' : `${beat.price_mp3.toFixed(0)} ₽`}
-                          </span>
-                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPurchaseType('mp3')}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            selectedPurchaseType === 'mp3'
+                              ? 'bg-gray-200 dark:bg-neutral-600 text-black dark:text-white'
+                              : 'bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-700'
+                          }`}
+                        >
+                          MP3 ({beat.price_mp3 === 0 ? 'Бесплатно' : `${beat.price_mp3.toFixed(0)} ₽`})
+                        </button>
                       )}
                       {beat.wav_url && (beat.price_wav !== null && beat.price_wav !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="radio"
-                              name="format"
-                              value="wav"
-                              checked={selectedPurchaseType === 'wav'}
-                              onChange={() => setSelectedPurchaseType('wav')}
-                              className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-600 focus:ring-black dark:focus:ring-white"
-                            />
-                            <span className="text-black dark:text-white font-medium">WAV</span>
-                          </div>
-                          <span className="text-black dark:text-white font-semibold">
-                            {beat.price_wav === 0 ? 'Бесплатно' : `${beat.price_wav.toFixed(0)} ₽`}
-                          </span>
-                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPurchaseType('wav')}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            selectedPurchaseType === 'wav'
+                              ? 'bg-gray-200 dark:bg-neutral-600 text-black dark:text-white'
+                              : 'bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-700'
+                          }`}
+                        >
+                          WAV ({beat.price_wav === 0 ? 'Бесплатно' : `${beat.price_wav.toFixed(0)} ₽`})
+                        </button>
                       )}
                       {beat.exclusive_url && (beat.price_exclusive !== null && beat.price_exclusive !== undefined) && (
-                        <label className="flex items-center justify-between cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="radio"
-                              name="format"
-                              value="exclusive"
-                              checked={selectedPurchaseType === 'exclusive'}
-                              onChange={() => setSelectedPurchaseType('exclusive')}
-                              className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-600 focus:ring-black dark:focus:ring-white"
-                            />
-                            <span className="text-black dark:text-white font-medium">Exclusive</span>
-                          </div>
-                          <span className="text-black dark:text-white font-semibold">
-                            {beat.price_exclusive === 0 ? 'Бесплатно' : `${beat.price_exclusive.toFixed(0)} ₽`}
-                          </span>
-                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPurchaseType('exclusive')}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            selectedPurchaseType === 'exclusive'
+                              ? 'bg-gray-200 dark:bg-neutral-600 text-black dark:text-white'
+                              : 'bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-neutral-300 hover:bg-gray-200 dark:hover:bg-neutral-700'
+                          }`}
+                        >
+                          Exclusive ({beat.price_exclusive === 0 ? 'Бесплатно' : `${beat.price_exclusive.toFixed(0)} ₽`})
+                        </button>
                       )}
                     </div>
                   </div>
@@ -406,7 +415,8 @@ const BeatPage = () => {
                         pauseTrack();
                       } else {
                         const fullUrl = buildMediaUrl(beat.demo_url);
-                        playTrack(beat.id, fullUrl, beat.title);
+                        const coverUrl = beat.cover_url ? buildMediaUrl(beat.cover_url) : null;
+                        playTrack(beat.id, fullUrl, beat.title, coverUrl);
                       }
                     }}
                     className="btn btn-primary btn-sm h-9 ml-auto"
@@ -470,63 +480,6 @@ const BeatPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Audio Player */}
-        <div className="flex flex-col">
-          <div className="card flex-1">
-            <div className="card-header">
-              <h2 className="text-lg font-semibold text-black dark:text-white">Превью</h2>
-            </div>
-            
-            <div className="card-content">
-              {beat.demo_url ? (
-                <div className="space-y-4">
-                  <AudioPlayer src={buildMediaUrl(beat.demo_url)} title={beat.title} trackId={beat.id} />
-                  
-                  {/* Дополнительные кнопки управления */}
-                  <div className="flex items-center justify-center space-x-4">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('BeatPage seek back - currentTime:', currentTime, 'duration:', duration);
-                        const newTime = Math.max(0, currentTime - 10);
-                        console.log('BeatPage seeking back to:', newTime, 'from:', currentTime);
-                        seekTo(newTime);
-                      }}
-                      disabled={!isCurrentTrack(beat.id)}
-                      className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black dark:text-white"
-                      title="Назад на 10 секунд"
-                    >
-                      <span className="text-sm font-medium">-10</span>
-                    </button>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('BeatPage seek forward - currentTime:', currentTime, 'duration:', duration);
-                        const newTime = currentTime + 10;
-                        console.log('BeatPage seeking forward to:', newTime, 'from:', currentTime);
-                        seekTo(newTime);
-                      }}
-                      disabled={!isCurrentTrack(beat.id)}
-                      className="w-10 h-10 rounded-full border-2 border-gray-300 dark:border-neutral-600 hover:border-black dark:hover:border-white flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-black dark:text-white"
-                      title="Вперед на 10 секунд"
-                    >
-                      <span className="text-sm font-medium">+10</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-600 dark:text-neutral-400">
-                  Превью недоступно
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
       
       <MiniPlayer />
       

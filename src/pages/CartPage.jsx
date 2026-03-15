@@ -86,7 +86,8 @@ const CartPage = () => {
   const handlePlay = (beat) => {
     if (!beat.demo_url) return;
     const trackUrl = buildMediaUrl(beat.demo_url);
-    playTrack(beat.id, trackUrl, beat.title);
+    const coverUrl = beat.cover_url ? buildMediaUrl(beat.cover_url) : null;
+    playTrack(beat.id, trackUrl, beat.title, coverUrl);
   };
 
   const handleBulkPurchase = async () => {

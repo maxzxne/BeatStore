@@ -181,7 +181,7 @@ const RegisterPage = () => {
         <div className="card">
           <div className="card-header text-center">
             <div className="bg-black dark:bg-white rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <User className="h-8 w-8 text-white dark:text-black dark:text-white" />
+              <User className="h-8 w-8 text-white dark:text-black" />
             </div>
             <h1 className="text-2xl font-bold text-black dark:text-white dark:text-white">Регистрация</h1>
             <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Создайте новый аккаунт</p>

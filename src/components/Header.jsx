@@ -72,8 +72,11 @@ const Header = ({ admin = false }) => {
 
   const fetchFavoritesCount = async () => {
     try {
-      const response = await api.get('/favorites');
-      setFavoritesCount(response.data.length);
+      const [beatsRes, coursesRes] = await Promise.all([
+        api.get('/favorites'),
+        api.get('/course-favorites')
+      ]);
+      setFavoritesCount((beatsRes.data?.length || 0) + (coursesRes.data?.length || 0));
     } catch (error) {
       console.error('Error fetching favorites count:', error);
     }
@@ -81,8 +84,11 @@ const Header = ({ admin = false }) => {
 
   const fetchCartCount = async () => {
     try {
-      const response = await api.get('/cart');
-      setCartCount(response.data.length);
+      const [beatsRes, coursesRes] = await Promise.all([
+        api.get('/cart'),
+        api.get('/course-cart')
+      ]);
+      setCartCount((beatsRes.data?.length || 0) + (coursesRes.data?.length || 0));
     } catch (error) {
       console.error('Error fetching cart count:', error);
     }
