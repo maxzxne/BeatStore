@@ -11,6 +11,7 @@
  */
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { Play, Pause, Volume2, VolumeX, X, SkipBack, SkipForward } from 'lucide-react';
 
@@ -36,11 +37,6 @@ const MiniPlayer = () => {
     toggleMute,
     stopTrack
   } = useAudioPlayer();
-
-  // Показываем плеер только если есть активный трек
-  if (!currentTrack || !currentTrackTitle) {
-    return null;
-  }
 
   const handleTogglePlay = () => {
     if (isPlaying) {
@@ -78,16 +74,22 @@ const MiniPlayer = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  return (
+  if (!currentTrack || !currentTrackTitle) {
+    return null;
+  }
+
+  const playerContent = (
     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-900 border-t border-gray-300 dark:border-neutral-800 z-[60] safe-area-bottom shadow-lg transition-colors relative">
-      {/* Прогресс-бар — верхняя граница плеера на всю ширину, только на мобиле */}
-      <div
-        className="md:hidden absolute left-0 right-0 top-0 h-1.5 bg-gray-200 dark:bg-neutral-700 cursor-pointer"
-        onClick={handleSeek}
-      >
-        <div
-          className="h-full bg-black dark:bg-white transition-all min-w-0"
-          style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+      {/* Прогресс-бар — верхняя граница плеера на всю ширину, только на мобиле. input[range] поддерживает перетаскивание. */}
+      <div className="md:hidden absolute left-0 right-0 top-0 h-4 flex items-center px-0 touch-none">
+        <input
+          type="range"
+          min={0}
+          max={duration || 1}
+          step={0.1}
+          value={duration ? currentTime : 0}
+          onChange={(e) => seekTo(parseFloat(e.target.value))}
+          className="w-full h-1.5 bg-transparent appearance-none cursor-pointer [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gray-200 dark:[&::-webkit-slider-runnable-track]:bg-neutral-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:-mt-1.25 [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-gray-200 dark:[&::-moz-range-track]:bg-neutral-700 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black dark:[&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0"
         />
       </div>
 
@@ -184,6 +186,8 @@ const MiniPlayer = () => {
       </div>
     </div>
   );
+
+  return createPortal(playerContent, document.body);
 };
 
 export default MiniPlayer;
