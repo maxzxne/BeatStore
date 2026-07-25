@@ -182,13 +182,27 @@
     * {
       -webkit-tap-highlight-color: transparent;
     }
-    
-    /* Увеличиваем размеры интерактивных элементов для удобства */
-    input, textarea, select, button, a {
+
+    /* Touch-target только для основных контролов — не для всех a/input (ломало хедер и плеер) */
+    button.btn,
+    .btn,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="search"],
+    textarea,
+    select {
       min-height: 44px;
       font-size: 16px; /* Предотвращает зум на iOS */
     }
-    
+
+    input[type="range"] {
+      min-height: 0;
+      height: auto;
+      font-size: inherit;
+    }
+
     /* Адаптивные отступы для контента */
     .container {
       padding-left: 1rem;
@@ -199,6 +213,55 @@
   /* Безопасная зона для мини-плеера */
   .safe-area-bottom {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  /* Компактный range для мини-плеера (не раздувается на мобиле) */
+  .mini-player-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    min-height: 0 !important;
+    background: transparent;
+    cursor: pointer;
+  }
+  .mini-player-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: rgb(229 231 235);
+  }
+  .dark .mini-player-range::-webkit-slider-runnable-track {
+    background: rgb(64 64 64);
+  }
+  .mini-player-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -5px;
+    border-radius: 9999px;
+    background: #000;
+    border: 0;
+  }
+  .dark .mini-player-range::-webkit-slider-thumb {
+    background: #fff;
+  }
+  .mini-player-range::-moz-range-track {
+    height: 4px;
+    border-radius: 9999px;
+    background: rgb(229 231 235);
+  }
+  .dark .mini-player-range::-moz-range-track {
+    background: rgb(64 64 64);
+  }
+  .mini-player-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: #000;
+    border: 0;
+  }
+  .dark .mini-player-range::-moz-range-thumb {
+    background: #fff;
   }
   
   .btn-secondary {
