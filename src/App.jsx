@@ -23,6 +23,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AudioPlayerProvider } from './contexts/AudioPlayerContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { SiteSettingsProvider } from './contexts/SiteSettingsContext';
 import Layout from './components/Layout';
 import TelegramInit from './components/TelegramInit';
 import HomePage from './pages/HomePage';
@@ -65,6 +66,7 @@ function App() {
     // Провайдеры контекста для глобального состояния
     <ThemeProvider>                   {/* Управление темой (тёмная/светлая) */}
       <AuthProvider>                    {/* Управление аутентификацией пользователей и админов */}
+        <SiteSettingsProvider>          {/* Настройки сайта (видимость разделов) */}
         <AudioPlayerProvider>           {/* Глобальный аудио плеер для воспроизведения битов */}
           <NotificationProvider>        {/* Система уведомлений */}
             <TelegramInit />            {/* Инициализация Telegram Web App */}
@@ -116,6 +118,7 @@ function App() {
             </Router>
           </NotificationProvider>
         </AudioPlayerProvider>
+        </SiteSettingsProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -26,7 +26,7 @@ const Sidebar = () => {
     { path: '/admin/purchases', label: 'Покупки', icon: ShoppingBag },
     { path: '/admin/orders', label: 'Заявки', icon: FileText },
     { path: '/admin/errors', label: 'Ошибки', icon: AlertTriangle },
-    { path: '/admin/oauth-settings', label: 'OAuth', icon: Settings },
+    { path: '/admin/oauth-settings', label: 'Настройки', icon: Settings },
   ];
 
   return (

@@ -36,7 +36,7 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, ErrorLog, cart_table, course_cart_table, course_favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, ErrorLog, cart_table, course_cart_table, course_favorites_table
 print("Импорт database и models завершен")
 
 # Импорт функций отправки сообщений и файлов в Telegram
@@ -198,6 +198,24 @@ def update_database_schema():
                 db.rollback()
             finally:
                 db.close()
+
+        # Настройки сайта (видимость разделов)
+        if 'site_settings' not in inspector.get_table_names():
+            print("Создание таблицы site_settings...")
+            Base.metadata.create_all(bind=engine)
+
+        db = SessionLocal()
+        try:
+            courses_visibility = db.query(SiteSetting).filter(SiteSetting.key == "courses_visibility").first()
+            if not courses_visibility:
+                db.add(SiteSetting(key="courses_visibility", value="all"))
+                db.commit()
+                print("Настройка courses_visibility создана (all)")
+        except Exception as e:
+            print(f"Ошибка создания site_settings: {e}")
+            db.rollback()
+        finally:
+            db.close()
         
         # Создаем все таблицы (если их еще нет)
         Base.metadata.create_all(bind=engine)
@@ -739,6 +757,35 @@ class OAuthSettingUpdate(BaseModel):
     """Схема для обновления настроек OAuth провайдера"""
     is_hidden: Optional[bool] = None
     is_disabled: Optional[bool] = None
+
+# all — всем; admins_only — только админам; hidden — никому (вкладка скрыта)
+COURSES_VISIBILITY_VALUES = {"all", "admins_only", "hidden"}
+
+class SiteSettingsUpdate(BaseModel):
+    """Схема обновления настроек сайта"""
+    courses_visibility: Optional[str] = None
+
+def get_site_setting_value(db: Session, key: str, default: str = "") -> str:
+    setting = db.query(SiteSetting).filter(SiteSetting.key == key).first()
+    return setting.value if setting else default
+
+def get_courses_visibility(db: Session) -> str:
+    value = get_site_setting_value(db, "courses_visibility", "all")
+    return value if value in COURSES_VISIBILITY_VALUES else "all"
+
+def user_can_access_courses_catalog(visibility: str, user: Optional[User]) -> bool:
+    """Доступ к публичному API каталога курсов. При admins_only/hidden — только админы."""
+    if visibility == "all":
+        return True
+    return bool(user and user.is_admin)
+
+def ensure_courses_catalog_access(db: Session, current_user: Optional[User]):
+    visibility = get_courses_visibility(db)
+    if not user_can_access_courses_catalog(visibility, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Раздел курсов временно недоступен"
+        )
 
 class ServiceOrderResponseFull(BaseModel):
     """Схема ответа с полной информацией о заказе услуги"""
@@ -1486,6 +1533,7 @@ def get_courses(
     current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
+    ensure_courses_catalog_access(db, current_user)
     query = db.query(Course).filter(Course.is_available == True)
     
     if purpose:
@@ -1517,6 +1565,7 @@ print("Определение эндпоинта get_course...")
 @app.get("/courses/{course_id}", response_model=CourseDetailResponse)
 def get_course(course_id: int, db: Session = Depends(get_db), 
             current_user: User = Depends(get_current_user_optional)):
+    ensure_courses_catalog_access(db, current_user)
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -2976,6 +3025,48 @@ def get_public_oauth_settings(db: Session = Depends(get_db)):
     """Получение настроек OAuth для публичного использования (без авторизации)"""
     settings = db.query(OAuthSettings).all()
     return {s.provider: {"is_hidden": s.is_hidden, "is_disabled": s.is_disabled} for s in settings}
+
+# Site Settings
+@app.get("/site-settings")
+def get_public_site_settings(db: Session = Depends(get_db)):
+    """Публичные настройки сайта (видимость разделов)"""
+    return {
+        "courses_visibility": get_courses_visibility(db)
+    }
+
+@app.get("/api/admin/site-settings")
+def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    return {
+        "courses_visibility": get_courses_visibility(db)
+    }
+
+@app.put("/api/admin/site-settings")
+def update_admin_site_settings(
+    update_data: SiteSettingsUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    if update_data.courses_visibility is not None:
+        if update_data.courses_visibility not in COURSES_VISIBILITY_VALUES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"courses_visibility must be one of: {', '.join(sorted(COURSES_VISIBILITY_VALUES))}"
+            )
+        setting = db.query(SiteSetting).filter(SiteSetting.key == "courses_visibility").first()
+        if not setting:
+            setting = SiteSetting(key="courses_visibility", value=update_data.courses_visibility)
+            db.add(setting)
+        else:
+            setting.value = update_data.courses_visibility
+            setting.updated_at = datetime.utcnow()
+        db.commit()
+
+    return {
+        "message": "Site settings updated successfully",
+        "settings": {
+            "courses_visibility": get_courses_visibility(db)
+        }
+    }
 
 # Error Logs Management
 @app.get("/api/admin/errors")

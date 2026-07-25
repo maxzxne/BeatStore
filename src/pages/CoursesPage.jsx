@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { api } from '../utils/api';
 import { Play, Pause, Heart, ShoppingCart, Download, CheckCircle, Filter } from 'lucide-react';
@@ -11,6 +12,8 @@ import { buildMediaUrl } from '../utils/api';
 
 const CoursesPage = () => {
   const { isAuthenticated } = useAuth();
+  const { canSeeCourses, loading: settingsLoading } = useSiteSettings();
+  const navigate = useNavigate();
   const { playTrack, isCurrentTrackPlaying, pauseTrack } = useAudioPlayer();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +24,12 @@ const CoursesPage = () => {
   });
   const isFirstLoad = useRef(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    if (!settingsLoading && !canSeeCourses) {
+      navigate('/', { replace: true });
+    }
+  }, [settingsLoading, canSeeCourses, navigate]);
 
   const fetchCourses = async () => {
     try {
@@ -41,6 +50,10 @@ const CoursesPage = () => {
 
   // Объединенный useEffect с debounce для всех фильтров
   useEffect(() => {
+    if (settingsLoading || !canSeeCourses) {
+      return;
+    }
+
     // При первой загрузке делаем запрос сразу без задержки
     if (isFirstLoad.current) {
       isFirstLoad.current = false;
@@ -57,7 +70,7 @@ const CoursesPage = () => {
     
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.purpose, filters.minPrice, filters.maxPrice]);
+  }, [filters.purpose, filters.minPrice, filters.maxPrice, canSeeCourses, settingsLoading]);
 
   const handlePlay = async (course, e) => {
     e.preventDefault();

@@ -273,6 +273,17 @@ class OAuthSettings(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class SiteSetting(Base):
+    """
+    Ключ-значение настройки сайта (видимость разделов и т.п.)
+    """
+    __tablename__ = "site_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, nullable=False, index=True)
+    value = Column(String, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class ErrorLog(Base):
     """
     Модель логов ошибок

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 
 const WelcomePopup = () => {
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
+  const { canSeeCourses } = useSiteSettings();
 
   useEffect(() => {
     // Проверяем, был ли попап уже закрыт
@@ -55,14 +57,16 @@ const WelcomePopup = () => {
             </span>
           </button>
           
-          <button
-            onClick={() => handleNavigate('/courses')}
-            className="w-full px-6 py-4 border border-black dark:border-white text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors focus:outline-none text-center"
-          >
-            <span className="text-lg font-semibold text-black dark:text-white">
-              НАУЧИТЬСЯ
-            </span>
-          </button>
+          {canSeeCourses && (
+            <button
+              onClick={() => handleNavigate('/courses')}
+              className="w-full px-6 py-4 border border-black dark:border-white text-black dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors focus:outline-none text-center"
+            >
+              <span className="text-lg font-semibold text-black dark:text-white">
+                НАУЧИТЬСЯ
+              </span>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -70,5 +74,3 @@ const WelcomePopup = () => {
 };
 
 export default WelcomePopup;
-
-
