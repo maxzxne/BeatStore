@@ -195,9 +195,6 @@ const HomePage = () => {
           })}
         </div>
       )}
-      
-      {/* Bottom padding to prevent overlap with mini player */}
-      <div className="h-20 sm:h-24"></div>
     </div>
   );
 };

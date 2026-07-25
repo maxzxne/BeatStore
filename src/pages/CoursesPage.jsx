@@ -305,9 +305,6 @@ const CoursesPage = () => {
           ))}
         </div>
       )}
-      
-      {/* Bottom padding to prevent overlap with mini player */}
-      <div className="h-20"></div>
     </div>
   );
 };

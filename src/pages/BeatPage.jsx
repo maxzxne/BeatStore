@@ -476,8 +476,6 @@ const BeatPage = () => {
             </div>
           </div>
       
-      {/* Bottom padding to prevent overlap with mini player */}
-      <div className="h-24"></div>
       </div>
     </div>
   );

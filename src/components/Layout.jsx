@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import WelcomePopup from './WelcomePopup';
@@ -10,9 +11,11 @@ const Layout = ({ admin = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAdminAuthenticated } = useAuth();
-  
+  const { currentTrack, currentTrackTitle } = useAudioPlayer();
+  const playerOpen = Boolean(currentTrack && currentTrackTitle);
+
   const isAdminRoute = location.pathname.startsWith('/admin');
-  
+
   if (isAdminRoute && location.pathname === '/admin/login') {
     return <Outlet />;
   }
@@ -24,7 +27,7 @@ const Layout = ({ admin = false }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black w-full transition-colors">
+    <div className="min-h-screen bg-white dark:bg-black w-full transition-colors flex flex-col">
       {isAdminRoute ? (
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
@@ -41,10 +44,10 @@ const Layout = ({ admin = false }) => {
         <>
           <WelcomePopup />
           <Header />
-          <main className="w-full min-h-[calc(100vh-64px)] pb-20 sm:pb-24">
+          <main className={`w-full flex-1 ${playerOpen ? 'pb-28' : 'pb-4'}`}>
             <Outlet />
           </main>
-          <footer className="border-t border-gray-300 dark:border-neutral-800 px-4 sm:px-6 py-4 pb-28 text-xs text-gray-500 dark:text-neutral-500">
+          <footer className="border-t border-gray-300 dark:border-neutral-800 px-4 sm:px-6 py-4 text-xs text-gray-500 dark:text-neutral-500 mt-auto">
             <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
               <span className="text-center sm:text-left">
                 © {new Date().getFullYear()} XWinner.beats.please. Все права защищены.
@@ -79,11 +82,9 @@ const Layout = ({ admin = false }) => {
           </footer>
         </>
       )}
-      {/* Мини-плеер отображается на всех страницах, когда трек играет */}
       <MiniPlayer />
     </div>
   );
 };
 
 export default Layout;
-
