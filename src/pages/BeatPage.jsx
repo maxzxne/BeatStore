@@ -243,32 +243,32 @@ const BeatPage = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
+      <div className="max-w-2xl mx-auto">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-6 transition-colors border-none bg-transparent p-0"
+        className="flex items-center text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white mb-6 transition-colors border-none bg-transparent p-0"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Назад
       </button>
 
-      <div className="max-w-2xl">
         <div className="card">
-            <div className="card-header">
+            <div className="card-header text-center sm:text-left">
               <h1 className="text-2xl font-bold text-black dark:text-white">{beat.title}</h1>
               <p className="text-gray-600 dark:text-neutral-400">{beat.artist}</p>
             </div>
             
             <div className="card-content">
               {(beat.cover_url || beat.demo_url) && (
-                <div className="relative w-full max-w-md mx-auto mb-6 group">
+                <div className="relative w-full max-w-lg mx-auto mb-6 group aspect-square">
                   {beat.cover_url ? (
                     <img
                       src={buildMediaUrl(beat.cover_url)}
                       alt={beat.title}
-                      className="w-full h-48 object-contain rounded-lg bg-gray-50 dark:bg-neutral-800"
+                      className="w-full h-full object-cover rounded-lg bg-gray-50 dark:bg-neutral-800"
                     />
                   ) : (
-                    <div className="w-full h-48 rounded-lg bg-gray-100 dark:bg-neutral-800 flex items-center justify-center">
+                    <div className="w-full h-full rounded-lg bg-gray-100 dark:bg-neutral-800 flex items-center justify-center">
                       <Play className="h-16 w-16 text-gray-400 dark:text-neutral-500" />
                     </div>
                   )}
@@ -475,10 +475,10 @@ const BeatPage = () => {
               )}
             </div>
           </div>
-        </div>
       
       {/* Bottom padding to prevent overlap with mini player */}
-      <div className="h-20"></div>
+      <div className="h-24"></div>
+      </div>
     </div>
   );
 };
