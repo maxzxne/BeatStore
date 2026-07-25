@@ -61,7 +61,7 @@ const PaymentFailurePage = () => {
               
               <Link
                 to="/"
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gray-200 hover:bg-gray-300 text-black dark:text-white rounded-lg font-medium transition-colors h-14 text-base"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gray-200 hover:bg-gray-300 text-black dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:text-white rounded-lg font-medium transition-colors h-14 text-base"
               >
                 <Home className="h-5 w-5" />
                 На главную
