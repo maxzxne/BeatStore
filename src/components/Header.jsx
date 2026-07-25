@@ -15,6 +15,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { User, ShoppingCart, Heart, Music, Settings } from 'lucide-react';
 import { api } from '../utils/api';
 
@@ -27,6 +28,7 @@ import { api } from '../utils/api';
 const Header = ({ admin = false }) => {
   // Контекст аутентификации
   const { user, adminUser, isAuthenticated, isAdminAuthenticated } = useAuth();
+  const { canSeeCourses } = useSiteSettings();
   const location = useLocation();
   
   // Состояние счетчиков
@@ -125,14 +127,16 @@ const Header = ({ admin = false }) => {
               >
                 Биты
               </Link>
-              <Link
-                to="/courses"
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-                }`}
-              >
-                Обучение
-              </Link>
+              {canSeeCourses && (
+                <Link
+                  to="/courses"
+                  className={`px-3 py-2 text-sm font-medium transition-colors ${
+                    location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+                  }`}
+                >
+                  Обучение
+                </Link>
+              )}
               <Link
                 to="/order"
                 className={`px-3 py-2 text-sm font-medium transition-colors ${
@@ -283,14 +287,16 @@ const Header = ({ admin = false }) => {
           >
             Биты
           </Link>
-          <Link
-            to="/courses"
-            className={`px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-medium transition-colors ${
-              location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Обучение
-          </Link>
+          {canSeeCourses && (
+            <Link
+              to="/courses"
+              className={`px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-medium transition-colors ${
+                location.pathname === '/courses' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white'
+              }`}
+            >
+              Обучение
+            </Link>
+          )}
           <Link
             to="/order"
             className={`px-1.5 sm:px-2 py-1 text-xs sm:text-sm font-medium transition-colors ${

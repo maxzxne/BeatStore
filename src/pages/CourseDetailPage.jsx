@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle } from 'lucide-react';
@@ -9,6 +10,7 @@ const CourseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { canSeeCourses, loading: settingsLoading } = useSiteSettings();
   const { showSuccess, showError } = useNotification();
   
   const [course, setCourse] = useState(null);
@@ -22,9 +24,16 @@ const CourseDetailPage = () => {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    fetchCourse();
-  }, [id, isAuthenticated]);
+    if (!settingsLoading && !canSeeCourses) {
+      navigate('/', { replace: true });
+    }
+  }, [settingsLoading, canSeeCourses, navigate]);
 
+  useEffect(() => {
+    if (canSeeCourses) {
+      fetchCourse();
+    }
+  }, [id, isAuthenticated, canSeeCourses]);
 
   const fetchCourse = async () => {
     try {

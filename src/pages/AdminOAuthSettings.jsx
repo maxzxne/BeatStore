@@ -1,17 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { Settings, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
+import { Eye, EyeOff, Lock, Unlock, GraduationCap } from 'lucide-react';
+
+const COURSES_VISIBILITY_OPTIONS = [
+  {
+    value: 'all',
+    label: 'Показывать всем',
+    description: 'Вкладка «Обучение» видна всем посетителям',
+  },
+  {
+    value: 'admins_only',
+    label: 'Только администраторам',
+    description: 'Вкладка скрыта для обычных пользователей, видна админам',
+  },
+  {
+    value: 'hidden',
+    label: 'Скрыть для всех',
+    description: 'Вкладка скрыта у всех на сайте (управление курсами в админке остаётся)',
+  },
+];
 
 const AdminOAuthSettings = () => {
   const { isAdminAuthenticated } = useAuth();
   const [settings, setSettings] = useState([]);
+  const [coursesVisibility, setCoursesVisibility] = useState('all');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
+  const [savingCourses, setSavingCourses] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
       fetchSettings();
+      fetchSiteSettings();
     }
   }, [isAdminAuthenticated]);
 
@@ -27,29 +48,53 @@ const AdminOAuthSettings = () => {
     }
   };
 
+  const fetchSiteSettings = async () => {
+    try {
+      const response = await api.get('/api/admin/site-settings');
+      const value = response.data?.courses_visibility;
+      if (value === 'all' || value === 'admins_only' || value === 'hidden') {
+        setCoursesVisibility(value);
+      }
+    } catch (error) {
+      console.error('Error fetching site settings:', error);
+    }
+  };
+
+  const updateCoursesVisibility = async (value) => {
+    const previous = coursesVisibility;
+    try {
+      setSavingCourses(true);
+      setCoursesVisibility(value);
+      await api.put('/api/admin/site-settings', { courses_visibility: value });
+      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+    } catch (error) {
+      console.error('Error updating courses visibility:', error);
+      setCoursesVisibility(previous);
+      alert(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
+    } finally {
+      setSavingCourses(false);
+    }
+  };
+
   const updateSetting = async (provider, field, value) => {
     try {
       setSaving(prev => ({ ...prev, [provider]: true }));
-      
-      // Находим текущую настройку
+
       const currentSetting = settings.find(s => s.provider === provider);
       if (!currentSetting) {
         throw new Error('Настройка не найдена');
       }
-      
-      // Оптимистичное обновление UI
-      setSettings(prevSettings => 
-        prevSettings.map(setting => 
+
+      setSettings(prevSettings =>
+        prevSettings.map(setting =>
           setting.provider === provider
             ? { ...setting, [field]: value }
             : setting
         )
       );
-      
-      // Подготавливаем данные для отправки (JSON)
+
       const updateData = {};
-      
-      // Отправляем обновленное значение для изменяемого поля
+
       if (field === 'is_hidden') {
         updateData.is_hidden = value;
         updateData.is_disabled = currentSetting.is_disabled;
@@ -57,19 +102,12 @@ const AdminOAuthSettings = () => {
         updateData.is_disabled = value;
         updateData.is_hidden = currentSetting.is_hidden;
       }
-      
-      const response = await api.put(`/api/admin/oauth-settings/${provider}`, updateData);
-      
-      console.log('OAuth setting updated:', response.data);
-      
-      // Обновляем настройки с сервера для синхронизации
+
+      await api.put(`/api/admin/oauth-settings/${provider}`, updateData);
       await fetchSettings();
-      
-      // Принудительно обновляем настройки на всех открытых страницах через событие
       window.dispatchEvent(new CustomEvent('oauthSettingsUpdated'));
     } catch (error) {
       console.error('Error updating OAuth setting:', error);
-      // Откатываем изменения при ошибке
       await fetchSettings();
       const errorMessage = error.response?.data?.detail || error.message || 'Ошибка обновления настройки';
       alert(errorMessage);
@@ -94,7 +132,7 @@ const AdminOAuthSettings = () => {
         return (
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77C16.54 21.04 14.4 22 12 22z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
@@ -142,8 +180,62 @@ const AdminOAuthSettings = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Настройки OAuth авторизации</h1>
-        <p className="text-gray-600 dark:text-neutral-400">Управление видимостью и доступностью кнопок авторизации</p>
+        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Настройки</h1>
+        <p className="text-gray-600 dark:text-neutral-400">Видимость разделов сайта и OAuth-авторизация</p>
+      </div>
+
+      <div className="card mb-8">
+        <div className="card-content">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-neutral-900">
+              <GraduationCap className="h-5 w-5 text-black dark:text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-black dark:text-white">Раздел «Обучение» (Курсы)</h2>
+              <p className="text-sm text-gray-600 dark:text-neutral-400">
+                Управление вкладкой в шапке сайта. В админке раздел «Курсы» всегда доступен.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {COURSES_VISIBILITY_OPTIONS.map((option) => {
+              const selected = coursesVisibility === option.value;
+              return (
+                <label
+                  key={option.value}
+                  className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                    selected
+                      ? 'border-black dark:border-white bg-gray-50 dark:bg-neutral-800'
+                      : 'border-gray-200 dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-800/60'
+                  } ${savingCourses ? 'opacity-60 pointer-events-none' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="courses_visibility"
+                    value={option.value}
+                    checked={selected}
+                    onChange={() => updateCoursesVisibility(option.value)}
+                    disabled={savingCourses}
+                    className="mt-1"
+                  />
+                  <div>
+                    <div className="text-sm font-medium text-black dark:text-white">{option.label}</div>
+                    <div className="text-xs text-gray-500 dark:text-neutral-500 mt-0.5">{option.description}</div>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+          {savingCourses && (
+            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-3">Сохранение...</p>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-black dark:text-white mb-1">OAuth авторизация</h2>
+        <p className="text-sm text-gray-600 dark:text-neutral-400">Видимость и доступность кнопок входа</p>
       </div>
 
       <div className="card">
@@ -162,7 +254,6 @@ const AdminOAuthSettings = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Скрыть кнопку */}
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg">
                     <div className="flex items-center gap-3">
                       {setting.is_hidden ? (
@@ -187,7 +278,6 @@ const AdminOAuthSettings = () => {
                     </label>
                   </div>
 
-                  {/* Дизейблить кнопку */}
                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg">
                     <div className="flex items-center gap-3">
                       {setting.is_disabled ? (
@@ -226,6 +316,3 @@ const AdminOAuthSettings = () => {
 };
 
 export default AdminOAuthSettings;
-
-
-
