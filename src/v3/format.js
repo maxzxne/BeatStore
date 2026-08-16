@@ -7,7 +7,7 @@ export function formatTime(time) {
 
 export function formatPrice(price) {
   if (price == null) return '';
-  if (Number(price) === 0) return 'Free';
+  if (Number(price) === 0) return 'Бесплатно';
   return `${Math.round(Number(price))} ₽`;
 }
 
@@ -17,6 +17,14 @@ export function formatTrackCount(n) {
   if (mod10 === 1 && mod100 !== 11) return `${n} трек`;
   if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} трека`;
   return `${n} треков`;
+}
+
+export function formatCourseCount(n) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${n} курс`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} курса`;
+  return `${n} курсов`;
 }
 
 export function playMeta(beat) {

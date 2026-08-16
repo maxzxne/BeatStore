@@ -50,7 +50,7 @@ export default function HomePageV3() {
 
       <div className="v3-shell v3-catalog" id="catalog">
         <div className="v3-catalog-head">
-          <h2>Catalog</h2>
+          <h2>Каталог</h2>
           <p className="v3-count">{loading ? '…' : formatTrackCount(visible.length)}</p>
         </div>
 
@@ -60,7 +60,7 @@ export default function HomePageV3() {
             <TextInput
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Search"
+              placeholder="Поиск"
               aria-label="Поиск по каталогу"
             />
           </div>
@@ -69,7 +69,7 @@ export default function HomePageV3() {
         {genres.length > 0 && (
           <div className="v3-tabs">
             <button type="button" className={`v3-tab ${genre === '' ? 'is-on' : ''}`} onClick={() => setGenre('')}>
-              All
+              Все
             </button>
             {genres.map((name) => (
               <button

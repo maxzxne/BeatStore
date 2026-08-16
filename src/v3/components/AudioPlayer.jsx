@@ -56,7 +56,7 @@ export default function AudioPlayer({ beat }) {
         </div>
       </div>
       <div className="v3-stage-copy">
-        <p className="v3-label">{current || playing ? 'Now' : 'Listen'}</p>
+        <p className="v3-label">{current || playing ? 'Сейчас' : 'Слушать'}</p>
         <h1 className="v3-stage-title">{beat.title}</h1>
         <div className="v3-stage-stats v3-data">
           {beat.bpm != null && <span>{beat.bpm} BPM</span>}
@@ -67,7 +67,7 @@ export default function AudioPlayer({ beat }) {
         </div>
         <button type="button" className="v3-btn v3-btn-primary w-fit" onClick={toggle}>
           {playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
-          {playing ? 'Pause' : 'Play'}
+          {playing ? 'Пауза' : 'Слушать'}
         </button>
       </div>
     </section>

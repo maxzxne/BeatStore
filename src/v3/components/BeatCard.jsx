@@ -73,7 +73,7 @@ export default function BeatCard({
       <span className="v3-data v3-meta-hide text-[var(--text-muted)]">{beat.key || '—'}</span>
       <span className="v3-data v3-track-price">{formatPrice(beat.price)}</span>
       <div className="v3-track-actions flex justify-end">
-        {isPurchased && <span className="v3-label mr-2">In library</span>}
+        {isPurchased && <span className="v3-label mr-2">В библиотеке</span>}
         {isAuthenticated && (
           <>
             <button

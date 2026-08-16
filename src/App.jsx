@@ -32,6 +32,12 @@ import { UiLayout, UiPage } from './v2/UiPage';
 import UiSwitch from './v2/UiSwitch';
 import HomePageV2 from './v2/HomePageV2';
 import HomePageV3 from './v3/pages/HomePageV3';
+import CoursesPageV3 from './v3/pages/CoursesPageV3';
+import CourseDetailPageV3 from './v3/pages/CourseDetailPageV3';
+import OrderPageV3 from './v3/pages/OrderPageV3';
+import ProfilePageV3 from './v3/pages/ProfilePageV3';
+import LoginPageV3 from './v3/pages/LoginPageV3';
+import RegisterPageV3 from './v3/pages/RegisterPageV3';
 import BeatPageV2 from './v2/BeatPageV2';
 import CoursesPageV2 from './v2/CoursesPageV2';
 import TelegramInit from './components/TelegramInit';
@@ -86,10 +92,10 @@ function App() {
               <Route path="/" element={<UiLayout v1={Layout} v2={LayoutV2} v3={LayoutV3} />}>
                 <Route index element={<UiPage v1={HomePage} v2={HomePageV2} v3={HomePageV3} />} />
                 <Route path="beat/:id" element={<UiPage v1={BeatPage} v2={BeatPageV2} />} />
-                <Route path="courses" element={<UiPage v1={CoursesPage} v2={CoursesPageV2} />} />
-                <Route path="course/:id" element={<CourseDetailPage />} /> {/* Страница детального просмотра курса */}
-                <Route path="order" element={<OrderPage />} />           {/* Форма заказа услуг */}
-                <Route path="profile" element={<ProfilePage />} />       {/* Личный кабинет */}
+                <Route path="courses" element={<UiPage v1={CoursesPage} v2={CoursesPageV2} v3={CoursesPageV3} />} />
+                <Route path="course/:id" element={<UiPage v1={CourseDetailPage} v3={CourseDetailPageV3} />} />
+                <Route path="order" element={<UiPage v1={OrderPage} v3={OrderPageV3} />} />
+                <Route path="profile" element={<UiPage v1={ProfilePage} v3={ProfilePageV3} />} />
                 <Route path="favorites" element={<FavoritesPage />} />    {/* Избранные биты */}
                 <Route path="cart" element={<CartPage />} />              {/* Корзина покупок */}
                 <Route path="purchases" element={<PurchasesPage />} />    {/* История покупок */}
@@ -104,8 +110,8 @@ function App() {
               </Route>
               
               {/* Маршруты аутентификации */}
-              <Route path="/login" element={<LoginPage />} />             {/* Вход в систему */}
-              <Route path="/register" element={<RegisterPage />} />       {/* Регистрация */}
+              <Route path="/login" element={<UiPage v1={LoginPage} v2={LoginPage} v3={LoginPageV3} />} />
+              <Route path="/register" element={<UiPage v1={RegisterPage} v2={RegisterPage} v3={RegisterPageV3} />} />
               
               {/* Административные маршруты */}
               <Route path="/admin/login" element={<AdminLogin />} />      {/* Вход для администраторов */}

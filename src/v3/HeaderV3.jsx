@@ -54,11 +54,11 @@ export default function HeaderV3() {
           <div className="flex min-w-0 items-center gap-6">
             <Link to="/" className="v3-wordmark shrink-0">XW</Link>
             <nav className="hidden items-center sm:flex" aria-label="Основное меню">
-              <NavItem to="/" label="Beats" active={location.pathname === '/'} />
+              <NavItem to="/" label="Биты" active={location.pathname === '/'} />
               {canSeeCourses && (
-                <NavItem to="/courses" label="Learn" active={location.pathname.startsWith('/course')} />
+                <NavItem to="/courses" label="Обучение" active={location.pathname.startsWith('/course')} />
               )}
-              <NavItem to="/order" label="Order" active={location.pathname === '/order'} />
+              <NavItem to="/order" label="Заказ" active={location.pathname === '/order'} />
             </nav>
           </div>
           <div className="flex items-center">
@@ -82,16 +82,16 @@ export default function HeaderV3() {
                 )}
               </>
             ) : (
-              <Link to="/login" className="v3-btn v3-btn-ghost text-sm">Log in</Link>
+              <Link to="/login" className="v3-btn v3-btn-ghost text-sm">Войти</Link>
             )}
           </div>
         </div>
         <nav className="flex gap-2 border-t border-[var(--border)] sm:hidden" aria-label="Мобильное меню">
-          <NavItem to="/" label="Beats" active={location.pathname === '/'} />
+          <NavItem to="/" label="Биты" active={location.pathname === '/'} />
           {canSeeCourses && (
-            <NavItem to="/courses" label="Learn" active={location.pathname.startsWith('/course')} />
+            <NavItem to="/courses" label="Обучение" active={location.pathname.startsWith('/course')} />
           )}
-          <NavItem to="/order" label="Order" active={location.pathname === '/order'} />
+          <NavItem to="/order" label="Заказ" active={location.pathname === '/order'} />
         </nav>
       </div>
     </header>
