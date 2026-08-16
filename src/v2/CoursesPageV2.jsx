@@ -160,8 +160,8 @@ const CoursesPageV2 = () => {
         <button
           type="button"
           onClick={() => setFiltersOpen(prev => !prev)}
-          className="inline-flex h-10 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/70 hover:text-white"
-          aria-label="Фильтры"
+          className={`v2-filter-btn ${filtersOpen || filters.purpose || filters.minPrice || filters.maxPrice ? 'is-on' : ''}`}
+          aria-expanded={filtersOpen}
         >
           <Filter className="h-4 w-4" />
           Фильтры

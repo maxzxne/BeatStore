@@ -85,9 +85,11 @@ const HomePageV2 = () => {
     setSearchParams(next);
   };
 
+  const filtersActive = Object.values(filters).some((value) => value);
+
   return (
     <div>
-      <section className="relative overflow-hidden px-4 pb-10 pt-8 sm:pt-14">
+      <section className="relative overflow-hidden px-4 pb-6 pt-8 sm:pt-14">
         <div className="mx-auto max-w-6xl">
           <p className="v2-reveal text-xs uppercase tracking-[0.3em] text-[#22c55e]">Marketplace</p>
           <h1 className="v2-reveal mt-3 max-w-3xl font-[Syne] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl" style={{ animationDelay: '80ms' }}>
@@ -96,39 +98,46 @@ const HomePageV2 = () => {
           <p className="v2-reveal mt-5 max-w-xl text-sm text-white/50 sm:text-base" style={{ animationDelay: '140ms' }}>
             Каталог битов, заказы под ключ{canSeeCourses ? ' и курсы по битмейкингу' : ''}. Слушай демо, бери лицензию, работай дальше.
           </p>
-          <form onSubmit={submitSearch} className="v2-reveal mt-8 flex max-w-xl items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4" style={{ animationDelay: '200ms' }}>
-            <Search className="h-4 w-4 text-white/40" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск по названию, артисту, жанру"
-              className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-white/30"
-            />
-          </form>
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl px-4 pb-12">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <p className="text-sm text-white/50">{loading ? 'Загрузка...' : `${beats.length} треков`}</p>
+        <div className="v2-toolbar v2-reveal mb-4">
+          <form onSubmit={submitSearch} className="v2-search" role="search">
+            <Search className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Поиск по названию, артисту, жанру"
+              className="v2-search-input"
+              aria-label="Поиск по названию, артисту, жанру"
+            />
+          </form>
           <button
             type="button"
             onClick={() => setFiltersOpen((prev) => !prev)}
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/70 hover:text-white"
+            className={`v2-filter-btn ${filtersOpen || filtersActive ? 'is-on' : ''}`}
+            aria-expanded={filtersOpen}
+            aria-controls="v2-beat-filters"
           >
             <Filter className="h-4 w-4" />
             Фильтры
           </button>
         </div>
 
-        <Filters
-          onFilterChange={setFilters}
-          genres={genres}
-          currentFilters={filters}
-          isOpen={filtersOpen}
-          onToggle={setFiltersOpen}
-          hideTrigger
-        />
+        <p className="mb-4 text-sm text-white/50">{loading ? 'Загрузка...' : `${beats.length} треков`}</p>
+
+        <div id="v2-beat-filters" className="v2-filters">
+          <Filters
+            onFilterChange={setFilters}
+            genres={genres}
+            currentFilters={filters}
+            isOpen={filtersOpen}
+            onToggle={setFiltersOpen}
+            hideTrigger
+          />
+        </div>
 
         {loading ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

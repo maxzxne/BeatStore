@@ -63,7 +63,7 @@ html.ui-v2 a.btn-primary {
 }
 
 html.ui-v2 .input,
-html.ui-v2 input:not([type='checkbox']):not([type='radio']):not([type='range']),
+html.ui-v2 input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.v2-search-input),
 html.ui-v2 textarea,
 html.ui-v2 select {
   background: rgba(7, 7, 15, 0.7) !important;
@@ -74,9 +74,100 @@ html.ui-v2 select {
 
 html.ui-v2 a:focus-visible,
 html.ui-v2 button:focus-visible,
-html.ui-v2 input:focus-visible {
+html.ui-v2 input:not(.v2-search-input):focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
+}
+
+.v2-toolbar {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+
+.v2-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  box-sizing: border-box;
+}
+
+.v2-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(248, 250, 252, 0.78);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.v2-filter-btn.is-on {
+  border-color: rgba(34, 197, 94, 0.55);
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+html.ui-v2 .v2-filters .card {
+  margin-top: 12px;
+  padding: 20px !important;
+  border-radius: 1.5rem !important;
+}
+
+html.ui-v2 .v2-filters .input {
+  height: 44px;
+  border-radius: 999px !important;
+  background: rgba(7, 7, 15, 0.55) !important;
+}
+
+.v2-search:focus-within {
+  border-color: rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+}
+
+.v2-search-input,
+.v2-search-input:focus,
+.v2-search-input:focus-visible {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0 !important;
+  margin: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #f8fafc;
+  font-size: 16px;
+  line-height: 1.2;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.v2-search-input::-webkit-search-decoration,
+.v2-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
 }
 
 html.ui-v2 .card .text-black,
