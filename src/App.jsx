@@ -24,7 +24,14 @@ import { AudioPlayerProvider } from './contexts/AudioPlayerContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SiteSettingsProvider } from './contexts/SiteSettingsContext';
+import { UiVersionProvider } from './contexts/UiVersionContext';
 import Layout from './components/Layout';
+import LayoutV2 from './v2/LayoutV2';
+import { UiLayout, UiPage } from './v2/UiPage';
+import UiSwitch from './v2/UiSwitch';
+import HomePageV2 from './v2/HomePageV2';
+import BeatPageV2 from './v2/BeatPageV2';
+import CoursesPageV2 from './v2/CoursesPageV2';
 import TelegramInit from './components/TelegramInit';
 import HomePage from './pages/HomePage';
 import BeatPage from './pages/BeatPage';
@@ -64,19 +71,20 @@ import CookiesPolicyPage from './pages/CookiesPolicyPage';
 function App() {
   return (
     // Провайдеры контекста для глобального состояния
-    <ThemeProvider>                   {/* Управление темой (тёмная/светлая) */}
-      <AuthProvider>                    {/* Управление аутентификацией пользователей и админов */}
-        <SiteSettingsProvider>          {/* Настройки сайта (видимость разделов) */}
-        <AudioPlayerProvider>           {/* Глобальный аудио плеер для воспроизведения битов */}
-          <NotificationProvider>        {/* Система уведомлений */}
-            <TelegramInit />            {/* Инициализация Telegram Web App */}
+    <ThemeProvider>
+      <UiVersionProvider>
+      <AuthProvider>
+        <SiteSettingsProvider>
+        <AudioPlayerProvider>
+          <NotificationProvider>
+            <TelegramInit />
             <Router>
+            <UiSwitch />
             <Routes>
-              {/* Публичные маршруты - доступны всем пользователям */}
-              <Route path="/" element={<Layout />}>
-                <Route index element={<HomePage />} />                    {/* Главная страница с каталогом битов */}
-                <Route path="beat/:id" element={<BeatPage />} />          {/* Страница отдельного бита */}
-                <Route path="courses" element={<CoursesPage />} />       {/* Страница курсов */}
+              <Route path="/" element={<UiLayout v1={Layout} v2={LayoutV2} />}>
+                <Route index element={<UiPage v1={HomePage} v2={HomePageV2} />} />
+                <Route path="beat/:id" element={<UiPage v1={BeatPage} v2={BeatPageV2} />} />
+                <Route path="courses" element={<UiPage v1={CoursesPage} v2={CoursesPageV2} />} />
                 <Route path="course/:id" element={<CourseDetailPage />} /> {/* Страница детального просмотра курса */}
                 <Route path="order" element={<OrderPage />} />           {/* Форма заказа услуг */}
                 <Route path="profile" element={<ProfilePage />} />       {/* Личный кабинет */}
@@ -99,7 +107,7 @@ function App() {
               
               {/* Административные маршруты */}
               <Route path="/admin/login" element={<AdminLogin />} />      {/* Вход для администраторов */}
-              <Route path="/admin" element={<Layout admin />}>
+              <Route path="/admin" element={<UiLayout v1={Layout} v2={LayoutV2} admin />}>
                 <Route index element={<AdminDashboard />} />              {/* Панель управления */}
                 <Route path="dashboard" element={<AdminDashboard />} />   {/* Аналитика и статистика */}
                 <Route path="beats" element={<AdminBeats />} />           {/* Управление битами */}
@@ -120,6 +128,7 @@ function App() {
         </AudioPlayerProvider>
         </SiteSettingsProvider>
       </AuthProvider>
+      </UiVersionProvider>
     </ThemeProvider>
   );
 }

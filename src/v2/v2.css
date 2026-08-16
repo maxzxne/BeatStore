@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+
+html.ui-v2 {
+  --color-primary: #1e1b4b;
+  --color-on-primary: #ffffff;
+  --color-secondary: #4338ca;
+  --color-accent: #22c55e;
+  --color-on-accent: #0f172a;
+  --color-background: #07070f;
+  --color-foreground: #f8fafc;
+  --color-card: rgba(27, 27, 48, 0.72);
+  --color-muted: #94a3b8;
+  --color-border: rgba(99, 102, 241, 0.28);
+  --color-destructive: #ef4444;
+  --v2-glow: 0 0 40px rgba(34, 197, 94, 0.18);
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'Poppins', sans-serif;
+  color-scheme: dark;
+}
+
+html.ui-v2,
+html.ui-v2 body {
+  background: var(--color-background) !important;
+  color: var(--color-foreground) !important;
+  font-family: var(--font-body);
+}
+
+html.ui-v2 body {
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, rgba(67, 56, 202, 0.28), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(34, 197, 94, 0.12), transparent 50%),
+    radial-gradient(800px 400px at 50% 120%, rgba(30, 27, 75, 0.55), transparent 60%);
+  background-attachment: fixed;
+}
+
+html.ui-v2 #root {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ui-v2 *,
+  html.ui-v2 *::before,
+  html.ui-v2 *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+html.ui-v2 .card {
+  background: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 1.25rem !important;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  color: var(--color-foreground) !important;
+}
+
+html.ui-v2 .btn-primary,
+html.ui-v2 a.btn-primary {
+  background: var(--color-accent) !important;
+  color: var(--color-on-accent) !important;
+  border-radius: 999px !important;
+}
+
+html.ui-v2 .input,
+html.ui-v2 input:not([type='checkbox']):not([type='radio']):not([type='range']),
+html.ui-v2 textarea,
+html.ui-v2 select {
+  background: rgba(7, 7, 15, 0.7) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-foreground) !important;
+  border-radius: 0.9rem !important;
+}
+
+html.ui-v2 a:focus-visible,
+html.ui-v2 button:focus-visible,
+html.ui-v2 input:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+html.ui-v2 .card .text-black,
+html.ui-v2 .card-header,
+html.ui-v2 .card-content,
+html.ui-v2 .card-footer {
+  color: #f8fafc;
+}
+
+html.ui-v2 h1,
+html.ui-v2 h2,
+html.ui-v2 h3 {
+  font-family: 'Syne', sans-serif;
+}
+
+html.ui-v2 .btn,
+html.ui-v2 button.btn {
+  border-radius: 999px !important;
+}
+
+html.ui-v2 .min-h-screen.bg-white {
+  background: transparent !important;
+}
+
+@keyframes v2-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes v2-eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes v2-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes v2-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.v2-spin {
+  animation: v2-spin-slow 12s linear infinite;
+}
+
+.v2-reveal {
+  animation: v2-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.v2-eq span {
+  display: block;
+  width: 3px;
+  border-radius: 99px;
+  background: var(--color-accent);
+  transform-origin: bottom;
+  animation: v2-eq 0.9s ease-in-out infinite;
+}
+.v2-eq span:nth-child(2) { animation-delay: 0.12s; }
+.v2-eq span:nth-child(3) { animation-delay: 0.24s; }
+.v2-eq span:nth-child(4) { animation-delay: 0.08s; }
+.v2-eq span:nth-child(5) { animation-delay: 0.2s; }
+
+.v2-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  min-height: 0 !important;
+  background: rgba(255,255,255,0.12);
+  border-radius: 99px;
+  cursor: pointer;
+}
+.v2-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 99px;
+  background: var(--color-accent);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.7);
+  border: 0;
+}
+.v2-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--color-accent);
+}

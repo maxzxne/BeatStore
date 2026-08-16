@@ -20,9 +20,11 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (isDarkMode) {
+    if (isDarkMode || root.classList.contains('ui-v2')) {
       root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      if (!root.classList.contains('ui-v2')) {
+        localStorage.setItem('theme', 'dark');
+      }
     } else {
       root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
