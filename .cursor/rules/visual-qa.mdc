@@ -1,0 +1,26 @@
+---
+description: Autonomous visual QA cycle required before any V3 page is done
+globs: src/**/*.{js,jsx,css}
+alwaysApply: false
+---
+
+# Visual QA
+
+Страница не готова, потому что «код компилируется».
+
+Цикл:
+
+```text
+IMPLEMENT → RUN → OPEN → INTERACT → SCREENSHOT → REVIEW → FIX → RECHECK
+```
+
+Инструмент: `playwright-cli` (skill `.cursor/skills/playwright-cli`).  
+Команды: `open`, `goto`, `snapshot`, `click`, `fill`, `resize`, `screenshot`, `console`.
+
+Проверяй: nav, buttons, search, filters, player, cart, checkout, auth, admin, console, network.
+
+Разрешения: 1920×1080, 1440×900, 1366×768, 1280×800, 1024×768, 768×1024, 430×932, 390×844, 375×812.
+
+Нашёл spacing/overflow/hover/contrast/console error — исправь сам, не спрашивай.
+
+Сверяй скрин с `DESIGN.md`: это один продукт V3, не набор разных дизайнеров.

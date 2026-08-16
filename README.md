@@ -1,6 +1,33 @@
 # XWinner.beats.please
 
+Официальный premium beat store бренда **XWinner**. Не marketplace.
+
+```text
+V1 — первоначальная версия
+V2 — текущая версия
+V3 — новый premium redesign
+
+Current UI: V2
+Target UI: V3
+```
+
+Дизайн-система V3: [`DESIGN.md`](./DESIGN.md)  
+План миграции: [`docs/v3-plan.md`](./docs/v3-plan.md)
+
 Современная веб-платформа для продажи и распространения музыкальных битов (инструменталов) с удобным интерфейсом и системой управления контентом.
+
+## Версии UI
+
+```text
+V1 — первоначальная версия
+V2 — текущая версия
+V3 — новый premium redesign
+
+Current UI: V2
+Target UI: V3
+```
+
+V3 — официальный premium beat store бренда XWinner, не marketplace. Дизайн-система: [`DESIGN.md`](./DESIGN.md). Реализация V3 не смешивается с визуальным языком V1/V2.
 
 ## 🎵 Описание проекта
 

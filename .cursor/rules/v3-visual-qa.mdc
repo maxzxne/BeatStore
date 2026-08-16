@@ -1,0 +1,19 @@
+---
+description: Autonomous visual QA cycle required for BeatStore V3 UI work
+globs: src/**/*.{js,jsx,css}
+alwaysApply: false
+---
+
+# V3 visual QA
+
+A page is not done when it compiles. Cycle:
+
+`implement → run → open browser → interact → screenshot → review → fix → recheck`
+
+Use `npx playwright-cli` from the repo (skill: `.cursor/skills/playwright-cli/SKILL.md`).
+
+Check: navigation, play, favorite, cart, filters, forms, checkout, admin tables, console errors, failed network.
+
+Viewports: 1920, 1440, 1366, 1280, 1024, 768, 430, 390, 375. No accidental horizontal scroll. Player usable on mobile.
+
+Fix obvious visual/interaction bugs yourself. Compare screenshots to `DESIGN.md`. If two pages look like different products, unify them.

@@ -1,0 +1,26 @@
+---
+description: BeatStore V3 positioning, versioning, and non-negotiable product rules
+alwaysApply: true
+---
+
+# BeatStore V3
+
+```text
+V1 — первоначальная версия
+V2 — текущая версия (indigo + acid green, частично поверх V1)
+V3 — 2026 music-tech product UI
+Current UI: V2
+Target UI: V3
+```
+
+Это **Official Beat Store** бренда XWinner, не marketplace и не BeatStars.
+
+- Публичный UI: единая официальная площадка. Чужие продюсеры/royalty не превращают витрину в маркетплейс.
+- Источник визуальных решений: корневой `DESIGN.md`. Не `design-system/beatstore-v2`.
+- Не смешивать стили V1/V2/V3. Не тащить в V3 `#22C55E`, indigo glow, Syne/Poppins, Cormorant, tungsten gold, pill-кнопки, spin-artwork.
+- V3: dark, sharp, dense, Space Grotesk, monochrome white interaction. Не luxury editorial, не лейбл 2015.
+- Reuse functionality, not UI: API, SQLite, JWT, FastAPI, бизнес-логика остаются.
+- Backend не менять без необходимости. Если нужно — объяснить, минимальный diff, проверить покупки/auth.
+- Новые UI-компоненты живут в `src/v3/`. Не патчить V1/V2 «под V3».
+- Запрещены: purple SaaS, gradient landing, glassmorphism, Inter-only, emoji-иконки, слово Marketplace в public UI, serif-hero, beige/gold luxury.
+- Signature V3 — sticky waveform player + oversized artwork, не native `<audio controls>`.

@@ -1,0 +1,27 @@
+---
+description: Do not change BeatStore backend contracts unless V3 truly cannot ship without it
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# Backend safety
+
+V3 — frontend/UX redesign. Backend трогать только если без этого нельзя собрать UI.
+
+Осторожно: API contracts, schema, payments, JWT, purchase/download, file upload.
+
+Сейчас факты:
+
+- Лицензии — это `purchase_type`: `mp3` | `wav` | `exclusive`, не отдельная сущность License.
+- Поиск в каталоге частично клиентский.
+- Оплата тестовая: `/test-payment` → `/payment/success`.
+- Royalty/producers в моделях нет.
+
+Если изменение нужно:
+
+1. Зачем для V3
+2. Что сломается
+3. Минимальный diff
+4. Проверить login, catalog, cart, purchase, download
+
+Не добавлять поля «для красоты». Waveform peaks лучше считать на клиенте из demo, чем менять схему вслепую.

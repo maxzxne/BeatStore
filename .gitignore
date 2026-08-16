@@ -136,3 +136,6 @@ dist/
 
 # Local development
 .local
+
+# Playwright CLI sessions / screenshots
+.playwright-cli/

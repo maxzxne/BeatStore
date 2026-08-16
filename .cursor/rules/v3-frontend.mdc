@@ -1,0 +1,28 @@
+---
+description: V3 frontend implementation must follow DESIGN.md tokens and src/v3 architecture
+globs: src/**/*.{js,jsx,css}
+alwaysApply: false
+---
+
+# V3 frontend
+
+Читай `DESIGN.md` до правок UI.
+
+```css
+/* токены только как CSS variables, не сырой hex в JSX */
+background: var(--bg);
+color: var(--accent);
+```
+
+- V3 код: `src/v3/**` + `src/v3/v3.css`. Contexts и `src/utils/api.js` переиспользуем.
+- Шрифты: Space Grotesk (UI/display), IBM Plex Mono (BPM/key/time). Не Cormorant, не Poppins, не Syne, не Righteous.
+- Accent: белый interaction `#FAFAFA`. Не tungsten gold, не `#22C55E`.
+- Кнопки `--r-md` 4px, высота 40px. Не pill, не rounded-xl cards.
+- Catalog: track rows, не ecommerce grid.
+- Player: sticky full-bleed, 64px, 0 radius.
+- Hover без layout-shift. Motion 120–280ms, `prefers-reduced-motion`.
+- Loading/empty/error обязательны. Skeleton в геометрии реального блока.
+- Иконки только Lucide. `cursor-pointer` + видимый focus ring.
+- Не логировать каждый API-запрос в проде. Не `user-select: none` на весь документ.
+- Карточка бита: artwork, title, artist, BPM, key, play, favorite, cart.
+- Плеер: waveform, playhead, duration, volume, keyboard. Не крутить обложку.

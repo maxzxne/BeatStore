@@ -40,6 +40,7 @@ export const AudioPlayerProvider = ({ children }) => {
   const [currentTrackTitle, setCurrentTrackTitle] = useState(null);
   // Обложка текущего трека (URL)
   const [currentTrackCover, setCurrentTrackCover] = useState(null);
+  const [currentTrackMeta, setCurrentTrackMeta] = useState(null);
   // Состояние воспроизведения
   const [isPlaying, setIsPlaying] = useState(false);
   // Текущее время воспроизведения (в секундах)
@@ -55,7 +56,7 @@ export const AudioPlayerProvider = ({ children }) => {
   // Флаг для предотвращения обновления времени во время перемотки
   const isSeekingRef = useRef(false);
 
-  const playTrack = useCallback((trackId, trackUrl, trackTitle, trackCoverUrl = null) => {
+  const playTrack = useCallback((trackId, trackUrl, trackTitle, trackCoverUrl = null, meta = null) => {
     // Если уже играет этот трек - ставим на паузу
     if (currentTrack === trackId && isPlaying) {
       pauseTrack();
@@ -118,6 +119,7 @@ export const AudioPlayerProvider = ({ children }) => {
       setCurrentTrackUrl(null);
       setCurrentTrackTitle(null);
       setCurrentTrackCover(null);
+      setCurrentTrackMeta(null);
       setCurrentTime(0);
     };
 
@@ -128,6 +130,7 @@ export const AudioPlayerProvider = ({ children }) => {
       setCurrentTrackUrl(null);
       setCurrentTrackTitle(null);
       setCurrentTrackCover(null);
+      setCurrentTrackMeta(null);
       setCurrentTime(0);
     };
 
@@ -136,6 +139,7 @@ export const AudioPlayerProvider = ({ children }) => {
     setCurrentTrackUrl(trackUrl);
     setCurrentTrackTitle(trackTitle);
     setCurrentTrackCover(trackCoverUrl);
+    setCurrentTrackMeta(meta);
     // НЕ сбрасываем время при смене трека
 
     // Запускаем воспроизведение
@@ -150,6 +154,7 @@ export const AudioPlayerProvider = ({ children }) => {
         setCurrentTrackUrl(null);
         setCurrentTrackTitle(null);
         setCurrentTrackCover(null);
+        setCurrentTrackMeta(null);
         setCurrentTime(0);
       });
   }, [currentTrack, isPlaying, volume, isMuted]);
@@ -195,6 +200,7 @@ export const AudioPlayerProvider = ({ children }) => {
     setCurrentTrackUrl(null);
     setCurrentTrackTitle(null);
     setCurrentTrackCover(null);
+    setCurrentTrackMeta(null);
     setCurrentTime(0);
   }, []);
 
@@ -231,6 +237,7 @@ export const AudioPlayerProvider = ({ children }) => {
     currentTrackUrl,
     currentTrackTitle,
     currentTrackCover,
+    currentTrackMeta,
     isPlaying,
     currentTime,
     duration,

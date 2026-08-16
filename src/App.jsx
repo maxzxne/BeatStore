@@ -27,9 +27,11 @@ import { SiteSettingsProvider } from './contexts/SiteSettingsContext';
 import { UiVersionProvider } from './contexts/UiVersionContext';
 import Layout from './components/Layout';
 import LayoutV2 from './v2/LayoutV2';
+import LayoutV3 from './v3/LayoutV3';
 import { UiLayout, UiPage } from './v2/UiPage';
 import UiSwitch from './v2/UiSwitch';
 import HomePageV2 from './v2/HomePageV2';
+import HomePageV3 from './v3/pages/HomePageV3';
 import BeatPageV2 from './v2/BeatPageV2';
 import CoursesPageV2 from './v2/CoursesPageV2';
 import TelegramInit from './components/TelegramInit';
@@ -81,8 +83,8 @@ function App() {
             <Router>
             <UiSwitch />
             <Routes>
-              <Route path="/" element={<UiLayout v1={Layout} v2={LayoutV2} />}>
-                <Route index element={<UiPage v1={HomePage} v2={HomePageV2} />} />
+              <Route path="/" element={<UiLayout v1={Layout} v2={LayoutV2} v3={LayoutV3} />}>
+                <Route index element={<UiPage v1={HomePage} v2={HomePageV2} v3={HomePageV3} />} />
                 <Route path="beat/:id" element={<UiPage v1={BeatPage} v2={BeatPageV2} />} />
                 <Route path="courses" element={<UiPage v1={CoursesPage} v2={CoursesPageV2} />} />
                 <Route path="course/:id" element={<CourseDetailPage />} /> {/* Страница детального просмотра курса */}
@@ -107,7 +109,7 @@ function App() {
               
               {/* Административные маршруты */}
               <Route path="/admin/login" element={<AdminLogin />} />      {/* Вход для администраторов */}
-              <Route path="/admin" element={<UiLayout v1={Layout} v2={LayoutV2} admin />}>
+              <Route path="/admin" element={<UiLayout v1={Layout} v2={LayoutV2} v3={LayoutV3} admin />}>
                 <Route index element={<AdminDashboard />} />              {/* Панель управления */}
                 <Route path="dashboard" element={<AdminDashboard />} />   {/* Аналитика и статистика */}
                 <Route path="beats" element={<AdminBeats />} />           {/* Управление битами */}

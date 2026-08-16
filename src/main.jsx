@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import './v2/v2.css'
+import './v3/v3.css'
 
 // Предотвращаем фокус на неинтерактивных элементах
 document.addEventListener('mousedown', (e) => {
