@@ -15,10 +15,13 @@ import axios from 'axios';
 export const API_URL = import.meta.env.VITE_API_URL || 
   (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
 
-// Отладочная информация
-console.log('API_URL:', API_URL);
-console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('window.location.origin:', typeof window !== 'undefined' ? window.location.origin : 'undefined');
+const debugApi = (...args) => {
+  if (import.meta.env.DEV) console.log(...args);
+};
+
+debugApi('API_URL:', API_URL);
+debugApi('VITE_API_URL:', import.meta.env.VITE_API_URL);
+debugApi('window.location.origin:', typeof window !== 'undefined' ? window.location.origin : 'undefined');
 
 // Создание экземпляра Axios с базовой конфигурацией
 export const api = axios.create({
@@ -34,7 +37,7 @@ export const api = axios.create({
  */
 api.interceptors.request.use(
   (config) => {
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    debugApi('API Request:', config.method?.toUpperCase(), config.url);
     
     // Получаем токены из localStorage
     const token = localStorage.getItem('token');           // Токен обычного пользователя
@@ -43,10 +46,10 @@ api.interceptors.request.use(
     // Добавляем токен в заголовки (приоритет у админ токена)
     if (adminToken) {
       config.headers.Authorization = `Bearer ${adminToken}`;
-      console.log('Using admin token');
+      debugApi('Using admin token');
     } else if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Using user token');
+      debugApi('Using user token');
     }
     
     return config;
@@ -64,7 +67,7 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', response.status, response.config.url);
+    debugApi('API Response:', response.status, response.config.url);
     return response;
   },
   (error) => {

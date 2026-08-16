@@ -60,7 +60,7 @@ export default function MiniPlayerV3() {
     <div className="v3-mini safe-area-bottom" role="region" aria-label="Плеер">
       <div className="v3-mini-inner">
         <div className="v3-mini-art">
-          {currentTrackCover ? <img src={currentTrackCover} alt="" /> : null}
+          {currentTrackCover ? <img src={currentTrackCover} alt="" decoding="async" /> : null}
         </div>
         <div className="min-w-0 w-[140px] sm:w-[200px]">
           <div className="truncate text-sm font-semibold tracking-tight">{currentTrackTitle}</div>

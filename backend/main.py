@@ -286,6 +286,30 @@ app.add_middleware(
     max_age=3600,  # Кеш preflight запросов на 1 час
 )
 
+FRONTEND_INDEX = "static/frontend/index.html"
+# Страницы SPA, которые совпадают с GET API. Браузер (Accept: text/html) должен
+# получить index.html, axios (Accept: application/json) — JSON.
+SPA_HTML_PATHS = {"/courses", "/favorites", "/cart", "/purchases"}
+
+
+def wants_browser_document(request: Request) -> bool:
+    accept = (request.headers.get("accept") or "").lower()
+    html_pos = accept.find("text/html")
+    if html_pos == -1:
+        return False
+    json_pos = accept.find("application/json")
+    return json_pos == -1 or html_pos < json_pos
+
+
+@app.middleware("http")
+async def spa_over_colliding_api(request: Request, call_next):
+    if request.method in ("GET", "HEAD"):
+        path = request.url.path.rstrip("/") or "/"
+        if path in SPA_HTML_PATHS and wants_browser_document(request):
+            if os.path.exists(FRONTEND_INDEX):
+                return FileResponse(FRONTEND_INDEX, media_type="text/html")
+    return await call_next(request)
+
 # Middleware для логирования ошибок
 @app.middleware("http")
 async def log_errors_middleware(request: Request, call_next):

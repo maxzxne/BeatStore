@@ -63,7 +63,7 @@ export default function BeatCard({
         {playing ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
       </button>
       <Link to={`/beat/${beat.id}`} className="v3-track-art">
-        {cover ? <img src={cover} alt={beat.title} /> : null}
+        {cover ? <img src={cover} alt={beat.title} loading="lazy" decoding="async" /> : null}
       </Link>
       <Link to={`/beat/${beat.id}`} className="min-w-0">
         <div className="v3-track-title">{beat.title}</div>

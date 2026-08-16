@@ -724,7 +724,7 @@ const AdminUpload = () => {
                     type="file"
                     id="beat_cover_file"
                     name="cover_file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                     onChange={handleBeatFileChange}
                     className="hidden"
                   />
@@ -757,16 +757,17 @@ const AdminUpload = () => {
                         <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
                           <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-neutral-500">Изображения (JPG, PNG, etc.)</p>
+                        <p className="text-xs text-gray-400 dark:text-neutral-500">JPEG, PNG или WebP</p>
                       </div>
                     </label>
                   )}
                 </div>
                 <p className="text-xs text-gray-600 dark:text-neutral-400 mt-1">
-                  Опциональная обложка для вашего бита
+                  JPEG, PNG или WebP. Не SVG, не HEIC. Макс. 10 МБ.
                 </p>
                 <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
-                  Рекомендуемое разрешение: 500×500px или больше
+                  Лучше квадрат 1400×1400 или 2000×2000, JPEG/WebP до 400 КБ.
+                  V3 кадрирует обложку на весь stage (левый край важнее) и в строку 72px — не грузи 4K PNG.
                 </p>
               </div>
             </div>

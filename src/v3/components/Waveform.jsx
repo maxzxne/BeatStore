@@ -11,27 +11,42 @@ export default function Waveform({
 }) {
   const clipId = useId().replace(/:/g, '');
   const svgRef = useRef(null);
-  const bars = compact ? 160 : 280;
+  const bars = compact ? 160 : 192;
   const width = compact ? 640 : 1400;
   const height = compact ? 28 : 56;
-  const [peaks, setPeaks] = useState([]);
+  const [peaks, setPeaks] = useState(() => fallbackPeaks(bars));
   const [hover, setHover] = useState(null);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!url) {
-      setPeaks(fallbackPeaks(bars));
-      return undefined;
+    setPeaks(fallbackPeaks(bars));
+    if (!url) return undefined;
+
+    const controller = new AbortController();
+    let idleId = 0;
+    const run = () => {
+      extractPeaks(url, bars, controller.signal)
+        .then((next) => {
+          if (!controller.signal.aborted) setPeaks(next);
+        })
+        .catch((error) => {
+          if (controller.signal.aborted || error?.name === 'AbortError') return;
+          setPeaks(fallbackPeaks(bars));
+        });
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(run, { timeout: 800 });
+    } else {
+      idleId = window.setTimeout(run, 120);
     }
-    extractPeaks(url, bars)
-      .then((next) => {
-        if (!cancelled) setPeaks(next);
-      })
-      .catch(() => {
-        if (!cancelled) setPeaks(fallbackPeaks(bars));
-      });
+
     return () => {
-      cancelled = true;
+      controller.abort();
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      } else {
+        window.clearTimeout(idleId);
+      }
     };
   }, [url, bars]);
 
@@ -45,10 +60,6 @@ export default function Waveform({
     if (!rect?.width) return 0;
     return Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
   };
-
-  if (!peaks.length) {
-    return <div className={clsx('v3-skeleton w-full', compact ? 'h-9' : 'h-24')} />;
-  }
 
   const columns = peaks.map((peak, index) => {
     const h = Math.max(2, peak * (height - 4));

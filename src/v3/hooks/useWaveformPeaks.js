@@ -1,14 +1,21 @@
 const cache = new Map();
+const MAX_DECODE_BYTES = 2 * 1024 * 1024;
 
-export async function extractPeaks(url, bars = 192) {
-  if (!url) return [];
+export async function extractPeaks(url, bars = 192, signal) {
+  if (!url) return fallbackPeaks(bars);
   const key = `${url}:${bars}`;
   if (cache.has(key)) return cache.get(key);
 
   const pending = (async () => {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal });
     if (!res.ok) throw new Error('audio fetch failed');
+    const len = Number(res.headers.get('content-length') || 0);
+    if (len > MAX_DECODE_BYTES) {
+      try { await res.body?.cancel(); } catch { /* ignore */ }
+      return fallbackPeaks(bars);
+    }
     const buffer = await res.arrayBuffer();
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioCtx();
     const audio = await ctx.decodeAudioData(buffer.slice(0));

@@ -47,7 +47,9 @@ export default function AudioPlayer({ beat }) {
   return (
     <section className={`v3-stage ${playing ? 'is-playing' : ''}`} aria-label="Плеер">
       <div className="v3-stage-art">
-        {cover ? <img src={cover} alt={beat.title} /> : null}
+        {cover ? (
+          <img src={cover} alt={beat.title} fetchPriority="high" decoding="async" />
+        ) : null}
         <button type="button" className="v3-stage-play" onClick={toggle} aria-label={playing ? 'Пауза' : 'Слушать'}>
           {playing ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
         </button>
