@@ -4,7 +4,7 @@ import { Heart, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSiteSettings } from '../../contexts/SiteSettingsContext';
 import { api, buildMediaUrl } from '../../utils/api';
-import { EmptyState, Skeleton, TextInput } from '../components/Primitives';
+import { EmptyState, Skeleton } from '../components/Primitives';
 import { formatCourseCount, formatPrice } from '../format';
 
 export default function CoursesPageV3() {
@@ -14,8 +14,6 @@ export default function CoursesPageV3() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purpose, setPurpose] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
   const first = useRef(true);
 
   useEffect(() => {
@@ -24,15 +22,13 @@ export default function CoursesPageV3() {
 
   useEffect(() => {
     if (settingsLoading || !canSeeCourses) return undefined;
-    const delay = first.current ? 0 : minPrice || maxPrice ? 800 : 300;
+    const delay = first.current ? 0 : 300;
     first.current = false;
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
         if (purpose) params.append('purpose', purpose);
-        if (minPrice) params.append('min_price', minPrice);
-        if (maxPrice) params.append('max_price', maxPrice);
         const response = await api.get(`/courses?${params.toString()}`);
         setCourses(response.data || []);
       } catch {
@@ -42,7 +38,7 @@ export default function CoursesPageV3() {
       }
     }, delay);
     return () => clearTimeout(timer);
-  }, [purpose, minPrice, maxPrice, canSeeCourses, settingsLoading]);
+  }, [purpose, canSeeCourses, settingsLoading]);
 
   const toggle = async (event, course, kind) => {
     event.preventDefault();
@@ -84,11 +80,6 @@ export default function CoursesPageV3() {
             {label}
           </button>
         ))}
-      </div>
-
-      <div className="mb-4 flex max-w-md gap-4">
-        <TextInput type="number" placeholder="Мин. цена" value={minPrice} onChange={(event) => setMinPrice(event.target.value)} aria-label="Минимальная цена" />
-        <TextInput type="number" placeholder="Макс. цена" value={maxPrice} onChange={(event) => setMaxPrice(event.target.value)} aria-label="Максимальная цена" />
       </div>
 
       {loading && (
