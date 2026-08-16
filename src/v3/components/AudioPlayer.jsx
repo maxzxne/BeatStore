@@ -56,7 +56,7 @@ export default function AudioPlayer({ beat }) {
         </div>
       </div>
       <div className="v3-stage-copy">
-        <p className="v3-label">Now</p>
+        <p className="v3-label">{current || playing ? 'Now' : 'Listen'}</p>
         <h1 className="v3-stage-title">{beat.title}</h1>
         <div className="v3-stage-stats v3-data">
           {beat.bpm != null && <span>{beat.bpm} BPM</span>}

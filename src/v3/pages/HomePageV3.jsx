@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
 import { useCatalog } from '../hooks/useCatalog';
 import AudioPlayer from '../components/AudioPlayer';
 import BeatCard from '../components/BeatCard';
@@ -8,6 +9,7 @@ import { Button, EmptyState, ErrorState, Skeleton, TextInput } from '../componen
 import { formatTrackCount } from '../format';
 
 export default function HomePageV3() {
+  const { currentTrack } = useAudioPlayer();
   const {
     visible,
     featured,
@@ -25,6 +27,7 @@ export default function HomePageV3() {
     isAuthenticated,
   } = useCatalog();
   const [draft, setDraft] = useState(query);
+  const stageBeat = visible.find((beat) => beat.id === currentTrack) || featured;
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -33,8 +36,8 @@ export default function HomePageV3() {
 
   return (
     <div>
-      {featured ? (
-        <AudioPlayer beat={featured} />
+      {stageBeat ? (
+        <AudioPlayer beat={stageBeat} />
       ) : loading ? (
         <div className="v3-stage">
           <Skeleton className="min-h-[320px]" />

@@ -45,15 +45,45 @@ html.ui-v3 {
   color-scheme: dark;
 }
 
-html.ui-v3,
+html.ui-v3 {
+  height: 100%;
+  overflow: hidden;
+}
+
 html.ui-v3 body {
   background: var(--bg) !important;
   color: var(--text) !important;
   font-family: var(--font-ui);
+  height: 100%;
   overflow-x: hidden;
+  overflow-y: scroll;
+  overscroll-behavior: auto;
+  scrollbar-width: auto;
+  scrollbar-color: #a1a1aa #111113;
 }
 
-html.ui-v3 #root { background: var(--bg); }
+html.ui-v3 body::-webkit-scrollbar {
+  width: 12px;
+}
+
+html.ui-v3 body::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+html.ui-v3 body::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
+html.ui-v3 body::-webkit-scrollbar-thumb:hover {
+  background: #71717a;
+}
+
+html.ui-v3 #root {
+  background: var(--bg);
+  overflow: visible;
+  height: auto;
+  min-height: 100%;
+}
 
 html.ui-v3,
 html.ui-v3 * {

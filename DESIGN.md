@@ -184,14 +184,16 @@ Fast, spring-like, restrained.
 
 ## 7. Homepage
 
-Первый экран = **featured listen + начало каталога**, не landing value prop.
+Первый экран = **сейчас играет + начало каталога**, не landing value prop.
 
-- Oversized cropped artwork, но не full-viewport poster
+- Oversized cropped artwork текущего трека (по умолчанию первый с demo), не full-viewport poster
+- Play строки в каталоге меняет обложку/title на stage — это now-playing, не баннер первого бита
 - `--stage: min(48dvh, 520px, calc(100dvh - header - 380px))` — в первом viewport видны catalog chrome и минимум 2 строки треков
 - Track title grotesk
 - Floating BPM / key
 - Waveform на media
 - Catalog как tracklist сразу под ним
+- Один скролл: `body overflow-y: scroll`. Не `overflow-x: hidden` на `html`/`#root` — это ломает wheel.
 
 Не hero «Official Beat Store» + две CTA. Не `min-height: 82vh` на stage.
 
