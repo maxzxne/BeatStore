@@ -184,15 +184,16 @@ Fast, spring-like, restrained.
 
 ## 7. Homepage
 
-Первый экран = **сейчас играет / featured listen**, не landing value prop.
+Первый экран = **featured listen + начало каталога**, не landing value prop.
 
-- Oversized cropped artwork
+- Oversized cropped artwork, но не full-viewport poster
+- `--stage: min(48dvh, 520px, calc(100dvh - header - 380px))` — в первом viewport видны catalog chrome и минимум 2 строки треков
 - Track title grotesk
 - Floating BPM / key
 - Waveform на media
 - Catalog как tracklist сразу под ним
 
-Не hero «Official Beat Store» + две CTA.
+Не hero «Official Beat Store» + две CTA. Не `min-height: 82vh` на stage.
 
 ---
 

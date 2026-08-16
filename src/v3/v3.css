@@ -40,6 +40,8 @@ html.ui-v3 {
   --content: 1200px;
   --header: 52px;
   --player: 64px;
+  /* Featured listen, not a full-viewport poster: catalog rows must enter the first screen. */
+  --stage: min(48dvh, 520px, calc(100dvh - var(--header) - 380px));
   color-scheme: dark;
 }
 
@@ -271,7 +273,7 @@ html.ui-v3 ::selection {
 /* Stage / hero */
 .v3-stage {
   position: relative;
-  min-height: min(82vh, 840px);
+  min-height: var(--stage);
   border-bottom: 1px solid var(--border);
 }
 
@@ -292,7 +294,7 @@ html.ui-v3 ::selection {
     display: grid;
     position: absolute;
     left: 16px;
-    bottom: 88px;
+    bottom: 72px;
     z-index: 3;
     width: 52px;
     height: 52px;
@@ -325,9 +327,9 @@ html.ui-v3 ::selection {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 14px;
-  min-height: min(82vh, 840px);
-  padding: 28px 16px 88px;
+  gap: 12px;
+  min-height: var(--stage);
+  padding: 20px 16px 64px;
   max-width: 640px;
   margin-left: auto;
   background: linear-gradient(90deg, transparent 0%, rgba(9, 9, 11, 0.55) 28%, rgba(9, 9, 11, 0.92) 70%);
@@ -348,7 +350,7 @@ html.ui-v3 ::selection {
 
 @media (min-width: 900px) {
   .v3-stage-copy {
-    padding: 48px 40px 96px 24px;
+    padding: 24px 40px 64px 24px;
   }
 }
 
