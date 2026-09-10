@@ -216,12 +216,12 @@ const CoursesPageV2 = () => {
             <Link
               key={course.id}
               to={`/course/${course.id}`}
-              className="v2-reveal group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] hover:border-[#22c55e]/40 hover:-translate-y-1 transition-all duration-300"
+              className="v2-reveal group relative rounded-3xl border border-white/10 bg-white/[0.03] hover:border-[#22c55e]/40 hover:-translate-y-1 transition-all duration-300"
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <div className="relative">
                 {course.preview_video_url ? (
-                  <div className="relative h-52 overflow-hidden bg-black">
+                  <div className="relative h-52 overflow-hidden rounded-t-3xl bg-black">
                     <video
                       src={buildMediaUrl(course.preview_video_url)}
                       className="h-full w-full object-cover"
@@ -240,13 +240,13 @@ const CoursesPageV2 = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid h-52 place-items-center bg-gradient-to-br from-neutral-900 to-black text-white/30 font-[Syne]">
+                  <div className="grid h-52 place-items-center rounded-t-3xl bg-gradient-to-br from-neutral-900 to-black text-white/30 font-[Syne]">
                     Курс
                   </div>
                 )}
               </div>
               
-              <div className="space-y-2 p-4">
+              <div className="space-y-2 px-4 pt-4 pb-5">
                 <h3 className="truncate font-[Syne] font-bold">{course.title}</h3>
                 {course.purpose && (
                   <p className="text-sm text-white/50">{course.purpose}</p>

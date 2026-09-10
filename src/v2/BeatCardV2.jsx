@@ -80,8 +80,8 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
       className="v2-reveal group block"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <article className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition-transform duration-300 hover:-translate-y-1 hover:border-[#22c55e]/40 hover:shadow-[0_20px_60px_rgba(34,197,94,0.12)]">
-        <div className="relative aspect-square overflow-hidden">
+      <article className="relative rounded-3xl border border-white/10 bg-white/[0.03] transition-transform duration-300 hover:-translate-y-1 hover:border-[#22c55e]/40 hover:shadow-[0_20px_60px_rgba(34,197,94,0.12)]">
+        <div className="relative aspect-square overflow-hidden rounded-t-3xl">
           {beat.cover_url ? (
             <img
               src={buildMediaUrl(beat.cover_url)}
@@ -115,7 +115,7 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
             </span>
           )}
         </div>
-        <div className="space-y-2 p-4">
+        <div className="space-y-2 px-4 pt-4 pb-5">
           <h3 className="truncate font-[Syne] text-base font-bold">{beat.title}</h3>
           <p className="truncate text-sm text-white/50">{beat.artist}</p>
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-white/40">
@@ -124,10 +124,10 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
             <span>{beat.bpm} BPM</span>
             {beat.key && <><span>·</span><span>{beat.key}</span></>}
           </div>
-          <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center justify-between gap-2 pt-1">
             <span className="text-sm font-semibold text-[#22c55e]">{price}</span>
             {(isAuthenticated || !isPurchased) && (
-              <div className="flex gap-1">
+              <div className="flex shrink-0 gap-1">
                 <button type="button" onClick={(e) => toggle(e, 'fav')} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10" aria-label="Избранное">
                   <Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
                 </button>

@@ -32,9 +32,9 @@ const LayoutV2 = ({ admin = false }) => {
       {isAdminRoute ? (
         <div className="v2-admin flex h-screen overflow-hidden">
           <SidebarV2 />
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
             <HeaderV2 admin />
-            <main className="flex-1 overflow-x-hidden overflow-y-auto">
+            <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
               <div className="container mx-auto px-4 sm:px-6 py-6">
                 <Outlet />
               </div>

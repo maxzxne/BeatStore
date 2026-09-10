@@ -129,8 +129,28 @@
   font-size: 0.875rem;
 }
 
+/* Last column (edit/delete) must keep its intrinsic width — nowrap
+   meta/price columns otherwise squeeze it and overflow:hidden eats the buttons. */
+.v2-admin table th:last-child,
+.v2-admin table td:last-child {
+  width: 1%;
+  min-width: 7.5rem;
+  white-space: nowrap;
+  padding-right: 2rem;
+}
+
+.v2-admin table th:first-child,
+.v2-admin table td:first-child {
+  padding-left: 1.5rem;
+}
+
+.v2-admin table thead th {
+  padding-top: 1rem;
+}
+
 .v2-admin table tbody tr:last-child td {
   border-bottom: none;
+  padding-bottom: 1.5rem;
 }
 
 .v2-admin table tr:hover td {
@@ -139,10 +159,16 @@
 
 /* Panel shell used by list pages */
 .v2-admin .admin-panel {
+  min-width: 0;
   overflow: hidden;
   border-radius: 1rem;
   border: 1px solid var(--admin-border);
   background: var(--admin-panel);
+}
+
+.v2-admin .admin-panel > .overflow-x-auto {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .v2-admin .admin-page-title {
@@ -375,6 +401,122 @@
 .v2-admin button.bg-black {
   background: var(--admin-accent) !important;
   color: var(--admin-accent-fg) !important;
+}
+
+.v2-admin table tbody tr {
+  cursor: pointer;
+}
+
+.v2-admin table tbody tr.is-selected td {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.v2-admin .admin-queue-tabs {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.v2-admin .admin-queue-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 0.45rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.v2-admin .admin-queue-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+}
+
+.v2-admin .admin-queue-tab.is-active {
+  background: rgba(34, 197, 94, 0.16);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+
+.v2-admin .admin-queue-count {
+  min-width: 1.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.05rem 0.4rem;
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+
+.v2-admin .admin-queue-tab.is-active .admin-queue-count {
+  background: rgba(34, 197, 94, 0.22);
+}
+
+.v2-admin .admin-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.v2-admin .admin-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.62);
+  cursor: pointer;
+}
+
+.v2-admin .admin-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  width: min(28rem, 100%);
+  flex-direction: column;
+  border-left: 1px solid var(--admin-border);
+  background: #0a0a0a;
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.45);
+}
+
+.v2-admin .admin-drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.15rem 0.9rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.v2-admin .admin-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.1rem 1.15rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.v2-admin .admin-drawer-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1.15rem 1.1rem;
+  border-top: 1px solid var(--admin-border);
+  background: #0a0a0a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-admin .admin-queue-tab,
+  .v2-admin .admin-drawer {
+    transition: none;
+  }
 }
 
 /* Toggle peer-checked accent */
