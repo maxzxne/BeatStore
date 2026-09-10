@@ -40,6 +40,7 @@ export default function BeatCard({
     event.preventDefault();
     event.stopPropagation();
     if (!isAuthenticated) return;
+    if (kind === 'cart' && isPurchased) return;
     try {
       if (kind === 'fav') {
         if (favorite) await api.delete(`/beats/${beat.id}/favorite`);

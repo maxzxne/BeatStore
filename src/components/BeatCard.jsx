@@ -101,7 +101,7 @@ const BeatCard = ({ beat, onUpdate, isPurchased = false }) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || isPurchased) return;
     
     try {
       if (isInCart) {

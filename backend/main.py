@@ -43,6 +43,7 @@ from payments.fulfill import fulfill_intent, mark_failed
 from payments.quote import payload_dict
 from payments.robokassa import format_out_sum, verify_result
 from payments.service import PaymentError, create_checkout, intent_view, public_config as payment_public_config
+from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
 print("Импорт database и models завершен")
 
 # Импорт функций отправки сообщений и файлов в Telegram
@@ -702,6 +703,7 @@ class CourseResponse(BaseModel):
     created_at: datetime
     is_favorite: Optional[bool] = False
     is_in_cart: Optional[bool] = False
+    is_purchased: Optional[bool] = False
 
     class Config:
         from_attributes = True
@@ -1424,6 +1426,9 @@ def add_to_cart(beat_id: int, db: Session = Depends(get_db),
     if not beat:
         raise HTTPException(status_code=404, detail="Beat not found")
     
+    if user_owns_beat(db, current_user.id, beat_id):
+        raise HTTPException(status_code=400, detail="Beat already purchased")
+
     if beat not in current_user.cart_items:
         current_user.cart_items.append(beat)
         db.commit()
@@ -1446,6 +1451,7 @@ def remove_from_cart(beat_id: int, db: Session = Depends(get_db),
 @app.get("/cart", response_model=List[BeatResponse])
 def get_cart(db: Session = Depends(get_db), 
             current_user: User = Depends(get_current_user)):
+    drop_owned_cart_items(db, current_user)
     return current_user.cart_items
 
 # Покупки
@@ -1713,12 +1719,23 @@ def get_courses(
         course_ids = [c.id for c in courses]
         favorite_course_ids = {c.id for c in current_user.course_favorites}
         cart_course_ids = {c.id for c in current_user.course_cart_items}
+        purchased_course_ids = set()
+        if course_ids:
+            purchased_course_ids = {
+                row.course_id
+                for row in db.query(CoursePurchase.course_id).filter(
+                    CoursePurchase.user_id == current_user.id,
+                    CoursePurchase.course_id.in_(course_ids),
+                )
+            }
         
         result = []
         for course in courses:
             course_dict = course.__dict__.copy()
+            purchased = course.id in purchased_course_ids
             course_dict['is_favorite'] = course.id in favorite_course_ids
-            course_dict['is_in_cart'] = course.id in cart_course_ids
+            course_dict['is_in_cart'] = (not purchased) and course.id in cart_course_ids
+            course_dict['is_purchased'] = purchased
             result.append(CourseResponse(**course_dict))
         return result
     
@@ -1737,21 +1754,19 @@ def get_course(course_id: int, db: Session = Depends(get_db),
     
     # Добавляем информацию о избранном и корзине для авторизованных пользователей
     if current_user:
+        purchased = user_owns_course(db, current_user.id, course_id)
         course_dict['is_favorite'] = course in current_user.course_favorites
-        course_dict['is_in_cart'] = course in current_user.course_cart_items
+        course_dict['is_in_cart'] = (not purchased) and course in current_user.course_cart_items
+        course_dict['is_purchased'] = purchased
         
         # Проверяем покупку пользователя
-        purchase = db.query(CoursePurchase).filter(
-            CoursePurchase.user_id == current_user.id,
-            CoursePurchase.course_id == course_id
-        ).first()
-        
-        if purchase:
+        if purchased:
             # Пользователь купил курс, показываем полную информацию
             course_dict['full_video_url'] = course.full_video_url
     else:
         course_dict['is_favorite'] = False
         course_dict['is_in_cart'] = False
+        course_dict['is_purchased'] = False
     
     return CourseDetailResponse(**course_dict)
 
@@ -1794,6 +1809,9 @@ def add_course_to_cart(course_id: int, db: Session = Depends(get_db),
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     
+    if user_owns_course(db, current_user.id, course_id):
+        raise HTTPException(status_code=400, detail="Course already purchased")
+
     if course in current_user.course_cart_items:
         raise HTTPException(status_code=400, detail="Course already in cart")
     
@@ -1817,6 +1835,7 @@ def remove_course_from_cart(course_id: int, db: Session = Depends(get_db),
 
 @app.get("/course-cart", response_model=List[CourseResponse])
 def get_course_cart(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    drop_owned_cart_items(db, current_user)
     return current_user.course_cart_items
 
 @app.get("/course-purchases", response_model=List[CourseResponse])

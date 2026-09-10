@@ -16,6 +16,7 @@ from models import (
     cart_table,
     course_cart_table,
 )
+from cart_rules import drop_owned_cart_items
 from payments.quote import beat_unit_price, payload_dict
 
 
@@ -83,6 +84,7 @@ def _fulfill_cart(db: Session, intent: PaymentIntent, payload: dict) -> None:
     user = db.query(User).filter(User.id == intent.user_id).first()
     if not user:
         raise ValueError("Пользователь не найден")
+    drop_owned_cart_items(db, user)
     formats = payload.get("beats_formats") or {}
     if isinstance(formats, list):
         formats = {str(item.get("id")): item.get("format") or "mp3" for item in formats}

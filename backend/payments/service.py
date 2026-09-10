@@ -6,6 +6,7 @@ import json
 from sqlalchemy.orm import Session
 
 from models import Beat, Course, PaymentIntent, ServiceOrder, User
+from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
 from payments import config
 from payments.quote import (
     QuoteError,
@@ -92,6 +93,8 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
         beat = db.query(Beat).filter(Beat.id == beat_id).first()
         if not beat or not beat.is_available:
             raise PaymentError("Бит недоступен")
+        if user_owns_beat(db, user.id, beat_id):
+            raise PaymentError("Бит уже куплен")
         amount = beat_unit_price(beat, purchase_type)
         payload = {"item_id": beat_id, "purchase_type": purchase_type}
         return payload, amount, description_for("beat", beat.title)
@@ -103,6 +106,8 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
         course = db.query(Course).filter(Course.id == course_id).first()
         if not course or not course.is_available:
             raise PaymentError("Курс недоступен")
+        if user_owns_course(db, user.id, course_id):
+            raise PaymentError("Курс уже куплен")
         payload = {"item_id": course_id}
         return payload, float(course.price or 0), description_for("course", course.title)
 
@@ -112,6 +117,7 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
         formats = body.get("beats_formats") or {}
         if isinstance(formats, list):
             formats = {str(item.get("id")): item.get("format") or "mp3" for item in formats}
+        drop_owned_cart_items(db, user)
         amount = 0.0
         for beat in user.cart_items:
             purchase_type = str(formats.get(str(beat.id)) or formats.get(beat.id) or "mp3")

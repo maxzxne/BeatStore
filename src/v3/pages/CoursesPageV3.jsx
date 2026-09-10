@@ -44,6 +44,7 @@ export default function CoursesPageV3() {
     event.preventDefault();
     event.stopPropagation();
     if (!isAuthenticated) return;
+    if (kind === 'cart' && course.is_purchased) return;
     const key = kind === 'fav' ? 'is_favorite' : 'is_in_cart';
     const was = Boolean(course[key]);
     setCourses((prev) => prev.map((item) => (item.id === course.id ? { ...item, [key]: !was } : item)));
@@ -110,9 +111,11 @@ export default function CoursesPageV3() {
                   <button type="button" className="v3-icon-btn" aria-label="Избранное" onClick={(event) => toggle(event, course, 'fav')}>
                     <Heart size={15} fill={course.is_favorite ? 'currentColor' : 'none'} />
                   </button>
-                  <button type="button" className="v3-icon-btn" aria-label="Корзина" onClick={(event) => toggle(event, course, 'cart')}>
-                    <ShoppingCart size={15} />
-                  </button>
+                  {!course.is_purchased && (
+                    <button type="button" className="v3-icon-btn" aria-label="Корзина" onClick={(event) => toggle(event, course, 'cart')}>
+                      <ShoppingCart size={15} />
+                    </button>
+                  )}
                 </div>
               )}
             </article>

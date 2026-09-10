@@ -255,6 +255,137 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(self.db.query(CoursePurchase).count(), 1)
         self.assertEqual(self.client.get("/cart", headers=auth(self.token)).json(), [])
 
+    def test_cannot_add_purchased_beat_to_cart(self):
+        beat = add_beat(self.db)
+        self.db.add(
+            Purchase(
+                user_id=self.user.id,
+                beat_id=beat.id,
+                price_paid=1000,
+                purchase_type="mp3",
+            )
+        )
+        self.db.commit()
+        response = self.client.post(
+            f"/beats/{beat.id}/cart", headers=auth(self.token)
+        )
+        self.assertEqual(response.status_code, 400, response.text)
+        self.assertEqual(
+            self.client.get("/cart", headers=auth(self.token)).json(), []
+        )
+
+    def test_cannot_add_purchased_course_to_cart(self):
+        course = add_course(self.db)
+        self.db.add(
+            CoursePurchase(
+                user_id=self.user.id, course_id=course.id, price_paid=5000
+            )
+        )
+        self.db.commit()
+        response = self.client.post(
+            f"/courses/{course.id}/cart", headers=auth(self.token)
+        )
+        self.assertEqual(response.status_code, 400, response.text)
+        self.assertEqual(
+            self.client.get("/course-cart", headers=auth(self.token)).json(), []
+        )
+
+    def test_cart_omits_and_does_not_charge_already_purchased(self):
+        owned_beat = add_beat(self.db, title="OwnedBeat")
+        fresh_beat = add_beat(self.db, title="FreshBeat")
+        owned_course = add_course(self.db, title="OwnedCourse", price=5000)
+        fresh_course = add_course(self.db, title="FreshCourse", price=3000)
+        self.db.add(
+            Purchase(
+                user_id=self.user.id,
+                beat_id=owned_beat.id,
+                price_paid=1000,
+                purchase_type="mp3",
+            )
+        )
+        self.db.add(
+            CoursePurchase(
+                user_id=self.user.id,
+                course_id=owned_course.id,
+                price_paid=5000,
+            )
+        )
+        self.db.commit()
+        self.db.refresh(self.user)
+        self.user.cart_items.extend([owned_beat, fresh_beat])
+        self.user.course_cart_items.extend([owned_course, fresh_course])
+        self.db.commit()
+
+        created = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={
+                "kind": "cart",
+                "beats_formats": {str(fresh_beat.id): "mp3"},
+            },
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        self.assertEqual(created.json()["amount"], 4000)
+
+        beats = self.client.get("/cart", headers=auth(self.token)).json()
+        self.assertEqual([row["title"] for row in beats], ["FreshBeat"])
+        courses = self.client.get(
+            "/course-cart", headers=auth(self.token)
+        ).json()
+        self.assertEqual([row["title"] for row in courses], ["FreshCourse"])
+
+    def test_create_rejects_already_purchased_beat_and_course(self):
+        beat = add_beat(self.db)
+        course = add_course(self.db, price=5000)
+        self.db.add(
+            Purchase(
+                user_id=self.user.id,
+                beat_id=beat.id,
+                price_paid=1000,
+                purchase_type="mp3",
+            )
+        )
+        self.db.add(
+            CoursePurchase(
+                user_id=self.user.id, course_id=course.id, price_paid=5000
+            )
+        )
+        self.db.commit()
+        beat_pay = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={"kind": "beat", "item_id": beat.id, "purchase_type": "wav"},
+        )
+        self.assertEqual(beat_pay.status_code, 400, beat_pay.text)
+        course_pay = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={"kind": "course", "item_id": course.id},
+        )
+        self.assertEqual(course_pay.status_code, 400, course_pay.text)
+
+    def test_courses_list_marks_purchased(self):
+        owned = add_course(self.db, title="Owned")
+        other = add_course(self.db, title="Other")
+        self.db.add(
+            CoursePurchase(
+                user_id=self.user.id, course_id=owned.id, price_paid=5000
+            )
+        )
+        self.db.commit()
+        rows = {
+            row["id"]: row
+            for row in self.client.get(
+                "/courses", headers=auth(self.token)
+            ).json()
+        }
+        self.assertTrue(rows[owned.id]["is_purchased"])
+        self.assertFalse(rows[other.id]["is_purchased"])
+        detail = self.client.get(
+            f"/courses/{owned.id}", headers=auth(self.token)
+        ).json()
+        self.assertTrue(detail["is_purchased"])
+
     def test_guest_cannot_create_beat_checkout(self):
         beat = add_beat(self.db)
         response = self.client.post(

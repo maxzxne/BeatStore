@@ -42,11 +42,15 @@ export default function CourseDetailPageV3() {
         if (isAuthenticated) {
           setFavorite(Boolean(response.data.is_favorite));
           setInCart(Boolean(response.data.is_in_cart));
-          try {
-            const purchases = await api.get('/course-purchases');
-            if (!cancelled) setPurchased((purchases.data || []).some((item) => item.id === response.data.id));
-          } catch {
-            /* optional */
+          if (response.data.is_purchased) {
+            setPurchased(true);
+          } else {
+            try {
+              const purchases = await api.get('/course-purchases');
+              if (!cancelled) setPurchased((purchases.data || []).some((item) => item.id === response.data.id));
+            } catch {
+              /* optional */
+            }
           }
         } else {
           setFavorite(false);
@@ -92,6 +96,7 @@ export default function CourseDetailPageV3() {
   };
 
   const onCart = async () => {
+    if (purchased) return;
     if (!isAuthenticated) return showError('Войдите, чтобы добавить в корзину');
     try {
       if (inCart) await api.delete(`/courses/${id}/cart`);
@@ -99,8 +104,10 @@ export default function CourseDetailPageV3() {
       setInCart(!inCart);
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (err) {
-      if (err.response?.status === 400) setInCart(true);
-      else showError(err.response?.data?.detail || 'Ошибка корзины');
+      const detail = String(err.response?.data?.detail || '');
+      if (err.response?.status === 400 && detail.includes('already in cart')) setInCart(true);
+      else if (err.response?.status === 400 && detail.toLowerCase().includes('already purchased')) setPurchased(true);
+      else showError(detail || 'Ошибка корзины');
     }
   };
 
