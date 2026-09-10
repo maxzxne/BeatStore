@@ -91,7 +91,7 @@ const HomePageV2 = () => {
     <div>
       <section className="relative overflow-hidden px-4 pb-6 pt-8 sm:pt-14">
         <div className="mx-auto max-w-6xl">
-          <p className="v2-reveal text-xs uppercase tracking-[0.3em] text-[#22c55e]">Marketplace</p>
+          <p className="v2-reveal text-xs uppercase tracking-[0.3em] text-[#22c55e]">XWinner</p>
           <h1 className="v2-reveal mt-3 max-w-3xl font-[Syne] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl" style={{ animationDelay: '80ms' }}>
             Инструменталы.<br />Чёрный экран.<br />Зелёный удар.
           </h1>

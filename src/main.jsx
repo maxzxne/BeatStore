@@ -5,6 +5,10 @@ import './index.css'
 import './v2/v2.css'
 import './v3/v3.css'
 
+// V2 is the only shipped UI — lock chrome classes before first paint
+document.documentElement.classList.add('ui-v2', 'dark')
+document.documentElement.classList.remove('ui-v3')
+
 // Предотвращаем фокус на неинтерактивных элементах
 document.addEventListener('mousedown', (e) => {
   const target = e.target;
