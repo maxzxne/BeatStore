@@ -5,7 +5,7 @@ import BeatCardV2 from './BeatCardV2';
 import PromoSliderV2 from './PromoSliderV2';
 import Filters from '../components/Filters';
 import { useAuth } from '../contexts/AuthContext';
-import { useSiteSettings } from '../contexts/SiteSettingsContext';
+import { normalizeHeroImagePosition, useSiteSettings } from '../contexts/SiteSettingsContext';
 import { api, buildMediaUrl } from '../utils/api';
 
 function isInternalHref(href) {
@@ -132,6 +132,7 @@ const HomePageV2 = () => {
   const filtersActive = Object.values(filters).some((value) => value);
   const heroEnabled = homeHero?.enabled !== false;
   const heroImage = homeHero?.image_url ? buildMediaUrl(homeHero.image_url) : null;
+  const heroPosition = normalizeHeroImagePosition(homeHero?.image_position);
 
   const heroCopy = (
     <div className={heroImage ? 'v2-hero-copy' : undefined}>
@@ -160,7 +161,7 @@ const HomePageV2 = () => {
     <div>
       {heroEnabled ? (
         <section className={`relative overflow-hidden px-4 pb-6 pt-8 sm:pt-14${heroImage ? ' v2-hero-with-image' : ''}`}>
-          <div className={`mx-auto max-w-6xl${heroImage ? ' v2-hero-grid' : ''}`}>
+          <div className={`mx-auto max-w-6xl${heroImage ? ` v2-hero-grid is-${heroPosition}` : ''}`}>
             {heroImage ? (
               <>
                 <div className="v2-hero-media v2-reveal">

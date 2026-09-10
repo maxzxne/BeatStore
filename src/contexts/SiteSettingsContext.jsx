@@ -4,15 +4,22 @@ import { useAuth } from './AuthContext';
 
 const SiteSettingsContext = createContext();
 
+export const HERO_IMAGE_POSITIONS = ['left', 'right', 'top', 'bottom'];
+
 export const DEFAULT_HOME_HERO = {
   enabled: true,
   eyebrow: 'XWinner',
   title: 'Инструменталы.\nЧёрный экран.\nЗелёный удар.',
   subtitle: 'Каталог битов, заказы под ключ и курсы по битмейкингу. Слушай демо, бери лицензию, работай дальше.',
   image_url: null,
+  image_position: 'left',
   cta_label: null,
   cta_href: null,
 };
+
+export function normalizeHeroImagePosition(value) {
+  return HERO_IMAGE_POSITIONS.includes(value) ? value : 'left';
+}
 
 function normalizeHomeHero(raw) {
   if (!raw || typeof raw !== 'object') {
@@ -26,6 +33,7 @@ function normalizeHomeHero(raw) {
     title: raw.title ?? DEFAULT_HOME_HERO.title,
     subtitle: raw.subtitle ?? DEFAULT_HOME_HERO.subtitle,
     image_url: raw.image_url || null,
+    image_position: normalizeHeroImagePosition(raw.image_position),
     cta_label: raw.cta_label || null,
     cta_href: raw.cta_href || null,
   };

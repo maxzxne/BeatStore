@@ -226,6 +226,7 @@ def update_database_schema():
                     "title": "Инструменталы.\nЧёрный экран.\nЗелёный удар.",
                     "subtitle": "Каталог битов, заказы под ключ и курсы по битмейкингу. Слушай демо, бери лицензию, работай дальше.",
                     "image_url": None,
+                    "image_position": "left",
                     "cta_label": None,
                     "cta_href": None,
                 }
@@ -815,15 +816,24 @@ class OAuthSettingUpdate(BaseModel):
 # all — всем; admins_only — только админам; hidden — никому (вкладка скрыта)
 COURSES_VISIBILITY_VALUES = {"all", "admins_only", "hidden"}
 
+HERO_IMAGE_POSITIONS = {"left", "right", "top", "bottom"}
+
 DEFAULT_HOME_HERO = {
     "enabled": True,
     "eyebrow": "XWinner",
     "title": "Инструменталы.\nЧёрный экран.\nЗелёный удар.",
     "subtitle": "Каталог битов, заказы под ключ и курсы по битмейкингу. Слушай демо, бери лицензию, работай дальше.",
     "image_url": None,
+    "image_position": "left",
     "cta_label": None,
     "cta_href": None,
 }
+
+
+def normalize_hero_image_position(value) -> str:
+    if value in HERO_IMAGE_POSITIONS:
+        return value
+    return "left"
 
 class SiteSettingsUpdate(BaseModel):
     """Схема обновления настроек сайта"""
@@ -836,6 +846,7 @@ class HomeHeroUpdate(BaseModel):
     title: Optional[str] = None
     subtitle: Optional[str] = None
     image_url: Optional[str] = None
+    image_position: Optional[str] = None
     cta_label: Optional[str] = None
     cta_href: Optional[str] = None
 
@@ -879,6 +890,7 @@ def get_home_hero(db: Session) -> dict:
             return dict(DEFAULT_HOME_HERO)
         merged = dict(DEFAULT_HOME_HERO)
         merged.update({k: data.get(k, merged[k]) for k in DEFAULT_HOME_HERO.keys()})
+        merged["image_position"] = normalize_hero_image_position(merged.get("image_position"))
         return merged
     except (json.JSONDecodeError, TypeError):
         return dict(DEFAULT_HOME_HERO)
@@ -886,6 +898,7 @@ def get_home_hero(db: Session) -> dict:
 def save_home_hero(db: Session, hero: dict) -> dict:
     normalized = dict(DEFAULT_HOME_HERO)
     normalized.update({k: hero.get(k, normalized[k]) for k in DEFAULT_HOME_HERO.keys()})
+    normalized["image_position"] = normalize_hero_image_position(normalized.get("image_position"))
     setting = db.query(SiteSetting).filter(SiteSetting.key == "home_hero").first()
     payload = json.dumps(normalized, ensure_ascii=False)
     if not setting:

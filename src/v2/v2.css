@@ -266,8 +266,19 @@ html.ui-v2 .min-h-screen.bg-white {
   align-items: center;
 }
 
-.v2-hero-media {
+.v2-hero-grid.is-left .v2-hero-media,
+.v2-hero-grid.is-top .v2-hero-media {
   order: -1;
+}
+
+.v2-hero-grid.is-right .v2-hero-media,
+.v2-hero-grid.is-bottom .v2-hero-media {
+  order: 1;
+}
+
+.v2-hero-grid.is-top .v2-hero-media,
+.v2-hero-grid.is-bottom .v2-hero-media {
+  max-width: min(100%, 28rem);
 }
 
 .v2-hero-img {
@@ -281,13 +292,25 @@ html.ui-v2 .min-h-screen.bg-white {
 }
 
 @media (min-width: 768px) {
-  .v2-hero-grid {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  .v2-hero-grid.is-left,
+  .v2-hero-grid.is-right {
     gap: 2.5rem;
   }
 
-  .v2-hero-media {
+  .v2-hero-grid.is-left {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  .v2-hero-grid.is-right {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  }
+
+  .v2-hero-grid.is-left .v2-hero-media {
     order: 0;
+  }
+
+  .v2-hero-grid.is-right .v2-hero-media {
+    order: 1;
   }
 }
 

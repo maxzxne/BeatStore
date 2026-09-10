@@ -305,6 +305,27 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(admin.status_code, 200)
         self.assertEqual(len(admin.json()), 3)
 
+    def test_admin_hero_saves_image_position(self):
+        response = self.client.put(
+            "/api/admin/site-settings/hero",
+            headers=auth(self.admin_token),
+            json={"image_position": "right"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["home_hero"]["image_position"], "right")
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.status_code, 200)
+        self.assertEqual(public.json()["home_hero"]["image_position"], "right")
+
+    def test_admin_hero_unknown_image_position_becomes_left(self):
+        response = self.client.put(
+            "/api/admin/site-settings/hero",
+            headers=auth(self.admin_token),
+            json={"image_position": "diagonal"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["home_hero"]["image_position"], "left")
+
     def test_download_after_pay_without_file_is_not_granted_to_stranger(self):
         beat = add_beat(self.db)
         created = self.client.post(

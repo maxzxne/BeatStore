@@ -8,7 +8,11 @@ from types import SimpleNamespace
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import bootstrap  # noqa: F401, E402
-from main import is_promo_banner_active, user_can_access_courses_catalog  # noqa: E402
+from main import (  # noqa: E402
+    is_promo_banner_active,
+    normalize_hero_image_position,
+    user_can_access_courses_catalog,
+)
 
 
 class PromoBannerWindowTests(unittest.TestCase):
@@ -40,6 +44,17 @@ class PromoBannerWindowTests(unittest.TestCase):
             ends_at=now + timedelta(days=1),
         )
         self.assertTrue(is_promo_banner_active(banner, now))
+
+
+class HeroImagePositionTests(unittest.TestCase):
+    def test_known_positions_pass_through(self):
+        for position in ("left", "right", "top", "bottom"):
+            self.assertEqual(normalize_hero_image_position(position), position)
+
+    def test_unknown_or_empty_falls_back_to_left(self):
+        self.assertEqual(normalize_hero_image_position(None), "left")
+        self.assertEqual(normalize_hero_image_position(""), "left")
+        self.assertEqual(normalize_hero_image_position("diagonal"), "left")
 
 
 class CoursesVisibilityTests(unittest.TestCase):

@@ -1,7 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ImagePlus, Loader2, Save, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { normalizeHeroImagePosition } from '../../contexts/SiteSettingsContext';
 import { api, buildMediaUrl } from '../../utils/api';
+
+const IMAGE_POSITIONS = [
+  { id: 'top', label: 'Сверху' },
+  { id: 'left', label: 'Слева' },
+  { id: 'right', label: 'Справа' },
+  { id: 'bottom', label: 'Снизу' },
+];
 
 const emptyHero = {
   enabled: true,
@@ -9,9 +17,23 @@ const emptyHero = {
   title: '',
   subtitle: '',
   image_url: null,
+  image_position: 'left',
   cta_label: '',
   cta_href: '',
 };
+
+function formFromHero(data) {
+  return {
+    enabled: Boolean(data?.enabled),
+    eyebrow: data?.eyebrow ?? '',
+    title: data?.title ?? '',
+    subtitle: data?.subtitle ?? '',
+    image_url: data?.image_url ?? null,
+    image_position: normalizeHeroImagePosition(data?.image_position),
+    cta_label: data?.cta_label ?? '',
+    cta_href: data?.cta_href ?? '',
+  };
+}
 
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
@@ -20,6 +42,25 @@ const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide tex
 
 function titleLines(title) {
   return (title || '').split('\n').filter((line, i, arr) => line.length > 0 || i < arr.length - 1);
+}
+
+function PositionChoice({ option, selected, onSelect }) {
+  const isOn = selected === option.id;
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={isOn}
+      onClick={() => onSelect(option.id)}
+      className={`min-h-[44px] rounded-xl border px-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/40 ${
+        isOn
+          ? 'border-[#22c55e] bg-[#22c55e]/15 text-[#22c55e]'
+          : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/[0.08]'
+      }`}
+    >
+      {option.label}
+    </button>
+  );
 }
 
 const AdminHeroPage = () => {
@@ -41,15 +82,7 @@ const AdminHeroPage = () => {
       setLoading(true);
       setError('');
       const { data } = await api.get('/api/admin/site-settings/hero');
-      setForm({
-        enabled: Boolean(data?.enabled),
-        eyebrow: data?.eyebrow ?? '',
-        title: data?.title ?? '',
-        subtitle: data?.subtitle ?? '',
-        image_url: data?.image_url ?? null,
-        cta_label: data?.cta_label ?? '',
-        cta_href: data?.cta_href ?? '',
-      });
+      setForm(formFromHero(data));
     } catch (err) {
       console.error('Error fetching hero:', err);
       setError(err.response?.data?.detail || 'Не удалось загрузить hero');
@@ -97,20 +130,13 @@ const AdminHeroPage = () => {
         title: form.title || '',
         subtitle: form.subtitle || '',
         image_url: form.image_url || null,
+        image_position: normalizeHeroImagePosition(form.image_position),
         cta_label: form.cta_label || null,
         cta_href: form.cta_href || null,
       };
       const { data } = await api.put('/api/admin/site-settings/hero', payload);
       const saved = data?.home_hero || payload;
-      setForm({
-        enabled: Boolean(saved.enabled),
-        eyebrow: saved.eyebrow ?? '',
-        title: saved.title ?? '',
-        subtitle: saved.subtitle ?? '',
-        image_url: saved.image_url ?? null,
-        cta_label: saved.cta_label ?? '',
-        cta_href: saved.cta_href ?? '',
-      });
+      setForm(formFromHero(saved));
       setMessage('Сохранено');
       window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
     } catch (err) {
@@ -140,13 +166,14 @@ const AdminHeroPage = () => {
 
   const previewImage = buildMediaUrl(form.image_url);
   const lines = titleLines(form.title);
+  const previewPosition = normalizeHeroImagePosition(form.image_position);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-[Syne] text-2xl font-bold text-white sm:text-3xl">Главный экран</h1>
-          <p className="mt-1 text-sm text-white/45">Hero на главной: тексты, картинка слева, вкл/выкл</p>
+          <p className="mt-1 text-sm text-white/45">Hero на главной: тексты, картинка, расположение, вкл/выкл</p>
         </div>
         <button
           type="button"
@@ -178,13 +205,13 @@ const AdminHeroPage = () => {
           {!form.enabled ? (
             <p className="text-sm text-white/40">Секция выключена — на сайте не показывается.</p>
           ) : (
-            <div className={`mx-auto max-w-6xl ${previewImage ? 'grid items-center gap-6 sm:grid-cols-[minmax(0,280px)_1fr]' : ''}`}>
+            <div className={`mx-auto max-w-6xl${previewImage ? ` v2-hero-grid is-${previewPosition}` : ''}`}>
               {previewImage && (
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-                  <img src={previewImage} alt="" className="aspect-square w-full object-cover" />
+                <div className="v2-hero-media">
+                  <img src={previewImage} alt="" className="v2-hero-img" />
                 </div>
               )}
-              <div>
+              <div className={previewImage ? 'v2-hero-copy' : undefined}>
                 <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">
                   {form.eyebrow || '—'}
                 </p>
@@ -293,7 +320,7 @@ const AdminHeroPage = () => {
 
         <div className="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
           <div>
-            <p className={labelClass}>Картинка слева</p>
+            <p className={labelClass}>Картинка</p>
             {previewImage ? (
               <div className="overflow-hidden rounded-xl border border-white/10">
                 <img src={previewImage} alt="Hero preview" className="aspect-square w-full object-cover" />
@@ -304,6 +331,41 @@ const AdminHeroPage = () => {
               </div>
             )}
           </div>
+
+          <fieldset>
+            <legend className={labelClass}>Расположение</legend>
+            <div
+              role="radiogroup"
+              aria-label="Расположение картинки"
+              className="grid grid-cols-3 gap-2"
+            >
+              <span aria-hidden="true" />
+              <PositionChoice
+                option={IMAGE_POSITIONS[0]}
+                selected={previewPosition}
+                onSelect={(id) => setField('image_position', id)}
+              />
+              <span aria-hidden="true" />
+              <PositionChoice
+                option={IMAGE_POSITIONS[1]}
+                selected={previewPosition}
+                onSelect={(id) => setField('image_position', id)}
+              />
+              <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03]" aria-hidden="true" />
+              <PositionChoice
+                option={IMAGE_POSITIONS[2]}
+                selected={previewPosition}
+                onSelect={(id) => setField('image_position', id)}
+              />
+              <span aria-hidden="true" />
+              <PositionChoice
+                option={IMAGE_POSITIONS[3]}
+                selected={previewPosition}
+                onSelect={(id) => setField('image_position', id)}
+              />
+              <span aria-hidden="true" />
+            </div>
+          </fieldset>
 
           <input
             ref={fileRef}
