@@ -16,12 +16,12 @@ print("НАЧАЛО ЗАГРУЗКИ МОДУЛЯ main.py")
 print("=" * 50)
 
 from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Form, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import Any, List, Optional
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -37,7 +37,12 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, cart_table, course_cart_table, course_favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, cart_table, course_cart_table, course_favorites_table
+from payments import config as payment_config
+from payments.fulfill import fulfill_intent, mark_failed
+from payments.quote import payload_dict
+from payments.robokassa import format_out_sum, verify_result
+from payments.service import PaymentError, create_checkout, intent_view, public_config as payment_public_config
 print("Импорт database и models завершен")
 
 # Импорт функций отправки сообщений и файлов в Telegram
@@ -1522,10 +1527,11 @@ def purchase_beat(beat_id: int,
     else:
         actual_price = beat.price
     
-    # Если бит платный - проверяем успешность оплаты
     if actual_price > 0:
-        if payment_success != 'true':
-            raise HTTPException(status_code=400, detail="Payment required. Please complete payment first.")
+        raise HTTPException(
+            status_code=400,
+            detail="Оплатите бит через /payments/create. Клиентский payment_success больше не принимается.",
+        )
     
     # Создаем покупку
     purchase = Purchase(
@@ -1822,10 +1828,11 @@ def purchase_course(course_id: int,
     if existing_purchase:
         raise HTTPException(status_code=400, detail="Course already purchased")
     
-    # Если курс платный - проверяем успешность оплаты
     if course.price > 0:
-        if payment_success != 'true':
-            raise HTTPException(status_code=400, detail="Payment required. Please complete payment first.")
+        raise HTTPException(
+            status_code=400,
+            detail="Оплатите курс через /payments/create. Клиентский payment_success больше не принимается.",
+        )
     
     # Создаем покупку
     purchase = CoursePurchase(
@@ -1880,6 +1887,137 @@ def download_course_video(course_id: int,
         media_type='video/mp4'
     )
 
+class CreatePaymentRequest(BaseModel):
+    kind: Optional[str] = None
+    type: Optional[str] = None
+    item_id: Optional[int] = None
+    purchase_type: Optional[str] = None
+    order_id: Optional[int] = None
+    beats_formats: Optional[Any] = None
+
+
+class SimulatePaymentRequest(BaseModel):
+    inv_id: int
+    success: bool = True
+
+
+@app.get("/payments/config")
+def payments_config():
+    return payment_public_config()
+
+
+@app.post("/payments/create")
+def payments_create(
+    body: CreatePaymentRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    try:
+        return create_checkout(db, current_user, body.dict())
+    except PaymentError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.get("/payments/intents/{inv_id}")
+def payments_intent(
+    inv_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    intent = db.query(PaymentIntent).filter(PaymentIntent.id == inv_id).first()
+    if not intent:
+        raise HTTPException(status_code=404, detail="Платёж не найден")
+    if intent.user_id:
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Войдите, чтобы увидеть платёж")
+        if current_user.id != intent.user_id and not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Это не ваш платёж")
+    return intent_view(intent)
+
+
+@app.post("/payments/intents/{inv_id}/retry")
+def payments_retry(
+    inv_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    intent = db.query(PaymentIntent).filter(PaymentIntent.id == inv_id).first()
+    if not intent:
+        raise HTTPException(status_code=404, detail="Платёж не найден")
+    if intent.status == "paid":
+        raise HTTPException(status_code=400, detail="Этот платёж уже оплачен")
+    payload = payload_dict(intent.payload)
+    body = {"kind": intent.kind, **payload}
+    if "beats_formats" in payload:
+        body["beats_formats"] = payload["beats_formats"]
+    try:
+        return create_checkout(db, current_user, body)
+    except PaymentError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/payments/simulate")
+def payments_simulate(
+    body: SimulatePaymentRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    if not payment_config.is_test() or payment_config.robokassa_configured():
+        raise HTTPException(status_code=403, detail="Симулятор только без боевых ключей Robokassa")
+    intent = db.query(PaymentIntent).filter(PaymentIntent.id == body.inv_id).first()
+    if not intent:
+        raise HTTPException(status_code=404, detail="Платёж не найден")
+    if intent.user_id:
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Войдите, чтобы подтвердить оплату")
+        if current_user.id != intent.user_id and not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Это не ваш платёж")
+    if body.success:
+        try:
+            fulfill_intent(db, intent)
+        except Exception as exc:
+            mark_failed(db, intent, str(exc))
+            raise HTTPException(status_code=400, detail=str(exc))
+    else:
+        mark_failed(db, intent, "Оплата отменена")
+    return intent_view(intent)
+
+
+@app.post("/payments/robokassa/result")
+@app.get("/payments/robokassa/result")
+async def payments_robokassa_result(request: Request, db: Session = Depends(get_db)):
+    data = request.query_params
+    if request.method == "POST":
+        form = await request.form()
+        data = form
+    out_sum = str(data.get("OutSum") or "")
+    inv_raw = str(data.get("InvId") or "0")
+    signature = str(data.get("SignatureValue") or "")
+    try:
+        inv_id = int(inv_raw)
+    except ValueError:
+        return PlainTextResponse("bad inv", status_code=400)
+
+    if not verify_result(out_sum, inv_id, signature, payment_config.robokassa_password2()):
+        return PlainTextResponse("bad sign", status_code=400)
+
+    intent = db.query(PaymentIntent).filter(PaymentIntent.id == inv_id).first()
+    if not intent:
+        return PlainTextResponse("not found", status_code=404)
+
+    expected = format_out_sum(intent.amount)
+    if out_sum != expected and f"{float(out_sum):.2f}" != expected:
+        mark_failed(db, intent, "Сумма не совпала")
+        return PlainTextResponse("bad sum", status_code=400)
+
+    try:
+        fulfill_intent(db, intent)
+    except Exception as exc:
+        mark_failed(db, intent, str(exc))
+        return PlainTextResponse("fail", status_code=400)
+    return PlainTextResponse(f"OK{inv_id}")
+
+
 class ProcessCartPaymentRequest(BaseModel):
     success: bool
 
@@ -1889,61 +2027,10 @@ def process_cart_payment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Обработка оплаты всех товаров из корзины"""
-    if not request.success:
-        raise HTTPException(status_code=400, detail="Payment was not successful")
-    
-    # Получаем все товары из корзины
-    beats_in_cart = current_user.cart_items
-    courses_in_cart = current_user.course_cart_items
-    
-    total_price = sum(beat.price for beat in beats_in_cart) + sum(course.price for course in courses_in_cart)
-    
-    if total_price == 0:
-        raise HTTPException(status_code=400, detail="Cart is empty or contains only free items")
-    
-    # Покупаем все биты из корзины
-    for beat in beats_in_cart:
-        if beat.price > 0:
-            # Проверяем, не куплен ли уже
-            existing = db.query(Purchase).filter(
-                Purchase.user_id == current_user.id,
-                Purchase.beat_id == beat.id
-            ).first()
-            
-            if not existing:
-                purchase = Purchase(
-                    user_id=current_user.id,
-                    beat_id=beat.id,
-                    price_paid=beat.price,
-                    purchase_type="mp3"  # По умолчанию MP3
-                )
-                db.add(purchase)
-    
-    # Покупаем все курсы из корзины
-    for course in courses_in_cart:
-        if course.price > 0:
-            # Проверяем, не куплен ли уже
-            existing = db.query(CoursePurchase).filter(
-                CoursePurchase.user_id == current_user.id,
-                CoursePurchase.course_id == course.id
-            ).first()
-            
-            if not existing:
-                course_purchase = CoursePurchase(
-                    user_id=current_user.id,
-                    course_id=course.id,
-                    price_paid=course.price
-                )
-                db.add(course_purchase)
-    
-    # Очищаем корзину
-    db.query(cart_table).filter(cart_table.c.user_id == current_user.id).delete()
-    db.query(course_cart_table).filter(course_cart_table.c.user_id == current_user.id).delete()
-    
-    db.commit()
-    
-    return {"message": "Cart payment processed successfully", "total_price": total_price}
+    raise HTTPException(
+        status_code=400,
+        detail="Оплатите корзину через /payments/create. Клиентский success больше не принимается.",
+    )
 
 # Заказы услуг
 @app.post("/service-orders", response_model=ServiceOrderResponse)
@@ -2207,14 +2294,10 @@ def process_service_order_payment(
     else:
         raise HTTPException(status_code=403, detail="Access denied")
     
-    # Обновляем статус заказа на "paid" при успешной оплате
-    if payment_data.get("success"):
-        order.status = "paid"
-        db.commit()
-        db.refresh(order)
-        return {"message": "Payment processed successfully", "order": ServiceOrderResponse.from_orm(order)}
-    else:
-        raise HTTPException(status_code=400, detail="Payment failed")
+    raise HTTPException(
+        status_code=400,
+        detail="Оплатите заказ через /payments/create. Клиентский success больше не принимается.",
+    )
 
 @app.post("/upload-materials")
 async def upload_materials(
@@ -3747,6 +3830,8 @@ async def serve_frontend_routes(path: str):
     if (path.startswith("api/") or 
         path.startswith("static/") or 
         path.startswith("beats/") or 
+        path.startswith("payments/") or
+        path.startswith("payment/") or
         path.startswith("favicon.ico") or
         path.startswith("assets/") or
         path.endswith(".js") or
@@ -3776,21 +3861,23 @@ async def serve_frontend_routes(path: str):
 print("=" * 50)
 print("Инициализация приложения...")
 print("=" * 50)
-print("ВЫЗОВ create_admin_user()...")
-create_admin_user()
-print("create_admin_user() завершен")
+if os.getenv("BEATSTORE_TESTING") == "1":
+    print("BEATSTORE_TESTING=1 — пропуск create_admin_user и seed")
+else:
+    print("ВЫЗОВ create_admin_user()...")
+    create_admin_user()
+    print("create_admin_user() завершен")
 
-# Заполнение тестовыми данными
-print("=" * 50)
-print("ПРОВЕРКА ТЕСТОВЫХ ДАННЫХ...")
-print("=" * 50)
-try:
-    from seed_test_data import seed_test_data
-    seed_test_data()
-except Exception as e:
-    print(f"⚠️  Ошибка при заполнении тестовыми данными: {e}")
-    import traceback
-    traceback.print_exc()
+    print("=" * 50)
+    print("ПРОВЕРКА ТЕСТОВЫХ ДАННЫХ...")
+    print("=" * 50)
+    try:
+        from seed_test_data import seed_test_data
+        seed_test_data()
+    except Exception as e:
+        print(f"⚠️  Ошибка при заполнении тестовыми данными: {e}")
+        import traceback
+        traceback.print_exc()
 
 # Запуск Telegram бота в фоновом потоке
 # Telegram bot будет запущен в startup event для более быстрого старта сервера

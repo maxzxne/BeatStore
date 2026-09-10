@@ -14,7 +14,7 @@ V3 — frontend/UX redesign. Backend трогать только если без
 
 - Лицензии — это `purchase_type`: `mp3` | `wav` | `exclusive`, не отдельная сущность License.
 - Поиск в каталоге частично клиентский.
-- Оплата тестовая: `/test-payment` → `/payment/success`.
+- Оплата: PaymentIntent + Robokassa ResultURL. Клиентский `payment_success` для платных больше не принимается.
 - Royalty/producers в моделях нет.
 
 Если изменение нужно:

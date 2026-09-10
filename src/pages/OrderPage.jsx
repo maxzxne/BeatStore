@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
+import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Phone, Plus, X, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 const OrderPage = () => {
@@ -27,6 +28,16 @@ const OrderPage = () => {
   // Сворачиваемые блоки: пользователь свернут, если авторизован и поля предзаполнены
   const [userBlockOpen, setUserBlockOpen] = useState(true);
   const [orderInfoBlockOpen, setOrderInfoBlockOpen] = useState(true);
+
+  const fieldClass =
+    'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
+  const cardClass = 'rounded-3xl border border-white/10 bg-white/[0.03]';
+  const primaryBtnClass =
+    'inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60';
+  const labelClass = 'mb-2 block text-sm font-medium text-white';
+  const hintClass = 'mt-1 text-xs text-white/40';
+  const accordionBtnClass =
+    'flex w-full items-center justify-between rounded-2xl p-4 text-left transition-colors hover:bg-white/5';
   const [filesBlockOpen, setFilesBlockOpen] = useState(true);
 
   // Категории услуг с описаниями
@@ -65,8 +76,8 @@ const OrderPage = () => {
     const priceMap = prices[prepaymentPercent];
     
     if (days >= 14 && days <= 21) return priceMap['14-21'];
-    if (days >= 7 && days < 14) return priceMap['7-14'];
     if (days === 7) return priceMap['7'];
+    if (days > 7 && days < 14) return priceMap['7-14'];
     if (days >= 2 && days <= 3) return priceMap['2-3'];
     if (days === 1) return priceMap['1'];
     
@@ -280,11 +291,14 @@ const OrderPage = () => {
       
       // Если есть цена, переходим на тестовую страницу оплаты
       if (calculatedTotalPrice > 0) {
-        const params = new URLSearchParams();
-        params.append('type', 'order');
-        params.append('order_id', orderId.toString());
-        params.append('total_price', calculatedPrepaymentAmount.toString());
-        navigate(`/test-payment?${params.toString()}`);
+        try {
+          await startCheckout({
+            kind: 'order',
+            order_id: orderId,
+          });
+        } catch (error) {
+          showError(checkoutErrorMessage(error));
+        }
       } else {
         showSuccess('Заказ успешно создан!');
         
@@ -370,7 +384,7 @@ const OrderPage = () => {
 
         <form onSubmit={handleSimpleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <label htmlFor="customer_name" className={labelClass}>
               <User className="h-4 w-4 inline mr-2" />
               Ваше имя *
             </label>
@@ -381,13 +395,13 @@ const OrderPage = () => {
               value={formData.customer_name}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+              className={fieldClass}
               placeholder="Введите ваше имя"
             />
           </div>
 
           <div>
-            <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <label htmlFor="customer_email" className={labelClass}>
               <Mail className="h-4 w-4 inline mr-2" />
               Email *
             </label>
@@ -398,13 +412,13 @@ const OrderPage = () => {
               value={formData.customer_email}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+              className={fieldClass}
               placeholder="Введите ваш email"
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <label htmlFor="description" className={labelClass}>
               <FileText className="h-4 w-4 inline mr-2" />
               Дополнительная информация (необязательно)
             </label>
@@ -415,12 +429,12 @@ const OrderPage = () => {
               onChange={handleInputChange}
               placeholder="Расскажите, что вас интересует..."
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+              className={fieldClass}
             />
           </div>
 
           <div>
-            <label htmlFor="contact_info" className="block text-sm font-medium text-black dark:text-white mb-2">
+            <label htmlFor="contact_info" className={labelClass}>
               <Mail className="h-4 w-4 inline mr-2" />
               Дополнительная информация для обратной связи
             </label>
@@ -431,25 +445,25 @@ const OrderPage = () => {
               value={formData.contact_info}
               onChange={handleInputChange}
               placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+              className={fieldClass}
             />
-            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+            <p className={hintClass}>
               Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
             </p>
           </div>
 
           <div className="pt-2">
-            <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-neutral-400">
+            <label className="flex items-start gap-2 text-xs text-white/50">
               <input
                 type="checkbox"
                 required
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-neutral-700 text-black dark:text-white focus:ring-black dark:focus:ring-white"
+                className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 accent-[#22c55e] focus:ring-[#22c55e]/40"
               />
               <span>
                 Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
                 <a
                   href="/terms"
-                  className="underline hover:text-black dark:hover:text-white"
+                  className="text-[#22c55e] underline hover:opacity-80"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -458,7 +472,7 @@ const OrderPage = () => {
                 и{' '}
                 <a
                   href="/privacy"
-                  className="underline hover:text-black dark:hover:text-white"
+                  className="text-[#22c55e] underline hover:opacity-80"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -472,7 +486,7 @@ const OrderPage = () => {
           <button
             type="submit"
             disabled={uploading}
-            className="w-full btn btn-primary h-12 text-base"
+            className={primaryBtnClass}
           >
             {uploading ? 'Отправка...' : 'Отправить заявку'}
           </button>
@@ -512,22 +526,22 @@ const OrderPage = () => {
 
       <form onSubmit={handleDetailedSubmit} className="space-y-6">
         {/* Блок 1: Пользователь */}
-        <div className="card border border-gray-300 dark:border-neutral-700">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03]">
           <button
             type="button"
             onClick={() => setUserBlockOpen(!userBlockOpen)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors rounded-lg"
+            className={accordionBtnClass}
           >
-            <h2 className="text-lg font-semibold text-black dark:text-white flex items-center gap-2">
+            <h2 className="flex items-center gap-2 font-[Syne] text-lg font-semibold text-white">
               <User className="h-5 w-5" />
               Пользователь
             </h2>
-            {userBlockOpen ? <ChevronUp className="h-5 w-5 text-gray-600 dark:text-neutral-400" /> : <ChevronDown className="h-5 w-5 text-gray-600 dark:text-neutral-400" />}
+            {userBlockOpen ? <ChevronUp className="h-5 w-5 text-white/50" /> : <ChevronDown className="h-5 w-5 text-white/50" />}
           </button>
           {userBlockOpen && (
             <div className="px-4 pb-4 space-y-4">
               <div>
-                <label htmlFor="customer_name" className="block text-sm font-medium text-black dark:text-white mb-2">Ваше имя *</label>
+                <label htmlFor="customer_name" className={labelClass}>Ваше имя *</label>
                 <input
                   type="text"
                   id="customer_name"
@@ -535,12 +549,12 @@ const OrderPage = () => {
                   value={formData.customer_name}
                   onChange={handleInputChange}
                   required
-                  className="input w-full"
+                  className={fieldClass}
                   placeholder="Введите ваше имя"
                 />
               </div>
               <div>
-                <label htmlFor="customer_email" className="block text-sm font-medium text-black dark:text-white mb-2">Email *</label>
+                <label htmlFor="customer_email" className={labelClass}>Email *</label>
                 <input
                   type="email"
                   id="customer_email"
@@ -548,12 +562,12 @@ const OrderPage = () => {
                   value={formData.customer_email}
                   onChange={handleInputChange}
                   required
-                  className="input w-full"
+                  className={fieldClass}
                   placeholder="Введите ваш email"
                 />
               </div>
               <div>
-                <label htmlFor="contact_info_detailed" className="block text-sm font-medium text-black dark:text-white mb-2">Дополнительная связь (Telegram, WhatsApp и т.д.)</label>
+                <label htmlFor="contact_info_detailed" className={labelClass}>Дополнительная связь (Telegram, WhatsApp и т.д.)</label>
                 <input
                   type="text"
                   id="contact_info_detailed"
@@ -561,32 +575,32 @@ const OrderPage = () => {
                   value={formData.contact_info}
                   onChange={handleInputChange}
                   placeholder="Например: @mytelegram, +79991234567"
-                  className="input w-full"
+                  className={fieldClass}
                 />
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Укажите удобный способ связи</p>
+                <p className={hintClass}>Укажите удобный способ связи</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Блок 2: Информация о заказе */}
-        <div className="card border border-gray-300 dark:border-neutral-700">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03]">
           <button
             type="button"
             onClick={() => setOrderInfoBlockOpen(!orderInfoBlockOpen)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors rounded-lg"
+            className={accordionBtnClass}
           >
-            <h2 className="text-lg font-semibold text-black dark:text-white flex items-center gap-2">
+            <h2 className="flex items-center gap-2 font-[Syne] text-lg font-semibold text-white">
               <FileText className="h-5 w-5" />
               Информация о заказе
             </h2>
-            {orderInfoBlockOpen ? <ChevronUp className="h-5 w-5 text-gray-600 dark:text-neutral-400" /> : <ChevronDown className="h-5 w-5 text-gray-600 dark:text-neutral-400" />}
+            {orderInfoBlockOpen ? <ChevronUp className="h-5 w-5 text-white/50" /> : <ChevronDown className="h-5 w-5 text-white/50" />}
           </button>
           {orderInfoBlockOpen && (
             <div className="px-4 pb-4 space-y-4">
         {/* Категории услуг с множественным выбором */}
         <div>
-          <label className="block text-sm font-medium text-black dark:text-white mb-2">
+          <label className={labelClass}>
             Категории услуг *
           </label>
           
@@ -597,19 +611,19 @@ const OrderPage = () => {
               return (
                 <div
                   key={`${category}-${index}`}
-                  className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg group relative"
+                  className="group relative flex items-center gap-2 rounded-full bg-[#22c55e] px-4 py-2 text-[#0f172a]"
                   title={description || undefined}
                 >
                   <span>{getCategoryLabel(category)}</span>
                   <button
                     type="button"
                     onClick={() => removeCategory(index)}
-                    className="hover:bg-gray-700 rounded p-1"
+                    className="hover:bg-white/10 rounded p-1"
                   >
                     <X className="h-4 w-4" />
                   </button>
                   {description && (
-                    <div className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <div className="pointer-events-none absolute bottom-full left-0 z-10 mb-2 w-64 rounded-xl border border-white/10 bg-[#0a0a0a] p-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
                       {description}
                     </div>
                   )}
@@ -623,7 +637,7 @@ const OrderPage = () => {
             <button
               type="button"
               onClick={() => setShowCategorySelector(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white transition-colors w-full"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-white/10 px-4 py-2 text-white/70 transition-colors hover:border-[#22c55e]/40 hover:text-white"
             >
               <Plus className="h-5 w-5" />
               <span>Добавить категорию услуги</span>
@@ -632,24 +646,24 @@ const OrderPage = () => {
 
           {/* Список категорий для выбора */}
           {showCategorySelector && (
-            <div className="border border-gray-300 dark:border-neutral-700 rounded-lg p-4 space-y-2">
+            <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
               {serviceCategories.map(category => (
                 <button
                   key={category.value}
                   type="button"
                   onClick={() => addCategory(category)}
-                  className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-neutral-800 dark:bg-neutral-900 border border-transparent hover:border-gray-300 dark:border-neutral-700"
+                  className="w-full rounded-xl border border-transparent bg-white/5 px-4 py-3 text-left transition-colors hover:border-white/10 hover:bg-white/5"
                 >
-                  <div className="font-medium text-black dark:text-white">{category.label}</div>
+                  <div className="font-medium text-white">{category.label}</div>
                   {category.description && (
-                    <div className="text-xs text-gray-600 dark:text-neutral-400 mt-1">{category.description}</div>
+                    <div className="text-xs text-white/50 mt-1">{category.description}</div>
                   )}
                 </button>
               ))}
               <button
                 type="button"
                 onClick={() => setShowCategorySelector(false)}
-                className="w-full mt-2 px-4 py-2 text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white"
+                className="w-full mt-2 px-4 py-2 text-white/50 hover:text-white"
               >
                 Отмена
               </button>
@@ -659,7 +673,7 @@ const OrderPage = () => {
 
         {/* Срок выполнения — под категориями */}
         <div>
-          <label htmlFor="deadline_days" className="block text-sm font-medium text-black dark:text-white mb-2">
+          <label htmlFor="deadline_days" className={labelClass}>
             <Calendar className="h-4 w-4 inline mr-2" />
             Срок выполнения (в днях) *
           </label>
@@ -672,16 +686,16 @@ const OrderPage = () => {
             required
             min="1"
             placeholder="Укажите количество дней"
-            className="input w-full"
+            className={fieldClass}
           />
-          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+          <p className={hintClass}>
             Примеры: 1 день (24 часа), 2-3 дня, 7 дней (1 неделя), 14-21 день (2-3 недели)
           </p>
         </div>
 
         {/* Описание — после срока выполнения */}
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-black dark:text-white mb-2">
+          <label htmlFor="description" className={labelClass}>
             <FileText className="h-4 w-4 inline mr-2" />
             Описание (Техническое задание)
           </label>
@@ -692,7 +706,7 @@ const OrderPage = () => {
             onChange={handleInputChange}
             placeholder="Опишите ваши требования..."
             rows={6}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:bg-neutral-900 dark:text-white dark:focus:ring-white"
+            className={fieldClass}
           />
         </div>
             </div>
@@ -700,23 +714,23 @@ const OrderPage = () => {
         </div>
 
         {/* Блок 3: Файлы и референсы */}
-        <div className="card border border-gray-300 dark:border-neutral-700">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03]">
           <button
             type="button"
             onClick={() => setFilesBlockOpen(!filesBlockOpen)}
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors rounded-lg"
+            className={accordionBtnClass}
           >
-            <h2 className="text-lg font-semibold text-black dark:text-white flex items-center gap-2">
+            <h2 className="flex items-center gap-2 font-[Syne] text-lg font-semibold text-white">
               <Upload className="h-5 w-5" />
               Файлы и референсы
             </h2>
-            {filesBlockOpen ? <ChevronUp className="h-5 w-5 text-gray-600 dark:text-neutral-400" /> : <ChevronDown className="h-5 w-5 text-gray-600 dark:text-neutral-400" />}
+            {filesBlockOpen ? <ChevronUp className="h-5 w-5 text-white/50" /> : <ChevronDown className="h-5 w-5 text-white/50" />}
           </button>
           {filesBlockOpen && (
             <div className="px-4 pb-4 space-y-4">
         {/* Загрузка материалов */}
         <div>
-          <label className="block text-sm font-medium text-black dark:text-white mb-2">
+          <label className={labelClass}>
             <Upload className="h-4 w-4 inline mr-2" />
             Загрузка материалов
           </label>
@@ -725,12 +739,12 @@ const OrderPage = () => {
           {formData.materials.length > 0 && (
             <div className="mb-3 space-y-2">
               {formData.materials.map((file, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-700 dark:text-neutral-300 truncate flex-1">{file.name}</span>
+                <div key={index} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2">
+                  <span className="text-sm text-white/70 truncate flex-1">{file.name}</span>
                   <button
                     type="button"
                     onClick={() => removeFile(formData.materials, index, 'materials')}
-                    className="ml-2 text-red-600 hover:text-red-800"
+                    className="ml-2 text-red-400 hover:text-red-300"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -741,7 +755,7 @@ const OrderPage = () => {
           
           {/* Красивая кнопка загрузки с drag and drop */}
           <label 
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-lg cursor-pointer hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 dark:bg-neutral-800 transition-colors"
+            className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-white/[0.03] transition-colors hover:border-[#22c55e]/40 hover:bg-white/5"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -757,11 +771,11 @@ const OrderPage = () => {
             }}
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <Upload className="h-8 w-8 text-gray-400 mb-2" />
-              <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+              <Upload className="h-8 w-8 text-white/40 mb-2" />
+              <p className="mb-2 text-sm text-white/40">
                 <span className="font-semibold">Нажмите для загрузки</span> или перетащите файлы
               </p>
-              <p className="text-xs text-gray-500 dark:text-neutral-500">Можно выбрать несколько файлов</p>
+              <p className="text-xs text-white/40">Можно выбрать несколько файлов</p>
             </div>
             <input
               type="file"
@@ -776,7 +790,7 @@ const OrderPage = () => {
 
         {/* Ссылки на референсы */}
         <div>
-          <label htmlFor="reference_links" className="block text-sm font-medium text-black dark:text-white mb-2">
+          <label htmlFor="reference_links" className={labelClass}>
             <LinkIcon className="h-4 w-4 inline mr-2" />
             Ссылки на референсы
           </label>
@@ -787,13 +801,13 @@ const OrderPage = () => {
             onChange={handleInputChange}
             placeholder="Введите ссылки на референсы (каждая ссылка с новой строки)"
             rows={4}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+            className={fieldClass}
           />
         </div>
 
         {/* Загрузка референсов файлами */}
         <div>
-          <label className="block text-sm font-medium text-black dark:text-white mb-2">
+          <label className={labelClass}>
             <Upload className="h-4 w-4 inline mr-2" />
             Загрузка референсов файлами
           </label>
@@ -802,12 +816,12 @@ const OrderPage = () => {
           {formData.reference_files.length > 0 && (
             <div className="mb-3 space-y-2">
               {formData.reference_files.map((file, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-lg px-4 py-2">
-                  <span className="text-sm text-gray-700 dark:text-neutral-300 truncate flex-1">{file.name}</span>
+                <div key={index} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2">
+                  <span className="text-sm text-white/70 truncate flex-1">{file.name}</span>
                   <button
                     type="button"
                     onClick={() => removeFile(formData.reference_files, index, 'reference_files')}
-                    className="ml-2 text-red-600 hover:text-red-800"
+                    className="ml-2 text-red-400 hover:text-red-300"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -818,7 +832,7 @@ const OrderPage = () => {
           
           {/* Красивая кнопка загрузки с drag and drop */}
           <label 
-            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-neutral-700 rounded-lg cursor-pointer hover:border-black dark:hover:border-white hover:bg-gray-50 dark:hover:bg-neutral-800 dark:bg-neutral-800 transition-colors"
+            className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-white/[0.03] transition-colors hover:border-[#22c55e]/40 hover:bg-white/5"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -834,11 +848,11 @@ const OrderPage = () => {
             }}
           >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <Upload className="h-8 w-8 text-gray-400 mb-2" />
-              <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+              <Upload className="h-8 w-8 text-white/40 mb-2" />
+              <p className="mb-2 text-sm text-white/40">
                 <span className="font-semibold">Нажмите для загрузки</span> или перетащите файлы
               </p>
-              <p className="text-xs text-gray-500 dark:text-neutral-500">Можно выбрать несколько файлов</p>
+              <p className="text-xs text-white/40">Можно выбрать несколько файлов</p>
             </div>
             <input
               type="file"
@@ -856,29 +870,29 @@ const OrderPage = () => {
 
         {/* Процент предоплаты и расчёт — вне блоков */}
         <div>
-          <label className="block text-sm font-medium text-black dark:text-white mb-2">
+          <label className={labelClass}>
             Процент предоплаты *
           </label>
           <div className="flex gap-4">
-            <label className="flex items-center">
+            <label className="flex items-center text-white/70">
               <input
                 type="radio"
                 name="prepayment_percent"
                 value="50"
                 checked={formData.prepayment_percent === 50}
                 onChange={(e) => setFormData({ ...formData, prepayment_percent: parseInt(e.target.value) })}
-                className="mr-2"
+                className="mr-2 accent-[#22c55e]"
               />
               <span>50% предоплата</span>
             </label>
-            <label className="flex items-center">
+            <label className="flex items-center text-white/70">
               <input
                 type="radio"
                 name="prepayment_percent"
                 value="100"
                 checked={formData.prepayment_percent === 100}
                 onChange={(e) => setFormData({ ...formData, prepayment_percent: parseInt(e.target.value) })}
-                className="mr-2"
+                className="mr-2 accent-[#22c55e]"
               />
               <span>100% предоплата</span>
             </label>
@@ -886,11 +900,11 @@ const OrderPage = () => {
         </div>
 
         {/* Калькулятор стоимости - всегда отображается */}
-        <div className="bg-gray-50 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-black dark:text-white mb-4">Расчет стоимости</h3>
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+          <h3 className="mb-4 font-[Syne] text-lg font-bold text-white">Расчет стоимости</h3>
           <div className="space-y-2">
             {formData.service_categories.length === 0 ? (
-              <p className="text-gray-500 dark:text-neutral-500 text-sm">Выберите услуги для расчета стоимости</p>
+              <p className="text-white/40 text-sm">Выберите услуги для расчета стоимости</p>
             ) : (
               <>
                 {Object.entries(serviceCounts).map(([category, count]) => {
@@ -900,7 +914,7 @@ const OrderPage = () => {
                   
                   if (!servicePrice && !isTrap) {
                     return (
-                      <div key={category} className="flex justify-between text-gray-500 dark:text-neutral-500">
+                      <div key={category} className="flex justify-between text-white/40">
                         <span>{category} × {count}:</span>
                         <span className="text-sm">Укажите срок выполнения</span>
                       </div>
@@ -908,7 +922,7 @@ const OrderPage = () => {
                   }
                   
                   return (
-                    <div key={category} className="flex justify-between">
+                    <div key={category} className="flex justify-between text-white">
                       <span>{category} × {count}:</span>
                       <span className="font-medium">
                         {servicePrice?.toLocaleString('ru-RU')} ₽ × {count} = {totalForService.toLocaleString('ru-RU')} ₽
@@ -918,11 +932,11 @@ const OrderPage = () => {
                 })}
                 {totalPrice > 0 && (
                   <>
-                    <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
+                    <div className="mt-2 flex justify-between border-t border-white/10 pt-2 text-lg font-bold text-white">
                       <span>Итого:</span>
                       <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
                     </div>
-                    <div className="flex justify-between text-sm text-gray-600 dark:text-neutral-400 border-t pt-2 mt-2">
+                    <div className="mt-2 flex justify-between border-t border-white/10 pt-2 text-sm text-white/50">
                       <span>Предоплата ({formData.prepayment_percent}%):</span>
                       <span className="font-medium">{prepaymentAmount.toLocaleString('ru-RU')} ₽</span>
                     </div>
@@ -933,15 +947,15 @@ const OrderPage = () => {
           </div>
           
           {/* Информация о стоимости */}
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-700 flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
+          <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-sm text-white/50">
             <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
             <div className="relative group">
-              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help flex-shrink-0" />
-              <div className="absolute bottom-full right-0 mb-2 w-80 p-4 bg-black text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              <HelpCircle className="h-4 w-4 text-white/40 cursor-help flex-shrink-0" />
+              <div className="invisible absolute bottom-full right-0 z-10 mb-2 w-80 rounded-xl border border-white/10 bg-[#0a0a0a] p-4 text-xs text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
                 <div className="space-y-3">
                   <div>
                     <div className="font-semibold mb-2">🟢 При 50% предоплате:</div>
-                    <ul className="space-y-1 text-gray-300">
+                    <ul className="space-y-1 text-white/70">
                       <li>• 2-3 недели: 25K</li>
                       <li>• 1-2 недели: 30K</li>
                       <li>• 1 неделя: 35K</li>
@@ -951,7 +965,7 @@ const OrderPage = () => {
                   </div>
                   <div>
                     <div className="font-semibold mb-2">🔴 При 100% предоплате:</div>
-                    <ul className="space-y-1 text-gray-300">
+                    <ul className="space-y-1 text-white/70">
                       <li>• 2-3 недели: 20K</li>
                       <li>• 1-2 недели: 25K</li>
                       <li>• 1 неделя: 30K</li>
@@ -959,16 +973,16 @@ const OrderPage = () => {
                       <li>• 24 часа: 45K</li>
                     </ul>
                   </div>
-                  <div className="pt-2 border-t border-gray-600">
+                  <div className="pt-2 border-t border-white/10">
                     <div className="font-semibold mb-1">✨ «Песня под ключ»:</div>
-                    <div className="text-gray-300">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
+                    <div className="text-white/70">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
                   </div>
-                  <div className="pt-2 border-t border-gray-600">
+                  <div className="pt-2 border-t border-white/10">
                     <div className="font-semibold mb-1">🎶 Бит в стиле трэп:</div>
-                    <div className="text-gray-300">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 15K</div>
+                    <div className="text-white/70">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 15K</div>
                   </div>
                 </div>
-                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
+                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[#0a0a0a]"></div>
               </div>
             </div>
           </div>
@@ -976,17 +990,17 @@ const OrderPage = () => {
 
         {/* Чекбокс — перед кнопкой оформления */}
         <div className="pt-2">
-          <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-neutral-400">
+          <label className="flex items-start gap-2 text-xs text-white/50">
             <input
               type="checkbox"
               required
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-neutral-700 text-black dark:text-white focus:ring-black dark:focus:ring-white"
+              className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 accent-[#22c55e] focus:ring-[#22c55e]/40"
             />
             <span>
               Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
               <a
                 href="/terms"
-                className="underline hover:text-black dark:hover:text-white"
+                className="text-[#22c55e] underline hover:opacity-80"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -995,7 +1009,7 @@ const OrderPage = () => {
               и{' '}
               <a
                 href="/privacy"
-                className="underline hover:text-black dark:hover:text-white"
+                className="text-[#22c55e] underline hover:opacity-80"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -1009,7 +1023,7 @@ const OrderPage = () => {
         <button
           type="submit"
           disabled={uploading || totalPrice === 0}
-          className="w-full btn btn-primary h-12 text-base"
+          className={primaryBtnClass}
         >
           {uploading ? 'Отправка...' : totalPrice > 0 ? `Оформить заказ (предоплата ${prepaymentAmount.toLocaleString('ru-RU')} ₽)` : 'Оформить заказ'}
         </button>

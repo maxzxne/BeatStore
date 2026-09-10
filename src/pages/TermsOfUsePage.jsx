@@ -1,26 +1,27 @@
 import React from 'react';
 
 const DocLink = ({ href, children, className = '' }) => (
-  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`text-[#22c55e] hover:underline cursor-pointer ${className}`}>
     {children}
   </a>
 );
 
 const TermsOfUsePage = () => {
   return (
-    <div className="container mx-auto px-6 py-10 max-w-4xl">
-      <h1 className="text-3xl font-bold text-black dark:text-white mb-6">
+    <div className="mx-auto max-w-4xl px-4 py-10">
+      <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e] mb-3">Legal</p>
+      <h1 className="font-[Syne] text-3xl font-extrabold text-white mb-6">
         Пользовательское соглашение (публичная оферта)
       </h1>
 
-      <p className="text-sm text-gray-600 dark:text-neutral-400 mb-6">
+      <p className="text-sm text-white/50 mb-6">
         Этот текст приведён как пример (обезличенный шаблон). Для реальной юридической силы необходимо
         указать конкретные реквизиты и согласовать документ с юристом.
       </p>
 
-      <div className="space-y-6 text-sm leading-relaxed text-gray-700 dark:text-neutral-300">
+      <div className="space-y-6 text-sm leading-relaxed text-white/70">
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             1. Общие положения
           </h2>
           <p>
@@ -39,7 +40,7 @@ const TermsOfUsePage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             2. Предмет Соглашения
           </h2>
           <p>
@@ -58,7 +59,7 @@ const TermsOfUsePage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             3. Регистрация и учётная запись
           </h2>
           <p>
@@ -76,7 +77,7 @@ const TermsOfUsePage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             4. Условия покупки и оплаты
           </h2>
           <p>
@@ -98,7 +99,7 @@ const TermsOfUsePage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             5. Права на контент
           </h2>
           <p>
@@ -121,19 +122,19 @@ const TermsOfUsePage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             6. Персональные данные
           </h2>
           <p>
             6.1. Обработка персональных данных Пользователя осуществляется в соответствии с Федеральным
             законом № 152‑ФЗ «О персональных данных» и{' '}
-            <DocLink href="/privacy" className="text-black dark:text-white">Политикой конфиденциальности</DocLink>
+            <DocLink href="/privacy">Политикой конфиденциальности</DocLink>
             , размещённой на Сайте.
           </p>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             7. Ответственность сторон
           </h2>
           <p>
@@ -152,13 +153,13 @@ const TermsOfUsePage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             8. Изменение условий Соглашения
           </h2>
           <p>
             8.1. Оператор вправе в одностороннем порядке изменять условия Соглашения. Обновлённая версия
             публикуется на Сайте ({' '}
-            <DocLink href="/terms" className="text-black dark:text-white">актуальная версия</DocLink>
+            <DocLink href="/terms">актуальная версия</DocLink>
             ) и вступает в силу с момента размещения, если иное не предусмотрено текстом Соглашения.
           </p>
           <p>
@@ -168,7 +169,7 @@ const TermsOfUsePage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             9. Заключительные положения
           </h2>
           <p>
@@ -186,5 +187,3 @@ const TermsOfUsePage = () => {
 };
 
 export default TermsOfUsePage;
-
-

@@ -1,24 +1,25 @@
 import React from 'react';
 
 const DocLink = ({ href, children, className = '' }) => (
-  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`text-[#22c55e] hover:underline cursor-pointer ${className}`}>
     {children}
   </a>
 );
 
 const PersonalDataConsentPage = () => {
   return (
-    <div className="container mx-auto px-6 py-10 max-w-4xl">
-      <h1 className="text-3xl font-bold text-black dark:text-white mb-6">
+    <div className="mx-auto max-w-4xl px-4 py-10">
+      <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e] mb-3">Legal</p>
+      <h1 className="font-[Syne] text-3xl font-extrabold text-white mb-6">
         Согласие на обработку персональных данных
       </h1>
 
-      <p className="text-sm text-gray-600 dark:text-neutral-400 mb-6">
+      <p className="text-sm text-white/50 mb-6">
         Текст ниже является примерочным (обезличенным) шаблоном. Перед использованием в реальном проекте
         его необходимо адаптировать под ваши реквизиты (ИП/ООО) и согласовать с юристом.
       </p>
 
-      <div className="space-y-6 text-sm leading-relaxed text-gray-700 dark:text-neutral-300">
+      <div className="space-y-6 text-sm leading-relaxed text-white/70">
         <section>
           <p>
             Я, <span className="italic">«Фамилия Имя Отчество пользователя»</span>, действуя своей волей
@@ -31,7 +32,7 @@ const PersonalDataConsentPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             1. Состав персональных данных
           </h2>
           <p>Под персональными данными понимается любая информация обо мне, в том числе:</p>
@@ -46,7 +47,7 @@ const PersonalDataConsentPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             2. Цели обработки персональных данных
           </h2>
           <p>Персональные данные обрабатываются в целях:</p>
@@ -61,7 +62,7 @@ const PersonalDataConsentPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             3. Действия с персональными данными
           </h2>
           <p>
@@ -73,7 +74,7 @@ const PersonalDataConsentPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             4. Передача персональных данных третьим лицам
           </h2>
           <p>
@@ -85,7 +86,7 @@ const PersonalDataConsentPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             5. Срок действия согласия и порядок его отзыва
           </h2>
           <p>
@@ -101,7 +102,7 @@ const PersonalDataConsentPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             6. Дополнительные условия
           </h2>
           <p>
@@ -111,9 +112,9 @@ const PersonalDataConsentPage = () => {
           </p>
           <p className="mt-2">
             Я подтверждаю, что ознакомился(лась) с{' '}
-            <DocLink href="/privacy" className="text-black dark:text-white">Политикой конфиденциальности</DocLink>
+            <DocLink href="/privacy">Политикой конфиденциальности</DocLink>
             {' '}и{' '}
-            <DocLink href="/terms" className="text-black dark:text-white">Пользовательским соглашением</DocLink>
+            <DocLink href="/terms">Пользовательским соглашением</DocLink>
             , размещёнными на сайте, и принимаю их условия.
           </p>
         </section>
@@ -123,5 +124,3 @@ const PersonalDataConsentPage = () => {
 };
 
 export default PersonalDataConsentPage;
-
-

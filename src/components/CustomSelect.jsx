@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 /**
- * Кастомный выпадающий список с контролируемым hover-цветом (серый вместо синего).
- * Заменяет нативный select, т.к. браузеры игнорируют стили option:hover.
+ * Кастомный выпадающий список (V2 OLED shell).
  */
 const CustomSelect = ({
   options = [],
@@ -18,8 +17,8 @@ const CustomSelect = ({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
-  const selectedOption = options.find(opt => opt.value === value);
-  const displayLabel = selectedOption ? selectedOption.label : (placeholder || 'Выберите...');
+  const selectedOption = options.find((opt) => opt.value === value);
+  const displayLabel = selectedOption ? selectedOption.label : placeholder || 'Выберите...';
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -42,22 +41,20 @@ const CustomSelect = ({
         type="button"
         id={id}
         name={name}
-        onClick={() => setIsOpen(prev => !prev)}
-        className={`input w-full min-w-0 text-left flex items-center justify-between gap-2 ${className}`}
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-left text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40 ${className}`}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-required={required}
       >
-        <span className={!selectedOption ? 'text-gray-500 dark:text-neutral-500' : ''}>
-          {displayLabel}
-        </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <span className={!selectedOption ? 'text-white/40' : ''}>{displayLabel}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
         <ul
           role="listbox"
-          className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 shadow-lg py-1"
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-white/10 bg-[#0a0a0a] py-1 shadow-lg"
         >
           {options.map((opt) => (
             <li
@@ -65,11 +62,11 @@ const CustomSelect = ({
               role="option"
               aria-selected={opt.value === value}
               onClick={() => handleSelect(opt)}
-              className={`px-4 py-2.5 cursor-pointer transition-colors
-                ${opt.value === value
-                  ? 'bg-gray-200 dark:bg-neutral-700 text-black dark:text-white font-medium'
-                  : 'hover:bg-gray-100 dark:hover:bg-neutral-800 text-black dark:text-white'
-                }`}
+              className={`cursor-pointer px-4 py-2.5 text-sm transition-colors ${
+                opt.value === value
+                  ? 'bg-[#22c55e]/15 font-medium text-[#22c55e]'
+                  : 'text-white hover:bg-white/5'
+              }`}
             >
               {opt.label}
             </li>

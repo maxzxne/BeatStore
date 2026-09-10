@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
+import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { ShoppingCart, Trash2, Play, Pause } from 'lucide-react';
 
 const CartPage = () => {
@@ -429,24 +430,15 @@ const CartPage = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => {
-                      // Переходим на тестовую страницу оплаты
-                      const params = new URLSearchParams();
-                      params.append('type', 'cart');
-                      params.append('total_price', totalPrice.toString());
-                      
-                      // Передаем выбранные форматы для битов в корзине
-                      const beatsWithFormats = cartItems
-                        .filter(item => item.type === 'beat')
-                        .map(item => ({
-                          id: item.id,
-                          format: selectedFormats[item.id] || 'mp3'
-                        }));
-                      if (beatsWithFormats.length > 0) {
-                        params.append('beats_formats', JSON.stringify(beatsWithFormats));
+                    onClick={async () => {
+                      try {
+                        await startCheckout({
+                          kind: 'cart',
+                          beats_formats: selectedFormats,
+                        });
+                      } catch (error) {
+                        showError(checkoutErrorMessage(error));
                       }
-                      
-                      navigate(`/test-payment?${params.toString()}`);
                     }}
                     className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
                     disabled={cartItems.length === 0}

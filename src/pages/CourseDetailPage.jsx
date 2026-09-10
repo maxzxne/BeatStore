@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
+import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle } from 'lucide-react';
 
 const CourseDetailPage = () => {
@@ -143,11 +144,14 @@ const CourseDetailPage = () => {
       }
     } else {
       // Для платных курсов переходим на тестовую страницу оплаты
-      const params = new URLSearchParams();
-      params.append('type', 'course');
-      params.append('item_id', id.toString());
-      params.append('total_price', course.price.toString());
-      navigate(`/test-payment?${params.toString()}`);
+      try {
+        await startCheckout({
+          kind: 'course',
+          item_id: Number(id),
+        });
+      } catch (error) {
+        showError(checkoutErrorMessage(error));
+      }
     }
   };
 
@@ -229,150 +233,149 @@ const CourseDetailPage = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const outlineBtn = (active) =>
+    `inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full border px-4 text-sm transition ${
+      active
+        ? 'border-[#22c55e]/50 bg-[#22c55e]/10 text-[#22c55e]'
+        : 'border-white/15 text-white/80 hover:bg-white/5'
+    }`;
+
   if (loading) {
     return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600 dark:text-neutral-400">Загрузка курса...</div>
-        </div>
-      </div>
+      <div className="mx-auto max-w-5xl px-4 py-16 text-sm text-white/50">Загрузка курса...</div>
     );
   }
 
   if (!course) {
     return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center py-12">
-          <div className="text-gray-600 dark:text-neutral-400 text-lg">Курс не найден</div>
-          <button
-            onClick={() => navigate('/courses')}
-            className="btn btn-outline mt-4"
-          >
-            Вернуться к курсам
-          </button>
-        </div>
+      <div className="mx-auto max-w-5xl px-4 py-16 text-center">
+        <p className="text-lg text-white/50">Курс не найден</p>
+        <button
+          type="button"
+          onClick={() => navigate('/courses')}
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-full border border-white/15 px-5 text-sm text-white hover:bg-white/5"
+        >
+          Вернуться к курсам
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <button
+        type="button"
         onClick={() => navigate('/courses')}
-        className="flex items-center text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-6 transition-colors border-none bg-transparent p-0"
+        className="mb-8 inline-flex items-center border-none bg-transparent p-0 text-sm text-white/50 transition-colors hover:text-white"
       >
-        <ArrowLeft className="h-5 w-5 mr-2" />
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Назад к курсам
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Левая колонка - Видео и кнопки */}
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2">
         <div className="space-y-4">
-          {/* Видео превью */}
           {course.preview_video_url ? (
-            <div className="space-y-3">
-              <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-                <video
-                  ref={videoRef}
-                  src={buildMediaUrl(course.preview_video_url)}
-                  className="w-full h-full object-cover"
-                  controls={false}
-                  playsInline
-                  preload="metadata"
-                  onTimeUpdate={handleVideoTimeUpdate}
-                  onLoadedMetadata={handleVideoLoadedMetadata}
-                  onPlay={() => setVideoPlaying(true)}
-                  onPause={() => setVideoPlaying(false)}
-                  onEnded={() => {
-                    setVideoPlaying(false);
-                    setVideoCurrentTime(0);
+            <div className="relative aspect-video w-full overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+              <video
+                ref={videoRef}
+                src={buildMediaUrl(course.preview_video_url)}
+                className="h-full w-full object-cover"
+                controls={false}
+                playsInline
+                preload="metadata"
+                onTimeUpdate={handleVideoTimeUpdate}
+                onLoadedMetadata={handleVideoLoadedMetadata}
+                onPlay={() => setVideoPlaying(true)}
+                onPause={() => setVideoPlaying(false)}
+                onEnded={() => {
+                  setVideoPlaying(false);
+                  setVideoCurrentTime(0);
+                }}
+                onError={(e) => {
+                  console.error('Video error:', e);
+                  showError('Ошибка загрузки видео');
+                }}
+              />
+
+              {!videoPlaying && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleVideo();
                   }}
-                  onError={(e) => {
-                    console.error('Video error:', e);
-                    showError('Ошибка загрузки видео');
-                  }}
-                />
-                
-                {!videoPlaying && (
+                  className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-black/40 transition-opacity hover:bg-black/50"
+                  type="button"
+                >
+                  <span className="grid h-20 w-20 place-items-center rounded-full bg-[#22c55e] text-[#0f172a] shadow-[0_0_40px_rgba(34,197,94,0.55)]">
+                    <Play className="ml-1 h-8 w-8" />
+                  </span>
+                </button>
+              )}
+
+              <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent p-4">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       toggleVideo();
                     }}
-                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 hover:bg-opacity-60 transition-opacity z-10 cursor-pointer"
+                    className="cursor-pointer rounded-full bg-white/20 p-2 transition-colors hover:bg-white/30"
                     type="button"
                   >
-                    <div className="bg-black rounded-full p-4">
-                      <Play className="h-12 w-12 text-white" />
-                    </div>
+                    {videoPlaying ? (
+                      <Pause className="h-5 w-5 text-white" />
+                    ) : (
+                      <Play className="h-5 w-5 text-white" />
+                    )}
                   </button>
-                )}
-                
-                {/* Кастомные контролы видео - показываем всегда */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 z-20">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleVideo();
-                      }}
-                      className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors cursor-pointer"
-                      type="button"
+
+                  <div className="flex-1">
+                    <div
+                      className="relative mb-1 h-1.5 w-full cursor-pointer rounded-full bg-white/30"
+                      onClick={handleSeek}
                     >
-                      {videoPlaying ? (
-                        <Pause className="h-5 w-5 text-white" />
-                      ) : (
-                        <Play className="h-5 w-5 text-white" />
-                      )}
-                    </button>
-                    
-                    <div className="flex-1">
-                      {/* Прогресс-бар */}
                       <div
-                        className="w-full h-1.5 bg-white/30 rounded-full cursor-pointer mb-1 relative"
-                        onClick={handleSeek}
-                      >
-                        <div
-                          className="h-full bg-white rounded-full transition-all"
-                          style={{ 
-                            width: videoDuration && videoDuration > 0
+                        className="h-full rounded-full bg-[#22c55e] transition-all"
+                        style={{
+                          width:
+                            videoDuration && videoDuration > 0
                               ? `${Math.min((videoCurrentTime / videoDuration) * 100, 100)}%`
-                              : '0%'
-                          }}
-                        />
-                      </div>
-                      {/* Время */}
-                      <div className="flex justify-between text-xs text-white">
-                        <span>{formatTime(videoCurrentTime)}</span>
-                        <span>{formatTime(videoDuration)}</span>
-                      </div>
+                              : '0%',
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-white/80">
+                      <span>{formatTime(videoCurrentTime)}</span>
+                      <span>{formatTime(videoDuration)}</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-lg flex items-center justify-center">
-              <span className="text-gray-600 dark:text-neutral-400 text-lg">Превью недоступно</span>
+            <div className="flex aspect-video w-full items-center justify-center rounded-[2rem] border border-white/10 bg-white/[0.03]">
+              <span className="text-lg text-white/40">Превью недоступно</span>
             </div>
           )}
 
-          {/* Кнопки под видео */}
           <div className="space-y-3">
             {isPurchased ? (
               <button
+                type="button"
                 onClick={handleDownload}
-                className="p-2 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-sm text-white transition hover:bg-white/5"
                 title="Скачать курс"
               >
                 <Download className="h-5 w-5" />
+                Скачать курс
               </button>
             ) : (
               <button
+                type="button"
                 onClick={handlePurchase}
-                className="btn btn-primary w-full h-12 text-base"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110"
               >
                 {course.price === 0 ? 'Получить бесплатно' : `Купить за ${course.price.toFixed(0)} ₽`}
               </button>
@@ -380,22 +383,12 @@ const CourseDetailPage = () => {
 
             {isAuthenticated && (
               <div className="flex gap-2">
-                <button
-                  onClick={handleFavorite}
-                  className={`btn btn-outline flex-1 h-12 flex items-center justify-center gap-2 ${
-                    isFavorite ? 'bg-gray-50 dark:bg-neutral-800 border-black dark:border-white' : ''
-                  }`}
-                >
+                <button type="button" onClick={handleFavorite} className={outlineBtn(isFavorite)}>
                   <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
                   {isFavorite ? 'В избранном' : 'В избранное'}
                 </button>
 
-                <button
-                  onClick={handleAddToCart}
-                  className={`btn btn-outline flex-1 h-12 flex items-center justify-center gap-2 ${
-                    isInCart ? 'bg-gray-50 dark:bg-neutral-800 border-black dark:border-white' : ''
-                  }`}
-                >
+                <button type="button" onClick={handleAddToCart} className={outlineBtn(isInCart)}>
                   <ShoppingCart className="h-5 w-5" fill={isInCart ? 'currentColor' : 'none'} />
                   {isInCart ? 'В корзине' : 'В корзину'}
                 </button>
@@ -404,20 +397,21 @@ const CourseDetailPage = () => {
           </div>
         </div>
 
-        {/* Правая колонка - Информация о курсе */}
-        <div>
-          <h1 className="text-3xl font-bold text-black dark:text-white mb-4">{course.title}</h1>
-          
-          {course.purpose && (
-            <p className="text-lg text-gray-600 dark:text-neutral-400 mb-4">{course.purpose}</p>
-          )}
+        <div className="v2-reveal space-y-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-[#22c55e]">Course</p>
+            <h1 className="mt-2 font-[Syne] text-4xl font-extrabold tracking-tight text-white">
+              {course.title}
+            </h1>
+            {course.purpose && <p className="mt-2 text-lg text-white/50">{course.purpose}</p>}
+          </div>
 
           {course.tags && (
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2">
               {course.tags.split(',').map((tag, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-neutral-300 rounded-full text-sm"
+                  className="rounded-full border border-white/10 px-3 py-1 text-sm text-white/70"
                 >
                   {tag.trim()}
                 </span>
@@ -425,21 +419,21 @@ const CourseDetailPage = () => {
             </div>
           )}
 
-          <div className="text-2xl font-bold text-black dark:text-white mb-6">
+          <div className="font-[Syne] text-3xl font-extrabold text-white">
             {course.price === 0 ? 'Бесплатно' : `${course.price.toFixed(0)} ₽`}
           </div>
 
           {course.description && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-black dark:text-white mb-2">Описание</h2>
-              <p className="text-gray-600 dark:text-neutral-400 whitespace-pre-wrap">{course.description}</p>
+            <div>
+              <h2 className="mb-2 text-lg font-semibold text-white">Описание</h2>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/60">{course.description}</p>
             </div>
           )}
 
           {isPurchased && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <span className="text-green-800">Вы уже купили этот курс</span>
+            <div className="flex items-center gap-2 rounded-2xl border border-[#22c55e]/30 bg-[#22c55e]/10 px-4 py-3 text-sm text-[#22c55e]">
+              <CheckCircle className="h-5 w-5 shrink-0" />
+              <span>Вы уже купили этот курс</span>
             </div>
           )}
         </div>

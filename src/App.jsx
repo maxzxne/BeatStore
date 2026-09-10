@@ -38,9 +38,9 @@ import AdminOAuthSettings from './pages/AdminOAuthSettings';
 import AdminRevenue from './pages/AdminRevenue';
 import AdminHeroPage from './v2/admin/AdminHeroPage';
 import AdminBannersPage from './v2/admin/AdminBannersPage';
-import TestPaymentPage from './pages/TestPaymentPage';
-import PaymentSuccessPage from './pages/PaymentSuccessPage';
-import PaymentFailurePage from './pages/PaymentFailurePage';
+import PaymentPayPage from './v2/PaymentPayPage';
+import PaymentSuccessPage from './v2/PaymentSuccessPage';
+import PaymentFailurePage from './v2/PaymentFailurePage';
 import ErrorPage from './pages/ErrorPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfUsePage from './pages/TermsOfUsePage';
@@ -68,7 +68,8 @@ function App() {
                     <Route path="cart" element={<CartPage />} />
                     <Route path="purchases" element={<PurchasesPage />} />
                     <Route path="success" element={<SuccessPage />} />
-                    <Route path="test-payment" element={<TestPaymentPage />} />
+                    <Route path="test-payment" element={<PaymentPayPage />} />
+                    <Route path="payment/pay" element={<PaymentPayPage />} />
                     <Route path="payment/success" element={<PaymentSuccessPage />} />
                     <Route path="payment/failure" element={<PaymentFailurePage />} />
                     <Route path="privacy" element={<PrivacyPolicyPage />} />

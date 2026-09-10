@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
+import { useNotification } from '../contexts/NotificationContext';
 import BeatCard from '../components/BeatCard';
 import { api, buildMediaUrl } from '../utils/api';
+import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio, HelpCircle } from 'lucide-react';
 
 const PurchasesPage = () => {
   const { isAuthenticated } = useAuth();
   const { playTrack, isCurrentTrackPlaying, pauseTrack, resumeTrack, isCurrentTrack } = useAudioPlayer();
+  const { showError } = useNotification();
   const navigate = useNavigate();
   const [purchases, setPurchases] = useState([]);
   const [coursePurchases, setCoursePurchases] = useState([]);
@@ -554,13 +557,12 @@ const PurchasesPage = () => {
                         Заказ подтвержден. Необходимо оплатить {order.prepayment_percent || 50}% предоплату: {(order.price * (order.prepayment_percent || 50) / 100).toLocaleString('ru-RU')} ₽
                       </p>
                       <button 
-                        onClick={() => {
-                          const prepaymentAmount = order.price * (order.prepayment_percent || 50) / 100;
-                          const params = new URLSearchParams();
-                          params.append('type', 'order');
-                          params.append('order_id', order.id.toString());
-                          params.append('total_price', prepaymentAmount.toString());
-                          navigate(`/test-payment?${params.toString()}`);
+                        onClick={async () => {
+                          try {
+                            await startCheckout({ kind: 'order', order_id: order.id });
+                          } catch (error) {
+                            showError(checkoutErrorMessage(error));
+                          }
                         }}
                         className="mt-3 inline-flex h-10 items-center justify-center rounded-full bg-[#22c55e] px-5 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
                       >

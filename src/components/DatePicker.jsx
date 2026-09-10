@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 const WEEKDAYS_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
 /**
- * Стильный календарь под дизайн сайта (светлая и тёмная тема)
+ * Календарь под V2 dark OLED shell
  */
 const DatePicker = ({ value = '', onChange, placeholder = 'ДД.ММ.ГГГГ', className = '', id }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -89,43 +89,43 @@ const DatePicker = ({ value = '', onChange, placeholder = 'ДД.ММ.ГГГГ', 
         type="button"
         id={id}
         onClick={() => setIsOpen(prev => !prev)}
-        className="input w-full min-w-0 text-left flex items-center gap-2"
+        className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-left text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
       >
-        <Calendar className="h-4 w-4 text-gray-500 dark:text-neutral-400 shrink-0" />
-        <span className={!value ? 'text-gray-500 dark:text-neutral-500' : ''}>
+        <Calendar className="h-4 w-4 shrink-0 text-white/50" />
+        <span className={!value ? 'text-white/40' : ''}>
           {value ? formatDisplay(value) : placeholder}
         </span>
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 left-0 rounded-lg border border-gray-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 shadow-xl py-3 px-4 min-w-[280px]">
+        <div className="absolute left-0 z-50 mt-1 min-w-[280px] rounded-xl border border-white/10 bg-[#0a0a0a] px-4 py-3 shadow-xl">
           {/* Заголовок с навигацией */}
-          <div className="flex items-center justify-between mb-3 px-1">
+          <div className="mb-3 flex items-center justify-between px-1">
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-white/50 transition-colors hover:bg-white/5 hover:text-white"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <span className="text-sm font-medium text-black dark:text-white capitalize">
+            <span className="text-sm font-medium capitalize text-white">
               {monthName}
             </span>
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-neutral-800 text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
+              className="rounded-md p-1.5 text-white/50 transition-colors hover:bg-white/5 hover:text-white"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
 
           {/* Дни недели */}
-          <div className="grid grid-cols-7 gap-0.5 mb-2">
+          <div className="mb-2 grid grid-cols-7 gap-0.5">
             {WEEKDAYS_RU.map(day => (
               <div
                 key={day}
-                className="text-center text-xs font-medium text-gray-500 dark:text-neutral-500 py-1"
+                className="py-1 text-center text-xs font-medium text-white/40"
               >
                 {day}
               </div>
@@ -144,13 +144,13 @@ const DatePicker = ({ value = '', onChange, placeholder = 'ДД.ММ.ГГГГ', 
                   type="button"
                   onClick={() => handleSelect(cell)}
                   className={`
-                    w-9 h-9 rounded-md text-sm transition-colors
-                    ${!cell.isCurrentMonth ? 'text-gray-400 dark:text-neutral-600' : 'text-black dark:text-white'}
+                    h-9 w-9 rounded-md text-sm transition-colors
+                    ${!cell.isCurrentMonth ? 'text-white/20' : 'text-white'}
                     ${isSelected
-                      ? 'bg-black dark:bg-neutral-600 text-white dark:text-white font-medium'
-                      : 'hover:bg-gray-100 dark:hover:bg-neutral-800'
+                      ? 'bg-[#22c55e] font-medium text-[#0f172a]'
+                      : 'hover:bg-white/5'
                     }
-                    ${isToday && !isSelected ? 'ring-1 ring-gray-400 dark:ring-neutral-500' : ''}
+                    ${isToday && !isSelected ? 'ring-1 ring-[#22c55e]/40' : ''}
                   `}
                 >
                   {cell.day}
@@ -160,18 +160,18 @@ const DatePicker = ({ value = '', onChange, placeholder = 'ДД.ММ.ГГГГ', 
           </div>
 
           {/* Кнопки внизу */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-neutral-700">
+          <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3">
             <button
               type="button"
               onClick={clearDate}
-              className="text-sm text-gray-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
+              className="text-sm text-white/50 transition-colors hover:text-white"
             >
               Очистить
             </button>
             <button
               type="button"
               onClick={setToday}
-              className="text-sm font-medium px-3 py-1.5 rounded-md bg-gray-200 dark:bg-neutral-700 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-neutral-600 transition-colors"
+              className="rounded-full bg-[#22c55e] px-3 py-1.5 text-sm font-medium text-[#0f172a] transition hover:brightness-110"
             >
               Сегодня
             </button>

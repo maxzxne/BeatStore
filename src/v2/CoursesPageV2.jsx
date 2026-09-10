@@ -203,11 +203,11 @@ const CoursesPageV2 = () => {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[280px]">
-          <div className="text-gray-600 dark:text-neutral-400">Загрузка курсов...</div>
+          <div className="text-sm text-white/50">Загрузка курсов...</div>
         </div>
       ) : courses.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-gray-600 dark:text-neutral-400 text-lg">Курсы не найдены</div>
+          <div className="text-lg text-white/50">Курсы не найдены</div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

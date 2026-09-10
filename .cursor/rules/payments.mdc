@@ -1,0 +1,13 @@
+---
+description: BeatStore acquiring — webhook fulfills, client never grants a purchase
+globs: backend/payments/**/*.py, backend/models.py, src/v2/Payment*.jsx, src/utils/checkout.js, src/pages/Payment*.jsx
+alwaysApply: false
+---
+
+# Payments
+
+- Amount and fulfillment live on the server (`PaymentIntent`).
+- Robokassa ResultURL verifies Password2 signature, responds `OK{InvId}`, then fulfill.
+- Success/fail pages only display status. Poll `GET /payments/intents/{id}`.
+- `PAYMENT_TEST=true` + empty MerchantLogin → Robokassa demo shop (`auth.robokassa.ru`, `IsTest=1`). Live = env flip, not new endpoints.
+- Public chrome: `src/v2`, OLED + `#22C55E`. No client `payment_success=true`.

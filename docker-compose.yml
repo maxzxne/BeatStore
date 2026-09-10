@@ -16,7 +16,13 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-}
       - MINI_APP_URL=${MINI_APP_URL:-}
-      - FRONTEND_URL=${FRONTEND_URL:-https://unvisited-eve-unadjusted.ngrok-free.dev}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - PAYMENT_PROVIDER=robokassa
+      - PAYMENT_TEST=true
+      - ROBOKASSA_MERCHANT_LOGIN=${ROBOKASSA_MERCHANT_LOGIN:-}
+      - ROBOKASSA_PASSWORD1=${ROBOKASSA_PASSWORD1:-password_1}
+      - ROBOKASSA_PASSWORD2=${ROBOKASSA_PASSWORD2:-password_2}
+      - BACKEND_PUBLIC_URL=${BACKEND_PUBLIC_URL:-http://localhost:8000}
     restart: unless-stopped
 
   frontend:

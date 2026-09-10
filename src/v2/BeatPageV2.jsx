@@ -18,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import api, { buildMediaUrl } from '../utils/api';
+import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check, Play, Pause } from 'lucide-react';
 
 /**
@@ -169,13 +170,25 @@ const BeatPageV2 = () => {
       actualPrice = beat.price_exclusive;
     }
     
-    // Всегда переходим на тестовую страницу оплаты (даже для бесплатных)
-    const params = new URLSearchParams();
-    params.append('type', 'beat');
-    params.append('item_id', id.toString());
-    params.append('purchase_type', selectedPurchaseType);
-    params.append('total_price', actualPrice.toString());
-    navigate(`/test-payment?${params.toString()}`);
+    try {
+      if (!actualPrice) {
+        const formData = new FormData();
+        formData.append('purchase_type', selectedPurchaseType);
+        await api.post(`/beats/${id}/purchase`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        showSuccess('Бит добавлен в покупки');
+        await checkBeatStatus();
+        return;
+      }
+      await startCheckout({
+        kind: 'beat',
+        item_id: Number(id),
+        purchase_type: selectedPurchaseType,
+      });
+    } catch (error) {
+      showError(checkoutErrorMessage(error));
+    }
   };
 
   const handleDownload = async (downloadType = null) => {

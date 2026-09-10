@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../utils/api';
-import { User, Mail, Lock, Save, Phone, X, LogOut, Sun, Moon } from 'lucide-react';
+import { User, Mail, Lock, Save, Phone, X, LogOut } from 'lucide-react';
 
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
@@ -12,7 +11,6 @@ const fieldClass =
 const ProfilePage = () => {
   const { user, fetchUser, logout } = useAuth();
   const { showSuccess, showError } = useNotification();
-  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -94,38 +92,6 @@ const ProfilePage = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
-        {/* Настройки темы */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center">
-              {isDarkMode ? (
-                <Moon className="mr-3 h-5 w-5 text-white/50" />
-              ) : (
-                <Sun className="mr-3 h-5 w-5 text-[#22c55e]" />
-              )}
-              <div>
-                <p className="text-sm font-medium text-white">Тема оформления</p>
-                <p className="text-xs text-white/40">
-                  {isDarkMode ? 'Тёмная тема' : 'Светлая тема'}
-                </p>
-              </div>
-            </div>
-            <label className="inline-flex cursor-pointer items-center gap-3">
-              <Moon className="h-5 w-5 shrink-0 text-white/40" />
-              <div className="relative h-6 w-11 flex-shrink-0">
-                <input
-                  type="checkbox"
-                  checked={!isDarkMode}
-                  onChange={toggleTheme}
-                  className="peer sr-only"
-                />
-                <div className="relative h-full w-full rounded-full bg-white/15 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-white/20 after:bg-white after:shadow-sm after:transition-transform after:duration-200 after:content-[''] peer-checked:bg-[#22c55e] peer-checked:after:translate-x-5 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/40"></div>
-              </div>
-              <Sun className="h-5 w-5 shrink-0 text-[#22c55e]" />
-            </label>
-          </div>
-        </div>
-
         {/* Имя пользователя */}
         <div>
           <label htmlFor="profile_username" className="mb-2 block text-sm font-medium text-white/80">

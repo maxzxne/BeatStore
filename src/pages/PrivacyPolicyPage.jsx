@@ -1,26 +1,27 @@
 import React from 'react';
 
 const DocLink = ({ href, children, className = '' }) => (
-  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`text-[#22c55e] hover:underline cursor-pointer ${className}`}>
     {children}
   </a>
 );
 
 const PrivacyPolicyPage = () => {
   return (
-    <div className="container mx-auto px-6 py-10 max-w-4xl">
-      <h1 className="text-3xl font-bold text-black dark:text-white mb-6">
+    <div className="mx-auto max-w-4xl px-4 py-10">
+      <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e] mb-3">Legal</p>
+      <h1 className="font-[Syne] text-3xl font-extrabold text-white mb-6">
         Политика конфиденциальности и обработки персональных данных
       </h1>
 
-      <p className="text-sm text-gray-600 dark:text-neutral-400 mb-6">
+      <p className="text-sm text-white/50 mb-6">
         Настоящая Политика конфиденциальности (далее — Политика) подготовлена в примерочном (обезличенном) виде.
         Для реального использования её необходимо адаптировать под ваши реквизиты и согласовать с юристом.
       </p>
 
-      <div className="space-y-6 text-sm leading-relaxed text-gray-700 dark:text-neutral-300">
+      <div className="space-y-6 text-sm leading-relaxed text-white/70">
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             1. Общие положения
           </h2>
           <p>
@@ -40,7 +41,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             2. Персональные данные, которые обрабатываются
           </h2>
           <p>2.1. В рамках использования Сайта Оператор может обрабатывать следующие категории данных:</p>
@@ -57,7 +58,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             3. Цели обработки персональных данных
           </h2>
           <p>3.1. Персональные данные обрабатываются в следующих целях:</p>
@@ -73,7 +74,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             4. Правовые основания обработки
           </h2>
           <p>
@@ -90,7 +91,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             5. Передача персональных данных третьим лицам
           </h2>
           <p>
@@ -105,7 +106,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             6. Права Пользователя
           </h2>
           <p>6.1. Пользователь имеет право:</p>
@@ -123,7 +124,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             7. Срок хранения персональных данных
           </h2>
           <p>
@@ -137,7 +138,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             8. Файлы cookie и технические данные
           </h2>
           <p>
@@ -151,7 +152,7 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             9. Заключительные положения
           </h2>
           <p>
@@ -162,7 +163,7 @@ const PrivacyPolicyPage = () => {
           <p>
             9.2. Оператор оставляет за собой право вносить изменения в Политику. Актуальная версия Политики
             публикуется на Сайте ({' '}
-            <DocLink href="/privacy" className="text-black dark:text-white">Политика конфиденциальности</DocLink>
+            <DocLink href="/privacy">Политика конфиденциальности</DocLink>
             ).
           </p>
         </section>
@@ -172,5 +173,3 @@ const PrivacyPolicyPage = () => {
 };
 
 export default PrivacyPolicyPage;
-
-

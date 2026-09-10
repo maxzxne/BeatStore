@@ -302,6 +302,26 @@ class PromoBanner(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class PaymentIntent(Base):
+    """Pending or completed checkout. InvId for Robokassa is this row's id."""
+    __tablename__ = "payment_intents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    kind = Column(String, nullable=False)
+    payload = Column(Text, nullable=False, default="{}")
+    amount = Column(Float, nullable=False)
+    currency = Column(String, default="RUB")
+    status = Column(String, default="pending", index=True)
+    provider = Column(String, default="robokassa")
+    description = Column(String, nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", foreign_keys=[user_id])
+
+
 class ErrorLog(Base):
     """
     Модель логов ошибок

@@ -4,40 +4,40 @@ import { Home, RefreshCw, AlertTriangle, FileX, Wifi, Server } from 'lucide-reac
 
 const ErrorPage = () => {
   const error = useRouteError();
-  
+
   const getErrorInfo = () => {
     if (error?.status === 404) {
       return {
         icon: FileX,
         title: 'Страница не найдена',
         message: 'К сожалению, запрашиваемая страница не существует.',
-        suggestion: 'Проверьте правильность URL или вернитесь на главную страницу.'
+        suggestion: 'Проверьте правильность URL или вернитесь на главную страницу.',
       };
     }
-    
+
     if (error?.status === 500) {
       return {
         icon: Server,
         title: 'Ошибка сервера',
         message: 'Произошла внутренняя ошибка сервера.',
-        suggestion: 'Попробуйте обновить страницу или вернитесь позже.'
+        suggestion: 'Попробуйте обновить страницу или вернитесь позже.',
       };
     }
-    
+
     if (error?.message?.includes('Network Error') || error?.message?.includes('fetch')) {
       return {
         icon: Wifi,
         title: 'Проблемы с подключением',
         message: 'Не удается подключиться к серверу.',
-        suggestion: 'Проверьте интернет-соединение и попробуйте снова.'
+        suggestion: 'Проверьте интернет-соединение и попробуйте снова.',
       };
     }
-    
+
     return {
       icon: AlertTriangle,
       title: 'Произошла ошибка',
       message: 'Что-то пошло не так. Мы уже работаем над исправлением.',
-      suggestion: 'Попробуйте обновить страницу или вернитесь на главную.'
+      suggestion: 'Попробуйте обновить страницу или вернитесь на главную.',
     };
   };
 
@@ -45,74 +45,51 @@ const ErrorPage = () => {
   const Icon = errorInfo.icon;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center px-4">
-      <div className="max-w-md w-full text-center">
-        {/* Error Icon */}
-        <div className="mb-8">
-          <div className="mx-auto w-24 h-24 bg-red-50 rounded-full flex items-center justify-center">
-            <Icon className="w-12 h-12 text-red-500" />
-          </div>
+    <div className="flex min-h-screen items-center justify-center bg-[#050505] px-4 py-10">
+      <div className="w-full max-w-md text-center">
+        <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Error</p>
+        <div className="mx-auto mt-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10">
+          <Icon className="h-10 w-10 text-red-400" />
         </div>
 
-        {/* Error Content */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            {errorInfo.title}
-          </h1>
-          <p className="text-gray-600 dark:text-neutral-400 mb-4">
-            {errorInfo.message}
-          </p>
-          <p className="text-sm text-gray-500 dark:text-neutral-500">
-            {errorInfo.suggestion}
-          </p>
-        </div>
+        <h1 className="mt-6 font-[Syne] text-3xl font-extrabold text-white">{errorInfo.title}</h1>
+        <p className="mt-3 text-sm text-white/60">{errorInfo.message}</p>
+        <p className="mt-2 text-sm text-white/40">{errorInfo.suggestion}</p>
 
-        {/* Error Details (for development) */}
-        {process.env.NODE_ENV === 'development' && error && (
-          <div className="mb-8 p-4 bg-gray-100 dark:bg-neutral-900 rounded-lg text-left">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-neutral-300 mb-2">Детали ошибки:</h3>
-            <pre className="text-xs text-gray-600 dark:text-neutral-400 overflow-auto">
-              {JSON.stringify(error, null, 2)}
-            </pre>
+        {import.meta.env.DEV && error && (
+          <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left">
+            <h3 className="mb-2 text-sm font-semibold text-white/70">Детали ошибки</h3>
+            <pre className="overflow-auto text-xs text-white/40">{JSON.stringify(error, null, 2)}</pre>
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
+        <div className="mt-8 space-y-3">
           <Link
             to="/"
-            className="inline-flex items-center justify-center w-full px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
           >
-            <Home className="w-5 h-5 mr-2" />
+            <Home className="mr-2 h-5 w-5" />
             На главную
           </Link>
-          
           <button
+            type="button"
             onClick={() => window.location.reload()}
-            className="inline-flex items-center justify-center w-full px-6 py-3 bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-neutral-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-800 transition-colors"
+            className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/15 text-sm text-white transition hover:bg-white/5"
           >
-            <RefreshCw className="w-5 h-5 mr-2" />
+            <RefreshCw className="mr-2 h-5 w-5" />
             Обновить страницу
           </button>
         </div>
 
-        {/* Additional Help */}
-        <div className="mt-8 text-sm text-gray-500 dark:text-neutral-500">
-          <p>
-            Если проблема повторяется,{' '}
-            <a 
-              href="mailto:support@XWinner.beats.please.com" 
-              className="text-black dark:text-white hover:underline"
-            >
-              свяжитесь с поддержкой
-            </a>
-          </p>
-        </div>
+        <p className="mt-8 text-sm text-white/40">
+          Если проблема повторяется,{' '}
+          <a href="mailto:support@XWinner.beats.please.com" className="text-[#22c55e] hover:underline">
+            свяжитесь с поддержкой
+          </a>
+        </p>
       </div>
     </div>
   );
 };
 
 export default ErrorPage;
-
-

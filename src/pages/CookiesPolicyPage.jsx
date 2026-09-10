@@ -1,27 +1,28 @@
 import React from 'react';
 
 const DocLink = ({ href, children, className = '' }) => (
-  <a href={href} target="_blank" rel="noopener noreferrer" className={`underline cursor-pointer hover:opacity-80 ${className}`}>
+  <a href={href} target="_blank" rel="noopener noreferrer" className={`text-[#22c55e] hover:underline cursor-pointer ${className}`}>
     {children}
   </a>
 );
 
 const CookiesPolicyPage = () => {
   return (
-    <div className="container mx-auto px-6 py-10 max-w-4xl">
-      <h1 className="text-3xl font-bold text-black dark:text-white mb-6">
+    <div className="mx-auto max-w-4xl px-4 py-10">
+      <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e] mb-3">Legal</p>
+      <h1 className="font-[Syne] text-3xl font-extrabold text-white mb-6">
         Политика использования файлов cookie
       </h1>
 
-      <p className="text-sm text-gray-600 dark:text-neutral-400 mb-6">
+      <p className="text-sm text-white/50 mb-6">
         Этот документ является примерочной (обезличенной) политикой использования файлов cookie. Перед
         применением в реальном проекте его следует адаптировать под ваши технические настройки и согласовать
         с юристом.
       </p>
 
-      <div className="space-y-6 text-sm leading-relaxed text-gray-700 dark:text-neutral-300">
+      <div className="space-y-6 text-sm leading-relaxed text-white/70">
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             1. Что такое файлы cookie
           </h2>
           <p>
@@ -32,7 +33,7 @@ const CookiesPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             2. Какие cookie используются на XWinner.beats.please
           </h2>
           <ul className="list-disc pl-5 mt-2 space-y-1">
@@ -57,7 +58,7 @@ const CookiesPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             3. Как управлять cookie
           </h2>
           <p>
@@ -71,7 +72,7 @@ const CookiesPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             4. Согласие на использование cookie
           </h2>
           <p>
@@ -82,13 +83,13 @@ const CookiesPolicyPage = () => {
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-black dark:text-white mb-2">
+          <h2 className="text-lg font-semibold text-white mb-2">
             5. Изменения в Политике cookie
           </h2>
           <p>
             Оператор оставляет за собой право вносить изменения в настоящую Политику cookie. Актуальная
             версия Политики всегда доступна на сайте ({' '}
-            <DocLink href="/cookies" className="text-black dark:text-white">Политика cookie</DocLink>
+            <DocLink href="/cookies">Политика cookie</DocLink>
             ).
           </p>
         </section>
@@ -98,5 +99,3 @@ const CookiesPolicyPage = () => {
 };
 
 export default CookiesPolicyPage;
-
-

@@ -30,8 +30,8 @@ export function getPrice(deadlineDays, prepaymentPercent) {
   };
   const priceMap = prices[prepaymentPercent];
   if (days >= 14 && days <= 21) return priceMap['14-21'];
-  if (days >= 7 && days < 14) return priceMap['7-14'];
   if (days === 7) return priceMap[7];
+  if (days > 7 && days < 14) return priceMap['7-14'];
   if (days >= 2 && days <= 3) return priceMap['2-3'];
   if (days === 1) return priceMap[1];
   return priceMap['14-21'];
