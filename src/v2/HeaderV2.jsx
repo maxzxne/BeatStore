@@ -113,7 +113,7 @@ const HeaderV2 = ({ admin = false }) => {
   const iconBtn = 'relative inline-flex h-10 w-10 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors';
 
   return (
-    <header ref={headerRef} className="sticky top-0 z-50 border-b border-white/10 bg-[#07070f]/70 backdrop-blur-xl">
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-white/10 bg-[#050505]/80 backdrop-blur-xl">
       <div className="mx-auto max-w-6xl px-4 py-3">
         <div className="flex items-center justify-between gap-4 min-h-[44px]">
           <div className="flex items-center gap-6 min-w-0">

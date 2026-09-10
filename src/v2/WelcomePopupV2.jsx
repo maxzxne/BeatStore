@@ -36,7 +36,7 @@ const WelcomePopupV2 = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="v2-reveal relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#0b0b16] p-8 shadow-[0_0_80px_rgba(34,197,94,0.12)]">
+      <div className="v2-reveal relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#0a0a0a] p-8 shadow-[0_0_80px_rgba(34,197,94,0.12)]">
         <button
           type="button"
           onClick={handleClose}

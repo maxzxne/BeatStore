@@ -149,6 +149,7 @@ const BeatPageV2 = () => {
   };
 
   const handleAddToCart = async () => {
+    if (isPurchased) return;
     if (!isAuthenticated) {
       if (isInCart) {
         removeGuestBeat(id);
@@ -288,7 +289,7 @@ const BeatPageV2 = () => {
           {beat.cover_url ? (
             <img src={buildMediaUrl(beat.cover_url)} alt={beat.title} className={`h-full w-full object-cover ${playing ? 'v2-spin' : ''}`} />
           ) : (
-            <div className="grid h-full place-items-center bg-gradient-to-br from-indigo-950 to-black">
+            <div className="grid h-full place-items-center bg-gradient-to-br from-neutral-900 to-black">
               <Play className="h-16 w-16 text-white/20" />
             </div>
           )}

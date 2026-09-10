@@ -60,6 +60,7 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
         setIsFavorite(!isFavorite);
         window.dispatchEvent(new Event('favoritesUpdated'));
       } else {
+        if (isPurchased) return;
         if (isInCart) await api.delete(`/beats/${beat.id}/cart`);
         else await api.post(`/beats/${beat.id}/cart`);
         setIsInCart(!isInCart);
@@ -88,7 +89,7 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
           ) : (
-            <div className="grid h-full place-items-center bg-gradient-to-br from-indigo-950 to-black font-[Syne] text-white/30">
+            <div className="grid h-full place-items-center bg-gradient-to-br from-neutral-900 to-black font-[Syne] text-white/30">
               XW
             </div>
           )}

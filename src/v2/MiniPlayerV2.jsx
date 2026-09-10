@@ -36,7 +36,7 @@ const MiniPlayerV2 = () => {
       className="safe-area-bottom"
       style={{ position: 'fixed', left: 12, right: 12, bottom: 12, zIndex: 9999 }}
     >
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b16]/85 backdrop-blur-2xl shadow-[0_20px_80px_rgba(0,0,0,0.55)]">
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-[0_20px_80px_rgba(0,0,0,0.55)]">
         <div className="h-1 bg-white/10">
           <div className="h-full bg-[#22c55e] transition-[width] duration-150" style={{ width: `${progress}%` }} />
         </div>

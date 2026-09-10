@@ -2,16 +2,16 @@
 
 html.ui-v2 {
   --header-h: 4.5rem;
-  --color-primary: #1e1b4b;
-  --color-on-primary: #ffffff;
-  --color-secondary: #4338ca;
+  --color-primary: #0a0a0a;
+  --color-on-primary: #fafafa;
+  --color-secondary: #171717;
   --color-accent: #22c55e;
-  --color-on-accent: #0f172a;
-  --color-background: #07070f;
-  --color-foreground: #f8fafc;
-  --color-card: rgba(27, 27, 48, 0.72);
-  --color-muted: #94a3b8;
-  --color-border: rgba(99, 102, 241, 0.28);
+  --color-on-accent: #052e16;
+  --color-background: #050505;
+  --color-foreground: #fafafa;
+  --color-card: rgba(255, 255, 255, 0.04);
+  --color-muted: #a3a3a3;
+  --color-border: rgba(255, 255, 255, 0.10);
   --color-destructive: #ef4444;
   --v2-glow: 0 0 40px rgba(34, 197, 94, 0.18);
   --font-display: 'Syne', sans-serif;
@@ -27,17 +27,9 @@ html.ui-v2 {
 
 html.ui-v2,
 html.ui-v2 body {
-  background: var(--color-background) !important;
+  background-color: var(--color-background) !important;
   color: var(--color-foreground) !important;
   font-family: var(--font-body);
-}
-
-html.ui-v2 body {
-  background-image:
-    radial-gradient(1200px 600px at 10% -10%, rgba(67, 56, 202, 0.28), transparent 55%),
-    radial-gradient(900px 500px at 100% 0%, rgba(34, 197, 94, 0.12), transparent 50%),
-    radial-gradient(800px 400px at 50% 120%, rgba(30, 27, 75, 0.55), transparent 60%);
-  background-attachment: fixed;
 }
 
 html.ui-v2 #root {
@@ -73,7 +65,7 @@ html.ui-v2 .input,
 html.ui-v2 input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.v2-search-input),
 html.ui-v2 textarea,
 html.ui-v2 select {
-  background: rgba(7, 7, 15, 0.7) !important;
+  background: rgba(0, 0, 0, 0.45) !important;
   border: 1px solid var(--color-border) !important;
   color: var(--color-foreground) !important;
   border-radius: 0.9rem !important;
@@ -143,7 +135,7 @@ html.ui-v2 .v2-filters .card {
 html.ui-v2 .v2-filters .input {
   height: 44px;
   border-radius: 999px !important;
-  background: rgba(7, 7, 15, 0.55) !important;
+  background: rgba(0, 0, 0, 0.45) !important;
 }
 
 .v2-search:focus-within {
@@ -492,4 +484,20 @@ html.ui-v2 .min-h-screen.bg-white {
 
 .v2-pay-btn-ghost:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.v2-course-player:fullscreen,
+.v2-course-player:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border-radius: 0;
+  border: 0;
+  aspect-ratio: auto;
+  background: #000;
+}
+
+.v2-course-player:fullscreen video,
+.v2-course-player:-webkit-full-screen video {
+  object-fit: contain;
 }

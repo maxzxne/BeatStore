@@ -11,7 +11,7 @@ export function PaymentTicket({ eyebrow, title, amount, children, tone = 'neutra
 
   return (
     <div className="relative mx-auto w-full max-w-md">
-      <div className={`v2-pay-ticket overflow-hidden rounded-[28px] border bg-[#0c0c18]/90 ${ring}`}>
+      <div className={`v2-pay-ticket overflow-hidden rounded-[28px] border bg-[#0a0a0a]/90 ${ring}`}>
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
           <p className="font-[Syne] text-[11px] font-bold tracking-[0.22em] text-white/45">{eyebrow}</p>
           <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e]" />

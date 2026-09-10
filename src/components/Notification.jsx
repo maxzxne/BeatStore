@@ -29,7 +29,7 @@ const Notification = ({ message, type = 'info', onClose, duration = 5000 }) => {
       case 'warning':
         return <AlertCircle className="h-5 w-5 text-yellow-500" />;
       default:
-        return <Info className="h-5 w-5 text-blue-500" />;
+        return <Info className="h-5 w-5 text-[#22c55e]" />;
     }
   };
 

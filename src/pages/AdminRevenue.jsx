@@ -129,7 +129,7 @@ const AdminRevenue = () => {
                     y={y - 10}
                     width="68"
                     height="20"
-                    fill='#0b0f14'
+                    fill='#0a0a0a'
                     opacity="0.98"
                     rx="3"
                     stroke='rgba(255,255,255,0.08)'
@@ -166,7 +166,7 @@ const AdminRevenue = () => {
                     cy={point.y}
                     r="5"
                     fill='#22c55e'
-                    stroke='#0b0f14'
+                    stroke='#0a0a0a'
                     strokeWidth="2"
                     className="cursor-pointer transition-all"
                   />
@@ -179,7 +179,7 @@ const AdminRevenue = () => {
                         y={chartHeight - bottomPadding + 5}
                         width="56"
                         height="18"
-                        fill='#0b0f14'
+                        fill='#0a0a0a'
                         opacity="0.98"
                         rx="3"
                         stroke='rgba(255,255,255,0.08)'

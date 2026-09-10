@@ -387,10 +387,10 @@ const PurchasesPage = () => {
             {serviceOrders.map(order => {
               const statusColors = {
                 pending: 'bg-amber-500/20 text-amber-300',
-                confirmed: 'bg-blue-500/20 text-blue-300',
+                confirmed: 'bg-white/10 text-white/80',
                 paid: 'bg-[#22c55e]/20 text-[#22c55e]',
-                in_progress: 'bg-violet-500/20 text-violet-300',
-                completed: 'bg-emerald-500/20 text-emerald-300',
+                in_progress: 'bg-[#22c55e]/10 text-[#86efac]',
+                completed: 'bg-[#22c55e]/20 text-[#22c55e]',
                 cancelled: 'bg-red-500/20 text-red-300'
               };
               
@@ -480,7 +480,7 @@ const PurchasesPage = () => {
                       <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
                       <div className="relative group">
                         <HelpCircle className="h-4 w-4 flex-shrink-0 cursor-help text-white/40" />
-                        <div className="invisible absolute bottom-full right-0 z-10 mb-2 w-80 rounded-2xl border border-white/10 bg-[#0b0f14] p-4 text-xs text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
+                        <div className="invisible absolute bottom-full right-0 z-10 mb-2 w-80 rounded-2xl border border-white/10 bg-[#0a0a0a] p-4 text-xs text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
                           <div className="space-y-3">
                             <div>
                               <div className="mb-2 font-semibold text-[#22c55e]">При 50% предоплате:</div>

@@ -117,8 +117,8 @@ const CoursesPageV2 = () => {
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated) return;
-    
     const course = courses.find(c => c.id === courseId);
+    if (course?.is_purchased) return;
     const isInCart = course?.is_in_cart || false;
     
     // Оптимистичное обновление — сразу меняем UI без перезагрузки списка
@@ -240,7 +240,7 @@ const CoursesPageV2 = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid h-52 place-items-center bg-gradient-to-br from-indigo-950 to-black text-white/30 font-[Syne]">
+                  <div className="grid h-52 place-items-center bg-gradient-to-br from-neutral-900 to-black text-white/30 font-[Syne]">
                     Курс
                   </div>
                 )}
@@ -269,14 +269,16 @@ const CoursesPageV2 = () => {
                     >
                       <Heart className="h-4 w-4" fill={course.is_favorite ? 'currentColor' : 'none'} />
                     </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleAddToCart(course.id, e)}
-                      className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/10"
-                      title="Корзина"
-                    >
-                      <ShoppingCart className="h-4 w-4" fill={course.is_in_cart ? 'currentColor' : 'none'} />
-                    </button>
+                    {!course.is_purchased && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleAddToCart(course.id, e)}
+                        className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/10"
+                        title="Корзина"
+                      >
+                        <ShoppingCart className="h-4 w-4" fill={course.is_in_cart ? 'currentColor' : 'none'} />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

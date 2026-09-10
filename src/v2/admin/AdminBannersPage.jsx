@@ -328,7 +328,7 @@ const AdminBannersPage = () => {
           />
           <form
             onSubmit={handleSave}
-            className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/10 bg-[#0b0f14] p-5 shadow-2xl"
+            className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0a0a] p-5 shadow-2xl"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="font-[Syne] text-xl font-bold text-white">
