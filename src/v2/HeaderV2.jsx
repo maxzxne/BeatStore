@@ -4,6 +4,8 @@ import { Heart, ShoppingCart, User, Music, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { api } from '../utils/api';
+import { loginPath } from '../utils/authRedirect';
+import { guestCartCount } from '../utils/guestCart';
 
 const NavItem = ({ to, label, active }) => (
   <Link
@@ -27,8 +29,12 @@ const HeaderV2 = ({ admin = false }) => {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     const load = async () => {
+      if (!isAuthenticated) {
+        setFavoritesCount(0);
+        setCartCount(guestCartCount());
+        return;
+      }
       try {
         const [fb, fc, cb, cc] = await Promise.all([
           api.get('/favorites'),
@@ -84,6 +90,14 @@ const HeaderV2 = ({ admin = false }) => {
           </div>
 
           <div className="flex items-center gap-1">
+            <Link to="/cart" className={iconBtn} aria-label="Корзина">
+              <ShoppingCart className="h-4 w-4" />
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#22c55e] text-[#0f172a] text-[10px] font-bold">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
             {isAuthenticated ? (
               <>
                 <Link to="/favorites" className={iconBtn} aria-label="Избранное">
@@ -91,14 +105,6 @@ const HeaderV2 = ({ admin = false }) => {
                   {favoritesCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#22c55e] text-[#0f172a] text-[10px] font-bold">
                       {favoritesCount}
-                    </span>
-                  )}
-                </Link>
-                <Link to="/cart" className={iconBtn} aria-label="Корзина">
-                  <ShoppingCart className="h-4 w-4" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#22c55e] text-[#0f172a] text-[10px] font-bold">
-                      {cartCount}
                     </span>
                   )}
                 </Link>
@@ -116,7 +122,7 @@ const HeaderV2 = ({ admin = false }) => {
               </>
             ) : (
               <Link
-                to="/login"
+                to={loginPath(`${location.pathname}${location.search}`)}
                 className="inline-flex h-10 items-center rounded-full bg-white px-4 text-sm font-semibold text-black hover:bg-[#22c55e] transition-colors"
               >
                 Войти

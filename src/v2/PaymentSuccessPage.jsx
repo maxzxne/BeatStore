@@ -7,7 +7,7 @@ import { PayActions, PayLink, PaymentTicket, TestBadge } from './PaymentChrome';
 
 const KIND_CTA = {
   course: { to: '/courses', label: 'К курсам' },
-  order: { to: '/purchases', label: 'Мои заказы' },
+  order: { to: '/purchases?tab=orders', label: 'Мои заказы' },
   cart: { to: '/purchases', label: 'Мои покупки' },
   beat: { to: '/purchases', label: 'Скачать в покупках' },
 };

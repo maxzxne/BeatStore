@@ -13,6 +13,7 @@ import {
   LogOut,
   LayoutTemplate,
   Image,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -41,6 +42,7 @@ const navGroups = [
     items: [
       { path: '/admin/purchases', label: 'Покупки', icon: ShoppingBag },
       { path: '/admin/orders', label: 'Заявки', icon: FileText },
+      { path: '/admin/support', label: 'Поддержка', icon: MessageCircle },
     ],
   },
   {

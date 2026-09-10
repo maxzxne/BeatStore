@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Lock, Mail, ArrowLeft } from 'lucide-react';
 import { api } from '../utils/api';
+import { mergeGuestCartToServer } from '../utils/guestCart';
+import { loginPath, readNextParam } from '../utils/authRedirect';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +20,8 @@ const RegisterPage = () => {
   
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = readNextParam(searchParams);
   
   useEffect(() => {
     // Загружаем настройки OAuth
@@ -99,9 +103,12 @@ const RegisterPage = () => {
           
           if (response.data.access_token) {
             localStorage.setItem('token', response.data.access_token);
-            // Убираем параметры из URL
-            window.history.replaceState({}, '', '/register');
-            navigate('/');
+            try {
+              await mergeGuestCartToServer();
+            } catch (e) {
+              console.warn('Guest cart merge failed', e);
+            }
+            navigate(readNextParam(window.location.search));
           } else {
             setError('Не удалось авторизоваться через Telegram');
           }
@@ -140,7 +147,7 @@ const RegisterPage = () => {
     const result = await register(formData.email, formData.username, formData.password);
     
     if (result.success) {
-      navigate('/login');
+      navigate(loginPath(nextPath));
     } else {
       setError(result.error);
     }
@@ -404,7 +411,7 @@ const RegisterPage = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-white/50">
               Уже есть аккаунт?{' '}
-              <Link to="/login" className="font-medium text-[#22c55e] hover:underline">
+              <Link to={loginPath(nextPath)} className="font-medium text-[#22c55e] hover:underline">
                 Войти
               </Link>
             </p>

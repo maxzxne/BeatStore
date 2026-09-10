@@ -5,6 +5,8 @@ import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { loginPath } from '../utils/authRedirect';
+import { guestCartCount, readGuestCart, removeGuestBeat, removeGuestCourse } from '../utils/guestCart';
 import { ShoppingCart, Trash2, Play, Pause } from 'lucide-react';
 
 const CartPage = () => {
@@ -22,9 +24,52 @@ const CartPage = () => {
     if (isAuthenticated) {
       fetchCart();
     } else {
-      setLoading(false);
+      fetchGuestCart();
     }
   }, [isAuthenticated]);
+
+  const fetchGuestCart = async () => {
+    try {
+      setLoading(true);
+      const guest = readGuestCart();
+      const beats = await Promise.all(
+        guest.beats.map(async (b) => {
+          try {
+            const { data } = await api.get(`/beats/${b.id}`);
+            return { ...data, type: 'beat', guest: true };
+          } catch {
+            return null;
+          }
+        })
+      );
+      const courses = await Promise.all(
+        guest.courses.map(async (c) => {
+          try {
+            const { data } = await api.get(`/courses/${c.id}`);
+            return { ...data, type: 'course', guest: true };
+          } catch {
+            return null;
+          }
+        })
+      );
+      const items = [...beats, ...courses].filter(Boolean);
+      setCartItems(items);
+      const formats = {};
+      guest.beats.forEach((b) => {
+        formats[b.id] = b.format || 'mp3';
+      });
+      items.filter((i) => i.type === 'beat').forEach((beat) => {
+        if (!formats[beat.id]) {
+          if (beat.mp3_url) formats[beat.id] = 'mp3';
+          else if (beat.wav_url) formats[beat.id] = 'wav';
+          else if (beat.exclusive_url) formats[beat.id] = 'exclusive';
+        }
+      });
+      setSelectedFormats(formats);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -61,6 +106,18 @@ const CartPage = () => {
 
   const removeFromCart = async (itemId, itemType) => {
     try {
+      if (!isAuthenticated) {
+        if (itemType === 'course') removeGuestCourse(itemId);
+        else removeGuestBeat(itemId);
+        setCartItems(cartItems.filter((item) => item.id !== itemId));
+        if (itemType === 'beat') {
+          const newFormats = { ...selectedFormats };
+          delete newFormats[itemId];
+          setSelectedFormats(newFormats);
+        }
+        showSuccess('Удалено из корзины');
+        return;
+      }
       if (itemType === 'course') {
         await api.delete(`/courses/${itemId}/cart`);
       } else {
@@ -169,19 +226,75 @@ const CartPage = () => {
   const freeItemsCount = cartItems.filter(item => item.price === 0).length;
 
   if (!isAuthenticated) {
+    if (loading) {
+      return (
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="flex h-64 items-center justify-center">
+            <div className="text-sm text-white/50">Загрузка корзины...</div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
-          <ShoppingCart className="mx-auto mb-4 h-12 w-12 text-white/30" />
-          <h1 className="font-[Syne] text-2xl font-extrabold text-white">Войдите для просмотра корзины</h1>
-          <p className="mt-2 text-sm text-white/50">Вам нужно войти в систему, чтобы увидеть корзину.</p>
-          <Link
-            to="/login"
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
-          >
-            Войти
-          </Link>
+        <div className="mb-8">
+          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Checkout</p>
+          <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Корзина</h1>
+          <p className="mt-2 text-sm text-white/50">
+            {cartItems.length} товаров · войди, чтобы оформить
+          </p>
         </div>
+
+        {cartItems.length === 0 ? (
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
+            <ShoppingCart className="mx-auto mb-4 h-12 w-12 text-white/30" />
+            <h1 className="font-[Syne] text-2xl font-extrabold text-white">Корзина пуста</h1>
+            <p className="mt-2 text-sm text-white/50">Добавь биты с каталога — можно без входа.</p>
+            <Link
+              to="/"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            >
+              В каталог
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {cartItems.map((item) => (
+              <div
+                key={`${item.type}-${item.id}`}
+                className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-4"
+              >
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-white/5">
+                  {item.cover_url ? (
+                    <img src={buildMediaUrl(item.cover_url)} alt="" className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-white">{item.title}</p>
+                  <p className="text-xs text-white/40">{item.type === 'course' ? 'Курс' : 'Бит'}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeFromCart(item.id, item.type)}
+                  className="rounded-full p-2 text-white/40 hover:bg-white/5 hover:text-white"
+                  aria-label="Удалить"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <div className="rounded-3xl border border-[#22c55e]/30 bg-[#22c55e]/10 p-5 text-center">
+              <p className="text-sm text-white/80">Чтобы оплатить или скачать бесплатное — войди в аккаунт.</p>
+              <Link
+                to={loginPath('/cart')}
+                className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] transition hover:brightness-110 sm:w-auto sm:px-8"
+              >
+                Войти и оформить ({guestCartCount()})
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

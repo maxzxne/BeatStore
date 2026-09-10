@@ -193,7 +193,8 @@ const AdminOrders = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="admin-page-title">Заявки</h1>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Продажи</p>
+        <h1 className="admin-page-title mt-1">Заявки</h1>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
           <p className="admin-page-sub !mt-0">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
           <div className="flex flex-wrap items-center gap-2">

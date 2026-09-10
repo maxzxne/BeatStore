@@ -5,6 +5,8 @@ import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { loginPath } from '../utils/authRedirect';
+import { addGuestCourse, isInGuestCart, removeGuestCourse } from '../utils/guestCart';
 import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle } from 'lucide-react';
 
 const CourseDetailPage = () => {
@@ -35,6 +37,12 @@ const CourseDetailPage = () => {
       fetchCourse();
     }
   }, [id, isAuthenticated, canSeeCourses]);
+
+  useEffect(() => {
+    if (!isAuthenticated && id) {
+      setIsInCart(isInGuestCart('course', id));
+    }
+  }, [id, isAuthenticated]);
 
   const fetchCourse = async () => {
     try {
@@ -72,7 +80,7 @@ const CourseDetailPage = () => {
 
   const handleFavorite = async () => {
     if (!isAuthenticated) {
-      showError('Войдите, чтобы добавить в избранное');
+      navigate(loginPath(`/course/${id}`));
       return;
     }
     
@@ -95,7 +103,15 @@ const CourseDetailPage = () => {
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
-      showError('Войдите, чтобы добавить в корзину');
+      if (isInCart) {
+        removeGuestCourse(id);
+        setIsInCart(false);
+        showSuccess('Удалено из корзины');
+      } else {
+        addGuestCourse(id);
+        setIsInCart(true);
+        showSuccess('Добавлено в корзину — войди, чтобы оформить');
+      }
       return;
     }
     
@@ -128,7 +144,7 @@ const CourseDetailPage = () => {
 
   const handlePurchase = async () => {
     if (!isAuthenticated) {
-      showError('Войдите, чтобы купить курс');
+      navigate(loginPath(`/course/${id}`));
       return;
     }
     

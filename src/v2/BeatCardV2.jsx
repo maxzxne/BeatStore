@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Play, Pause, Heart, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { api, buildMediaUrl } from '../utils/api';
+import { loginPath } from '../utils/authRedirect';
+import { addGuestBeat, isInGuestCart, removeGuestBeat } from '../utils/guestCart';
 
 const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
   const { isAuthenticated } = useAuth();
   const { playTrack, isCurrentTrackPlaying } = useAudioPlayer();
+  const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated || !beat.id) return;
+    if (!beat.id) return;
+    if (!isAuthenticated) {
+      setIsInCart(isInGuestCart('beat', beat.id));
+      setIsFavorite(false);
+      return;
+    }
     Promise.all([api.get('/favorites'), api.get('/cart')])
       .then(([fav, cart]) => {
         setIsFavorite(fav.data?.some((f) => f.id === beat.id));
@@ -31,7 +39,20 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
   const toggle = async (e, kind) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      if (kind === 'fav') {
+        navigate(loginPath(`/beat/${beat.id}`));
+        return;
+      }
+      if (isInCart) {
+        removeGuestBeat(beat.id);
+        setIsInCart(false);
+      } else {
+        addGuestBeat(beat.id);
+        setIsInCart(true);
+      }
+      return;
+    }
     try {
       if (kind === 'fav') {
         if (isFavorite) await api.delete(`/beats/${beat.id}/favorite`);
@@ -104,7 +125,7 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
           </div>
           <div className="flex items-center justify-between pt-1">
             <span className="text-sm font-semibold text-[#22c55e]">{price}</span>
-            {isAuthenticated && (
+            {(isAuthenticated || !isPurchased) && (
               <div className="flex gap-1">
                 <button type="button" onClick={(e) => toggle(e, 'fav')} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10" aria-label="Избранное">
                   <Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />

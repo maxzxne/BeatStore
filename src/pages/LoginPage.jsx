@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Lock, ArrowLeft } from 'lucide-react';
 import { api } from '../utils/api';
+import { mergeGuestCartToServer } from '../utils/guestCart';
+import { readNextParam, registerPath } from '../utils/authRedirect';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -14,6 +16,8 @@ const LoginPage = () => {
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = readNextParam(searchParams);
   
   // Загружаем настройки OAuth
   useEffect(() => {
@@ -96,9 +100,14 @@ const LoginPage = () => {
           
           if (response.data.access_token) {
             localStorage.setItem('token', response.data.access_token);
-            // Убираем параметры из URL
-            window.history.replaceState({}, '', '/login');
-            navigate('/');
+            try {
+              await mergeGuestCartToServer();
+            } catch (e) {
+              console.warn('Guest cart merge failed', e);
+            }
+            const keepNext = readNextParam(window.location.search);
+            window.history.replaceState({}, '', keepNext !== '/' ? `/login?next=${encodeURIComponent(keepNext)}` : '/login');
+            navigate(keepNext);
           } else {
             setError('Не удалось авторизоваться через Telegram');
           }
@@ -124,7 +133,7 @@ const LoginPage = () => {
     const result = await login(username, password);
     
     if (result.success) {
-      navigate('/');
+      navigate(nextPath);
     } else {
       setError(result.error);
     }
@@ -317,7 +326,7 @@ const LoginPage = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-white/50">
               Нет аккаунта?{' '}
-              <Link to="/register" className="font-medium text-[#22c55e] hover:underline">
+              <Link to={registerPath(nextPath)} className="font-medium text-[#22c55e] hover:underline">
                 Зарегистрироваться
               </Link>
             </p>

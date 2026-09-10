@@ -19,6 +19,8 @@ import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import api, { buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { loginPath } from '../utils/authRedirect';
+import { addGuestBeat, isInGuestCart, removeGuestBeat } from '../utils/guestCart';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check, Play, Pause } from 'lucide-react';
 
 /**
@@ -47,6 +49,12 @@ const BeatPageV2 = () => {
   useEffect(() => {
     fetchBeat();
   }, [id]);
+
+  useEffect(() => {
+    if (!isAuthenticated && id) {
+      setIsInCart(isInGuestCart('beat', id));
+    }
+  }, [id, isAuthenticated, selectedPurchaseType]);
 
   useEffect(() => {
     // Обновляем статус после загрузки бита
@@ -121,7 +129,10 @@ const BeatPageV2 = () => {
   };
 
   const handleFavorite = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      navigate(loginPath(`/beat/${id}`));
+      return;
+    }
     
     try {
       if (isFavorite) {
@@ -138,7 +149,17 @@ const BeatPageV2 = () => {
   };
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      if (isInCart) {
+        removeGuestBeat(id);
+        setIsInCart(false);
+      } else {
+        addGuestBeat(id, selectedPurchaseType);
+        setIsInCart(true);
+        showSuccess('Добавлено в корзину — войди, чтобы оформить');
+      }
+      return;
+    }
     
     try {
       if (isInCart) {
@@ -156,7 +177,7 @@ const BeatPageV2 = () => {
 
   const handlePurchase = async () => {
     if (!isAuthenticated) {
-      showError('Войдите, чтобы купить бит');
+      navigate(loginPath(`/beat/${id}`));
       return;
     }
     

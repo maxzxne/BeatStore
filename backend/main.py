@@ -37,7 +37,7 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, cart_table, course_cart_table, course_favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, SupportThread, SupportMessage, cart_table, course_cart_table, course_favorites_table
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
 from payments.quote import payload_dict
@@ -652,6 +652,11 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
     additional_contact: Optional[str] = None
+
+class SupportMessageCreate(BaseModel):
+    body: str
+
+SUPPORT_MESSAGE_MAX_LEN = 2000
 
 class BeatResponse(BaseModel):
     """Схема ответа с информацией о бите (базовая)"""
@@ -2477,6 +2482,210 @@ def get_current_admin_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="Admin access required"
         )
     return user
+
+
+def _normalize_support_body(body: Optional[str]) -> str:
+    text = (body or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Сообщение не может быть пустым")
+    if len(text) > SUPPORT_MESSAGE_MAX_LEN:
+        raise HTTPException(status_code=400, detail="Сообщение слишком длинное")
+    return text
+
+
+def _support_preview(text: str, limit: int = 140) -> str:
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1] + "…"
+
+
+def _support_message_out(message: SupportMessage) -> dict:
+    return {
+        "id": message.id,
+        "thread_id": message.thread_id,
+        "author_id": message.author_id,
+        "author_role": message.author_role,
+        "body": message.body,
+        "created_at": message.created_at,
+    }
+
+
+def _empty_support_thread() -> dict:
+    return {"id": None, "unread_for_user": 0, "messages": []}
+
+
+def _user_support_thread(db: Session, user_id: int) -> Optional[SupportThread]:
+    return db.query(SupportThread).filter(SupportThread.user_id == user_id).first()
+
+
+def _get_or_create_support_thread(db: Session, user_id: int) -> SupportThread:
+    thread = _user_support_thread(db, user_id)
+    if thread:
+        return thread
+    thread = SupportThread(user_id=user_id, unread_for_admin=0, unread_for_user=0)
+    db.add(thread)
+    db.commit()
+    db.refresh(thread)
+    return thread
+
+
+def _append_support_message(
+    db: Session, thread: SupportThread, *, author: User, role: str, body: str
+) -> SupportMessage:
+    now = datetime.utcnow()
+    message = SupportMessage(
+        thread_id=thread.id,
+        author_id=author.id,
+        author_role=role,
+        body=body,
+        created_at=now,
+    )
+    db.add(message)
+    thread.last_message_at = now
+    thread.last_message_preview = _support_preview(body)
+    thread.updated_at = now
+    if role == "user":
+        thread.unread_for_admin = (thread.unread_for_admin or 0) + 1
+    else:
+        thread.unread_for_user = (thread.unread_for_user or 0) + 1
+        thread.unread_for_admin = 0
+    db.commit()
+    db.refresh(message)
+    db.refresh(thread)
+    return message
+
+
+def _thread_messages(db: Session, thread_id: int, after_id: Optional[int] = None):
+    query = db.query(SupportMessage).filter(SupportMessage.thread_id == thread_id)
+    if after_id is not None:
+        query = query.filter(SupportMessage.id > after_id)
+    return query.order_by(SupportMessage.id.asc()).all()
+
+
+def _notify_admin_support_message(username: str, body: str) -> None:
+    if not TELEGRAM_BOT_AVAILABLE:
+        return
+    chat_id = os.getenv("ADMIN_TELEGRAM_CHAT_ID")
+    if not chat_id:
+        return
+    preview = _support_preview(body, 200)
+    text = (
+        f"💬 <b>Поддержка</b>\n\n"
+        f"👤 {username}\n"
+        f"{preview}\n\n"
+        f"Ответить в админке → Поддержка"
+    )
+    try:
+        send_message(int(chat_id), text)
+    except Exception:
+        pass
+
+
+def _support_thread_payload(thread: Optional[SupportThread], messages) -> dict:
+    if thread is None:
+        return _empty_support_thread()
+    return {
+        "id": thread.id,
+        "unread_for_user": thread.unread_for_user or 0,
+        "messages": [_support_message_out(item) for item in messages],
+    }
+
+
+@app.get("/api/support/thread")
+def get_support_thread(
+    after_id: Optional[int] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    thread = _user_support_thread(db, current_user.id)
+    if thread is None:
+        return _empty_support_thread()
+    messages = _thread_messages(db, thread.id, after_id)
+    if thread.unread_for_user:
+        thread.unread_for_user = 0
+        db.commit()
+        db.refresh(thread)
+    return _support_thread_payload(thread, messages)
+
+
+@app.post("/api/support/thread/messages")
+def post_support_message(
+    payload: SupportMessageCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    body = _normalize_support_body(payload.body)
+    thread = _get_or_create_support_thread(db, current_user.id)
+    message = _append_support_message(db, thread, author=current_user, role="user", body=body)
+    _notify_admin_support_message(current_user.username, body)
+    return _support_message_out(message)
+
+
+@app.get("/api/admin/support/threads")
+def admin_list_support_threads(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    threads = (
+        db.query(SupportThread)
+        .filter(SupportThread.last_message_at.isnot(None))
+        .order_by(SupportThread.last_message_at.desc())
+        .all()
+    )
+    rows = []
+    for thread in threads:
+        user = thread.user
+        rows.append({
+            "id": thread.id,
+            "user_id": thread.user_id,
+            "username": user.username if user else None,
+            "email": user.email if user else None,
+            "last_message_at": thread.last_message_at,
+            "last_message_preview": thread.last_message_preview,
+            "unread_for_admin": thread.unread_for_admin or 0,
+        })
+    return rows
+
+
+@app.get("/api/admin/support/threads/{thread_id}")
+def admin_get_support_thread(
+    thread_id: int,
+    after_id: Optional[int] = None,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    thread = db.query(SupportThread).filter(SupportThread.id == thread_id).first()
+    if thread is None:
+        raise HTTPException(status_code=404, detail="Тред не найден")
+    if thread.unread_for_admin:
+        thread.unread_for_admin = 0
+        db.commit()
+        db.refresh(thread)
+    user = thread.user
+    return {
+        "id": thread.id,
+        "user_id": thread.user_id,
+        "username": user.username if user else None,
+        "email": user.email if user else None,
+        "unread_for_admin": thread.unread_for_admin or 0,
+        "messages": [_support_message_out(item) for item in _thread_messages(db, thread.id, after_id)],
+    }
+
+
+@app.post("/api/admin/support/threads/{thread_id}/messages")
+def admin_post_support_message(
+    thread_id: int,
+    payload: SupportMessageCreate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    thread = db.query(SupportThread).filter(SupportThread.id == thread_id).first()
+    if thread is None:
+        raise HTTPException(status_code=404, detail="Тред не найден")
+    body = _normalize_support_body(payload.body)
+    message = _append_support_message(db, thread, author=current_admin, role="admin", body=body)
+    return _support_message_out(message)
+
 
 @app.get("/api/admin/analytics")
 def get_analytics(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):

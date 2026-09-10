@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import BeatCardV2 from '../v2/BeatCardV2';
 import { api } from '../utils/api';
+import { loginPath } from '../utils/authRedirect';
 import { Heart } from 'lucide-react';
 
 const FavoritesPage = () => {
@@ -49,7 +50,7 @@ const FavoritesPage = () => {
           <h1 className="font-[Syne] text-2xl font-extrabold text-white">Войдите, чтобы просмотреть избранное</h1>
           <p className="mt-2 text-sm text-white/50">Вам нужно войти в систему, чтобы увидеть избранные биты.</p>
           <Link
-            to="/login"
+            to={loginPath('/favorites')}
             className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
           >
             Войти

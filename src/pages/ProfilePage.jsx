@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
+import { loginPath } from '../utils/authRedirect';
 import { User, Mail, Lock, Save, Phone, X, LogOut } from 'lucide-react';
 
 const fieldClass =
@@ -73,7 +74,7 @@ const ProfilePage = () => {
           <h1 className="font-[Syne] text-2xl font-extrabold text-white">Войдите для просмотра профиля</h1>
           <p className="mt-2 text-sm text-white/50">Вам нужно войти в систему, чтобы просмотреть профиль.</p>
           <Link
-            to="/login"
+            to={loginPath('/profile')}
             className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
           >
             Войти

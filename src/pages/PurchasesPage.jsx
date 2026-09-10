@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
-import BeatCard from '../components/BeatCard';
+import BeatCardV2 from '../v2/BeatCardV2';
 import { api, buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { loginPath } from '../utils/authRedirect';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio, HelpCircle } from 'lucide-react';
 
@@ -14,11 +15,26 @@ const PurchasesPage = () => {
   const { playTrack, isCurrentTrackPlaying, pauseTrack, resumeTrack, isCurrentTrack } = useAudioPlayer();
   const { showError } = useNotification();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [purchases, setPurchases] = useState([]);
   const [coursePurchases, setCoursePurchases] = useState([]);
   const [serviceOrders, setServiceOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('beats'); // 'beats', 'courses' или 'orders'
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    tabFromUrl === 'orders' || tabFromUrl === 'courses' || tabFromUrl === 'beats' ? tabFromUrl : 'beats'
+  );
+
+  useEffect(() => {
+    if (tabFromUrl === 'orders' || tabFromUrl === 'courses' || tabFromUrl === 'beats') {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
+  const selectTab = (tab) => {
+    setActiveTab(tab);
+    setSearchParams(tab === 'beats' ? {} : { tab });
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -166,7 +182,7 @@ const PurchasesPage = () => {
           <h1 className="font-[Syne] text-2xl font-extrabold text-white">Войдите для просмотра покупок</h1>
           <p className="mt-2 text-sm text-white/50">Вам нужно войти в систему, чтобы увидеть купленные биты.</p>
           <Link
-            to="/login"
+            to={loginPath('/purchases')}
             className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
           >
             Войти
@@ -195,19 +211,19 @@ const PurchasesPage = () => {
         {/* Табы для переключения между битами, курсами и заказами */}
         <div className="mt-5 flex flex-wrap gap-2">
           <button
-            onClick={() => setActiveTab('beats')}
+            onClick={() => selectTab('beats')}
             className={tabClass(activeTab === 'beats')}
           >
             Биты ({purchases.length})
           </button>
           <button
-            onClick={() => setActiveTab('courses')}
+            onClick={() => selectTab('courses')}
             className={tabClass(activeTab === 'courses')}
           >
             Курсы ({coursePurchases.length})
           </button>
           <button
-            onClick={() => setActiveTab('orders')}
+            onClick={() => selectTab('orders')}
             className={tabClass(activeTab === 'orders')}
           >
             Заказы ({serviceOrders.length})
@@ -232,66 +248,18 @@ const PurchasesPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {purchases.map(beat => (
-              <Link key={beat.id} to={`/beat/${beat.id}`} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition hover:border-[#22c55e]/40">
-                <div className="relative">
-                  {beat.cover_url ? (
-                    <img
-                      src={buildMediaUrl(beat.cover_url)}
-                      alt={beat.title}
-                      className="h-48 w-full object-cover"
-                    />
-                  ) : (
-                    <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-white/5">
-                      <span className="font-[Syne] text-sm font-medium text-white/30">XWinner</span>
-                    </div>
-                  )}
-                  
-                  {/* Purchased badge */}
-                  <div className="absolute right-3 top-3 z-40 rounded-full bg-[#22c55e] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#0f172a]">
-                    Куплено
-                  </div>
-                  
-                  {/* Play button overlay - показывается при наведении */}
-                  <button
-                    onClick={(e) => handlePlay(beat, e)}
-                    className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    <div className="rounded-full bg-[#22c55e] p-3 text-[#0f172a]">
-                      {isCurrentTrackPlaying(beat.id) ? (
-                        <Pause className="h-6 w-6" />
-                      ) : (
-                        <Play className="h-6 w-6" />
-                      )}
-                    </div>
-                  </button>
-                </div>
-                
-                <div className="p-4">
-                  <h3 className="mb-1 truncate font-[Syne] font-bold text-white">{beat.title}</h3>
-                  <p className="mb-2 text-sm text-white/50">{beat.artist}</p>
-                  
-                  <div className="mb-3 flex items-center justify-between text-sm text-white/40">
-                    <span>{beat.genre}</span>
-                    <span>{beat.bpm} BPM</span>
-                    {beat.key && <span>{beat.key}</span>}
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-[#22c55e]">
-                      Куплено
-                    </span>
-                    
-                    <button
-                      onClick={(e) => handleDownload(beat.id, e)}
-                      className="rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-                      title="Скачать"
-                    >
-                      <Download className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </Link>
+            {purchases.map((beat, i) => (
+              <div key={beat.id} className="relative">
+                <BeatCardV2 beat={beat} isPurchased delay={i * 40} />
+                <button
+                  type="button"
+                  onClick={(e) => handleDownload(beat.id, e)}
+                  className="absolute bottom-4 right-4 z-20 rounded-full border border-white/15 bg-black/60 p-2 text-white/80 backdrop-blur hover:bg-white/10 hover:text-white"
+                  title="Скачать"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+              </div>
             ))}
           </div>
         )

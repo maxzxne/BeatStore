@@ -90,6 +90,7 @@ class User(Base):
     course_cart_items = relationship("Course", secondary=course_cart_table, back_populates="in_carts")
     course_purchases = relationship("CoursePurchase", back_populates="user")
     service_orders = relationship("ServiceOrder", back_populates="user")
+    support_threads = relationship("SupportThread", back_populates="user")
 
 class Beat(Base):
     """
@@ -258,6 +259,43 @@ class ServiceOrder(Base):
     
     # Связи с другими таблицами
     user = relationship("User", back_populates="service_orders")
+
+class SupportThread(Base):
+    """Один тред поддержки на аккаунт пользователя."""
+    __tablename__ = "support_threads"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False, index=True)
+    last_message_at = Column(DateTime, nullable=True, index=True)
+    last_message_preview = Column(String, nullable=True)
+    unread_for_admin = Column(Integer, default=0, nullable=False)
+    unread_for_user = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="support_threads")
+    messages = relationship(
+        "SupportMessage",
+        back_populates="thread",
+        order_by="SupportMessage.id",
+        cascade="all, delete-orphan",
+    )
+
+
+class SupportMessage(Base):
+    """Сообщение в треде поддержки. author_role: user | admin."""
+    __tablename__ = "support_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    thread_id = Column(Integer, ForeignKey("support_threads.id"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    author_role = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    thread = relationship("SupportThread", back_populates="messages")
+    author = relationship("User", foreign_keys=[author_id])
+
 
 class OAuthSettings(Base):
     """

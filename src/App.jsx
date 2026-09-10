@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AudioPlayerProvider } from './contexts/AudioPlayerContext';
 import { NotificationProvider } from './contexts/NotificationContext';
@@ -38,6 +38,8 @@ import AdminOAuthSettings from './pages/AdminOAuthSettings';
 import AdminRevenue from './pages/AdminRevenue';
 import AdminHeroPage from './v2/admin/AdminHeroPage';
 import AdminBannersPage from './v2/admin/AdminBannersPage';
+import AdminSupportPage from './v2/admin/AdminSupportPage';
+import SupportPageV2 from './v2/SupportPageV2';
 import PaymentPayPage from './v2/PaymentPayPage';
 import PaymentSuccessPage from './v2/PaymentSuccessPage';
 import PaymentFailurePage from './v2/PaymentFailurePage';
@@ -64,11 +66,12 @@ function App() {
                     <Route path="course/:id" element={<CourseDetailPage />} />
                     <Route path="order" element={<OrderPage />} />
                     <Route path="profile" element={<ProfilePage />} />
+                    <Route path="support" element={<SupportPageV2 />} />
                     <Route path="favorites" element={<FavoritesPage />} />
                     <Route path="cart" element={<CartPage />} />
                     <Route path="purchases" element={<PurchasesPage />} />
                     <Route path="success" element={<SuccessPage />} />
-                    <Route path="test-payment" element={<PaymentPayPage />} />
+                    <Route path="test-payment" element={<Navigate to="/payment/pay" replace />} />
                     <Route path="payment/pay" element={<PaymentPayPage />} />
                     <Route path="payment/success" element={<PaymentSuccessPage />} />
                     <Route path="payment/failure" element={<PaymentFailurePage />} />
@@ -91,6 +94,7 @@ function App() {
                     <Route path="upload" element={<AdminUpload />} />
                     <Route path="purchases" element={<AdminPurchases />} />
                     <Route path="orders" element={<AdminOrders />} />
+                    <Route path="support" element={<AdminSupportPage />} />
                     <Route path="revenue" element={<AdminRevenue />} />
                     <Route path="errors" element={<AdminErrors />} />
                     <Route path="oauth-settings" element={<AdminOAuthSettings />} />

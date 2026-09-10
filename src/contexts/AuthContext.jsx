@@ -11,6 +11,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../utils/api';
+import { mergeGuestCartToServer } from '../utils/guestCart';
 
 // Создание контекста для аутентификации
 const AuthContext = createContext();
@@ -89,6 +90,11 @@ export const AuthProvider = ({ children }) => {
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
       await fetchUser();
+      try {
+        await mergeGuestCartToServer();
+      } catch (e) {
+        console.warn('Guest cart merge failed', e);
+      }
       return { success: true };
     } catch (error) {
       return { 
@@ -167,6 +173,11 @@ export const AuthProvider = ({ children }) => {
       console.log('loginWithTelegram: получаем данные пользователя...');
       await fetchUser();
       console.log('loginWithTelegram: данные пользователя получены');
+      try {
+        await mergeGuestCartToServer();
+      } catch (e) {
+        console.warn('Guest cart merge failed', e);
+      }
       
       console.log('✅ loginWithTelegram: УСПЕХ');
       console.log('========================================');

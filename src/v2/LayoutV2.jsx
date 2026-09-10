@@ -6,6 +6,7 @@ import HeaderV2 from './HeaderV2';
 import SidebarV2 from './SidebarV2';
 import WelcomePopupV2 from './WelcomePopupV2';
 import MiniPlayerV2 from './MiniPlayerV2';
+import { MessageCircle } from 'lucide-react';
 import './admin/admin.css';
 
 const LayoutV2 = ({ admin = false }) => {
@@ -50,6 +51,14 @@ const LayoutV2 = ({ admin = false }) => {
             <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3">
               <span>© {new Date().getFullYear()} XWinner.beats.please</span>
               <div className="flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  to="/support"
+                  className="inline-flex items-center gap-1.5 hover:text-white transition-colors"
+                  aria-label="Поддержка"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Поддержка
+                </Link>
                 <Link to="/terms" className="hover:text-white transition-colors">Соглашение</Link>
                 <Link to="/privacy" className="hover:text-white transition-colors">Приватность</Link>
                 <Link to="/consent-personal-data" className="hover:text-white transition-colors">ПДн</Link>

@@ -25,6 +25,8 @@ const OrderPage = () => {
   });
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // Wizard steps for detailed form only: 1=contact, 2=services+deadline, 3=refs+review+submit
+  const [wizardStep, setWizardStep] = useState(1);
   // Сворачиваемые блоки: пользователь свернут, если авторизован и поля предзаполнены
   const [userBlockOpen, setUserBlockOpen] = useState(true);
   const [orderInfoBlockOpen, setOrderInfoBlockOpen] = useState(true);
@@ -38,6 +40,8 @@ const OrderPage = () => {
   const hintClass = 'mt-1 text-xs text-white/40';
   const accordionBtnClass =
     'flex w-full items-center justify-between rounded-2xl p-4 text-left transition-colors hover:bg-white/5';
+  const secondaryBtnClass =
+    'inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 bg-transparent text-base font-semibold text-white transition hover:bg-white/5 disabled:opacity-60';
   const [filesBlockOpen, setFilesBlockOpen] = useState(true);
 
   // Категории услуг с описаниями
@@ -49,6 +53,18 @@ const OrderPage = () => {
     { value: 'топлайны', label: 'Топ-лайны', description: null },
     { value: 'трек под ключ', label: 'Трек под ключ', description: 'Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!' },
     { value: 'запись индивидуального курса с объяснениями по проделанной работе', label: 'Запись индивидуального курса с объяснениями по проделанной работе', description: null }
+  ];
+
+  const servicePresets = [
+    { label: 'Трэп бит', value: 'бит в стиле трэп' },
+    { label: 'Песня под ключ', value: 'трек под ключ' },
+    { label: 'Бит', value: 'бит' },
+  ];
+
+  const WIZARD_STEPS = [
+    { n: 1, label: 'Контакты' },
+    { n: 2, label: 'Услуги' },
+    { n: 3, label: 'Итог' },
   ];
 
   // Цены согласно сообщению
@@ -144,12 +160,47 @@ const OrderPage = () => {
         customer_email: prev.customer_email || user.email || '',
         contact_info: prev.contact_info || user.additional_contact || ''
       }));
-      // Если поля предзаполнены — сворачиваем блок «Пользователь»
-      if (user.username || user.email) {
-        setUserBlockOpen(false);
-      }
     }
   }, [isAuthenticated, user]);
+
+  // Keep accordion open state synced with wizard step
+  React.useEffect(() => {
+    if (orderType !== 'know') return;
+    setUserBlockOpen(wizardStep === 1);
+    setOrderInfoBlockOpen(wizardStep === 2);
+    setFilesBlockOpen(wizardStep === 3);
+  }, [wizardStep, orderType]);
+
+  const selectOrderType = (type) => {
+    setOrderType(type);
+    setWizardStep(1);
+  };
+
+  const goWizardNext = () => {
+    if (wizardStep === 1) {
+      if (!formData.customer_name || !formData.customer_email) {
+        showError('Укажите ваше имя и email');
+        return;
+      }
+      setWizardStep(2);
+      return;
+    }
+    if (wizardStep === 2) {
+      if (formData.service_categories.length === 0) {
+        showError('Выберите хотя бы одну категорию услуги');
+        return;
+      }
+      if (!formData.deadline_days) {
+        showError('Укажите срок выполнения заказа');
+        return;
+      }
+      setWizardStep(3);
+    }
+  };
+
+  const goWizardBack = () => {
+    setWizardStep((s) => Math.max(1, s - 1));
+  };
 
   const addCategory = (category) => {
     const categoryValue = typeof category === 'string' ? category : category.value;
@@ -337,7 +388,7 @@ const OrderPage = () => {
 
         <div className="space-y-4">
           <button
-            onClick={() => setOrderType("know")}
+            onClick={() => selectOrderType("know")}
             className="w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/40"
           >
             <div className="flex items-center justify-between gap-4">
@@ -522,10 +573,27 @@ const OrderPage = () => {
         <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
         <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Подробная форма заказа</h1>
         <p className="mt-2 text-sm text-white/50">Заполните форму для расчета стоимости и оформления заказа</p>
+        <div className="mt-5 flex gap-2">
+          {WIZARD_STEPS.map((s) => (
+            <div
+              key={s.n}
+              className={`flex-1 rounded-full py-2 text-center text-xs font-semibold uppercase tracking-wide ${
+                wizardStep === s.n
+                  ? 'bg-[#22c55e] text-[#0f172a]'
+                  : wizardStep > s.n
+                    ? 'border border-[#22c55e]/40 text-[#22c55e]'
+                    : 'border border-white/10 text-white/35'
+              }`}
+            >
+              {s.n}. {s.label}
+            </div>
+          ))}
+        </div>
       </div>
 
       <form onSubmit={handleDetailedSubmit} className="space-y-6">
         {/* Блок 1: Пользователь */}
+        {wizardStep === 1 && (
         <div className="rounded-3xl border border-white/10 bg-white/[0.03]">
           <button
             type="button"
@@ -582,8 +650,16 @@ const OrderPage = () => {
             </div>
           )}
         </div>
+        )}
+
+        {wizardStep === 1 && (
+          <button type="button" onClick={goWizardNext} className={primaryBtnClass}>
+            Далее — услуги
+          </button>
+        )}
 
         {/* Блок 2: Информация о заказе */}
+        {wizardStep === 2 && (
         <div className="rounded-3xl border border-white/10 bg-white/[0.03]">
           <button
             type="button"
@@ -598,6 +674,28 @@ const OrderPage = () => {
           </button>
           {orderInfoBlockOpen && (
             <div className="px-4 pb-4 space-y-4">
+        <div>
+          <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/40">Пресеты</p>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {servicePresets.map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    service_categories: prev.service_categories.includes(preset.value)
+                      ? prev.service_categories
+                      : [...prev.service_categories, preset.value],
+                  }))
+                }
+                className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/70 transition hover:border-[#22c55e]/40 hover:text-white"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
         {/* Категории услуг с множественным выбором */}
         <div>
           <label className={labelClass}>
@@ -712,8 +810,22 @@ const OrderPage = () => {
             </div>
           )}
         </div>
+        )}
+
+        {wizardStep === 2 && (
+          <div className="flex gap-3">
+            <button type="button" onClick={goWizardBack} className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5">
+              Назад
+            </button>
+            <button type="button" onClick={goWizardNext} className="inline-flex h-12 flex-[2] items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] hover:brightness-110">
+              Далее — файлы
+            </button>
+          </div>
+        )}
 
         {/* Блок 3: Файлы и референсы */}
+        {wizardStep === 3 && (
+        <>
         <div className="rounded-3xl border border-white/10 bg-white/[0.03]">
           <button
             type="button"
@@ -989,6 +1101,12 @@ const OrderPage = () => {
         </div>
 
         {/* Чекбокс — перед кнопкой оформления */}
+        <div className="flex gap-3">
+          <button type="button" onClick={goWizardBack} className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5">
+            Назад
+          </button>
+        </div>
+
         <div className="pt-2">
           <label className="flex items-start gap-2 text-xs text-white/50">
             <input
@@ -1027,6 +1145,8 @@ const OrderPage = () => {
         >
           {uploading ? 'Отправка...' : totalPrice > 0 ? `Оформить заказ (предоплата ${prepaymentAmount.toLocaleString('ru-RU')} ₽)` : 'Оформить заказ'}
         </button>
+        </>
+        )}
       </form>
     </div>
   );

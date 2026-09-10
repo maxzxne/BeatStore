@@ -234,7 +234,8 @@ const AdminUpload = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="admin-page-title">Загрузка</h1>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Каталог</p>
+        <h1 className="admin-page-title mt-1">Загрузка</h1>
         <p className="admin-page-sub">Новый бит или курс в каталог</p>
       </div>
 
