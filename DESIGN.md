@@ -1,20 +1,21 @@
-# BeatStore V3 — Design System
+# BeatStore Design System
 
-Canonical source of truth for all V3 UI.
+> **Shipped product UI is V2** (dark OLED + acid green `#22C55E`, Syne/Poppins in `src/v2`).  
+> The V3 sections below are historical design notes — not the live product chrome for now.
 
 ```text
-V1 — первоначальная версия
-V2 — текущая версия (indigo + acid green)
-V3 — 2026 music-tech product UI
+V1 — первоначальная версия (legacy)
+V2 — shipped product UI
+V3 — historical / unused product path
 
 Current UI: V2
-Target UI: V3
+Target UI: V2 (shipped)
 ```
 
-V3 — **modern digital music product** для аудитории 18–35 (Spotify / Apple Music / Ableton / FL / TikTok).  
+V3 below describes a future **modern digital music product** для аудитории 18–35 (Spotify / Apple Music / Ableton / FL / TikTok).  
 Не marketplace, не лейбл 2015, не luxury hotel, не fashion magazine, не ecommerce template.
 
-Не смешивать V1/V2 визуал. Не использовать `design-system/beatstore-v2`.
+Пока в проде — визуал V2. Не смешивать V1/V3 в публичный UI.
 
 ---
 

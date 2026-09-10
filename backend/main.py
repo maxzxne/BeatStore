@@ -32,11 +32,12 @@ import os
 import sys
 import re
 import uuid
+import json
 from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, ErrorLog, cart_table, course_cart_table, course_favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, cart_table, course_cart_table, course_favorites_table
 print("Импорт database и models завершен")
 
 # Импорт функций отправки сообщений и файлов в Telegram
@@ -211,11 +212,30 @@ def update_database_schema():
                 db.add(SiteSetting(key="courses_visibility", value="all"))
                 db.commit()
                 print("Настройка courses_visibility создана (all)")
+
+            home_hero = db.query(SiteSetting).filter(SiteSetting.key == "home_hero").first()
+            if not home_hero:
+                default_hero = {
+                    "enabled": True,
+                    "eyebrow": "XWinner",
+                    "title": "Инструменталы.\nЧёрный экран.\nЗелёный удар.",
+                    "subtitle": "Каталог битов, заказы под ключ и курсы по битмейкингу. Слушай демо, бери лицензию, работай дальше.",
+                    "image_url": None,
+                    "cta_label": None,
+                    "cta_href": None,
+                }
+                db.add(SiteSetting(key="home_hero", value=json.dumps(default_hero, ensure_ascii=False)))
+                db.commit()
+                print("Настройка home_hero создана (default)")
         except Exception as e:
             print(f"Ошибка создания site_settings: {e}")
             db.rollback()
         finally:
             db.close()
+
+        # Промо-баннеры (таблица создаётся через create_all ниже)
+        if 'promo_banners' not in inspector.get_table_names():
+            print("Создание таблицы promo_banners...")
         
         # Создаем все таблицы (если их еще нет)
         Base.metadata.create_all(bind=engine)
@@ -785,9 +805,51 @@ class OAuthSettingUpdate(BaseModel):
 # all — всем; admins_only — только админам; hidden — никому (вкладка скрыта)
 COURSES_VISIBILITY_VALUES = {"all", "admins_only", "hidden"}
 
+DEFAULT_HOME_HERO = {
+    "enabled": True,
+    "eyebrow": "XWinner",
+    "title": "Инструменталы.\nЧёрный экран.\nЗелёный удар.",
+    "subtitle": "Каталог битов, заказы под ключ и курсы по битмейкингу. Слушай демо, бери лицензию, работай дальше.",
+    "image_url": None,
+    "cta_label": None,
+    "cta_href": None,
+}
+
 class SiteSettingsUpdate(BaseModel):
     """Схема обновления настроек сайта"""
     courses_visibility: Optional[str] = None
+
+class HomeHeroUpdate(BaseModel):
+    """Схема обновления hero главной"""
+    enabled: Optional[bool] = None
+    eyebrow: Optional[str] = None
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    image_url: Optional[str] = None
+    cta_label: Optional[str] = None
+    cta_href: Optional[str] = None
+
+class PromoBannerCreate(BaseModel):
+    """Схема создания промо-баннера"""
+    title: Optional[str] = None
+    body: Optional[str] = None
+    image_url: Optional[str] = None
+    link_url: Optional[str] = None
+    sort_order: int = 0
+    enabled: bool = True
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+
+class PromoBannerUpdate(BaseModel):
+    """Схема обновления промо-баннера"""
+    title: Optional[str] = None
+    body: Optional[str] = None
+    image_url: Optional[str] = None
+    link_url: Optional[str] = None
+    sort_order: Optional[int] = None
+    enabled: Optional[bool] = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
 
 def get_site_setting_value(db: Session, key: str, default: str = "") -> str:
     setting = db.query(SiteSetting).filter(SiteSetting.key == key).first()
@@ -796,6 +858,59 @@ def get_site_setting_value(db: Session, key: str, default: str = "") -> str:
 def get_courses_visibility(db: Session) -> str:
     value = get_site_setting_value(db, "courses_visibility", "all")
     return value if value in COURSES_VISIBILITY_VALUES else "all"
+
+def get_home_hero(db: Session) -> dict:
+    raw = get_site_setting_value(db, "home_hero", "")
+    if not raw:
+        return dict(DEFAULT_HOME_HERO)
+    try:
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            return dict(DEFAULT_HOME_HERO)
+        merged = dict(DEFAULT_HOME_HERO)
+        merged.update({k: data.get(k, merged[k]) for k in DEFAULT_HOME_HERO.keys()})
+        return merged
+    except (json.JSONDecodeError, TypeError):
+        return dict(DEFAULT_HOME_HERO)
+
+def save_home_hero(db: Session, hero: dict) -> dict:
+    normalized = dict(DEFAULT_HOME_HERO)
+    normalized.update({k: hero.get(k, normalized[k]) for k in DEFAULT_HOME_HERO.keys()})
+    setting = db.query(SiteSetting).filter(SiteSetting.key == "home_hero").first()
+    payload = json.dumps(normalized, ensure_ascii=False)
+    if not setting:
+        setting = SiteSetting(key="home_hero", value=payload)
+        db.add(setting)
+    else:
+        setting.value = payload
+        setting.updated_at = datetime.utcnow()
+    db.commit()
+    return normalized
+
+def promo_banner_to_dict(banner: PromoBanner) -> dict:
+    return {
+        "id": banner.id,
+        "title": banner.title,
+        "body": banner.body,
+        "image_url": banner.image_url,
+        "link_url": banner.link_url,
+        "sort_order": banner.sort_order,
+        "enabled": banner.enabled,
+        "starts_at": banner.starts_at.isoformat() if banner.starts_at else None,
+        "ends_at": banner.ends_at.isoformat() if banner.ends_at else None,
+        "created_at": banner.created_at.isoformat() if banner.created_at else None,
+        "updated_at": banner.updated_at.isoformat() if banner.updated_at else None,
+    }
+
+def is_promo_banner_active(banner: PromoBanner, now: Optional[datetime] = None) -> bool:
+    if not banner.enabled:
+        return False
+    now = now or datetime.utcnow()
+    if banner.starts_at is not None and banner.starts_at > now:
+        return False
+    if banner.ends_at is not None and banner.ends_at < now:
+        return False
+    return True
 
 def user_can_access_courses_catalog(visibility: str, user: Optional[User]) -> bool:
     """Доступ к публичному API каталога курсов. При admins_only/hidden — только админы."""
@@ -3053,15 +3168,17 @@ def get_public_oauth_settings(db: Session = Depends(get_db)):
 # Site Settings
 @app.get("/site-settings")
 def get_public_site_settings(db: Session = Depends(get_db)):
-    """Публичные настройки сайта (видимость разделов)"""
+    """Публичные настройки сайта (видимость разделов + hero)"""
     return {
-        "courses_visibility": get_courses_visibility(db)
+        "courses_visibility": get_courses_visibility(db),
+        "home_hero": get_home_hero(db),
     }
 
 @app.get("/api/admin/site-settings")
 def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     return {
-        "courses_visibility": get_courses_visibility(db)
+        "courses_visibility": get_courses_visibility(db),
+        "home_hero": get_home_hero(db),
     }
 
 @app.put("/api/admin/site-settings")
@@ -3088,9 +3205,148 @@ def update_admin_site_settings(
     return {
         "message": "Site settings updated successfully",
         "settings": {
-            "courses_visibility": get_courses_visibility(db)
+            "courses_visibility": get_courses_visibility(db),
+            "home_hero": get_home_hero(db),
         }
     }
+
+@app.get("/api/admin/site-settings/hero")
+def get_admin_home_hero(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    return get_home_hero(db)
+
+@app.put("/api/admin/site-settings/hero")
+def update_admin_home_hero(
+    update_data: HomeHeroUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    hero = get_home_hero(db)
+    patch = update_data.dict(exclude_unset=True)
+    hero.update(patch)
+    saved = save_home_hero(db, hero)
+    return {"message": "Hero settings updated successfully", "home_hero": saved}
+
+@app.post("/api/admin/hero-image")
+async def upload_hero_image(
+    file: UploadFile = File(...),
+    current_admin: User = Depends(get_current_admin_user),
+):
+    is_valid, error_msg = validate_file(file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, "image")
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+
+    safe_filename = sanitize_filename(file.filename or "hero.jpg")
+    filename = f"hero_{uuid.uuid4().hex[:12]}_{safe_filename}"
+    relative_dir = "static/site"
+    os.makedirs(relative_dir, exist_ok=True)
+    path = f"{relative_dir}/{filename}"
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    url = f"/static/site/{filename}"
+    return {"url": url, "image_url": url}
+
+# Promo Banners
+@app.get("/promo-banners")
+def get_public_promo_banners(db: Session = Depends(get_db)):
+    """Публичные активные промо-баннеры (enabled + окно дат)"""
+    now = datetime.utcnow()
+    banners = (
+        db.query(PromoBanner)
+        .filter(PromoBanner.enabled == True)
+        .order_by(PromoBanner.sort_order.asc(), PromoBanner.id.asc())
+        .all()
+    )
+    active = [promo_banner_to_dict(b) for b in banners if is_promo_banner_active(b, now)]
+    return active
+
+@app.get("/api/admin/promo-banners")
+def get_admin_promo_banners(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    banners = (
+        db.query(PromoBanner)
+        .order_by(PromoBanner.sort_order.asc(), PromoBanner.id.asc())
+        .all()
+    )
+    return [promo_banner_to_dict(b) for b in banners]
+
+@app.post("/api/admin/promo-banners")
+def create_admin_promo_banner(
+    data: PromoBannerCreate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    banner = PromoBanner(
+        title=data.title,
+        body=data.body,
+        image_url=data.image_url,
+        link_url=data.link_url,
+        sort_order=data.sort_order,
+        enabled=data.enabled,
+        starts_at=data.starts_at,
+        ends_at=data.ends_at,
+    )
+    db.add(banner)
+    db.commit()
+    db.refresh(banner)
+    return promo_banner_to_dict(banner)
+
+@app.put("/api/admin/promo-banners/{banner_id}")
+def update_admin_promo_banner(
+    banner_id: int,
+    data: PromoBannerUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    banner = db.query(PromoBanner).filter(PromoBanner.id == banner_id).first()
+    if not banner:
+        raise HTTPException(status_code=404, detail="Promo banner not found")
+
+    patch = data.dict(exclude_unset=True)
+    for key, value in patch.items():
+        setattr(banner, key, value)
+    banner.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(banner)
+    return promo_banner_to_dict(banner)
+
+@app.delete("/api/admin/promo-banners/{banner_id}")
+def delete_admin_promo_banner(
+    banner_id: int,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    banner = db.query(PromoBanner).filter(PromoBanner.id == banner_id).first()
+    if not banner:
+        raise HTTPException(status_code=404, detail="Promo banner not found")
+    db.delete(banner)
+    db.commit()
+    return {"message": "Promo banner deleted successfully", "id": banner_id}
+
+@app.post("/api/admin/promo-banners/upload-image")
+async def upload_promo_banner_image(
+    file: UploadFile = File(...),
+    current_admin: User = Depends(get_current_admin_user),
+):
+    is_valid, error_msg = validate_file(file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE, "image")
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_msg)
+
+    safe_filename = sanitize_filename(file.filename or "banner.jpg")
+    filename = f"banner_{uuid.uuid4().hex[:12]}_{safe_filename}"
+    relative_dir = "static/site"
+    os.makedirs(relative_dir, exist_ok=True)
+    path = f"{relative_dir}/{filename}"
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    url = f"/static/site/{filename}"
+    return {"url": url, "image_url": url}
 
 # Error Logs Management
 @app.get("/api/admin/errors")

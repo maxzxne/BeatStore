@@ -150,13 +150,24 @@ const PurchasesPage = () => {
     }
   };
 
+  const tabClass = (active) =>
+    `rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+      active ? 'bg-[#22c55e] text-[#0f172a]' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+    }`;
+
   if (!isAuthenticated) {
     return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center">
-          <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-black dark:text-white mb-2">Войдите для просмотра покупок</h1>
-          <p className="text-gray-600 dark:text-neutral-400">Вам нужно войти в систему, чтобы увидеть купленные биты.</p>
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
+          <CheckCircle className="mx-auto mb-4 h-12 w-12 text-white/30" />
+          <h1 className="font-[Syne] text-2xl font-extrabold text-white">Войдите для просмотра покупок</h1>
+          <p className="mt-2 text-sm text-white/50">Вам нужно войти в систему, чтобы увидеть купленные биты.</p>
+          <Link
+            to="/login"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+          >
+            Войти
+          </Link>
         </div>
       </div>
     );
@@ -164,48 +175,37 @@ const PurchasesPage = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600 dark:text-neutral-400">Загрузка покупок...</div>
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-sm text-white/50">Загрузка покупок...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-6 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Ваши покупки</h1>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Library</p>
+        <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Ваши покупки</h1>
         
         {/* Табы для переключения между битами, курсами и заказами */}
-        <div className="flex gap-4 mb-4">
+        <div className="mt-5 flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab('beats')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'beats'
-                ? 'bg-black text-white'
-                : 'bg-gray-100 dark:bg-neutral-900 text-gray-600 dark:text-neutral-400 hover:bg-gray-200'
-            }`}
+            className={tabClass(activeTab === 'beats')}
           >
             Биты ({purchases.length})
           </button>
           <button
             onClick={() => setActiveTab('courses')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'courses'
-                ? 'bg-black text-white'
-                : 'bg-gray-100 dark:bg-neutral-900 text-gray-600 dark:text-neutral-400 hover:bg-gray-200'
-            }`}
+            className={tabClass(activeTab === 'courses')}
           >
             Курсы ({coursePurchases.length})
           </button>
           <button
             onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'orders'
-                ? 'bg-black text-white'
-                : 'bg-gray-100 dark:bg-neutral-900 text-gray-600 dark:text-neutral-400 hover:bg-gray-200'
-            }`}
+            className={tabClass(activeTab === 'orders')}
           >
             Заказы ({serviceOrders.length})
           </button>
@@ -214,71 +214,74 @@ const PurchasesPage = () => {
 
       {activeTab === 'beats' ? (
         purchases.length === 0 ? (
-          <div className="text-center py-12">
-            <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <div className="text-gray-600 dark:text-neutral-400 text-lg">Покупок битов пока нет</div>
-            <p className="text-gray-500 dark:text-neutral-500 mt-2">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
+            <CheckCircle className="mx-auto mb-4 h-12 w-12 text-white/30" />
+            <div className="font-[Syne] text-xl font-bold text-white">Покупок битов пока нет</div>
+            <p className="mt-2 text-sm text-white/50">
               Начните покупать биты, чтобы увидеть их здесь
             </p>
+            <Link
+              to="/"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            >
+              Смотреть биты
+            </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {purchases.map(beat => (
-              <Link key={beat.id} to={`/beat/${beat.id}`} className="card group relative ring-2 ring-green-500 ring-opacity-50">
+              <Link key={beat.id} to={`/beat/${beat.id}`} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition hover:border-[#22c55e]/40">
                 <div className="relative">
                   {beat.cover_url ? (
                     <img
                       src={buildMediaUrl(beat.cover_url)}
                       alt={beat.title}
-                      className="w-full h-48 object-cover rounded-t-lg"
+                      className="h-48 w-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-t-lg flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 bg-black bg-opacity-5"></div>
-                      <div className="relative z-10 text-center">
-                        <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">XWinner.beats.please</span>
-                      </div>
+                    <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-white/5">
+                      <span className="font-[Syne] text-sm font-medium text-white/30">XWinner</span>
                     </div>
                   )}
                   
                   {/* Purchased badge */}
-                  <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full z-40">
+                  <div className="absolute right-3 top-3 z-40 rounded-full bg-[#22c55e] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#0f172a]">
                     Куплено
                   </div>
                   
                   {/* Play button overlay - показывается при наведении */}
                   <button
                     onClick={(e) => handlePlay(beat, e)}
-                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                   >
-                    <div className="bg-black rounded-full p-3">
+                    <div className="rounded-full bg-[#22c55e] p-3 text-[#0f172a]">
                       {isCurrentTrackPlaying(beat.id) ? (
-                        <Pause className="h-6 w-6 text-white" />
+                        <Pause className="h-6 w-6" />
                       ) : (
-                        <Play className="h-6 w-6 text-white" />
+                        <Play className="h-6 w-6" />
                       )}
                     </div>
                   </button>
                 </div>
                 
-                <div className="card-content !px-0">
-                  <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{beat.title}</h3>
-                  <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{beat.artist}</p>
+                <div className="p-4">
+                  <h3 className="mb-1 truncate font-[Syne] font-bold text-white">{beat.title}</h3>
+                  <p className="mb-2 text-sm text-white/50">{beat.artist}</p>
                   
-                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-neutral-500 mb-3">
+                  <div className="mb-3 flex items-center justify-between text-sm text-white/40">
                     <span>{beat.genre}</span>
                     <span>{beat.bpm} BPM</span>
                     {beat.key && <span>{beat.key}</span>}
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-green-600 font-medium">
+                    <span className="text-sm font-medium text-[#22c55e]">
                       Куплено
                     </span>
                     
                     <button
                       onClick={(e) => handleDownload(beat.id, e)}
-                      className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                      className="rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                       title="Скачать"
                     >
                       <Download className="h-4 w-4" />
@@ -291,57 +294,62 @@ const PurchasesPage = () => {
         )
       ) : activeTab === 'courses' ? (
         coursePurchases.length === 0 ? (
-          <div className="text-center py-12">
-            <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <div className="text-gray-600 dark:text-neutral-400 text-lg">Покупок курсов пока нет</div>
-            <p className="text-gray-500 dark:text-neutral-500 mt-2">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
+            <CheckCircle className="mx-auto mb-4 h-12 w-12 text-white/30" />
+            <div className="font-[Syne] text-xl font-bold text-white">Покупок курсов пока нет</div>
+            <p className="mt-2 text-sm text-white/50">
               Начните покупать курсы, чтобы увидеть их здесь
             </p>
+            <Link
+              to="/courses"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            >
+              Смотреть курсы
+            </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {coursePurchases.map(course => (
-              <Link key={course.id} to={`/course/${course.id}`} className="card group relative ring-2 ring-green-500 ring-opacity-50">
+              <Link key={course.id} to={`/course/${course.id}`} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] transition hover:border-[#22c55e]/40">
                 <div className="relative">
                   {course.preview_video_url ? (
-                    <div className="w-full h-48 bg-black rounded-t-lg flex items-center justify-center relative overflow-hidden">
+                    <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-black">
                       <video
                         src={buildMediaUrl(course.preview_video_url)}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                         muted
                         loop
                       />
                       {/* Play button overlay - показывается при наведении вместо кнопки скачать */}
                       <button
                         onClick={(e) => handlePlayCourse(course, e)}
-                        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                       >
-                        <div className="bg-black rounded-full p-3">
+                        <div className="rounded-full bg-[#22c55e] p-3 text-[#0f172a]">
                           {isCurrentTrackPlaying(`course_${course.id}`) ? (
-                            <Pause className="h-6 w-6 text-white" />
+                            <Pause className="h-6 w-6" />
                           ) : (
-                            <Play className="h-6 w-6 text-white" />
+                            <Play className="h-6 w-6" />
                           )}
                         </div>
                       </button>
                     </div>
                   ) : (
-                    <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded-t-lg flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 bg-black bg-opacity-5"></div>
+                    <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-white/5">
                       <div className="relative z-10 text-center">
-                        <Video className="h-8 w-8 text-gray-600 dark:text-neutral-400 mx-auto mb-2" />
-                        <span className="text-gray-600 dark:text-neutral-400 text-sm font-medium">Курс</span>
+                        <Video className="mx-auto mb-2 h-8 w-8 text-white/40" />
+                        <span className="text-sm font-medium text-white/40">Курс</span>
                       </div>
                       {/* Play button overlay */}
                       <button
                         onClick={(e) => handlePlayCourse(course, e)}
-                        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity z-50"
+                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                       >
-                        <div className="bg-black rounded-full p-3">
+                        <div className="rounded-full bg-[#22c55e] p-3 text-[#0f172a]">
                           {isCurrentTrackPlaying(`course_${course.id}`) ? (
-                            <Pause className="h-6 w-6 text-white" />
+                            <Pause className="h-6 w-6" />
                           ) : (
-                            <Play className="h-6 w-6 text-white" />
+                            <Play className="h-6 w-6" />
                           )}
                         </div>
                       </button>
@@ -349,34 +357,34 @@ const PurchasesPage = () => {
                   )}
                   
                   {/* Purchased badge */}
-                  <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full z-40">
+                  <div className="absolute right-3 top-3 z-40 rounded-full bg-[#22c55e] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#0f172a]">
                     Куплено
                   </div>
                 </div>
                 
-                <div className="card-content !px-0">
-                  <h3 className="font-semibold text-black dark:text-white mb-1 truncate">{course.title}</h3>
+                <div className="p-4">
+                  <h3 className="mb-1 truncate font-[Syne] font-bold text-white">{course.title}</h3>
                   {course.purpose && (
-                    <p className="text-gray-600 dark:text-neutral-400 text-sm mb-2">{course.purpose}</p>
+                    <p className="mb-2 text-sm text-white/50">{course.purpose}</p>
                   )}
                   
-                  <div className="flex items-center justify-between text-sm text-gray-500 dark:text-neutral-500 mb-3">
+                  <div className="mb-3 flex items-center justify-between text-sm text-white/40">
                     {course.tags && (
                       <span className="truncate">{course.tags.split(',')[0]}</span>
                     )}
-                    <span className="text-black dark:text-white font-semibold">
+                    <span className="font-semibold text-white">
                       {course.price === 0 ? 'Бесплатно' : `${course.price.toFixed(0)} ₽`}
                     </span>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-green-600 font-medium">
+                    <span className="text-sm font-medium text-[#22c55e]">
                       Куплено
                     </span>
                     
                     <button
                       onClick={(e) => handleDownloadCourse(course.id, e)}
-                      className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                      className="rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                       title="Скачать"
                     >
                       <Download className="h-4 w-4" />
@@ -389,23 +397,29 @@ const PurchasesPage = () => {
         )
       ) : (
         serviceOrders.length === 0 ? (
-          <div className="text-center py-12">
-            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <div className="text-gray-600 dark:text-neutral-400 text-lg">Заказов пока нет</div>
-            <p className="text-gray-500 dark:text-neutral-500 mt-2">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
+            <FileText className="mx-auto mb-4 h-12 w-12 text-white/30" />
+            <div className="font-[Syne] text-xl font-bold text-white">Заказов пока нет</div>
+            <p className="mt-2 text-sm text-white/50">
               Оформите заказ услуг, чтобы увидеть его здесь
             </p>
+            <Link
+              to="/order"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            >
+              Оформить заказ
+            </Link>
           </div>
         ) : (
           <div className="space-y-4">
             {serviceOrders.map(order => {
               const statusColors = {
-                pending: 'bg-amber-500 text-white',
-                confirmed: 'bg-blue-600 text-white',
-                paid: 'bg-green-600 text-white',
-                in_progress: 'bg-violet-600 text-white',
-                completed: 'bg-emerald-600 text-white',
-                cancelled: 'bg-red-600 text-white'
+                pending: 'bg-amber-500/20 text-amber-300',
+                confirmed: 'bg-blue-500/20 text-blue-300',
+                paid: 'bg-[#22c55e]/20 text-[#22c55e]',
+                in_progress: 'bg-violet-500/20 text-violet-300',
+                completed: 'bg-emerald-500/20 text-emerald-300',
+                cancelled: 'bg-red-500/20 text-red-300'
               };
               
               const statusLabels = {
@@ -420,18 +434,18 @@ const PurchasesPage = () => {
               const categories = order.service_categories || (order.service_category ? [order.service_category] : []);
               
               return (
-                <div key={order.id} className="border border-gray-300 dark:border-neutral-700 rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <div key={order.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+                  <div className="mb-4 flex items-start justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-bold text-black dark:text-white mb-2">
+                      <h3 className="mb-2 font-[Syne] text-lg font-bold text-white">
                         Заказ #{order.id}
                       </h3>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusColors[order.status] || statusColors.pending}`}>
                           {statusLabels[order.status] || order.status}
                         </span>
                         {order.order_type === 'dont_know' && (
-                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500 text-white">
+                          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/70">
                             Требует обсуждения
                           </span>
                         )}
@@ -440,17 +454,17 @@ const PurchasesPage = () => {
                     <div className="text-right">
                       {order.price ? (
                         <>
-                          <div className="text-lg font-bold text-black dark:text-white">
+                          <div className="text-lg font-bold text-[#22c55e]">
                             {order.price.toLocaleString('ru-RU')} ₽
                           </div>
                           {order.prepayment_percent && (
-                            <div className="text-sm text-gray-600 dark:text-neutral-400">
+                            <div className="text-sm text-white/50">
                               Предоплата {order.prepayment_percent}%: {(order.price * order.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
                             </div>
                           )}
                         </>
                       ) : (
-                        <div className="text-sm text-gray-500 dark:text-neutral-500">
+                        <div className="text-sm text-white/40">
                           Цена не указана
                         </div>
                       )}
@@ -459,10 +473,10 @@ const PurchasesPage = () => {
                   
                   {categories.length > 0 && (
                     <div className="mb-3">
-                      <div className="text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Категории услуг:</div>
+                      <div className="mb-1 text-sm font-medium text-white/70">Категории услуг:</div>
                       <div className="flex flex-wrap gap-2">
                         {categories.map((cat, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-gray-100 dark:bg-neutral-900 rounded-lg text-sm">
+                          <span key={idx} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80">
                             {cat}
                           </span>
                         ))}
@@ -471,7 +485,7 @@ const PurchasesPage = () => {
                   )}
                   
                   {order.deadline_days && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400 mb-2">
+                    <div className="mb-2 flex items-center gap-2 text-sm text-white/50">
                       <Clock className="h-4 w-4" />
                       <span>Срок: {order.deadline_days} {order.deadline_days === 1 ? 'день' : order.deadline_days < 5 ? 'дня' : 'дней'}</span>
                     </div>
@@ -479,26 +493,26 @@ const PurchasesPage = () => {
                   
                   {order.description && (
                     <div className="mb-3">
-                      <div className="text-sm font-medium text-gray-700 dark:text-neutral-300 mb-1">Описание:</div>
-                      <p className="text-sm text-gray-600 dark:text-neutral-400">{order.description}</p>
+                      <div className="mb-1 text-sm font-medium text-white/70">Описание:</div>
+                      <p className="text-sm text-white/50">{order.description}</p>
                     </div>
                   )}
                   
-                  <div className="text-xs text-gray-500 dark:text-neutral-500 mt-4">
+                  <div className="mt-4 text-xs text-white/40">
                     Создан: {formatMoscowDate(order.created_at)}
                   </div>
                   
                   {/* Информация о стоимости для заказов типа "знаю" */}
                   {order.order_type === 'know' && (
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-700 dark:border-neutral-700 flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
+                    <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-sm text-white/50">
                       <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
                       <div className="relative group">
-                        <HelpCircle className="h-4 w-4 text-gray-400 cursor-help flex-shrink-0" />
-                        <div className="absolute bottom-full right-0 mb-2 w-80 p-4 bg-black text-white text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                        <HelpCircle className="h-4 w-4 flex-shrink-0 cursor-help text-white/40" />
+                        <div className="invisible absolute bottom-full right-0 z-10 mb-2 w-80 rounded-2xl border border-white/10 bg-[#0b0f14] p-4 text-xs text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
                           <div className="space-y-3">
                             <div>
-                              <div className="font-semibold mb-2">🟢 При 50% предоплате:</div>
-                              <ul className="space-y-1 text-gray-300">
+                              <div className="mb-2 font-semibold text-[#22c55e]">При 50% предоплате:</div>
+                              <ul className="space-y-1 text-white/60">
                                 <li>• 2-3 недели: 25K</li>
                                 <li>• 1-2 недели: 30K</li>
                                 <li>• 1 неделя: 35K</li>
@@ -507,8 +521,8 @@ const PurchasesPage = () => {
                               </ul>
                             </div>
                             <div>
-                              <div className="font-semibold mb-2">🔴 При 100% предоплате:</div>
-                              <ul className="space-y-1 text-gray-300">
+                              <div className="mb-2 font-semibold text-[#22c55e]">При 100% предоплате:</div>
+                              <ul className="space-y-1 text-white/60">
                                 <li>• 2-3 недели: 20K</li>
                                 <li>• 1-2 недели: 25K</li>
                                 <li>• 1 неделя: 30K</li>
@@ -516,28 +530,27 @@ const PurchasesPage = () => {
                                 <li>• 24 часа: 45K</li>
                               </ul>
                             </div>
-                            <div className="pt-2 border-t border-gray-600">
-                              <div className="font-semibold mb-1">✨ «Песня под ключ»:</div>
-                              <div className="text-gray-300">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
+                            <div className="border-t border-white/10 pt-2">
+                              <div className="mb-1 font-semibold">«Песня под ключ»:</div>
+                              <div className="text-white/60">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
                             </div>
-                            <div className="pt-2 border-t border-gray-600">
-                              <div className="font-semibold mb-1">🎶 Бит в стиле трэп:</div>
-                              <div className="text-gray-300">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 10-15K</div>
+                            <div className="border-t border-white/10 pt-2">
+                              <div className="mb-1 font-semibold">Бит в стиле трэп:</div>
+                              <div className="text-white/60">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 10-15K</div>
                             </div>
                           </div>
-                          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
                         </div>
                       </div>
                     </div>
                   )}
                   
                   {order.status === 'confirmed' && order.price && (
-                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-center gap-2 text-yellow-800 font-medium mb-2">
+                    <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                      <div className="mb-2 flex items-center gap-2 font-medium text-amber-300">
                         <DollarSign className="h-5 w-5" />
                         <span>Требуется оплата</span>
                       </div>
-                      <p className="text-sm text-yellow-700">
+                      <p className="text-sm text-amber-200/80">
                         Заказ подтвержден. Необходимо оплатить {order.prepayment_percent || 50}% предоплату: {(order.price * (order.prepayment_percent || 50) / 100).toLocaleString('ru-RU')} ₽
                       </p>
                       <button 
@@ -549,7 +562,7 @@ const PurchasesPage = () => {
                           params.append('total_price', prepaymentAmount.toString());
                           navigate(`/test-payment?${params.toString()}`);
                         }}
-                        className="mt-3 btn btn-primary btn-sm"
+                        className="mt-3 inline-flex h-10 items-center justify-center rounded-full bg-[#22c55e] px-5 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
                       >
                         Оплатить
                       </button>
@@ -558,8 +571,8 @@ const PurchasesPage = () => {
                   
                   {/* Файлы результата (для заказов типа "не знаю" после оплаты) */}
                   {(order.result_wav_url || order.result_mp3_url || order.result_zip_url) && (
-                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center gap-2 text-green-800 font-medium mb-3">
+                    <div className="mt-4 rounded-2xl border border-[#22c55e]/30 bg-[#22c55e]/10 p-4">
+                      <div className="mb-3 flex items-center gap-2 font-medium text-[#22c55e]">
                         <CheckCircle className="h-5 w-5" />
                         <span>Готовые файлы</span>
                       </div>
@@ -567,11 +580,11 @@ const PurchasesPage = () => {
                       <div className="space-y-3">
                         {/* MP3 файл с возможностью прослушивания */}
                         {order.result_mp3_url && (
-                          <div className="bg-white dark:bg-neutral-800 p-3 rounded border border-green-200 dark:border-green-800">
-                            <div className="flex items-center justify-between mb-2">
+                          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                            <div className="mb-2 flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-green-700" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300 dark:text-neutral-300">MP3 файл</span>
+                                <Music className="h-4 w-4 text-[#22c55e]" />
+                                <span className="text-sm font-medium text-white/80">MP3 файл</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <button
@@ -584,16 +597,16 @@ const PurchasesPage = () => {
                                       playTrack(trackId, audioUrl, `Заказ #${order.id} - MP3`);
                                     }
                                   }}
-                                  className="btn btn-sm btn-outline h-8 px-3"
+                                  className="inline-flex h-8 items-center rounded-full border border-white/15 px-3 text-xs text-white transition hover:bg-white/5"
                                 >
                                   {isCurrentTrack(`order_${order.id}_mp3`) && isCurrentTrackPlaying(`order_${order.id}_mp3`) ? (
                                     <>
-                                      <Pause className="h-3 w-3 mr-1" />
+                                      <Pause className="mr-1 h-3 w-3" />
                                       Пауза
                                     </>
                                   ) : (
                                     <>
-                                      <Play className="h-3 w-3 mr-1" />
+                                      <Play className="mr-1 h-3 w-3" />
                                       Плей
                                     </>
                                   )}
@@ -601,7 +614,7 @@ const PurchasesPage = () => {
                                 <a
                                   href={buildMediaUrl(order.result_mp3_url)}
                                   download
-                                  className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                                  className="rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                                   title="Скачать"
                                 >
                                   <Download className="h-4 w-4" />
@@ -613,11 +626,11 @@ const PurchasesPage = () => {
                         
                         {/* WAV файл с возможностью прослушивания */}
                         {order.result_wav_url && (
-                          <div className="bg-white dark:bg-neutral-800 p-3 rounded border border-green-200 dark:border-green-800">
-                            <div className="flex items-center justify-between mb-2">
+                          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                            <div className="mb-2 flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <FileAudio className="h-4 w-4 text-green-700" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300 dark:text-neutral-300">WAV файл</span>
+                                <FileAudio className="h-4 w-4 text-[#22c55e]" />
+                                <span className="text-sm font-medium text-white/80">WAV файл</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <button
@@ -630,16 +643,16 @@ const PurchasesPage = () => {
                                       playTrack(trackId, audioUrl, `Заказ #${order.id} - WAV`);
                                     }
                                   }}
-                                  className="btn btn-sm btn-outline h-8 px-3"
+                                  className="inline-flex h-8 items-center rounded-full border border-white/15 px-3 text-xs text-white transition hover:bg-white/5"
                                 >
                                   {isCurrentTrack(`order_${order.id}_wav`) && isCurrentTrackPlaying(`order_${order.id}_wav`) ? (
                                     <>
-                                      <Pause className="h-3 w-3 mr-1" />
+                                      <Pause className="mr-1 h-3 w-3" />
                                       Пауза
                                     </>
                                   ) : (
                                     <>
-                                      <Play className="h-3 w-3 mr-1" />
+                                      <Play className="mr-1 h-3 w-3" />
                                       Плей
                                     </>
                                   )}
@@ -647,7 +660,7 @@ const PurchasesPage = () => {
                                 <a
                                   href={buildMediaUrl(order.result_wav_url)}
                                   download
-                                  className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                                  className="rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                                   title="Скачать"
                                 >
                                   <Download className="h-4 w-4" />
@@ -659,16 +672,16 @@ const PurchasesPage = () => {
                         
                         {/* ZIP архив */}
                         {order.result_zip_url && (
-                          <div className="bg-white dark:bg-neutral-800 p-3 rounded border border-green-200 dark:border-green-800">
+                          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-green-700" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-neutral-300 dark:text-neutral-300">ZIP архив</span>
+                                <FileText className="h-4 w-4 text-[#22c55e]" />
+                                <span className="text-sm font-medium text-white/80">ZIP архив</span>
                               </div>
                               <a
                                 href={buildMediaUrl(order.result_zip_url)}
                                 download
-                                className="p-1.5 text-black dark:text-white hover:text-gray-600 dark:hover:text-neutral-400 transition-colors"
+                                className="rounded-full p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                                 title="Скачать"
                               >
                                 <Download className="h-4 w-4" />

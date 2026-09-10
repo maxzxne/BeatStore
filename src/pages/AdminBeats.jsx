@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api, buildMediaUrl } from '../utils/api';
-import { Edit, Trash2, Eye, Music } from 'lucide-react';
+import { Pencil, Trash2, Music, Loader2, X } from 'lucide-react';
+
+const fieldClass =
+  'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
+
+const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-white/45';
 
 const AdminBeats = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -9,6 +14,7 @@ const AdminBeats = () => {
   const [loading, setLoading] = useState(true);
   const [editingBeat, setEditingBeat] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -38,24 +44,27 @@ const AdminBeats = () => {
       price: beat.price,
       key: beat.key || '',
       description: beat.description || '',
-      is_available: beat.is_available
+      is_available: beat.is_available,
     });
   };
 
   const handleSaveEdit = async () => {
     try {
+      setSaving(true);
       await api.put(`/api/admin/beats/${editingBeat.id}`, editForm);
       setEditingBeat(null);
       fetchBeats();
     } catch (error) {
       console.error('Error updating beat:', error);
       alert('Ошибка обновления бита');
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async (beatId) => {
     if (!confirm('Вы уверены, что хотите удалить этот бит?')) return;
-    
+
     try {
       await api.delete(`/api/admin/beats/${beatId}`);
       fetchBeats();
@@ -67,219 +76,217 @@ const AdminBeats = () => {
 
   if (!isAdminAuthenticated) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
+      <div className="py-12 text-center text-white/50">
+        Доступ запрещен. Войдите как администратор.
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600 dark:text-neutral-400">Загрузка битов...</div>
+      <div className="admin-loading">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Загрузка битов…
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Управление битами</h1>
-        <p className="text-gray-600 dark:text-neutral-400">{beats.length} битов в каталоге</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="admin-page-title">Биты</h1>
+        <p className="admin-page-sub">{beats.length} в каталоге</p>
       </div>
 
-      {beats.length === 0 ? (
-        <div className="text-center py-12">
-          <Music className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <div className="text-gray-600 dark:text-neutral-400 text-lg">Биты не найдены</div>
-          <p className="text-gray-500 dark:text-neutral-500 mt-2">
-            Загрузите первый бит для начала работы
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {beats.map(beat => (
-            <div key={beat.id} className="card">
-              <div className="card-content">
-                <div className="flex items-center space-x-4">
-                  {beat.cover_url ? (
-                    <img
-                      src={buildMediaUrl(beat.cover_url)}
-                      alt={beat.title}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-neutral-800 dark:to-neutral-700 rounded flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 bg-black bg-opacity-5"></div>
-                      <div className="relative z-10">
-                        <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.983 5.983 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.984 3.984 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
-                          </svg>
+      <div className="admin-panel">
+        {beats.length === 0 ? (
+          <div className="admin-empty">
+            <Music className="mx-auto mb-3 h-10 w-10 text-white/25" />
+            Битов пока нет. Загрузите первый в разделе «Загрузка».
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th>Обложка</th>
+                  <th>Трек</th>
+                  <th>Мета</th>
+                  <th>Цена</th>
+                  <th>Статус</th>
+                  <th className="text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {beats.map((beat) => (
+                  <tr key={beat.id}>
+                    <td>
+                      {beat.cover_url ? (
+                        <img
+                          src={buildMediaUrl(beat.cover_url)}
+                          alt=""
+                          className="h-12 w-12 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5">
+                          <Music className="h-5 w-5 text-white/30" />
                         </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-black dark:text-white">{beat.title}</h3>
-                    <p className="text-gray-600 dark:text-neutral-400 text-sm">{beat.artist}</p>
-                    <p className="text-gray-600 dark:text-neutral-400 text-sm">
-                      {beat.genre} • {beat.bpm} BPM • {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
-                    </p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        beat.is_available 
-                          ? 'bg-emerald-600 text-white' 
-                          : 'bg-red-600 text-white'
-                      }`}>
-                        {beat.is_available ? 'Доступен' : 'Недоступен'}
+                      )}
+                    </td>
+                    <td>
+                      <div className="font-medium text-white">{beat.title}</div>
+                      <div className="text-xs text-white/40">{beat.artist}</div>
+                    </td>
+                    <td className="whitespace-nowrap text-xs text-white/45">
+                      {beat.genre} · {beat.bpm} BPM
+                      {beat.key ? ` · ${beat.key}` : ''}
+                    </td>
+                    <td className="whitespace-nowrap text-white/80">
+                      {beat.price === 0 ? 'Бесплатно' : `${beat.price.toFixed(0)} ₽`}
+                    </td>
+                    <td>
+                      <span
+                        className={`admin-badge ${
+                          beat.is_available ? 'admin-badge-ok' : 'admin-badge-err'
+                        }`}
+                      >
+                        {beat.is_available ? 'Доступен' : 'Скрыт'}
                       </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(beat)}
-                      className="btn btn-outline btn-sm"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDelete(beat.id)}
-                      className="btn btn-outline btn-sm text-red-400 hover:text-red-300 hover:border-red-400"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+                    </td>
+                    <td>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(beat)}
+                          className="admin-icon-btn"
+                          aria-label="Редактировать"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(beat.id)}
+                          className="admin-icon-btn admin-icon-btn-danger"
+                          aria-label="Удалить"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
-      {/* Edit Modal */}
       {editingBeat && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-neutral-900 rounded-lg p-6 w-full max-w-md mx-4 border border-gray-300 dark:border-neutral-700">
-            <h2 className="text-xl font-bold text-black dark:text-white mb-4">Редактировать бит</h2>
-            
+        <div className="admin-modal-backdrop">
+          <div className="absolute inset-0" onClick={() => setEditingBeat(null)} aria-hidden="true" />
+          <div className="admin-modal max-w-lg">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="font-[Syne] text-xl font-bold text-white">Редактировать бит</h2>
+              <button
+                type="button"
+                onClick={() => setEditingBeat(null)}
+                className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white"
+                aria-label="Закрыть"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                  Название
-                </label>
+                <label className={labelClass}>Название</label>
                 <input
                   type="text"
                   value={editForm.title}
-                  onChange={(e) => setEditForm({...editForm, title: e.target.value})}
-                  className="input w-full"
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className={fieldClass}
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                  Исполнитель
-                </label>
+                <label className={labelClass}>Исполнитель</label>
                 <input
                   type="text"
                   value={editForm.artist}
-                  onChange={(e) => setEditForm({...editForm, artist: e.target.value})}
-                  className="input w-full"
+                  onChange={(e) => setEditForm({ ...editForm, artist: e.target.value })}
+                  className={fieldClass}
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                  Жанр
-                </label>
+                <label className={labelClass}>Жанр</label>
                 <input
                   type="text"
                   value={editForm.genre}
-                  onChange={(e) => setEditForm({...editForm, genre: e.target.value})}
-                  className="input w-full"
+                  onChange={(e) => setEditForm({ ...editForm, genre: e.target.value })}
+                  className={fieldClass}
                 />
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                    BPM
-                  </label>
+                  <label className={labelClass}>BPM</label>
                   <input
                     type="number"
                     value={editForm.bpm}
-                    onChange={(e) => setEditForm({...editForm, bpm: parseInt(e.target.value)})}
-                    className="input w-full"
+                    onChange={(e) => setEditForm({ ...editForm, bpm: parseInt(e.target.value, 10) })}
+                    className={fieldClass}
                   />
                 </div>
-                
                 <div>
-                  <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                    Цена (₽)
-                  </label>
+                  <label className={labelClass}>Цена (₽)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={editForm.price}
-                    onChange={(e) => setEditForm({...editForm, price: parseFloat(e.target.value)})}
-                    className="input w-full"
+                    onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) })}
+                    className={fieldClass}
                   />
                 </div>
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                  Тональность
-                </label>
+                <label className={labelClass}>Тональность</label>
                 <input
                   type="text"
                   value={editForm.key}
-                  onChange={(e) => setEditForm({...editForm, key: e.target.value})}
-                  className="input w-full"
+                  onChange={(e) => setEditForm({ ...editForm, key: e.target.value })}
+                  className={fieldClass}
                 />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                  Описание
-                </label>
+                <label className={labelClass}>Описание</label>
                 <textarea
                   value={editForm.description}
-                  onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                  className="input w-full h-20 resize-none"
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className={`${fieldClass} h-20 resize-y`}
                 />
               </div>
-              
-              <div className="flex items-center space-x-2">
+              <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                 <input
                   type="checkbox"
                   id="is_available"
                   checked={editForm.is_available}
-                  onChange={(e) => setEditForm({...editForm, is_available: e.target.checked})}
-                  className="rounded"
+                  onChange={(e) => setEditForm({ ...editForm, is_available: e.target.checked })}
+                  className="h-5 w-5 accent-[#22c55e]"
                 />
-                <label htmlFor="is_available" className="text-black dark:text-white text-sm">
-                  Доступен для покупки
-                </label>
-              </div>
+                <span className="text-sm text-white/80">Доступен для покупки</span>
+              </label>
             </div>
-            
-            <div className="flex items-center space-x-3 mt-6">
-              <button
-                onClick={handleSaveEdit}
-                className="btn btn-primary flex-1"
-              >
-                Сохранить
-              </button>
-              
-              <button
-                onClick={() => setEditingBeat(null)}
-                className="btn btn-outline flex-1"
-              >
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => setEditingBeat(null)} className="admin-ghost-btn">
                 Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={saving}
+                className="admin-primary-btn"
+              >
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                Сохранить
               </button>
             </div>
           </div>
@@ -290,5 +297,3 @@ const AdminBeats = () => {
 };
 
 export default AdminBeats;
-
-

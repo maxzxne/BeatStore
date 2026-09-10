@@ -6,6 +6,7 @@ import HeaderV2 from './HeaderV2';
 import SidebarV2 from './SidebarV2';
 import WelcomePopupV2 from './WelcomePopupV2';
 import MiniPlayerV2 from './MiniPlayerV2';
+import './admin/admin.css';
 
 const LayoutV2 = ({ admin = false }) => {
   const location = useLocation();
@@ -27,7 +28,7 @@ const LayoutV2 = ({ admin = false }) => {
   return (
     <div className="min-h-screen w-full flex flex-col text-white">
       {isAdminRoute ? (
-        <div className="flex h-screen overflow-hidden">
+        <div className="v2-admin flex h-screen overflow-hidden">
           <SidebarV2 />
           <div className="flex-1 flex flex-col overflow-hidden">
             <HeaderV2 admin />

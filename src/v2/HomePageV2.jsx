@@ -1,15 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Filter, Search } from 'lucide-react';
 import BeatCardV2 from './BeatCardV2';
+import PromoSliderV2 from './PromoSliderV2';
 import Filters from '../components/Filters';
 import { useAuth } from '../contexts/AuthContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
-import { api } from '../utils/api';
+import { api, buildMediaUrl } from '../utils/api';
+
+function isInternalHref(href) {
+  if (!href) return false;
+  return href.startsWith('/') && !href.startsWith('//');
+}
+
+function HeroTitle({ title }) {
+  const lines = String(title || '').split('\n');
+  return (
+    <>
+      {lines.map((line, i) => (
+        <React.Fragment key={`${i}-${line}`}>
+          {i > 0 ? <br /> : null}
+          {line}
+        </React.Fragment>
+      ))}
+    </>
+  );
+}
+
+function HeroCta({ label, href }) {
+  if (!label || !href) return null;
+  const className =
+    'v2-reveal mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-black transition hover:bg-[#4ade80]';
+  if (isInternalHref(href)) {
+    return (
+      <Link to={href} className={className} style={{ animationDelay: '200ms' }}>
+        {label}
+      </Link>
+    );
+  }
+  return (
+    <a
+      href={href}
+      className={className}
+      style={{ animationDelay: '200ms' }}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {label}
+    </a>
+  );
+}
 
 const HomePageV2 = () => {
   const { isAuthenticated } = useAuth();
-  const { canSeeCourses } = useSiteSettings();
+  const { homeHero } = useSiteSettings();
   const [beats, setBeats] = useState([]);
   const [genres, setGenres] = useState([]);
   const [purchasedBeats, setPurchasedBeats] = useState([]);
@@ -86,22 +130,54 @@ const HomePageV2 = () => {
   };
 
   const filtersActive = Object.values(filters).some((value) => value);
+  const heroEnabled = homeHero?.enabled !== false;
+  const heroImage = homeHero?.image_url ? buildMediaUrl(homeHero.image_url) : null;
+
+  const heroCopy = (
+    <div className={heroImage ? 'v2-hero-copy' : undefined}>
+      <p className="v2-reveal text-xs uppercase tracking-[0.3em] text-[#22c55e]">
+        {homeHero.eyebrow || 'XWinner'}
+      </p>
+      <h1
+        className="v2-reveal mt-3 max-w-3xl font-[Syne] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl"
+        style={{ animationDelay: '80ms' }}
+      >
+        <HeroTitle title={homeHero.title} />
+      </h1>
+      {homeHero.subtitle ? (
+        <p
+          className="v2-reveal mt-5 max-w-xl text-sm text-white/50 sm:text-base"
+          style={{ animationDelay: '140ms' }}
+        >
+          {homeHero.subtitle}
+        </p>
+      ) : null}
+      <HeroCta label={homeHero.cta_label} href={homeHero.cta_href} />
+    </div>
+  );
 
   return (
     <div>
-      <section className="relative overflow-hidden px-4 pb-6 pt-8 sm:pt-14">
-        <div className="mx-auto max-w-6xl">
-          <p className="v2-reveal text-xs uppercase tracking-[0.3em] text-[#22c55e]">Marketplace</p>
-          <h1 className="v2-reveal mt-3 max-w-3xl font-[Syne] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl" style={{ animationDelay: '80ms' }}>
-            Инструменталы.<br />Чёрный экран.<br />Зелёный удар.
-          </h1>
-          <p className="v2-reveal mt-5 max-w-xl text-sm text-white/50 sm:text-base" style={{ animationDelay: '140ms' }}>
-            Каталог битов, заказы под ключ{canSeeCourses ? ' и курсы по битмейкингу' : ''}. Слушай демо, бери лицензию, работай дальше.
-          </p>
-        </div>
-      </section>
+      {heroEnabled ? (
+        <section className={`relative overflow-hidden px-4 pb-6 pt-8 sm:pt-14${heroImage ? ' v2-hero-with-image' : ''}`}>
+          <div className={`mx-auto max-w-6xl${heroImage ? ' v2-hero-grid' : ''}`}>
+            {heroImage ? (
+              <>
+                <div className="v2-hero-media v2-reveal">
+                  <img src={heroImage} alt="" className="v2-hero-img" />
+                </div>
+                {heroCopy}
+              </>
+            ) : (
+              heroCopy
+            )}
+          </div>
+        </section>
+      ) : null}
 
       <div className="mx-auto max-w-6xl px-4 pb-12">
+        <PromoSliderV2 />
+
         <div className="v2-toolbar v2-reveal mb-4">
           <form onSubmit={submitSearch} className="v2-search" role="search">
             <Search className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />

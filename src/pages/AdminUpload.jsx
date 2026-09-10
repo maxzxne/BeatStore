@@ -225,57 +225,58 @@ const AdminUpload = () => {
 
   if (!isAdminAuthenticated) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
+      <div className="py-12 text-center text-white/50">
+        Доступ запрещен. Войдите как администратор.
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Загрузка контента</h1>
-        <p className="text-gray-600 dark:text-neutral-400">Добавить новый бит или курс в каталог</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="admin-page-title">Загрузка</h1>
+        <p className="admin-page-sub">Новый бит или курс в каталог</p>
       </div>
 
-      {/* Табы */}
-      <div className="flex gap-4 mb-6">
+      <div className="inline-flex gap-1 rounded-xl border border-white/10 bg-black/30 p-1">
         <button
+          type="button"
           onClick={() => setActiveTab('beat')}
-          className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+          className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
             activeTab === 'beat'
-              ? 'bg-black text-white'
-              : 'bg-gray-100 text-gray-600 dark:text-neutral-400 hover:bg-gray-200'
+              ? 'bg-[#22c55e] text-[#0f172a]'
+              : 'text-white/55 hover:bg-white/5 hover:text-white'
           }`}
         >
-          <Music className="h-5 w-5" />
-          Загрузить бит
+          <Music className="h-4 w-4" />
+          Бит
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('course')}
-          className={`px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+          className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
             activeTab === 'course'
-              ? 'bg-black text-white'
-              : 'bg-gray-100 text-gray-600 dark:text-neutral-400 hover:bg-gray-200'
+              ? 'bg-[#22c55e] text-[#0f172a]'
+              : 'text-white/55 hover:bg-white/5 hover:text-white'
           }`}
         >
-          <GraduationCap className="h-5 w-5" />
-          Загрузить курс
+          <GraduationCap className="h-4 w-4" />
+          Курс
         </button>
       </div>
 
       <div className="max-w-2xl">
         {activeTab === 'beat' ? (
           <form onSubmit={handleBeatSubmit} className="space-y-6">
-          <div className="card">
-            <div className="card-header">
-              <h2 className="text-lg font-semibold text-white">Информация о бите</h2>
+          <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
+            <div className="border-b border-white/10 px-5 py-4">
+              <h2 className="font-[Syne] text-lg font-semibold text-white">Информация о бите</h2>
             </div>
             
-            <div className="card-content space-y-4">
+            <div className="space-y-4 p-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="beat_title" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_title" className="admin-field-label">
                     Название *
                   </label>
                   <input
@@ -290,7 +291,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="beat_artist" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_artist" className="admin-field-label">
                     Исполнитель *
                   </label>
                   <input
@@ -307,7 +308,7 @@ const AdminUpload = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="beat_genre" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_genre" className="admin-field-label">
                     Жанр *
                   </label>
                   <input
@@ -322,7 +323,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="beat_bpm" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_bpm" className="admin-field-label">
                     BPM *
                   </label>
                   <input
@@ -337,7 +338,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="beat_price" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_price" className="admin-field-label">
                     Базовая цена (₽) *
                   </label>
                   <input
@@ -351,7 +352,7 @@ const AdminUpload = () => {
                     placeholder="0"
                     required
                   />
-                  <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                  <p className="text-xs text-white/40 mt-1">
                     Используется, если не указаны отдельные цены
                   </p>
                 </div>
@@ -359,7 +360,7 @@ const AdminUpload = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="beat_price_mp3" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_price_mp3" className="admin-field-label">
                     Цена MP3 (₽)
                   </label>
                   <input
@@ -375,7 +376,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="beat_price_wav" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_price_wav" className="admin-field-label">
                     Цена WAV (₽)
                   </label>
                   <input
@@ -391,7 +392,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="beat_price_exclusive" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="beat_price_exclusive" className="admin-field-label">
                     Цена Exclusive (₽)
                   </label>
                   <input
@@ -408,7 +409,7 @@ const AdminUpload = () => {
               </div>
               
               <div>
-                <label htmlFor="beat_key" className="block text-sm font-medium text-black dark:text-white mb-2">
+                <label htmlFor="beat_key" className="admin-field-label">
                   Тональность
                 </label>
                 <input
@@ -423,7 +424,7 @@ const AdminUpload = () => {
               </div>
               
               <div>
-                <label htmlFor="beat_description" className="block text-sm font-medium text-black dark:text-white mb-2">
+                <label htmlFor="beat_description" className="admin-field-label">
                   Описание
                 </label>
                 <textarea
@@ -438,14 +439,14 @@ const AdminUpload = () => {
             </div>
           </div>
 
-          <div className="card">
-            <div className="card-header">
-              <h2 className="text-lg font-semibold text-black dark:text-white">Аудио файлы</h2>
+          <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
+            <div className="border-b border-white/10 px-5 py-4">
+              <h2 className="font-[Syne] text-lg font-semibold text-white">Аудио файлы</h2>
             </div>
             
-            <div className="card-content space-y-4">
+            <div className="space-y-4 p-5">
               <div>
-                <label htmlFor="beat_demo_file" className="block text-sm font-medium text-black dark:text-white mb-2">
+                <label htmlFor="beat_demo_file" className="admin-field-label">
                   Демо файл (для прослушивания) *
                 </label>
                 <div
@@ -470,8 +471,8 @@ const AdminUpload = () => {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-black dark:text-white truncate">{beatFiles.demo_file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-neutral-500">{formatFileSize(beatFiles.demo_file.size)}</p>
+                          <p className="text-sm font-medium text-white truncate">{beatFiles.demo_file.name}</p>
+                          <p className="text-xs text-white/40">{formatFileSize(beatFiles.demo_file.size)}</p>
                         </div>
                       </div>
                       <button
@@ -479,31 +480,31 @@ const AdminUpload = () => {
                         onClick={() => handleFileRemove('demo_file', 'beat')}
                         className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
                       >
-                        <X className="h-4 w-4 text-red-600" />
+                        <X className="h-4 w-4 text-red-300" />
                       </button>
                     </div>
                   ) : (
                     <label
                       htmlFor="beat_demo_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/15 border-dashed rounded-xl cursor-pointer bg-white/[0.03] hover:bg-white/5 hover:border-[#22c55e]/40 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                        <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+                        <Upload className="h-8 w-8 text-white/35 mb-2" />
+                        <p className="mb-2 text-sm text-white/40">
                           <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-neutral-500">AUDIO файлы</p>
+                        <p className="text-xs text-white/35">AUDIO файлы</p>
                       </div>
                     </label>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   Короткая превью версия вашего бита
                 </p>
               </div>
               
               <div>
-                <label htmlFor="beat_wav_file" className="block text-sm font-medium text-black dark:text-white mb-2">
+                <label htmlFor="beat_wav_file" className="admin-field-label">
                   WAV файл *
                 </label>
                 <div
@@ -528,8 +529,8 @@ const AdminUpload = () => {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-black dark:text-white truncate">{beatFiles.wav_file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-neutral-500">{formatFileSize(beatFiles.wav_file.size)}</p>
+                          <p className="text-sm font-medium text-white truncate">{beatFiles.wav_file.name}</p>
+                          <p className="text-xs text-white/40">{formatFileSize(beatFiles.wav_file.size)}</p>
                         </div>
                       </div>
                       <button
@@ -537,31 +538,31 @@ const AdminUpload = () => {
                         onClick={() => handleFileRemove('wav_file', 'beat')}
                         className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
                       >
-                        <X className="h-4 w-4 text-red-600" />
+                        <X className="h-4 w-4 text-red-300" />
                       </button>
                     </div>
                   ) : (
                     <label
                       htmlFor="beat_wav_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/15 border-dashed rounded-xl cursor-pointer bg-white/[0.03] hover:bg-white/5 hover:border-[#22c55e]/40 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                        <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+                        <Upload className="h-8 w-8 text-white/35 mb-2" />
+                        <p className="mb-2 text-sm text-white/40">
                           <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-neutral-500">WAV файлы</p>
+                        <p className="text-xs text-white/35">WAV файлы</p>
                       </div>
                     </label>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   WAV версия для покупки
                 </p>
               </div>
               
               <div>
-                <label htmlFor="beat_mp3_file" className="block text-sm font-medium text-black dark:text-white mb-2">
+                <label htmlFor="beat_mp3_file" className="admin-field-label">
                   MP3 файл *
                 </label>
                 <div
@@ -586,8 +587,8 @@ const AdminUpload = () => {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-black dark:text-white truncate">{beatFiles.mp3_file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-neutral-500">{formatFileSize(beatFiles.mp3_file.size)}</p>
+                          <p className="text-sm font-medium text-white truncate">{beatFiles.mp3_file.name}</p>
+                          <p className="text-xs text-white/40">{formatFileSize(beatFiles.mp3_file.size)}</p>
                         </div>
                       </div>
                       <button
@@ -595,31 +596,31 @@ const AdminUpload = () => {
                         onClick={() => handleFileRemove('mp3_file', 'beat')}
                         className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
                       >
-                        <X className="h-4 w-4 text-red-600" />
+                        <X className="h-4 w-4 text-red-300" />
                       </button>
                     </div>
                   ) : (
                     <label
                       htmlFor="beat_mp3_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/15 border-dashed rounded-xl cursor-pointer bg-white/[0.03] hover:bg-white/5 hover:border-[#22c55e]/40 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                        <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+                        <Upload className="h-8 w-8 text-white/35 mb-2" />
+                        <p className="mb-2 text-sm text-white/40">
                           <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-neutral-500">MP3 файлы</p>
+                        <p className="text-xs text-white/35">MP3 файлы</p>
                       </div>
                     </label>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   MP3 версия для покупки
                 </p>
               </div>
               
               <div>
-                <label htmlFor="beat_exclusive_file" className="block text-sm font-medium text-black dark:text-white mb-2">
+                <label htmlFor="beat_exclusive_file" className="admin-field-label">
                   Эксклюзивный файл (ZIP) *
                 </label>
                 <div
@@ -644,8 +645,8 @@ const AdminUpload = () => {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-black dark:text-white truncate">{beatFiles.exclusive_file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-neutral-500">{formatFileSize(beatFiles.exclusive_file.size)}</p>
+                          <p className="text-sm font-medium text-white truncate">{beatFiles.exclusive_file.name}</p>
+                          <p className="text-xs text-white/40">{formatFileSize(beatFiles.exclusive_file.size)}</p>
                         </div>
                       </div>
                       <button
@@ -653,50 +654,50 @@ const AdminUpload = () => {
                         onClick={() => handleFileRemove('exclusive_file', 'beat')}
                         className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
                       >
-                        <X className="h-4 w-4 text-red-600" />
+                        <X className="h-4 w-4 text-red-300" />
                       </button>
                     </div>
                   ) : (
                     <label
                       htmlFor="beat_exclusive_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/15 border-dashed rounded-xl cursor-pointer bg-white/[0.03] hover:bg-white/5 hover:border-[#22c55e]/40 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                        <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+                        <Upload className="h-8 w-8 text-white/35 mb-2" />
+                        <p className="mb-2 text-sm text-white/40">
                           <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-neutral-500">ZIP архивы</p>
+                        <p className="text-xs text-white/35">ZIP архивы</p>
                       </div>
                     </label>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   ZIP архив с FL-проектом, дорожками и другими файлами
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="card">
-            <div className="card-header">
-              <h2 className="text-lg font-semibold text-black dark:text-white">Настройки покупки</h2>
+          <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
+            <div className="border-b border-white/10 px-5 py-4">
+              <h2 className="font-[Syne] text-lg font-semibold text-white">Настройки покупки</h2>
             </div>
             
-            <div className="card-content">
+            <div className="p-5">
               <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   id="allow_multiple_purchases"
                   checked={allowMultiplePurchases}
                   onChange={(e) => setAllowMultiplePurchases(e.target.checked)}
-                  className="w-4 h-4 text-black dark:text-white border-gray-300 dark:border-neutral-700 rounded focus:ring-black"
+                  className="w-4 h-4 text-white border-white/15 rounded focus:ring-black"
                 />
-                <label htmlFor="allow_multiple_purchases" className="text-sm font-medium text-black dark:text-white">
+                <label htmlFor="allow_multiple_purchases" className="text-sm font-medium text-white">
                   Разрешить множественные покупки
                 </label>
               </div>
-              <p className="text-xs text-gray-600 dark:text-neutral-400 mt-2">
+              <p className="text-xs text-white/45 mt-2">
                 {allowMultiplePurchases 
                   ? "Бит можно покупать много раз (как в аренду)"
                   : "Бит эксклюзивный - только один покупатель (по умолчанию)"}
@@ -704,14 +705,14 @@ const AdminUpload = () => {
             </div>
           </div>
 
-          <div className="card">
-            <div className="card-header">
-              <h2 className="text-lg font-semibold text-black dark:text-white">Обложка</h2>
+          <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
+            <div className="border-b border-white/10 px-5 py-4">
+              <h2 className="font-[Syne] text-lg font-semibold text-white">Обложка</h2>
             </div>
             
-            <div className="card-content">
+            <div className="p-5">
               <div>
-                <label htmlFor="beat_cover_file" className="block text-sm font-medium text-black dark:text-white mb-2">
+                <label htmlFor="beat_cover_file" className="admin-field-label">
                   Обложка
                 </label>
                 <div
@@ -735,8 +736,8 @@ const AdminUpload = () => {
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-black dark:text-white truncate">{beatFiles.cover_file.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-neutral-500">{formatFileSize(beatFiles.cover_file.size)}</p>
+                          <p className="text-sm font-medium text-white truncate">{beatFiles.cover_file.name}</p>
+                          <p className="text-xs text-white/40">{formatFileSize(beatFiles.cover_file.size)}</p>
                         </div>
                       </div>
                       <button
@@ -744,28 +745,28 @@ const AdminUpload = () => {
                         onClick={() => handleFileRemove('cover_file', 'beat')}
                         className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
                       >
-                        <X className="h-4 w-4 text-red-600" />
+                        <X className="h-4 w-4 text-red-300" />
                       </button>
                     </div>
                   ) : (
                     <label
                       htmlFor="beat_cover_file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/15 border-dashed rounded-xl cursor-pointer bg-white/[0.03] hover:bg-white/5 hover:border-[#22c55e]/40 transition-colors"
                     >
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Image className="h-8 w-8 text-gray-400 mb-2" />
-                        <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+                        <Image className="h-8 w-8 text-white/35 mb-2" />
+                        <p className="mb-2 text-sm text-white/40">
                           <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-neutral-500">JPEG, PNG или WebP</p>
+                        <p className="text-xs text-white/35">JPEG, PNG или WebP</p>
                       </div>
                     </label>
                   )}
                 </div>
-                <p className="text-xs text-gray-600 dark:text-neutral-400 mt-1">
+                <p className="text-xs text-white/45 mt-1">
                   JPEG, PNG или WebP. Не SVG, не HEIC. Макс. 10 МБ.
                 </p>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   Лучше квадрат 1400×1400 или 2000×2000, JPEG/WebP до 400 КБ.
                   V3 кадрирует обложку на весь stage (левый край важнее) и в строку 72px — не грузи 4K PNG.
                 </p>
@@ -776,7 +777,7 @@ const AdminUpload = () => {
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary w-full"
+            className="admin-primary-btn w-full justify-center h-11"
           >
             {loading ? (
               'Загрузка...'
@@ -790,14 +791,14 @@ const AdminUpload = () => {
         </form>
         ) : (
           <form onSubmit={handleCourseSubmit} className="space-y-6">
-            <div className="card">
-              <div className="card-header">
-                <h2 className="text-lg font-semibold text-black dark:text-white">Информация о курсе</h2>
+            <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
+              <div className="border-b border-white/10 px-5 py-4">
+                <h2 className="font-[Syne] text-lg font-semibold text-white">Информация о курсе</h2>
               </div>
               
-              <div className="card-content space-y-4">
+              <div className="space-y-4 p-5">
                 <div>
-                  <label htmlFor="course_title" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="course_title" className="admin-field-label">
                     Название курса *
                   </label>
                   <input
@@ -812,7 +813,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="course_purpose" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="course_purpose" className="admin-field-label">
                     Предназначение
                   </label>
                   <CustomSelect
@@ -831,7 +832,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="course_tags" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="course_tags" className="admin-field-label">
                     Тэги (через запятую)
                   </label>
                   <input
@@ -846,7 +847,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="course_price" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="course_price" className="admin-field-label">
                     Цена (₽) *
                   </label>
                   <input
@@ -863,7 +864,7 @@ const AdminUpload = () => {
                 </div>
                 
                 <div>
-                  <label htmlFor="course_description" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="course_description" className="admin-field-label">
                     Описание
                   </label>
                   <textarea
@@ -878,14 +879,14 @@ const AdminUpload = () => {
               </div>
             </div>
 
-            <div className="card">
-              <div className="card-header">
-                <h2 className="text-lg font-semibold text-black dark:text-white">Видео файлы</h2>
+            <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
+              <div className="border-b border-white/10 px-5 py-4">
+                <h2 className="font-[Syne] text-lg font-semibold text-white">Видео файлы</h2>
               </div>
               
-              <div className="card-content space-y-4">
+              <div className="space-y-4 p-5">
                 <div>
-                  <label htmlFor="course_preview_video" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="course_preview_video" className="admin-field-label">
                     Превью видео * (для просмотра на сайте)
                   </label>
                   <div
@@ -910,8 +911,8 @@ const AdminUpload = () => {
                             <CheckCircle className="h-5 w-5 text-green-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-black dark:text-white truncate">{courseFiles.preview_video_file.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-neutral-500">{formatFileSize(courseFiles.preview_video_file.size)}</p>
+                            <p className="text-sm font-medium text-white truncate">{courseFiles.preview_video_file.name}</p>
+                            <p className="text-xs text-white/40">{formatFileSize(courseFiles.preview_video_file.size)}</p>
                           </div>
                         </div>
                         <button
@@ -919,31 +920,31 @@ const AdminUpload = () => {
                           onClick={() => handleFileRemove('preview_video_file', 'course')}
                           className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
                         >
-                          <X className="h-4 w-4 text-red-600" />
+                          <X className="h-4 w-4 text-red-300" />
                         </button>
                       </div>
                     ) : (
                       <label
                         htmlFor="course_preview_video"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/15 border-dashed rounded-xl cursor-pointer bg-white/[0.03] hover:bg-white/5 hover:border-[#22c55e]/40 transition-colors"
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Video className="h-8 w-8 text-gray-400 mb-2" />
-                          <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+                          <Video className="h-8 w-8 text-white/35 mb-2" />
+                          <p className="mb-2 text-sm text-white/40">
                             <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                           </p>
-                          <p className="text-xs text-gray-400 dark:text-neutral-500">Видео файлы</p>
+                          <p className="text-xs text-white/35">Видео файлы</p>
                         </div>
                       </label>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                  <p className="text-xs text-white/40 mt-1">
                     Короткое превью для просмотра на сайте
                   </p>
                 </div>
                 
                 <div>
-                  <label htmlFor="course_full_video" className="block text-sm font-medium text-black dark:text-white mb-2">
+                  <label htmlFor="course_full_video" className="admin-field-label">
                     Полное видео * (для скачивания после покупки)
                   </label>
                   <div
@@ -968,8 +969,8 @@ const AdminUpload = () => {
                             <CheckCircle className="h-5 w-5 text-green-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-black dark:text-white truncate">{courseFiles.full_video_file.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-neutral-500">{formatFileSize(courseFiles.full_video_file.size)}</p>
+                            <p className="text-sm font-medium text-white truncate">{courseFiles.full_video_file.name}</p>
+                            <p className="text-xs text-white/40">{formatFileSize(courseFiles.full_video_file.size)}</p>
                           </div>
                         </div>
                         <button
@@ -977,25 +978,25 @@ const AdminUpload = () => {
                           onClick={() => handleFileRemove('full_video_file', 'course')}
                           className="ml-3 p-1 hover:bg-red-100 rounded-full transition-colors"
                         >
-                          <X className="h-4 w-4 text-red-600" />
+                          <X className="h-4 w-4 text-red-300" />
                         </button>
                       </div>
                     ) : (
                       <label
                         htmlFor="course_full_video"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-neutral-700 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-neutral-700 hover:border-gray-400 dark:hover:border-neutral-600 transition-colors"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-white/15 border-dashed rounded-xl cursor-pointer bg-white/[0.03] hover:bg-white/5 hover:border-[#22c55e]/40 transition-colors"
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Video className="h-8 w-8 text-gray-400 mb-2" />
-                          <p className="mb-2 text-sm text-gray-500 dark:text-neutral-500">
+                          <Video className="h-8 w-8 text-white/35 mb-2" />
+                          <p className="mb-2 text-sm text-white/40">
                             <span className="font-semibold">Нажмите для загрузки</span> или перетащите файл
                           </p>
-                          <p className="text-xs text-gray-400 dark:text-neutral-500">Видео файлы</p>
+                          <p className="text-xs text-white/35">Видео файлы</p>
                         </div>
                       </label>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                  <p className="text-xs text-white/40 mt-1">
                     Полное видео для скачивания после покупки
                   </p>
                 </div>
@@ -1005,7 +1006,7 @@ const AdminUpload = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full"
+              className="admin-primary-btn w-full justify-center h-11"
             >
               {loading ? (
                 'Загрузка...'

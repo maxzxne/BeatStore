@@ -1,0 +1,384 @@
+/* Admin density layer — scoped under .v2-admin (LayoutV2) */
+
+.v2-admin {
+  --admin-accent: #22c55e;
+  --admin-accent-fg: #0f172a;
+  --admin-panel: rgba(0, 0, 0, 0.3);
+  --admin-border: rgba(255, 255, 255, 0.1);
+  --admin-muted: rgba(248, 250, 252, 0.45);
+  --admin-soft: rgba(255, 255, 255, 0.05);
+}
+
+.v2-admin h1,
+.v2-admin h2,
+.v2-admin h3 {
+  font-family: 'Syne', sans-serif;
+}
+
+/* Legacy card → glass panel */
+.v2-admin .card {
+  background: var(--admin-panel) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+
+.v2-admin .card-header {
+  border-bottom: 1px solid var(--admin-border) !important;
+  background: transparent !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.v2-admin .card-content {
+  padding: 1.25rem !important;
+  color: #fff !important;
+}
+
+.v2-admin .card-footer {
+  border-top: 1px solid var(--admin-border) !important;
+  background: transparent !important;
+}
+
+/* Buttons */
+.v2-admin .btn,
+.v2-admin button.btn {
+  border-radius: 0.75rem !important;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, filter 0.15s;
+}
+
+.v2-admin .btn-primary,
+.v2-admin a.btn-primary {
+  background: var(--admin-accent) !important;
+  color: var(--admin-accent-fg) !important;
+  border: none !important;
+}
+
+.v2-admin .btn-primary:hover,
+.v2-admin a.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.v2-admin .btn-outline {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.v2-admin .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+}
+
+.v2-admin .btn-sm {
+  padding: 0.4rem 0.65rem !important;
+}
+
+/* Inputs */
+.v2-admin .input,
+.v2-admin input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not(.sr-only),
+.v2-admin textarea,
+.v2-admin select {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 0.75rem !important;
+  color: #fff !important;
+  padding: 0.625rem 0.75rem !important;
+}
+
+.v2-admin .input:focus,
+.v2-admin input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not(.sr-only):focus,
+.v2-admin textarea:focus,
+.v2-admin select:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35) !important;
+  border-color: rgba(34, 197, 94, 0.45) !important;
+}
+
+.v2-admin input::placeholder,
+.v2-admin textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.v2-admin input[type='checkbox'] {
+  accent-color: var(--admin-accent);
+}
+
+/* Dense tables */
+.v2-admin table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.v2-admin table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(248, 250, 252, 0.35);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--admin-border);
+  font-weight: 600;
+}
+
+.v2-admin table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+  font-size: 0.875rem;
+}
+
+.v2-admin table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.v2-admin table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Panel shell used by list pages */
+.v2-admin .admin-panel {
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-panel);
+}
+
+.v2-admin .admin-page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .v2-admin .admin-page-title {
+    font-size: 1.875rem;
+  }
+}
+
+.v2-admin .admin-page-sub {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.v2-admin .admin-empty {
+  padding: 4rem 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.v2-admin .admin-loading {
+  display: flex;
+  height: 16rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.v2-admin .admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.v2-admin .admin-badge-ok {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.v2-admin .admin-badge-off {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.v2-admin .admin-badge-warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.v2-admin .admin-badge-err {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.v2-admin .admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid var(--admin-border);
+  padding: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+  background: transparent;
+}
+
+.v2-admin .admin-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.v2-admin .admin-icon-btn-danger {
+  border-color: rgba(239, 68, 68, 0.2);
+  color: rgba(252, 165, 165, 0.85);
+}
+
+.v2-admin .admin-icon-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.v2-admin .admin-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--admin-accent);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-accent-fg);
+  transition: filter 0.15s;
+  border: none;
+  cursor: pointer;
+}
+
+.v2-admin .admin-primary-btn:hover {
+  filter: brightness(1.1);
+}
+
+.v2-admin .admin-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.v2-admin .admin-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.v2-admin .admin-ghost-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.v2-admin .admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .v2-admin .admin-modal-backdrop {
+    align-items: center;
+  }
+}
+
+.v2-admin .admin-modal {
+  position: relative;
+  z-index: 10;
+  max-height: 90vh;
+  width: 100%;
+  max-width: 28rem;
+  overflow-y: auto;
+  border-radius: 1rem;
+  border: 1px solid var(--admin-border);
+  background: #0b0f14;
+  padding: 1.25rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.v2-admin .admin-field-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.v2-admin .admin-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--admin-accent);
+}
+
+/* Soften light-theme leftovers inside admin */
+.v2-admin .bg-white,
+.v2-admin .bg-gray-50,
+.v2-admin .bg-gray-100,
+.v2-admin .dark\:bg-neutral-800,
+.v2-admin .dark\:bg-neutral-900 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.v2-admin .border-gray-200,
+.v2-admin .border-gray-300,
+.v2-admin .dark\:border-neutral-700 {
+  border-color: var(--admin-border) !important;
+}
+
+.v2-admin .text-black,
+.v2-admin .text-gray-700,
+.v2-admin .text-gray-900,
+.v2-admin .dark\:text-white {
+  color: #fff !important;
+}
+
+.v2-admin .text-gray-500,
+.v2-admin .text-gray-600,
+.v2-admin .dark\:text-neutral-400,
+.v2-admin .dark\:text-neutral-500,
+.v2-admin .dark\:text-neutral-300 {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.v2-admin .hover\:bg-gray-50:hover,
+.v2-admin .dark\:hover\:bg-neutral-800:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+.v2-admin .ring-black {
+  --tw-ring-color: #22c55e !important;
+}
+
+.v2-admin .bg-black.text-white,
+.v2-admin button.bg-black {
+  background: var(--admin-accent) !important;
+  color: var(--admin-accent-fg) !important;
+}
+
+/* Toggle peer-checked accent */
+.v2-admin .peer:checked ~ div.peer-checked\:bg-black,
+.v2-admin input:checked + div[class*='peer-checked:bg-black'] {
+  background-color: var(--admin-accent) !important;
+}

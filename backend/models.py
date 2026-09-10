@@ -284,6 +284,24 @@ class SiteSetting(Base):
     value = Column(String, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class PromoBanner(Base):
+    """
+    Промо-баннеры на главной с окном активности по датам
+    """
+    __tablename__ = "promo_banners"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=True)
+    body = Column(Text, nullable=True)
+    image_url = Column(String, nullable=True)
+    link_url = Column(String, nullable=True)
+    sort_order = Column(Integer, default=0, nullable=False)
+    enabled = Column(Boolean, default=True, nullable=False)
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class ErrorLog(Base):
     """
     Модель логов ошибок

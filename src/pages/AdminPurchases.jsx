@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
-import { ShoppingBag, User, Calendar, Banknote } from 'lucide-react';
+import { ShoppingBag, Loader2 } from 'lucide-react';
 
 const AdminPurchases = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -27,82 +27,76 @@ const AdminPurchases = () => {
     }
   };
 
-  const formatDate = formatMoscowDate;
-
   if (!isAdminAuthenticated) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
+      <div className="py-12 text-center text-white/50">
+        Доступ запрещен. Войдите как администратор.
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600 dark:text-neutral-400">Загрузка покупок...</div>
+      <div className="admin-loading">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Загрузка покупок…
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">История покупок</h1>
-        <p className="text-gray-600 dark:text-neutral-400">{purchases.length} всего покупок</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="admin-page-title">Покупки</h1>
+        <p className="admin-page-sub">{purchases.length} записей в истории</p>
       </div>
 
-      {purchases.length === 0 ? (
-        <div className="text-center py-12">
-          <ShoppingBag className="h-16 w-16 text-dark-400 mx-auto mb-4" />
-          <div className="text-gray-600 dark:text-neutral-400 text-lg">Покупок пока нет</div>
-          <p className="text-gray-500 dark:text-neutral-500 mt-2">
-            Покупки появятся здесь, когда клиенты начнут покупать биты
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {purchases.map(purchase => (
-            <div key={purchase.id} className="card">
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-black dark:text-white">{purchase.beat_title}</h3>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 dark:text-neutral-400">
-                      <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4" />
-                        <span>{purchase.user_username} ({purchase.user_email})</span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Banknote className="h-4 w-4" />
-                        <span>
-                          {purchase.price_paid === 0 ? 'Бесплатно' : `${purchase.price_paid.toFixed(0)} ₽`}
-                          {purchase.beat_price > 0 && (
-                        <span className="text-gray-500 dark:text-neutral-500"> / {purchase.beat_price === 0 ? 'Бесплатно' : `${purchase.beat_price.toFixed(0)} ₽`}</span>
-                          )}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatDate(purchase.created_at)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="admin-panel">
+        {purchases.length === 0 ? (
+          <div className="admin-empty">
+            <ShoppingBag className="mx-auto mb-3 h-10 w-10 text-white/25" />
+            Покупок пока нет
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th>Бит</th>
+                  <th>Покупатель</th>
+                  <th>Сумма</th>
+                  <th>Дата</th>
+                </tr>
+              </thead>
+              <tbody>
+                {purchases.map((purchase) => (
+                  <tr key={purchase.id}>
+                    <td>
+                      <div className="font-medium text-white">{purchase.beat_title}</div>
+                    </td>
+                    <td>
+                      <div className="text-white/80">{purchase.user_username}</div>
+                      <div className="text-xs text-white/40">{purchase.user_email}</div>
+                    </td>
+                    <td className="whitespace-nowrap text-white/80">
+                      {purchase.price_paid === 0 ? (
+                        <span className="admin-badge admin-badge-off">Бесплатно</span>
+                      ) : (
+                        `${purchase.price_paid.toFixed(0)} ₽`
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap text-xs text-white/45">
+                      {formatMoscowDate(purchase.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 export default AdminPurchases;
-
-

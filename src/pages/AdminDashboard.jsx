@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { Users, Music, ShoppingBag, Banknote, TrendingUp, TrendingDown } from 'lucide-react';
+import { Users, Music, ShoppingBag, Banknote, Loader2 } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -18,7 +18,6 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       const response = await api.get('/api/admin/analytics');
-      console.log('Analytics data:', response.data);
       setAnalytics(response.data);
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -29,81 +28,60 @@ const AdminDashboard = () => {
 
   if (!isAdminAuthenticated) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
+      <div className="py-12 text-center text-white/50">
+        Доступ запрещен. Войдите как администратор.
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Загрузка аналитики...</div>
+      <div className="admin-loading">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Загрузка аналитики…
       </div>
     );
   }
 
   if (!analytics) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Ошибка загрузки аналитики</div>
-      </div>
+      <div className="admin-empty">Ошибка загрузки аналитики</div>
     );
   }
 
   const stats = [
+    { title: 'Пользователи', value: analytics.total_users, icon: Users },
+    { title: 'Биты', value: analytics.total_beats, icon: Music },
+    { title: 'Покупки', value: analytics.total_purchases, icon: ShoppingBag },
     {
-      title: 'Всего пользователей',
-      value: analytics.total_users,
-      icon: Users,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10'
-    },
-    {
-      title: 'Всего битов',
-      value: analytics.total_beats,
-      icon: Music,
-      color: 'text-green-500',
-      bgColor: 'bg-green-500/10'
-    },
-    {
-      title: 'Всего покупок',
-      value: analytics.total_purchases,
-      icon: ShoppingBag,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10'
-    },
-    {
-      title: 'Общий доход',
+      title: 'Доход',
       value: `${analytics.total_revenue.toFixed(0)} ₽`,
       icon: Banknote,
-      color: 'text-yellow-500',
-      bgColor: 'bg-yellow-500/10'
-    }
+    },
   ];
 
+  const registrations = Object.values(analytics.registrations_by_day || {}).reduce((a, b) => a + b, 0);
+  const purchases = Object.values(analytics.purchases_by_day || {}).reduce((a, b) => a + b, 0);
+
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white dark:text-white mb-2">Панель управления</h1>
-        <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Обзор вашего XWinner.beats.please</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="admin-page-title">Панель</h1>
+        <p className="admin-page-sub">Обзор XWinner.beats.please</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => {
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="card">
-              <div className="card-content h-full flex items-center">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex flex-col">
-                    <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400 text-sm mb-1">{stat.title}</p>
-                    <p className="text-2xl font-bold text-black dark:text-white dark:text-white">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-full ${stat.bgColor} flex items-center justify-center self-center`}>
-                    <Icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
+            <div key={stat.title} className="rounded-2xl border border-white/10 bg-black/30 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-white/45">{stat.title}</p>
+                  <p className="mt-1 font-[Syne] text-2xl font-bold text-white">{stat.value}</p>
+                </div>
+                <div className="admin-stat-icon">
+                  <Icon className="h-5 w-5" />
                 </div>
               </div>
             </div>
@@ -111,52 +89,41 @@ const AdminDashboard = () => {
         })}
       </div>
 
-      {/* Purchase Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <div className="card-header">
-            <h2 className="text-lg font-semibold text-black dark:text-white dark:text-white">Типы покупок</h2>
-          </div>
-          <div className="card-content">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-black dark:text-white dark:text-white">Бесплатные покупки</span>
-                </div>
-                <span className="text-black dark:text-white dark:text-white font-semibold">{analytics.free_purchases}</span>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.16em] text-white/35">
+            Типы покупок
+          </h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" />
+                <span className="text-sm text-white/80">Бесплатные</span>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-black dark:text-white dark:text-white">Платные покупки</span>
-                </div>
-                <span className="text-black dark:text-white dark:text-white font-semibold">{analytics.paid_purchases}</span>
+              <span className="font-semibold text-white">{analytics.free_purchases}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-white/40" />
+                <span className="text-sm text-white/80">Платные</span>
               </div>
+              <span className="font-semibold text-white">{analytics.paid_purchases}</span>
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <h2 className="text-lg font-semibold text-black dark:text-white dark:text-white">Статистика по дням</h2>
-          </div>
-          <div className="card-content">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-black dark:text-white dark:text-white">Регистрации за последние дни:</span>
-                <span className="text-black dark:text-white dark:text-white font-semibold">
-                  {Object.values(analytics.registrations_by_day).reduce((a, b) => a + b, 0)}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-black dark:text-white dark:text-white">Покупки за последние дни:</span>
-                <span className="text-black dark:text-white dark:text-white font-semibold">
-                  {Object.values(analytics.purchases_by_day).reduce((a, b) => a + b, 0)}
-                </span>
-              </div>
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.16em] text-white/35">
+            За последние дни
+          </h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <span className="text-sm text-white/80">Регистрации</span>
+              <span className="font-semibold text-white">{registrations}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <span className="text-sm text-white/80">Покупки</span>
+              <span className="font-semibold text-white">{purchases}</span>
             </div>
           </div>
         </div>
@@ -166,6 +133,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-
-
-
