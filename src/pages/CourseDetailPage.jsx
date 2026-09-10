@@ -7,7 +7,8 @@ import { api, buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { loginPath } from '../utils/authRedirect';
 import { addGuestCourse, isInGuestCart, removeGuestCourse } from '../utils/guestCart';
-import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { isElementFullscreen, isVideoNativeFullscreen, togglePlayerFullscreen } from '../utils/videoFullscreen';
 
 const CourseDetailPage = () => {
   const { id } = useParams();
@@ -24,7 +25,9 @@ const CourseDetailPage = () => {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef(null);
+  const playerRef = useRef(null);
 
   useEffect(() => {
     if (!settingsLoading && !canSeeCourses) {
@@ -55,14 +58,16 @@ const CourseDetailPage = () => {
       if (isAuthenticated) {
         setIsFavorite(courseData.is_favorite || false);
         setIsInCart(courseData.is_in_cart || false);
-        
-        // Проверяем, куплен ли курс
-        try {
-          const purchasesResponse = await api.get('/course-purchases');
-          const purchased = purchasesResponse.data.some(c => c.id === courseData.id);
-          setIsPurchased(purchased);
-        } catch (error) {
-          console.error('Error checking purchase:', error);
+        if (courseData.is_purchased) {
+          setIsPurchased(true);
+        } else {
+          try {
+            const purchasesResponse = await api.get('/course-purchases');
+            const purchased = purchasesResponse.data.some(c => c.id === courseData.id);
+            setIsPurchased(purchased);
+          } catch (error) {
+            console.error('Error checking purchase:', error);
+          }
         }
       } else {
         // Если не авторизован, сбрасываем состояние
@@ -102,6 +107,7 @@ const CourseDetailPage = () => {
   };
 
   const handleAddToCart = async () => {
+    if (isPurchased) return;
     if (!isAuthenticated) {
       if (isInCart) {
         removeGuestCourse(id);
@@ -197,6 +203,25 @@ const CourseDetailPage = () => {
     }
   };
 
+  useEffect(() => {
+    const syncFullscreen = () => {
+      setIsFullscreen(
+        isElementFullscreen(playerRef.current) || isVideoNativeFullscreen(videoRef.current),
+      );
+    };
+    const video = videoRef.current;
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    document.addEventListener('webkitfullscreenchange', syncFullscreen);
+    video?.addEventListener('webkitbeginfullscreen', syncFullscreen);
+    video?.addEventListener('webkitendfullscreen', syncFullscreen);
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFullscreen);
+      document.removeEventListener('webkitfullscreenchange', syncFullscreen);
+      video?.removeEventListener('webkitbeginfullscreen', syncFullscreen);
+      video?.removeEventListener('webkitendfullscreen', syncFullscreen);
+    };
+  }, [course?.preview_video_url]);
+
   const toggleVideo = (e) => {
     if (e) {
       e.preventDefault();
@@ -240,6 +265,23 @@ const CourseDetailPage = () => {
     
     videoRef.current.currentTime = newTime;
     setVideoCurrentTime(newTime);
+  };
+
+  const handleFullscreen = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await togglePlayerFullscreen({
+        container: playerRef.current,
+        video: videoRef.current,
+      });
+      setIsFullscreen(
+        isElementFullscreen(playerRef.current) || isVideoNativeFullscreen(videoRef.current),
+      );
+    } catch (error) {
+      console.error('Fullscreen error:', error);
+      showError('Не удалось открыть видео на весь экран');
+    }
   };
 
   const formatTime = (time) => {
@@ -291,7 +333,10 @@ const CourseDetailPage = () => {
       <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2">
         <div className="space-y-4">
           {course.preview_video_url ? (
-            <div className="relative aspect-video w-full overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+            <div
+              ref={playerRef}
+              className="v2-course-player relative aspect-video w-full overflow-hidden rounded-[2rem] border border-white/10 bg-black shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+            >
               <video
                 ref={videoRef}
                 src={buildMediaUrl(course.preview_video_url)}
@@ -320,7 +365,7 @@ const CourseDetailPage = () => {
                     e.stopPropagation();
                     toggleVideo();
                   }}
-                  className="absolute inset-0 z-10 flex cursor-pointer items-center justify-center bg-black/40 transition-opacity hover:bg-black/50"
+                  className="absolute inset-x-0 top-0 bottom-[4.5rem] z-10 flex cursor-pointer items-center justify-center bg-black/40 transition-opacity hover:bg-black/50"
                   type="button"
                 >
                   <span className="grid h-20 w-20 place-items-center rounded-full bg-[#22c55e] text-[#0f172a] shadow-[0_0_40px_rgba(34,197,94,0.55)]">
@@ -367,6 +412,20 @@ const CourseDetailPage = () => {
                       <span>{formatTime(videoDuration)}</span>
                     </div>
                   </div>
+
+                  <button
+                    onClick={handleFullscreen}
+                    className="cursor-pointer rounded-full bg-white/20 p-2 transition-colors hover:bg-white/30"
+                    type="button"
+                    aria-label={isFullscreen ? 'Выйти из полноэкранного режима' : 'На весь экран'}
+                    title={isFullscreen ? 'Выйти из полноэкранного режима' : 'На весь экран'}
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="h-5 w-5 text-white" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5 text-white" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -404,10 +463,12 @@ const CourseDetailPage = () => {
                   {isFavorite ? 'В избранном' : 'В избранное'}
                 </button>
 
-                <button type="button" onClick={handleAddToCart} className={outlineBtn(isInCart)}>
-                  <ShoppingCart className="h-5 w-5" fill={isInCart ? 'currentColor' : 'none'} />
-                  {isInCart ? 'В корзине' : 'В корзину'}
-                </button>
+                {!isPurchased && (
+                  <button type="button" onClick={handleAddToCart} className={outlineBtn(isInCart)}>
+                    <ShoppingCart className="h-5 w-5" fill={isInCart ? 'currentColor' : 'none'} />
+                    {isInCart ? 'В корзине' : 'В корзину'}
+                  </button>
+                )}
               </div>
             )}
           </div>
