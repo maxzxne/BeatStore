@@ -159,7 +159,7 @@ const HomePageV2 = () => {
   );
 
   return (
-    <div>
+    <div className="v2-home">
       {heroEnabled ? (
         <section className={`relative overflow-hidden px-4 pb-6 pt-8 sm:pt-14${heroImage ? ' v2-hero-with-image' : ''}`}>
           <div className={`mx-auto max-w-6xl${heroImage ? ` v2-hero-grid is-${heroPosition}` : ''}`}>
@@ -177,7 +177,7 @@ const HomePageV2 = () => {
         </section>
       ) : null}
 
-      <div className="mx-auto max-w-6xl px-4 pb-12">
+      <div className="v2-catalog mx-auto max-w-6xl px-4 pb-12">
         <PromoSliderV2 />
 
         <div className="v2-toolbar v2-reveal mb-4">
