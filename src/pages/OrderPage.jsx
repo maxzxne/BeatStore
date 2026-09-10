@@ -67,6 +67,16 @@ const OrderPage = () => {
     { n: 3, label: 'Итог' },
   ];
 
+  const DEADLINE_OPTIONS = [
+    { days: 21, label: '2–3 недели', hint: '14–21 день' },
+    { days: 10, label: '1–2 недели', hint: '8–13 дней' },
+    { days: 7, label: '7 дней', hint: 'неделя' },
+    { days: 3, label: '2–3 дня', hint: 'быстрее' },
+    { days: 1, label: '24 часа', hint: 'срочно' },
+  ];
+
+  const rub = (n) => `${Number(n).toLocaleString('ru-RU')} ₽`;
+
   // Цены согласно сообщению
   const getPrice = (deadlineDays, prepaymentPercent) => {
     if (!deadlineDays) return null;
@@ -101,30 +111,24 @@ const OrderPage = () => {
     return priceMap['14-21'];
   };
 
-  const calculateTotalPrice = () => {
+  const quoteTotal = (deadlineDays = formData.deadline_days, prepaymentPercent = formData.prepayment_percent) => {
     if (formData.service_categories.length === 0) return 0;
-    
     let total = 0;
-    
-    formData.service_categories.forEach(category => {
-      // Бит в стиле трэп всегда стоит 15К
+    formData.service_categories.forEach((category) => {
       if (category === 'бит в стиле трэп') {
         total += 15000;
-      } else {
-        // Для остальных услуг нужен срок и предоплата
-        if (!formData.deadline_days) {
-          // Если нет срока, не добавляем к общей сумме
-          return;
-        }
-        const pricePerService = getPrice(formData.deadline_days, formData.prepayment_percent);
-        if (pricePerService) {
-          total += pricePerService;
-        }
+        return;
       }
+      if (!deadlineDays) return;
+      const pricePerService = getPrice(deadlineDays, prepaymentPercent);
+      if (pricePerService) total += pricePerService;
     });
-    
     return total;
   };
+
+  const calculateTotalPrice = () => quoteTotal();
+
+  const needsDeadlineForPrice = formData.service_categories.some((category) => category !== 'бит в стиле трэп');
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
@@ -200,6 +204,29 @@ const OrderPage = () => {
 
   const goWizardBack = () => {
     setWizardStep((s) => Math.max(1, s - 1));
+  };
+
+  const goToWizardStep = (n) => {
+    if (n < 1 || n > 3 || n === wizardStep) return;
+    if (n > wizardStep) {
+      if (wizardStep === 1 && n >= 2) {
+        if (!formData.customer_name || !formData.customer_email) {
+          showError('Укажите ваше имя и email');
+          return;
+        }
+      }
+      if (n === 3) {
+        if (formData.service_categories.length === 0) {
+          showError('Выберите хотя бы одну категорию услуги');
+          return;
+        }
+        if (!formData.deadline_days) {
+          showError('Укажите срок выполнения заказа');
+          return;
+        }
+      }
+    }
+    setWizardStep(n);
   };
 
   const addCategory = (category) => {
@@ -573,22 +600,31 @@ const OrderPage = () => {
         <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
         <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Подробная форма заказа</h1>
         <p className="mt-2 text-sm text-white/50">Заполните форму для расчета стоимости и оформления заказа</p>
-        <div className="mt-5 flex gap-2">
-          {WIZARD_STEPS.map((s) => (
-            <div
-              key={s.n}
-              className={`flex-1 rounded-full py-2 text-center text-xs font-semibold uppercase tracking-wide ${
-                wizardStep === s.n
-                  ? 'bg-[#22c55e] text-[#0f172a]'
-                  : wizardStep > s.n
-                    ? 'border border-[#22c55e]/40 text-[#22c55e]'
-                    : 'border border-white/10 text-white/35'
-              }`}
-            >
-              {s.n}. {s.label}
-            </div>
-          ))}
+        <div className="mt-5 flex gap-2" role="tablist" aria-label="Шаги заказа">
+          {WIZARD_STEPS.map((s) => {
+            const current = wizardStep === s.n;
+            const done = wizardStep > s.n;
+            return (
+              <button
+                key={s.n}
+                type="button"
+                role="tab"
+                aria-current={current ? 'step' : undefined}
+                onClick={() => goToWizardStep(s.n)}
+                className={`flex-1 rounded-full py-2 text-center text-xs font-semibold uppercase tracking-wide transition ${
+                  current
+                    ? 'bg-[#22c55e] text-[#0f172a]'
+                    : done
+                      ? 'cursor-pointer border border-[#22c55e]/40 text-[#22c55e] hover:bg-[#22c55e]/10'
+                      : 'cursor-pointer border border-white/10 text-white/35 hover:border-white/25 hover:text-white/60'
+                }`}
+              >
+                {s.n}. {s.label}
+              </button>
+            );
+          })}
         </div>
+        <p className="mt-2 text-xs text-white/35">Можно вернуться на любой шаг — данные не сбросятся.</p>
       </div>
 
       <form onSubmit={handleDetailedSubmit} className="space-y-6">
@@ -713,6 +749,13 @@ const OrderPage = () => {
                   title={description || undefined}
                 >
                   <span>{getCategoryLabel(category)}</span>
+                  {category === 'бит в стиле трэп' ? (
+                    <span className="text-xs font-semibold opacity-70">15 000 ₽</span>
+                  ) : formData.deadline_days && getPrice(formData.deadline_days, formData.prepayment_percent) ? (
+                    <span className="text-xs font-semibold opacity-70">
+                      {rub(getPrice(formData.deadline_days, formData.prepayment_percent))}
+                    </span>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => removeCategory(index)}
@@ -752,7 +795,16 @@ const OrderPage = () => {
                   onClick={() => addCategory(category)}
                   className="w-full rounded-xl border border-transparent bg-white/5 px-4 py-3 text-left transition-colors hover:border-white/10 hover:bg-white/5"
                 >
-                  <div className="font-medium text-white">{category.label}</div>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="font-medium text-white">{category.label}</div>
+                    <div className="shrink-0 text-sm text-[#22c55e]">
+                      {category.value === 'бит в стиле трэп'
+                        ? '15 000 ₽'
+                        : formData.deadline_days
+                          ? rub(getPrice(formData.deadline_days, formData.prepayment_percent))
+                          : 'от 20 000 ₽'}
+                    </div>
+                  </div>
                   {category.description && (
                     <div className="text-xs text-white/50 mt-1">{category.description}</div>
                   )}
@@ -771,24 +823,70 @@ const OrderPage = () => {
 
         {/* Срок выполнения — под категориями */}
         <div>
-          <label htmlFor="deadline_days" className={labelClass}>
+          <p className={labelClass}>
             <Calendar className="h-4 w-4 inline mr-2" />
-            Срок выполнения (в днях) *
-          </label>
-          <input
-            type="number"
-            id="deadline_days"
-            name="deadline_days"
-            value={formData.deadline_days}
-            onChange={handleInputChange}
-            required
-            min="1"
-            placeholder="Укажите количество дней"
-            className={fieldClass}
-          />
-          <p className={hintClass}>
-            Примеры: 1 день (24 часа), 2-3 дня, 7 дней (1 неделя), 14-21 день (2-3 недели)
+            Срок выполнения *
           </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {DEADLINE_OPTIONS.map((option) => {
+              const selected = Number(formData.deadline_days) === option.days;
+              const preview = quoteTotal(option.days);
+              const showMoney = formData.service_categories.length > 0 && (!needsDeadlineForPrice || preview > 0);
+              return (
+                <button
+                  key={option.days}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, deadline_days: String(option.days) }))}
+                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                    selected
+                      ? 'border-[#22c55e] bg-[#22c55e]/10'
+                      : 'border-white/10 bg-white/[0.03] hover:border-white/25'
+                  }`}
+                >
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="text-sm font-semibold text-white">{option.label}</span>
+                    {showMoney && (
+                      <span className="text-sm font-semibold text-[#22c55e]">{rub(preview)}</span>
+                    )}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-white/40">{option.hint}</span>
+                </button>
+              );
+            })}
+          </div>
+          {formData.service_categories.length > 0 && needsDeadlineForPrice && !formData.deadline_days && (
+            <p className="mt-2 text-xs text-[#22c55e]">Выбери срок — цена появится сразу на кнопках.</p>
+          )}
+          {formData.service_categories.length > 0 && !needsDeadlineForPrice && (
+            <p className="mt-2 text-xs text-white/40">Трэп-бит всегда 15 000 ₽, срок на цену не влияет.</p>
+          )}
+        </div>
+
+        <div>
+          <p className={labelClass}>Предоплата</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: 50, label: '50%', hint: 'остальное после' },
+              { value: 100, label: '100%', hint: 'дешевле' },
+            ].map((opt) => {
+              const selected = formData.prepayment_percent === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, prepayment_percent: opt.value }))}
+                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                    selected
+                      ? 'border-[#22c55e] bg-[#22c55e]/10'
+                      : 'border-white/10 bg-white/[0.03] hover:border-white/25'
+                  }`}
+                >
+                  <span className="block text-sm font-semibold text-white">{opt.label}</span>
+                  <span className="text-xs text-white/40">{opt.hint}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Описание — после срока выполнения */}
@@ -813,19 +911,61 @@ const OrderPage = () => {
         )}
 
         {wizardStep === 2 && (
-          <div className="flex gap-3">
-            <button type="button" onClick={goWizardBack} className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5">
-              Назад
-            </button>
-            <button type="button" onClick={goWizardNext} className="inline-flex h-12 flex-[2] items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] hover:brightness-110">
-              Далее — файлы
-            </button>
+          <div className="space-y-3">
+            <div
+              className="rounded-3xl border border-[#22c55e]/25 bg-[#22c55e]/[0.07] p-4"
+              role="status"
+              aria-live="polite"
+            >
+              {formData.service_categories.length === 0 ? (
+                <p className="text-sm text-white/50">Добавь услугу — сразу покажем цену.</p>
+              ) : !formData.deadline_days && needsDeadlineForPrice ? (
+                <p className="text-sm text-white/50">Выбери срок выше, чтобы увидеть сумму.</p>
+              ) : (
+                <>
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#22c55e]">Сейчас выйдет</p>
+                  <p className="mt-1 font-[Syne] text-3xl font-extrabold text-white">{rub(totalPrice)}</p>
+                  <p className="mt-1 text-sm text-white/55">
+                    Предоплата {formData.prepayment_percent}% · к оплате сейчас {rub(prepaymentAmount)}
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button type="button" onClick={goWizardBack} className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5">
+                К контактам
+              </button>
+              <button type="button" onClick={goWizardNext} className="inline-flex h-12 flex-[2] items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] hover:brightness-110">
+                {totalPrice > 0 ? `Далее · ${rub(prepaymentAmount)}` : 'Далее — файлы'}
+              </button>
+            </div>
           </div>
         )}
 
         {/* Блок 3: Файлы и референсы */}
         {wizardStep === 3 && (
         <>
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/40">Заказ</p>
+              <p className="mt-1 text-sm text-white">
+                {formData.service_categories.map(getCategoryLabel).join(', ')}
+                {formData.deadline_days ? ` · ${formData.deadline_days} дн.` : ''}
+              </p>
+              {totalPrice > 0 && (
+                <p className="mt-1 font-[Syne] text-xl font-bold text-[#22c55e]">{rub(totalPrice)}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => goToWizardStep(2)}
+              className="shrink-0 text-sm text-[#22c55e] hover:underline"
+            >
+              Изменить
+            </button>
+          </div>
+        </div>
         <div className="rounded-3xl border border-white/10 bg-white/[0.03]">
           <button
             type="button"
@@ -1102,8 +1242,12 @@ const OrderPage = () => {
 
         {/* Чекбокс — перед кнопкой оформления */}
         <div className="flex gap-3">
-          <button type="button" onClick={goWizardBack} className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5">
-            Назад
+          <button
+            type="button"
+            onClick={() => goToWizardStep(2)}
+            className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5"
+          >
+            Изменить услуги и срок
           </button>
         </div>
 
