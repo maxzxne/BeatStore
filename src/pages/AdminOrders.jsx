@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
+import { ruCount } from '../utils/ruPlural';
 import { FileText, User, Calendar, Link as LinkIcon, Upload, CheckCircle, XCircle, Clock, AlertCircle, Music, FileAudio, X } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 
@@ -284,7 +285,7 @@ const AdminOrders = () => {
                       <span>{formatDate(order.created_at)}</span>
                     </div>
                     {order.deadline_days && (
-                      <span>Дедлайн: {order.deadline_days} {order.deadline_days === 1 ? 'день' : order.deadline_days < 5 ? 'дня' : 'дней'}</span>
+                      <span>Дедлайн: {ruCount(order.deadline_days, 'день', 'дня', 'дней')}</span>
                     )}
                     {order.price && (
                       <span className="font-semibold text-white">{order.price.toLocaleString('ru-RU')} ₽</span>
@@ -359,7 +360,7 @@ const AdminOrders = () => {
                     <div>
                       <label className="text-sm font-medium text-white/45">Дедлайн</label>
                       <p className="text-white">
-                        {selectedOrder.deadline_days} {selectedOrder.deadline_days === 1 ? 'день' : selectedOrder.deadline_days < 5 ? 'дня' : 'дней'}
+                        {ruCount(selectedOrder.deadline_days, 'день', 'дня', 'дней')}
                       </p>
                     </div>
                   )}

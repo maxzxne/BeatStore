@@ -8,6 +8,7 @@ import { api, buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { loginPath } from '../utils/authRedirect';
 import { formatMoscowDate } from '../utils/dateUtils';
+import { ruCount } from '../utils/ruPlural';
 import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio, HelpCircle } from 'lucide-react';
 
 const PurchasesPage = () => {
@@ -458,7 +459,7 @@ const PurchasesPage = () => {
                   {order.deadline_days && (
                     <div className="mb-2 flex items-center gap-2 text-sm text-white/50">
                       <Clock className="h-4 w-4" />
-                      <span>Срок: {order.deadline_days} {order.deadline_days === 1 ? 'день' : order.deadline_days < 5 ? 'дня' : 'дней'}</span>
+                      <span>Срок: {ruCount(order.deadline_days, 'день', 'дня', 'дней')}</span>
                     </div>
                   )}
                   

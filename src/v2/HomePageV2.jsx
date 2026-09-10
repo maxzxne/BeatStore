@@ -7,6 +7,7 @@ import Filters from '../components/Filters';
 import { useAuth } from '../contexts/AuthContext';
 import { normalizeHeroImagePosition, useSiteSettings } from '../contexts/SiteSettingsContext';
 import { api, buildMediaUrl } from '../utils/api';
+import { ruCount } from '../utils/ruPlural';
 
 function isInternalHref(href) {
   if (!href) return false;
@@ -203,7 +204,7 @@ const HomePageV2 = () => {
           </button>
         </div>
 
-        <p className="mb-4 text-sm text-white/50">{loading ? 'Загрузка...' : `${beats.length} треков`}</p>
+        <p className="mb-4 text-sm text-white/50">{loading ? 'Загрузка...' : ruCount(beats.length, 'трек', 'трека', 'треков')}</p>
 
         <div id="v2-beat-filters" className="v2-filters">
           <Filters

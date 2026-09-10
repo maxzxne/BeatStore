@@ -33,6 +33,23 @@ describe('ruCount cart copy', () => {
     assert.equal(ruCount(21, 'товар', 'товара', 'товаров'), '21 товар');
   });
 
+  it('declines трек on the catalog count', () => {
+    assert.equal(ruCount(1, 'трек', 'трека', 'треков'), '1 трек');
+    assert.equal(ruCount(2, 'трек', 'трека', 'треков'), '2 трека');
+    assert.equal(ruCount(5, 'трек', 'трека', 'треков'), '5 треков');
+    assert.equal(ruCount(11, 'трек', 'трека', 'треков'), '11 треков');
+  });
+
+  it('declines день for order deadlines including 21', () => {
+    assert.equal(ruCount(1, 'день', 'дня', 'дней'), '1 день');
+    assert.equal(ruCount(2, 'день', 'дня', 'дней'), '2 дня');
+    assert.equal(ruCount(4, 'день', 'дня', 'дней'), '4 дня');
+    assert.equal(ruCount(5, 'день', 'дня', 'дней'), '5 дней');
+    assert.equal(ruCount(11, 'день', 'дня', 'дней'), '11 дней');
+    assert.equal(ruCount(21, 'день', 'дня', 'дней'), '21 день');
+    assert.equal(ruCount(22, 'день', 'дня', 'дней'), '22 дня');
+  });
+
   it('declines adjective+noun for free checkout button', () => {
     assert.equal(
       ruCount(1, 'бесплатный товар', 'бесплатных товара', 'бесплатных товаров'),
