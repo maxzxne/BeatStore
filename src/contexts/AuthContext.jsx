@@ -58,6 +58,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.get('/me');
       setUser(response.data);
+      try {
+        await mergeGuestCartToServer();
+      } catch (e) {
+        console.warn('Guest cart merge failed', e);
+      }
     } catch (error) {
       localStorage.removeItem('token');
     } finally {

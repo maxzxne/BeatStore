@@ -16,7 +16,7 @@ const FREE_BEAT_FORMS = ['бесплатный бит', 'бесплатных б
 const FREE_COURSE_FORMS = ['бесплатный курс', 'бесплатных курса', 'бесплатных курсов'];
 
 const CartPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const { playTrack, isCurrentTrack, isCurrentTrackPlaying } = useAudioPlayer();
   const { showSuccess, showError } = useNotification();
   const navigate = useNavigate();
@@ -27,12 +27,13 @@ const CartPage = () => {
   const [selectedFormats, setSelectedFormats] = useState({});
 
   useEffect(() => {
+    if (authLoading) return;
     if (isAuthenticated) {
       fetchCart();
     } else {
       fetchGuestCart();
     }
-  }, [isAuthenticated]);
+  }, [authLoading, isAuthenticated]);
 
   const fetchGuestCart = async () => {
     try {
