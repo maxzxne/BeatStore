@@ -36,6 +36,8 @@ import AdminPurchases from './pages/AdminPurchases';
 import AdminOrders from './pages/AdminOrders';
 import AdminOAuthSettings from './pages/AdminOAuthSettings';
 import AdminRevenue from './pages/AdminRevenue';
+import AdminHeroPage from './v2/admin/AdminHeroPage';
+import AdminBannersPage from './v2/admin/AdminBannersPage';
 import TestPaymentPage from './pages/TestPaymentPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailurePage from './pages/PaymentFailurePage';
@@ -91,6 +93,8 @@ function App() {
                     <Route path="revenue" element={<AdminRevenue />} />
                     <Route path="errors" element={<AdminErrors />} />
                     <Route path="oauth-settings" element={<AdminOAuthSettings />} />
+                    <Route path="hero" element={<AdminHeroPage />} />
+                    <Route path="banners" element={<AdminBannersPage />} />
                   </Route>
 
                   <Route path="*" element={<ErrorPage />} />
