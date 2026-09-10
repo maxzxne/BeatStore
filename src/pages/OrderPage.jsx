@@ -314,36 +314,37 @@ const OrderPage = () => {
   // Если тип заказа не выбран
   if (orderType === null) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-2xl">
+      <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Форма заказа услуг</h1>
-          <p className="text-gray-600 dark:text-neutral-400">Выберите тип заказа</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
+          <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Форма заказа услуг</h1>
+          <p className="mt-2 text-sm text-white/50">Выберите тип заказа</p>
         </div>
 
         <div className="space-y-4">
           <button
             onClick={() => setOrderType("know")}
-            className="w-full p-6 border-2 border-gray-300 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white transition-colors text-left"
+            className="w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/40"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold text-black dark:text-white mb-4">Я знаю, что я хочу!</h3>
-                <p className="text-gray-600 dark:text-neutral-400 mb-4">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
+                <h3 className="mb-2 font-[Syne] text-xl font-bold text-white">Я знаю, что я хочу!</h3>
+                <p className="text-sm text-white/50">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
               </div>
-              <div className="text-2xl text-black dark:text-white">→</div>
+              <div className="text-2xl text-[#22c55e]">→</div>
             </div>
           </button>
 
           <button
             onClick={() => setOrderType("dont_know")}
-            className="w-full p-6 border-2 border-gray-300 dark:border-neutral-700 rounded-lg hover:border-black dark:hover:border-white transition-colors text-left"
+            className="w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/40"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold text-black dark:text-white mb-2">Я не знаю, что я хочу!</h3>
-                <p className="text-gray-600 dark:text-neutral-400">Отправьте простую заявку, мы свяжемся с вами для обсуждения</p>
+                <h3 className="mb-2 font-[Syne] text-xl font-bold text-white">Я не знаю, что я хочу!</h3>
+                <p className="text-sm text-white/50">Отправьте простую заявку, мы свяжемся с вами для обсуждения</p>
               </div>
-              <div className="text-2xl text-black dark:text-white">→</div>
+              <div className="text-2xl text-[#22c55e]">→</div>
             </div>
           </button>
         </div>
@@ -354,16 +355,17 @@ const OrderPage = () => {
   // Простая форма для "не знаю"
   if (orderType === "dont_know") {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-2xl">
+      <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-8">
           <button
             onClick={() => setOrderType(null)}
-            className="text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-4 flex items-center border-none bg-transparent p-0"
+            className="mb-4 flex items-center border-none bg-transparent p-0 text-sm text-white/50 hover:text-white"
           >
             ← Назад к выбору типа заказа
           </button>
-          <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Простая заявка</h1>
-          <p className="text-gray-600 dark:text-neutral-400">Заполните форму, и мы свяжемся с вами для обсуждения заказа</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
+          <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Простая заявка</h1>
+          <p className="mt-2 text-sm text-white/50">Заполните форму, и мы свяжемся с вами для обсуждения заказа</p>
         </div>
 
         <form onSubmit={handleSimpleSubmit} className="space-y-6">
@@ -495,16 +497,17 @@ const OrderPage = () => {
   const serviceCounts = getServiceCounts();
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-2xl">
+    <div className="mx-auto max-w-2xl px-4 py-10">
       <div className="mb-8">
         <button
           onClick={() => setOrderType(null)}
-          className="text-gray-600 dark:text-neutral-400 hover:text-black dark:text-white mb-4 flex items-center"
+          className="mb-4 flex items-center text-sm text-white/50 hover:text-white"
         >
           ← Назад к выбору типа заказа
         </button>
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Подробная форма заказа</h1>
-        <p className="text-gray-600 dark:text-neutral-400">Заполните форму для расчета стоимости и оформления заказа</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
+        <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Подробная форма заказа</h1>
+        <p className="mt-2 text-sm text-white/50">Заполните форму для расчета стоимости и оформления заказа</p>
       </div>
 
       <form onSubmit={handleDetailedSubmit} className="space-y-6">
