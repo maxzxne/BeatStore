@@ -40,7 +40,7 @@ from database import SessionLocal, engine
 from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, SupportThread, SupportMessage, cart_table, course_cart_table, course_favorites_table
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
-from payments.quote import payload_dict
+from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
 from payments.robokassa import format_out_sum, verify_result
 from payments.service import PaymentError, create_checkout, intent_view, public_config as payment_public_config
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
@@ -90,7 +90,8 @@ def update_database_schema():
                 'consent_personal_data': 'BOOLEAN DEFAULT 1',
                 'consent_personal_data_at': 'DATETIME',
                 'consent_personal_data_version': 'VARCHAR',
-                'consent_ip': 'VARCHAR'
+                'consent_ip': 'VARCHAR',
+                'admin_note': 'TEXT'
             }
             
             for col_name, col_type in new_columns.items():
@@ -3298,57 +3299,67 @@ async def upload_course_admin(
         db.commit()
         raise HTTPException(status_code=500, detail=f"Error uploading files: {str(e)}")
 
+def serialize_admin_service_order(order: ServiceOrder, db: Session) -> dict:
+    """Полный payload заявки для админки: очередь, сумма к оплате, файлы, заметка."""
+    import json
+
+    service_categories = []
+    if order.service_categories:
+        try:
+            service_categories = json.loads(order.service_categories)
+        except (TypeError, json.JSONDecodeError):
+            service_categories = []
+    elif order.service_category:
+        service_categories = [order.service_category]
+
+    due_amount = service_order_amount(order)
+    quoted_price = service_order_full_price(order)
+
+    payload = {
+        "id": order.id,
+        "user_id": order.user_id,
+        "customer_name": order.customer_name,
+        "customer_email": order.customer_email,
+        "order_type": order.order_type or "know",
+        "service_category": order.service_category,
+        "service_categories": service_categories,
+        "materials_url": order.materials_url,
+        "reference_links": order.reference_links,
+        "reference_files_url": order.reference_files_url,
+        "description": order.description,
+        "deadline_min": order.deadline_min,
+        "deadline_max": order.deadline_max,
+        "deadline_days": order.deadline_days,
+        "price": order.price,
+        "prepayment_percent": order.prepayment_percent,
+        "contact_info": order.contact_info,
+        "status": order.status or "pending",
+        "queue": service_order_queue(order.status),
+        "due_amount": due_amount,
+        "quoted_price": quoted_price if quoted_price > 0 else None,
+        "admin_note": order.admin_note,
+        "result_wav_url": order.result_wav_url,
+        "result_mp3_url": order.result_mp3_url,
+        "result_zip_url": order.result_zip_url,
+        "created_at": order.created_at,
+        "updated_at": order.updated_at,
+    }
+
+    if order.user_id:
+        user = db.query(User).filter(User.id == order.user_id).first()
+        if user:
+            payload["user_email"] = user.email
+            payload["user_username"] = user.username
+
+    return payload
+
+
 # Админские эндпоинты для заявок на услуги
 @app.get("/api/admin/service-orders")
 def get_service_orders_admin(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     """Получение всех заявок на услуги для админа"""
-    import json
-    orders = db.query(ServiceOrder).all()
-    
-    result = []
-    for order in orders:
-        # Парсим service_categories из JSON
-        service_categories = []
-        if order.service_categories:
-            try:
-                service_categories = json.loads(order.service_categories)
-            except:
-                pass
-        elif order.service_category:
-            service_categories = [order.service_category]
-        
-        order_data = {
-            "id": order.id,
-            "user_id": order.user_id,
-            "customer_name": order.customer_name,
-            "customer_email": order.customer_email,
-            "order_type": order.order_type or "know",
-            "service_category": order.service_category,
-            "service_categories": service_categories,
-            "materials_url": order.materials_url,
-            "reference_links": order.reference_links,
-            "reference_files_url": order.reference_files_url,
-            "description": order.description,
-            "deadline_min": order.deadline_min,
-            "deadline_max": order.deadline_max,
-            "deadline_days": order.deadline_days,
-            "price": order.price,
-            "prepayment_percent": order.prepayment_percent,
-            "status": order.status,
-            "created_at": order.created_at,
-            "updated_at": order.updated_at
-        }
-        
-        # Добавляем данные пользователя, если заказ от авторизованного пользователя
-        if order.user_id:
-            user = db.query(User).filter(User.id == order.user_id).first()
-            if user:
-                order_data["user_email"] = user.email
-                order_data["user_username"] = user.username
-        
-        result.append(order_data)
-    
-    return result
+    orders = db.query(ServiceOrder).order_by(ServiceOrder.created_at.desc()).all()
+    return [serialize_admin_service_order(order, db) for order in orders]
 
 @app.put("/api/admin/service-orders/{order_id}")
 def update_service_order_status(
@@ -3356,32 +3367,47 @@ def update_service_order_status(
     status: Optional[str] = Form(None),
     price: Optional[float] = Form(None),
     prepayment_percent: Optional[int] = Form(None),
+    admin_note: Optional[str] = Form(None),
     current_admin: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Обновление статуса, цены и процента предоплаты заявки на услугу"""
+    """Обновление статуса, цены, предоплаты и внутренней заметки заявки"""
     order = db.query(ServiceOrder).filter(ServiceOrder.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Service order not found")
-    
-    if status:
-        if status not in ["pending", "confirmed", "paid", "in_progress", "completed", "cancelled"]:
-            raise HTTPException(status_code=400, detail="Invalid status")
-        order.status = status
-    
+
     if price is not None:
         order.price = price
-    
+
     if prepayment_percent is not None:
         if prepayment_percent not in [50, 100]:
             raise HTTPException(status_code=400, detail="prepayment_percent must be 50 or 100")
         order.prepayment_percent = prepayment_percent
-    
+
+    if admin_note is not None:
+        order.admin_note = admin_note.strip() or None
+
+    if status:
+        if status not in ["pending", "confirmed", "paid", "in_progress", "completed", "cancelled"]:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        if status == "confirmed":
+            if not order.price:
+                quoted = service_order_full_price(order)
+                if quoted <= 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Сначала укажите стоимость",
+                    )
+                order.price = quoted
+            if not order.prepayment_percent:
+                order.prepayment_percent = 50
+        order.status = status
+
     order.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(order)
-    
-    return {"message": "Order updated successfully", "order": ServiceOrderResponse.from_orm(order)}
+
+    return {"message": "Order updated successfully", "order": serialize_admin_service_order(order, db)}
 
 @app.post("/api/admin/service-orders/{order_id}/upload-result")
 async def upload_order_result_files(
@@ -3450,7 +3476,7 @@ async def upload_order_result_files(
     
     return {
         "message": "Files uploaded successfully",
-        "order": ServiceOrderResponse.from_orm(order)
+        "order": serialize_admin_service_order(order, db)
     }
 
 # OAuth Settings Management

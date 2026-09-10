@@ -387,20 +387,20 @@ const PurchasesPage = () => {
             {serviceOrders.map(order => {
               const statusColors = {
                 pending: 'bg-amber-500/20 text-amber-300',
-                confirmed: 'bg-white/10 text-white/80',
+                confirmed: 'bg-amber-500/20 text-amber-300',
                 paid: 'bg-[#22c55e]/20 text-[#22c55e]',
-                in_progress: 'bg-[#22c55e]/10 text-[#86efac]',
+                in_progress: 'bg-[#22c55e]/20 text-[#22c55e]',
                 completed: 'bg-[#22c55e]/20 text-[#22c55e]',
                 cancelled: 'bg-red-500/20 text-red-300'
               };
               
               const statusLabels = {
                 pending: 'Ожидает',
-                confirmed: 'Подтвержден',
-                paid: 'Оплачен',
+                confirmed: 'Нужно оплатить',
+                paid: 'В работе',
                 in_progress: 'В работе',
-                completed: 'Завершен',
-                cancelled: 'Отменен'
+                completed: 'Сдан',
+                cancelled: 'Отменён'
               };
               
               const categories = order.service_categories || (order.service_category ? [order.service_category] : []);
@@ -523,7 +523,7 @@ const PurchasesPage = () => {
                         <span>Требуется оплата</span>
                       </div>
                       <p className="text-sm text-amber-200/80">
-                        Заказ подтвержден. Необходимо оплатить {order.prepayment_percent || 50}% предоплату: {(order.price * (order.prepayment_percent || 50) / 100).toLocaleString('ru-RU')} ₽
+                        Заказ готов к оплате. Предоплата {order.prepayment_percent || 50}%: {(order.price * (order.prepayment_percent || 50) / 100).toLocaleString('ru-RU')} ₽
                       </p>
                       <button 
                         onClick={async () => {

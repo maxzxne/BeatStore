@@ -1,191 +1,339 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  FileAudio,
+  FileText,
+  Link as LinkIcon,
+  Loader2,
+  Music,
+  Search,
+  Upload,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { ruCount } from '../utils/ruPlural';
-import { FileText, User, Calendar, Link as LinkIcon, Upload, CheckCircle, XCircle, Clock, AlertCircle, Music, FileAudio, X } from 'lucide-react';
-import CustomSelect from '../components/CustomSelect';
+
+const QUEUES = [
+  { id: 'action', label: 'Нужно действие' },
+  { id: 'payment', label: 'Ждёт оплату' },
+  { id: 'work', label: 'В работе' },
+  { id: 'done', label: 'Сдано' },
+  { id: 'cancelled', label: 'Отмена' },
+  { id: 'all', label: 'Все' },
+];
+
+const STATUS_UI = {
+  pending: { label: 'Новая', badge: 'admin-badge-warn' },
+  confirmed: { label: 'Ждёт оплату', badge: 'admin-badge-warn' },
+  paid: { label: 'В работе', badge: 'admin-badge-ok' },
+  in_progress: { label: 'В работе', badge: 'admin-badge-ok' },
+  completed: { label: 'Сдано', badge: 'admin-badge-ok' },
+  cancelled: { label: 'Отменено', badge: 'admin-badge-err' },
+};
+
+const QUEUE_BY_STATUS = {
+  pending: 'action',
+  confirmed: 'payment',
+  paid: 'work',
+  in_progress: 'work',
+  completed: 'done',
+  cancelled: 'cancelled',
+};
+
+const fieldClass =
+  'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
+
+function orderQueue(order) {
+  return order.queue || QUEUE_BY_STATUS[order.status] || 'action';
+}
+
+function formatMoney(value) {
+  if (value == null || Number.isNaN(Number(value))) return '—';
+  return `${Number(value).toLocaleString('ru-RU')} ₽`;
+}
+
+function parseMediaList(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  const raw = String(value).trim();
+  if (!raw) return [];
+  if (raw.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch {
+      /* fall through */
+    }
+  }
+  return raw
+    .split(/[\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function fileName(url) {
+  try {
+    const path = String(url).split('?')[0];
+    return decodeURIComponent(path.split('/').pop() || 'файл');
+  } catch {
+    return 'файл';
+  }
+}
+
+function customerName(order) {
+  return order.user_username || order.customer_name || 'Гость';
+}
+
+function customerEmail(order) {
+  return order.user_email || order.customer_email || '';
+}
+
+function categoriesOf(order) {
+  if (order.service_categories?.length) return order.service_categories;
+  return order.service_category ? [order.service_category] : [];
+}
+
+function nextStep(order) {
+  const queue = orderQueue(order);
+  if (queue === 'action') {
+    return order.price || order.quoted_price ? 'Выставить счёт' : 'Указать цену';
+  }
+  if (queue === 'payment') return 'Ждёт клиента';
+  if (queue === 'work') return 'Сдать заказ';
+  if (queue === 'cancelled') return 'Вернуть';
+  return '—';
+}
+
+function dueDate(order) {
+  if (!order.deadline_days || !order.created_at) return null;
+  const date = new Date(order.created_at);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setDate(date.getDate() + Number(order.deadline_days));
+  return date;
+}
 
 const AdminOrders = () => {
   const { isAdminAuthenticated } = useAuth();
+  const { showSuccess, showError } = useNotification();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'pending', 'confirmed', 'paid', 'in_progress', 'completed', 'cancelled'
-  const [sortBy, setSortBy] = useState('created_at'); // 'created_at', 'deadline_days', 'price'
-  const [sortOrder, setSortOrder] = useState('desc'); // 'asc', 'desc'
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [resultFiles, setResultFiles] = useState({
-    wav: null,
-    mp3: null,
-    zip: null
-  });
-  const [uploadingResult, setUploadingResult] = useState(false);
+  const [queue, setQueue] = useState('action');
+  const [queueReady, setQueueReady] = useState(false);
+  const [query, setQuery] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [priceDraft, setPriceDraft] = useState('');
+  const [prepayDraft, setPrepayDraft] = useState('50');
+  const [noteDraft, setNoteDraft] = useState('');
+  const [resultFiles, setResultFiles] = useState({ wav: null, mp3: null, zip: null });
 
-  useEffect(() => {
-    if (isAdminAuthenticated) {
-      fetchOrders();
-    }
-  }, [isAdminAuthenticated]);
-  
-  useEffect(() => {
-    if (selectedOrder) {
-      setResultFiles({
-        wav: null,
-        mp3: null,
-        zip: null
-      });
-    }
-  }, [selectedOrder]);
+  const selectedId = Number(searchParams.get('id')) || null;
 
   const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/api/admin/service-orders');
-      setOrders(response.data);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
-      setLoading(false);
-    }
+    const response = await api.get('/api/admin/service-orders');
+    setOrders(response.data || []);
+    return response.data || [];
   };
 
-  // Фильтрация заявок по статусу
   useEffect(() => {
-    if (statusFilter === 'all') {
-      setFilteredOrders(orders);
-    } else {
-      setFilteredOrders(orders.filter(order => order.status === statusFilter));
-    }
-  }, [orders, statusFilter]);
-
-  // Сортировка заявок (по умолчанию — новые первые)
-  const sortedOrders = useMemo(() => {
-    const sorted = [...filteredOrders];
-    const mult = sortOrder === 'asc' ? 1 : -1;
-
-    sorted.sort((a, b) => {
-      let valA, valB;
-      if (sortBy === 'created_at') {
-        valA = new Date(a.created_at || 0).getTime();
-        valB = new Date(b.created_at || 0).getTime();
-      } else if (sortBy === 'deadline_days') {
-        valA = a.deadline_days ?? 9999;
-        valB = b.deadline_days ?? 9999;
-      } else {
-        valA = a.price ?? 0;
-        valB = b.price ?? 0;
+    if (!isAdminAuthenticated) return undefined;
+    let cancelled = false;
+    const boot = async () => {
+      try {
+        setLoading(true);
+        const rows = await fetchOrders();
+        if (cancelled) return;
+        if (!queueReady) {
+          const counts = rows.reduce((acc, order) => {
+            const key = orderQueue(order);
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+          }, {});
+          if (counts.action) setQueue('action');
+          else if (counts.payment) setQueue('payment');
+          else if (counts.work) setQueue('work');
+          else setQueue('all');
+          setQueueReady(true);
+        }
+      } catch (error) {
+        if (!cancelled) showError(error.response?.data?.detail || 'Не удалось загрузить заявки');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      return mult * (valA - valB);
+    };
+    boot();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdminAuthenticated]);
+
+  const selectedOrder = useMemo(
+    () => orders.find((order) => order.id === selectedId) || null,
+    [orders, selectedId]
+  );
+
+  useEffect(() => {
+    if (!selectedOrder) {
+      setPriceDraft('');
+      setPrepayDraft('50');
+      setNoteDraft('');
+      setResultFiles({ wav: null, mp3: null, zip: null });
+      return undefined;
+    }
+    setPriceDraft(selectedOrder.price ? String(selectedOrder.price) : selectedOrder.quoted_price ? String(selectedOrder.quoted_price) : '');
+    setPrepayDraft(String(selectedOrder.prepayment_percent || 50));
+    setNoteDraft(selectedOrder.admin_note || '');
+    setResultFiles({ wav: null, mp3: null, zip: null });
+    const onKey = (event) => {
+      if (event.key === 'Escape') setSearchParams({});
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedOrder?.id]);
+
+  const counts = useMemo(() => {
+    const acc = { action: 0, payment: 0, work: 0, done: 0, cancelled: 0, all: orders.length };
+    orders.forEach((order) => {
+      const key = orderQueue(order);
+      acc[key] = (acc[key] || 0) + 1;
     });
-    return sorted;
-  }, [filteredOrders, sortBy, sortOrder]);
+    return acc;
+  }, [orders]);
 
-  const updateOrderStatus = async (orderId, newStatus, price = null, prepaymentPercent = null) => {
-    try {
-      const formData = new FormData();
-      if (newStatus) formData.append('status', newStatus);
-      if (price !== null) formData.append('price', price.toString());
-      if (prepaymentPercent !== null) formData.append('prepayment_percent', prepaymentPercent.toString());
-      
-      await api.put(`/api/admin/service-orders/${orderId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
-      await fetchOrders();
-      if (selectedOrder && selectedOrder.id === orderId) {
-        const updated = { ...selectedOrder };
-        if (newStatus) updated.status = newStatus;
-        if (price !== null) updated.price = price;
-        if (prepaymentPercent !== null) updated.prepayment_percent = prepaymentPercent;
-        setSelectedOrder(updated);
-      }
-    } catch (error) {
-      console.error('Error updating order:', error);
-      alert('Ошибка обновления заявки');
-    }
+  const visibleOrders = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return orders.filter((order) => {
+      if (queue !== 'all' && orderQueue(order) !== queue) return false;
+      if (!needle) return true;
+      const haystack = [
+        `#${order.id}`,
+        customerName(order),
+        customerEmail(order),
+        order.contact_info,
+        order.description,
+        order.admin_note,
+        categoriesOf(order).join(' '),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(needle);
+    });
+  }, [orders, queue, query]);
+
+  const openOrder = (id) => {
+    setSearchParams(id ? { id: String(id) } : {});
   };
 
-  const handleResultFileChange = (e, fileType) => {
-    const file = e.target.files[0];
-    if (file) {
-      setResultFiles(prev => ({
-        ...prev,
-        [fileType]: file
-      }));
-    }
+  const patchLocal = (updated) => {
+    setOrders((prev) => prev.map((order) => (order.id === updated.id ? { ...order, ...updated } : order)));
   };
-  
-  const handleUploadResultFiles = async () => {
+
+  const updateOrder = async (orderId, fields) => {
+    const formData = new FormData();
+    Object.entries(fields).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) formData.append(key, String(value));
+    });
+    const response = await api.put(`/api/admin/service-orders/${orderId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    const updated = response.data?.order;
+    if (updated) patchLocal(updated);
+    return updated;
+  };
+
+  const handleUpdate = async (fields, successMessage) => {
     if (!selectedOrder) return;
-    
-    if (!resultFiles.wav && !resultFiles.mp3 && !resultFiles.zip) {
-      alert('Выберите хотя бы один файл для загрузки');
+    try {
+      setSaving(true);
+      await updateOrder(selectedOrder.id, fields);
+      if (successMessage) showSuccess(successMessage);
+    } catch (error) {
+      showError(error.response?.data?.detail || 'Не удалось обновить заявку');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const parsedPrice = () => {
+    const value = parseFloat(priceDraft);
+    return value > 0 ? value : null;
+  };
+
+  const sendInvoice = async () => {
+    const price = parsedPrice();
+    if (!price && !selectedOrder?.quoted_price) {
+      showError('Сначала укажи стоимость');
       return;
     }
-    
+    const fields = { status: 'confirmed', prepayment_percent: Number(prepayDraft) || 50 };
+    if (price) fields.price = price;
+    await handleUpdate(fields, 'Счёт выставлен. Клиент может оплатить из профиля.');
+  };
+
+  const saveMoney = async () => {
+    const price = parsedPrice();
+    if (!price) {
+      showError('Укажи стоимость');
+      return;
+    }
+    await handleUpdate(
+      { price, prepayment_percent: Number(prepayDraft) || 50 },
+      'Стоимость сохранена'
+    );
+  };
+
+  const saveNote = async () => {
+    await handleUpdate({ admin_note: noteDraft }, 'Заметка сохранена');
+  };
+
+  const handleUploadResults = async () => {
+    if (!selectedOrder) return;
+    if (!resultFiles.wav && !resultFiles.mp3 && !resultFiles.zip) {
+      showError('Выбери хотя бы один файл');
+      return;
+    }
     try {
-      setUploadingResult(true);
+      setUploading(true);
       const formData = new FormData();
-      
       if (resultFiles.wav) formData.append('wav_file', resultFiles.wav);
       if (resultFiles.mp3) formData.append('mp3_file', resultFiles.mp3);
       if (resultFiles.zip) formData.append('zip_file', resultFiles.zip);
-      
-      await api.post(`/api/admin/service-orders/${selectedOrder.id}/upload-result`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await api.post(`/api/admin/service-orders/${selectedOrder.id}/upload-result`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      
-      alert('Файлы результата успешно загружены!');
-      await fetchOrders();
-      if (selectedOrder) {
-        const updated = orders.find(o => o.id === selectedOrder.id);
-        if (updated) setSelectedOrder(updated);
-      }
+      if (response.data?.order) patchLocal(response.data.order);
       setResultFiles({ wav: null, mp3: null, zip: null });
+      showSuccess('Файлы результата загружены');
     } catch (error) {
-      console.error('Error uploading result files:', error);
-      alert('Ошибка загрузки файлов результата');
+      showError(error.response?.data?.detail || 'Ошибка загрузки файлов');
     } finally {
-      setUploadingResult(false);
+      setUploading(false);
     }
   };
-  
-  const formatDate = formatMoscowDate;
 
-  const statusConfig = {
-    pending: { label: 'Ожидает', color: 'bg-amber-500/15 text-amber-300', icon: Clock },
-    confirmed: { label: 'Подтверждено', color: 'bg-white/10 text-white/80', icon: CheckCircle },
-    paid: { label: 'Оплачено', color: 'bg-[#22c55e]/15 text-[#22c55e]', icon: CheckCircle },
-    in_progress: { label: 'В работе', color: 'bg-white/10 text-white/70', icon: AlertCircle },
-    completed: { label: 'Завершено', color: 'bg-[#22c55e]/15 text-[#22c55e]', icon: CheckCircle },
-    cancelled: { label: 'Отменено', color: 'bg-red-500/15 text-red-300', icon: XCircle }
+  const copyText = async (value) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      showSuccess('Скопировано');
+    } catch {
+      showError('Не удалось скопировать');
+    }
   };
-
-  const getStatusBadge = (status) => {
-    const config = statusConfig[status] || statusConfig.pending;
-    const Icon = config.icon;
-    
-    return (
-      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${config.color}`}>
-        <Icon className="h-3 w-3 shrink-0" />
-        {config.label}
-      </span>
-    );
-  };
-
 
   if (!isAdminAuthenticated) {
-    return (
-      <div className="py-12 text-center text-white/50">
-        Доступ запрещен. Войдите как администратор.
-      </div>
-    );
+    return <div className="py-12 text-center text-white/50">Доступ запрещен. Войдите как администратор.</div>;
   }
 
   if (loading) {
     return (
       <div className="admin-loading">
+        <Loader2 className="h-5 w-5 animate-spin" />
         Загрузка заявок…
       </div>
     );
@@ -196,538 +344,440 @@ const AdminOrders = () => {
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Продажи</p>
         <h1 className="admin-page-title mt-1">Заявки</h1>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-          <p className="admin-page-sub !mt-0">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <CustomSelect
-              value={sortBy}
-              onChange={setSortBy}
-              options={[
-                { value: 'created_at', label: 'По дате создания' },
-                { value: 'deadline_days', label: 'По дедлайну' },
-                { value: 'price', label: 'По стоимости' }
-              ]}
-              className="w-auto min-w-[180px]"
-            />
-            <CustomSelect
-              value={sortOrder}
-              onChange={setSortOrder}
-              options={[
-                { value: 'desc', label: 'По убыванию' },
-                { value: 'asc', label: 'По возрастанию' }
-              ]}
-              className="w-auto min-w-[160px]"
-            />
-            <CustomSelect
-              value={statusFilter}
-              onChange={setStatusFilter}
-              options={[
-                { value: 'all', label: 'Все статусы' },
-                { value: 'pending', label: 'Ожидает' },
-                { value: 'confirmed', label: 'Подтверждено' },
-                { value: 'paid', label: 'Оплачено' },
-                { value: 'in_progress', label: 'В работе' },
-                { value: 'completed', label: 'Завершено' },
-                { value: 'cancelled', label: 'Отменено' }
-              ]}
-              className="w-auto min-w-[180px]"
-            />
-          </div>
-        </div>
+        <p className="admin-page-sub">
+          {counts.action
+            ? `${ruCount(counts.action, 'заявка ждёт', 'заявки ждут', 'заявок ждут')} действия · ${orders.length} всего`
+            : `${orders.length} всего`}
+        </p>
       </div>
 
-      {sortedOrders.length === 0 ? (
-        <div className="admin-panel">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="admin-queue-tabs" role="tablist" aria-label="Очереди заявок">
+          {QUEUES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={queue === item.id}
+              className={`admin-queue-tab ${queue === item.id ? 'is-active' : ''}`}
+              onClick={() => setQueue(item.id)}
+            >
+              {item.label}
+              <span className="admin-queue-count">{counts[item.id] || 0}</span>
+            </button>
+          ))}
+        </div>
+        <label className="relative block w-full lg:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Поиск: имя, почта, #id, услуга"
+            aria-label="Поиск заявок"
+            className={`${fieldClass} pl-9`}
+          />
+        </label>
+      </div>
+
+      <div className="admin-panel">
+        {visibleOrders.length === 0 ? (
           <div className="admin-empty">
             <FileText className="mx-auto mb-3 h-10 w-10 text-white/25" />
-            Заявок пока нет
+            {orders.length === 0 ? 'Заявок пока нет' : 'В этой очереди пусто'}
           </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Список заявок */}
-          <div className="lg:col-span-2 space-y-4">
-            {sortedOrders.map(order => (
-              <div
-                key={order.id}
-                className={`card cursor-pointer transition-all ${
-                  selectedOrder?.id === order.id ? 'ring-2 ring-[#22c55e]/60 border-[#22c55e]/30' : ''
-                }`}
-                onClick={() => setSelectedOrder(order)}
-              >
-                <div className="card-content">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1">
-                        {order.service_categories && order.service_categories.length > 0
-                          ? order.service_categories.join(', ')
-                          : order.service_category || 'Заказ'}
-                      </h3>
-                      {order.order_type === 'dont_know' && (
-                        <span className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded-full mb-2 inline-block">
-                          Требует обсуждения
-                        </span>
-                      )}
-                      <div className="flex items-center gap-2 text-sm text-white/45">
-                        <User className="h-4 w-4" />
-                        <span>
-                          {order.user_username || order.customer_name} 
-                          {order.user_email || order.customer_email ? ` (${order.user_email || order.customer_email})` : ''}
-                        </span>
-                      </div>
-                    </div>
-                    {getStatusBadge(order.status)}
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-xs text-white/40">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(order.created_at)}</span>
-                    </div>
-                    {order.deadline_days && (
-                      <span>Дедлайн: {ruCount(order.deadline_days, 'день', 'дня', 'дней')}</span>
-                    )}
-                    {order.price && (
-                      <span className="font-semibold text-white">{order.price.toLocaleString('ru-RU')} ₽</span>
-                    )}
-                  </div>
-                  
-                  {order.description && (
-                    <p className="text-sm text-white/45 mt-2 line-clamp-2">
-                      {order.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th>№</th>
+                  <th>Клиент</th>
+                  <th>Услуга</th>
+                  <th>Срок</th>
+                  <th>Сумма</th>
+                  <th>Статус</th>
+                  <th>Дальше</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleOrders.map((order) => {
+                  const status = STATUS_UI[order.status] || STATUS_UI.pending;
+                  const due = dueDate(order);
+                  const overdue = due && due.getTime() < Date.now() && orderQueue(order) !== 'done' && orderQueue(order) !== 'cancelled';
+                  return (
+                    <tr
+                      key={order.id}
+                      className={selectedId === order.id ? 'is-selected' : ''}
+                      onClick={() => openOrder(order.id)}
+                    >
+                      <td className="whitespace-nowrap font-medium text-white/80">#{order.id}</td>
+                      <td>
+                        <div className="font-medium text-white">{customerName(order)}</div>
+                        <div className="text-xs text-white/40">{customerEmail(order) || 'без почты'}</div>
+                      </td>
+                      <td>
+                        <div className="max-w-[220px] truncate text-white/80">
+                          {categoriesOf(order).join(', ') || (order.order_type === 'dont_know' ? 'Нужно обсуждение' : 'Заказ')}
+                        </div>
+                        <div className="text-xs text-white/35">
+                          {order.order_type === 'dont_know' ? 'Обсуждение' : 'Бриф'}
+                        </div>
+                      </td>
+                      <td className={`whitespace-nowrap text-xs ${overdue ? 'text-red-300' : 'text-white/45'}`}>
+                        {order.deadline_days ? ruCount(order.deadline_days, 'день', 'дня', 'дней') : '—'}
+                      </td>
+                      <td className="whitespace-nowrap text-white/80">
+                        {order.price ? formatMoney(order.price) : order.quoted_price ? formatMoney(order.quoted_price) : '—'}
+                      </td>
+                      <td>
+                        <span className={`admin-badge ${status.badge}`}>{status.label}</span>
+                      </td>
+                      <td className="whitespace-nowrap text-xs text-white/55">{nextStep(order)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+        )}
+      </div>
 
-          {/* Детали заявки */}
-          <div className="lg:col-span-1">
-            {selectedOrder ? (
-              <div className="card sticky top-4">
-                <div className="card-header">
-                  <h2 className="text-lg font-semibold text-white">Детали заявки</h2>
-                </div>
-                
-                <div className="card-content space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-white/45">Категории услуг</label>
-                    {selectedOrder.service_categories && selectedOrder.service_categories.length > 0 ? (
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {selectedOrder.service_categories.map((cat, idx) => (
-                          <span key={idx} className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/10 text-white/80 border border-white/10">
-                            {cat}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-white font-semibold">{selectedOrder.service_category || 'Не указано'}</p>
-                    )}
-                  </div>
-                  
-                  {selectedOrder.order_type && (
-                    <div>
-                      <label className="text-sm font-medium text-white/45">Тип заказа</label>
-                      <p className="text-white">
-                        {selectedOrder.order_type === 'know' ? 'Я знаю, что хочу' : 'Требует обсуждения'}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="text-sm font-medium text-white/45">Пользователь</label>
-                    <p className="text-white">{selectedOrder.user_username || selectedOrder.customer_name || 'Не указано'}</p>
-                    <p className="text-sm text-white/45">{selectedOrder.user_email || selectedOrder.customer_email || 'Не указано'}</p>
-                    {!selectedOrder.user_id && (
-                      <p className="text-xs text-white/40 mt-1">Неавторизованный пользователь</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-white/45">Статус</label>
-                    <div className="mt-1">{getStatusBadge(selectedOrder.status)}</div>
-                  </div>
-                  
-                  {selectedOrder.description && (
-                    <div>
-                      <label className="text-sm font-medium text-white/45">Описание (ТЗ)</label>
-                      <p className="text-white whitespace-pre-wrap">{selectedOrder.description}</p>
-                    </div>
-                  )}
-                  
-                  {selectedOrder.deadline_days && (
-                    <div>
-                      <label className="text-sm font-medium text-white/45">Дедлайн</label>
-                      <p className="text-white">
-                        {ruCount(selectedOrder.deadline_days, 'день', 'дня', 'дней')}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {selectedOrder.prepayment_percent && (
-                    <div>
-                      <label className="text-sm font-medium text-white/45">Процент предоплаты</label>
-                      <p className="text-white">{selectedOrder.prepayment_percent}%</p>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="text-sm font-medium text-white/45">Стоимость</label>
-                    {selectedOrder.price ? (
-                      <div>
-                        <p className="text-white font-semibold text-lg mb-2">
-                          {selectedOrder.price.toLocaleString('ru-RU')} ₽
-                          {selectedOrder.prepayment_percent && (
-                            <span className="text-sm text-white/45 block mt-1">
-                              Предоплата ({selectedOrder.prepayment_percent}%): {(selectedOrder.price * selectedOrder.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
-                            </span>
-                          )}
-                        </p>
-                        {/* Показываем возможность изменения цены для заявок "не знаю" в статусе pending */}
-                        {selectedOrder.order_type === 'dont_know' && selectedOrder.status === 'pending' && (
-                          <div className="mt-2">
-                            <input
-                              type="number"
-                              placeholder="Изменить стоимость"
-                              defaultValue={selectedOrder.price}
-                              className="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-xl"
-                              onBlur={(e) => {
-                                const price = parseFloat(e.target.value);
-                                if (price > 0 && price !== selectedOrder.price) {
-                                  updateOrderStatus(selectedOrder.id, null, price, null);
-                                }
-                              }}
-                            />
-                            <p className="text-xs text-white/40 mt-1">Можно изменить стоимость до подтверждения заказа</p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mt-2">
-                        <input
-                          type="number"
-                          placeholder="Укажите стоимость"
-                          className="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-xl"
-                          onBlur={(e) => {
-                            const price = parseFloat(e.target.value);
-                            if (price > 0) {
-                              updateOrderStatus(selectedOrder.id, null, price, null);
-                            }
-                          }}
-                        />
-                        {selectedOrder.order_type === 'dont_know' && (
-                          <p className="text-xs text-white/40 mt-1">Укажите стоимость для заявки</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {selectedOrder.reference_links && (
-                    <div>
-                      <label className="text-sm font-medium text-white/45 flex items-center gap-1">
-                        <LinkIcon className="h-4 w-4" />
-                        Ссылки на референсы
-                      </label>
-                      <div className="mt-1 space-y-1">
-                        {selectedOrder.reference_links.split('\n').filter(link => link.trim()).map((link, idx) => (
-                          <a
-                            key={idx}
-                            href={link.trim()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#22c55e] hover:underline text-sm block truncate"
-                          >
-                            {link.trim()}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {selectedOrder.materials_url && (
-                    <div>
-                      <label className="text-sm font-medium text-white/45 flex items-center gap-1">
-                        <Upload className="h-4 w-4" />
-                        Материалы
-                      </label>
-                      <a
-                        href={buildMediaUrl(selectedOrder.materials_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#22c55e] hover:underline text-sm"
-                      >
-                        Скачать материалы
-                      </a>
-                    </div>
-                  )}
-                  
-                  {selectedOrder.reference_files_url && (
-                    <div>
-                      <label className="text-sm font-medium text-white/45 flex items-center gap-1">
-                        <Upload className="h-4 w-4" />
-                        Референсы (файлы)
-                      </label>
-                      <a
-                        href={buildMediaUrl(selectedOrder.reference_files_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#22c55e] hover:underline text-sm"
-                      >
-                        Скачать референсы
-                      </a>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="text-sm font-medium text-white/45">Дата создания</label>
-                    <p className="text-white text-sm">{formatDate(selectedOrder.created_at)}</p>
-                  </div>
-                  
-                  {/* Загрузка файлов результата (только для заказов типа "не знаю" после оплаты) */}
-                  {selectedOrder.order_type === 'dont_know' && (selectedOrder.status === 'paid' || selectedOrder.status === 'in_progress' || selectedOrder.status === 'completed') && (
-                    <div className="pt-4 border-t border-white/10">
-                      <h3 className="text-md font-semibold text-white mb-3">Файлы результата</h3>
-                      
-                      {/* Текущие файлы */}
-                      {(selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url) && (
-                        <div className="mb-4 space-y-2">
-                          {selectedOrder.result_wav_url && (
-                            <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl">
-                              <div className="flex items-center gap-2">
-                                <FileAudio className="h-4 w-4 text-white/45" />
-                                <span className="text-sm text-white/70">WAV файл</span>
-                              </div>
-                              <a
-                                href={buildMediaUrl(selectedOrder.result_wav_url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[#22c55e] hover:underline text-xs"
-                              >
-                                Скачать
-                              </a>
-                            </div>
-                          )}
-                          {selectedOrder.result_mp3_url && (
-                            <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl">
-                              <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-white/45" />
-                                <span className="text-sm text-white/70">MP3 файл</span>
-                              </div>
-                              <a
-                                href={buildMediaUrl(selectedOrder.result_mp3_url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[#22c55e] hover:underline text-xs"
-                              >
-                                Скачать
-                              </a>
-                            </div>
-                          )}
-                          {selectedOrder.result_zip_url && (
-                            <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-white/45" />
-                                <span className="text-sm text-white/70">ZIP архив</span>
-                              </div>
-                              <a
-                                href={buildMediaUrl(selectedOrder.result_zip_url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[#22c55e] hover:underline text-xs"
-                              >
-                                Скачать
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Форма загрузки файлов */}
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-white/45 mb-1">WAV файл</label>
-                          <div className="flex items-center gap-2">
-                            <label
-                              htmlFor="result-file-wav"
-                              className="btn btn-outline btn-sm cursor-pointer shrink-0"
-                            >
-                              Выберите файл
-                            </label>
-                            <input
-                              id="result-file-wav"
-                              type="file"
-                              accept="audio/wav,audio/*"
-                              onChange={(e) => handleResultFileChange(e, 'wav')}
-                              className="hidden"
-                            />
-                            {resultFiles.wav ? (
-                              <>
-                                <span className="text-sm text-white/45 truncate flex-1">{resultFiles.wav.name}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setResultFiles(prev => ({ ...prev, wav: null }))}
-                                  className="text-red-600 hover:text-red-800 shrink-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-sm text-white/40">Файл не выбран</span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-white/45 mb-1">MP3 файл</label>
-                          <div className="flex items-center gap-2">
-                            <label
-                              htmlFor="result-file-mp3"
-                              className="btn btn-outline btn-sm cursor-pointer shrink-0"
-                            >
-                              Выберите файл
-                            </label>
-                            <input
-                              id="result-file-mp3"
-                              type="file"
-                              accept="audio/mpeg,audio/mp3,audio/*"
-                              onChange={(e) => handleResultFileChange(e, 'mp3')}
-                              className="hidden"
-                            />
-                            {resultFiles.mp3 ? (
-                              <>
-                                <span className="text-sm text-white/45 truncate flex-1">{resultFiles.mp3.name}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setResultFiles(prev => ({ ...prev, mp3: null }))}
-                                  className="text-red-600 hover:text-red-800 shrink-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-sm text-white/40">Файл не выбран</span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-white/45 mb-1">ZIP архив</label>
-                          <div className="flex items-center gap-2">
-                            <label
-                              htmlFor="result-file-zip"
-                              className="btn btn-outline btn-sm cursor-pointer shrink-0"
-                            >
-                              Выберите файл
-                            </label>
-                            <input
-                              id="result-file-zip"
-                              type="file"
-                              accept=".zip,application/zip"
-                              onChange={(e) => handleResultFileChange(e, 'zip')}
-                              className="hidden"
-                            />
-                            {resultFiles.zip ? (
-                              <>
-                                <span className="text-sm text-white/45 truncate flex-1">{resultFiles.zip.name}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setResultFiles(prev => ({ ...prev, zip: null }))}
-                                  className="text-red-600 hover:text-red-800 shrink-0"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-sm text-white/40">Файл не выбран</span>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <button
-                          onClick={handleUploadResultFiles}
-                          disabled={uploadingResult || (!resultFiles.wav && !resultFiles.mp3 && !resultFiles.zip)}
-                          className="btn btn-primary btn-sm w-full"
-                        >
-                          {uploadingResult ? 'Загрузка...' : selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url ? 'Заменить файлы' : 'Загрузить файлы'}
-                        </button>
-                        <p className="text-xs text-white/40">
-                          Можно загрузить от 1 до 3 файлов. При повторной загрузке файлы будут заменены.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="pt-4 border-t border-white/10">
-                    <label className="text-sm font-medium text-white/45 mb-2 block">Изменить статус</label>
-                    <div className="space-y-2">
-                      {selectedOrder.status !== 'pending' && (
-                        <button
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'pending')}
-                          className="btn btn-outline btn-sm w-full"
-                        >
-                          Вернуть в ожидание
-                        </button>
-                      )}
-                      {selectedOrder.status !== 'confirmed' && selectedOrder.price && (
-                        <button
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'confirmed')}
-                          className="btn btn-primary btn-sm w-full"
-                        >
-                          Подтвердить заказ
-                        </button>
-                      )}
-                      {selectedOrder.status !== 'paid' && (
-                        <button
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'paid')}
-                          className="btn btn-primary btn-sm w-full"
-                        >
-                          Отметить как оплачен
-                        </button>
-                      )}
-                      {selectedOrder.status !== 'in_progress' && (
-                        <button
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'in_progress')}
-                          className="btn btn-primary btn-sm w-full"
-                        >
-                          Взять в работу
-                        </button>
-                      )}
-                      {selectedOrder.status !== 'completed' && (
-                        <button
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'completed')}
-                          className="btn btn-primary btn-sm w-full"
-                        >
-                          Завершить
-                        </button>
-                      )}
-                      {selectedOrder.status !== 'cancelled' && (
-                        <button
-                          onClick={() => updateOrderStatus(selectedOrder.id, 'cancelled')}
-                          className="btn btn-outline btn-sm w-full text-red-300 hover:text-red-200 hover:border-red-400"
-                        >
-                          Отменить
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="card">
-                <div className="card-content text-center text-white/40">
-                  Выберите заявку для просмотра деталей
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      {selectedOrder && (
+        <OrderDrawer
+          order={selectedOrder}
+          saving={saving}
+          uploading={uploading}
+          priceDraft={priceDraft}
+          prepayDraft={prepayDraft}
+          noteDraft={noteDraft}
+          resultFiles={resultFiles}
+          onClose={() => openOrder(null)}
+          onPrice={setPriceDraft}
+          onPrepay={setPrepayDraft}
+          onNote={setNoteDraft}
+          onResultFile={(type, file) => setResultFiles((prev) => ({ ...prev, [type]: file }))}
+          onSendInvoice={sendInvoice}
+          onSaveMoney={saveMoney}
+          onSaveNote={saveNote}
+          onUpload={handleUploadResults}
+          onCopy={copyText}
+          onAction={(fields, message) => handleUpdate(fields, message)}
+        />
       )}
     </div>
   );
 };
 
+function FileRow({ url, label, icon: Icon }) {
+  if (!url) return null;
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2">
+        <Icon className="h-4 w-4 shrink-0 text-white/45" />
+        <span className="truncate text-sm text-white/70">{label}</span>
+      </div>
+      <a href={buildMediaUrl(url)} target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs text-[#22c55e] hover:underline">
+        Скачать
+      </a>
+    </div>
+  );
+}
+
+function OrderDrawer({
+  order,
+  saving,
+  uploading,
+  priceDraft,
+  prepayDraft,
+  noteDraft,
+  resultFiles,
+  onClose,
+  onPrice,
+  onPrepay,
+  onNote,
+  onResultFile,
+  onSendInvoice,
+  onSaveMoney,
+  onSaveNote,
+  onUpload,
+  onCopy,
+  onAction,
+}) {
+  const queue = orderQueue(order);
+  const status = STATUS_UI[order.status] || STATUS_UI.pending;
+  const cats = categoriesOf(order);
+  const materials = parseMediaList(order.materials_url);
+  const refFiles = parseMediaList(order.reference_files_url);
+  const refLinks = parseMediaList(order.reference_links);
+  const due = dueDate(order);
+  const dueNow = order.due_amount || (order.price && (order.price * (order.prepayment_percent || 50)) / 100);
+  const busy = saving || uploading;
+  const canInvoice = queue === 'action';
+  const canDeliver = queue === 'work';
+  const hasResults = Boolean(order.result_wav_url || order.result_mp3_url || order.result_zip_url);
+
+  const primary = () => {
+    if (canInvoice) {
+      return (
+        <button type="button" className="admin-primary-btn w-full justify-center" disabled={busy} onClick={onSendInvoice}>
+          Выставить счёт
+        </button>
+      );
+    }
+    if (queue === 'payment') {
+      return (
+        <button
+          type="button"
+          className="admin-primary-btn w-full justify-center"
+          disabled={busy}
+          onClick={() => onAction({ status: 'paid' }, 'Оплата отмечена, заказ в работе')}
+        >
+          Оплата получена
+        </button>
+      );
+    }
+    if (canDeliver) {
+      return (
+        <button
+          type="button"
+          className="admin-primary-btn w-full justify-center"
+          disabled={busy}
+          onClick={() => {
+            if (!hasResults && !window.confirm('Сдать заказ без файлов результата?')) return;
+            onAction({ status: 'completed' }, 'Заказ сдан');
+          }}
+        >
+          Сдать заказ
+        </button>
+      );
+    }
+    if (queue === 'cancelled') {
+      return (
+        <button
+          type="button"
+          className="admin-primary-btn w-full justify-center"
+          disabled={busy}
+          onClick={() => onAction({ status: 'pending' }, 'Заявка снова в очереди')}
+        >
+          Вернуть в очередь
+        </button>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="admin-drawer-backdrop">
+      <button type="button" className="admin-drawer-scrim" aria-label="Закрыть заявку" onClick={onClose} />
+      <aside className="admin-drawer" role="dialog" aria-modal="true" aria-labelledby="order-drawer-title">
+        <header className="admin-drawer-head">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">Заявка</p>
+            <h2 id="order-drawer-title" className="font-[Syne] text-xl font-bold text-white">
+              #{order.id}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`admin-badge ${status.badge}`}>{status.label}</span>
+            <button type="button" className="admin-icon-btn" onClick={onClose} aria-label="Закрыть">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
+
+        <div className="admin-drawer-body">
+          <section>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="admin-field-label">Клиент</p>
+                <p className="text-white">{customerName(order)}</p>
+                <p className="text-sm text-white/45">{customerEmail(order) || 'Почта не указана'}</p>
+                {!order.user_id && <p className="mt-1 text-xs text-white/35">Гость, без аккаунта</p>}
+              </div>
+              {customerEmail(order) && (
+                <button type="button" className="admin-ghost-btn !px-3 !py-2 text-xs" onClick={() => onCopy(customerEmail(order))}>
+                  Почта
+                </button>
+              )}
+            </div>
+            {order.contact_info && (
+              <button type="button" className="mt-2 text-left text-sm text-[#22c55e] hover:underline" onClick={() => onCopy(order.contact_info)}>
+                {order.contact_info}
+              </button>
+            )}
+          </section>
+
+          <section>
+            <p className="admin-field-label">Услуга</p>
+            {cats.length ? (
+              <div className="flex flex-wrap gap-1.5">
+                {cats.map((cat) => (
+                  <span key={cat} className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white/80">
+                    {cat}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-white/70">{order.order_type === 'dont_know' ? 'Клиент не знает, что нужно — обсудить' : 'Не указано'}</p>
+            )}
+            <p className="mt-2 text-xs text-white/40">
+              {order.order_type === 'dont_know' ? 'Тип: обсуждение' : 'Тип: бриф'} · {formatMoscowDate(order.created_at)}
+              {order.deadline_days ? ` · срок ${ruCount(order.deadline_days, 'день', 'дня', 'дней')}` : ''}
+              {due ? ` · до ${due.toLocaleDateString('ru-RU')}` : ''}
+            </p>
+          </section>
+
+          {order.description && (
+            <section>
+              <p className="admin-field-label">ТЗ</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/80">{order.description}</p>
+            </section>
+          )}
+
+          {(materials.length > 0 || refFiles.length > 0 || refLinks.length > 0) && (
+            <section className="space-y-2">
+              <p className="admin-field-label">Материалы</p>
+              {materials.map((url) => (
+                <FileRow key={url} url={url} label={fileName(url)} icon={Upload} />
+              ))}
+              {refFiles.map((url) => (
+                <FileRow key={url} url={url} label={`Референс · ${fileName(url)}`} icon={FileAudio} />
+              ))}
+              {refLinks.map((link) => (
+                <a
+                  key={link}
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 truncate text-sm text-[#22c55e] hover:underline"
+                >
+                  <LinkIcon className="h-3.5 w-3.5 shrink-0" />
+                  {link}
+                </a>
+              ))}
+            </section>
+          )}
+
+          <section className="space-y-3">
+            <p className="admin-field-label">Деньги</p>
+            <div className="grid grid-cols-2 gap-2">
+              <label>
+                <span className="mb-1 block text-xs text-white/40">Стоимость, ₽</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={priceDraft}
+                  onChange={(event) => onPrice(event.target.value)}
+                  className={fieldClass}
+                  placeholder={order.quoted_price ? String(order.quoted_price) : '0'}
+                />
+              </label>
+              <label>
+                <span className="mb-1 block text-xs text-white/40">Предоплата</span>
+                <select value={prepayDraft} onChange={(event) => onPrepay(event.target.value)} className={fieldClass}>
+                  <option value="50">50%</option>
+                  <option value="100">100%</option>
+                </select>
+              </label>
+            </div>
+            <p className="text-xs text-white/40">
+              {dueNow > 0 ? `К оплате сейчас: ${formatMoney(dueNow)}` : 'Сначала укажи стоимость, потом выставляй счёт'}
+              {order.quoted_price && !order.price ? ` · тариф ${formatMoney(order.quoted_price)}` : ''}
+            </p>
+            {queue !== 'done' && queue !== 'cancelled' && (
+              <button type="button" className="admin-ghost-btn text-xs" disabled={busy} onClick={onSaveMoney}>
+                Сохранить сумму
+              </button>
+            )}
+          </section>
+
+          <section className="space-y-2">
+            <p className="admin-field-label">Заметка себе</p>
+            <textarea
+              value={noteDraft}
+              onChange={(event) => onNote(event.target.value)}
+              rows={3}
+              className={fieldClass}
+              placeholder="Что обсудили, куда скинуть, кто должен деньги"
+            />
+            <button type="button" className="admin-ghost-btn text-xs" disabled={busy} onClick={onSaveNote}>
+              Сохранить заметку
+            </button>
+          </section>
+
+          {(queue === 'work' || queue === 'done' || hasResults) && (
+            <section className="space-y-3">
+              <p className="admin-field-label">Результат</p>
+              <div className="space-y-2">
+                <FileRow url={order.result_wav_url} label="WAV" icon={FileAudio} />
+                <FileRow url={order.result_mp3_url} label="MP3" icon={Music} />
+                <FileRow url={order.result_zip_url} label="ZIP" icon={FileText} />
+              </div>
+              {queue !== 'cancelled' && (
+                <div className="space-y-2">
+                  {['wav', 'mp3', 'zip'].map((type) => (
+                    <label key={type} className="flex items-center gap-2 text-sm text-white/60">
+                      <span className="w-10 uppercase text-white/35">{type}</span>
+                      <input
+                        type="file"
+                        className="block w-full text-xs text-white/50 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-white"
+                        accept={type === 'zip' ? '.zip,application/zip' : 'audio/*'}
+                        onChange={(event) => onResultFile(type, event.target.files?.[0] || null)}
+                      />
+                    </label>
+                  ))}
+                  <button
+                    type="button"
+                    className="admin-ghost-btn w-full justify-center text-xs"
+                    disabled={busy || (!resultFiles.wav && !resultFiles.mp3 && !resultFiles.zip)}
+                    onClick={onUpload}
+                  >
+                    {uploading ? 'Загрузка…' : hasResults ? 'Заменить файлы' : 'Загрузить файлы'}
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
+
+          {queue !== 'cancelled' && queue !== 'done' && (
+            <details className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+              <summary className="cursor-pointer text-xs uppercase tracking-wide text-white/40">Другие статусы</summary>
+              <div className="mt-2 grid grid-cols-1 gap-2">
+                {order.status !== 'pending' && (
+                  <button type="button" className="admin-ghost-btn text-xs" disabled={busy} onClick={() => onAction({ status: 'pending' }, 'Вернули в новые')}>
+                    В новые
+                  </button>
+                )}
+                {order.status !== 'in_progress' && (order.status === 'paid' || order.status === 'confirmed') && (
+                  <button type="button" className="admin-ghost-btn text-xs" disabled={busy} onClick={() => onAction({ status: 'in_progress' }, 'В работе')}>
+                    Пометить «в работе»
+                  </button>
+                )}
+              </div>
+            </details>
+          )}
+        </div>
+
+        <footer className="admin-drawer-foot">
+          {primary()}
+          {queue !== 'cancelled' && queue !== 'done' && (
+            <button
+              type="button"
+              className="admin-ghost-btn w-full justify-center text-red-300 hover:border-red-400 hover:text-red-200"
+              disabled={busy}
+              onClick={() => {
+                if (!window.confirm('Отменить заявку?')) return;
+                onAction({ status: 'cancelled' }, 'Заявка отменена');
+              }}
+            >
+              Отменить заявку
+            </button>
+          )}
+        </footer>
+      </aside>
+    </div>
+  );
+}
+
 export default AdminOrders;
-
-
-

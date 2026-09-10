@@ -58,6 +58,21 @@ class ServiceOrderAmountTests(unittest.TestCase):
         )
         self.assertEqual(service_order_amount(order), 20000.0)
 
+    def test_full_price_from_tariff_when_admin_price_missing(self):
+        from payments.quote import service_order_full_price, service_order_queue
+
+        order = SimpleNamespace(
+            price=None,
+            prepayment_percent=50,
+            service_categories='["бит в стиле трэп"]',
+            service_category=None,
+            deadline_days=7,
+        )
+        self.assertEqual(service_order_full_price(order), 15000.0)
+        self.assertEqual(service_order_queue("paid"), "work")
+        self.assertEqual(service_order_queue("in_progress"), "work")
+        self.assertEqual(service_order_queue("confirmed"), "payment")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -47,8 +47,12 @@ def _deadline_price(deadline_days: int | None, prepayment_percent: int) -> float
     return float(table[14])
 
 
+def _prepayment_percent(order: ServiceOrder) -> int:
+    return int(getattr(order, "prepayment_percent", None) or 50) or 50
+
+
 def service_order_amount(order: ServiceOrder) -> float:
-    percent = int(order.prepayment_percent or 50)
+    percent = _prepayment_percent(order)
     if order.price:
         return round(float(order.price) * percent / 100, 2)
     categories = []
@@ -66,6 +70,28 @@ def service_order_amount(order: ServiceOrder) -> float:
         else:
             total += _deadline_price(order.deadline_days, percent)
     return round(total * percent / 100, 2)
+
+
+def service_order_full_price(order: ServiceOrder) -> float:
+    """Полная стоимость заказа. Если админ ещё не зафиксировал price — из тарифа."""
+    if getattr(order, "price", None):
+        return round(float(order.price), 2)
+    due = service_order_amount(order)
+    if due <= 0:
+        return 0.0
+    return round(due * 100 / _prepayment_percent(order), 2)
+
+
+def service_order_queue(status: str | None) -> str:
+    mapping = {
+        "pending": "action",
+        "confirmed": "payment",
+        "paid": "work",
+        "in_progress": "work",
+        "completed": "done",
+        "cancelled": "cancelled",
+    }
+    return mapping.get(status or "pending", "action")
 
 
 def description_for(kind: str, extra: str = "") -> str:

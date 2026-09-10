@@ -242,6 +242,7 @@ class ServiceOrder(Base):
     
     # Статус заказа
     status = Column(String, default="pending")  # pending/confirmed/paid/in_progress/completed/cancelled
+    admin_note = Column(Text, nullable=True)  # внутренняя заметка админа, клиенту не отдаём
     
     # Файлы результата работы (для заказов типа "не знаю")
     result_wav_url = Column(String, nullable=True)  # WAV файл результата
