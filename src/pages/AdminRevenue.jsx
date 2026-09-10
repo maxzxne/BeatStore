@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../utils/api';
 import { Music, GraduationCap, FileText, TrendingUp, Calendar } from 'lucide-react';
 import DatePicker from '../components/DatePicker';
 
 const AdminRevenue = () => {
   const { isAdminAuthenticated } = useAuth();
-  const { isDarkMode } = useTheme();
-  const isDark = isDarkMode;
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
@@ -55,7 +52,7 @@ const AdminRevenue = () => {
   const renderChart = () => {
     if (!stats || !stats.revenue_by_day || Object.keys(stats.revenue_by_day).length === 0) {
       return (
-        <div className="flex items-center justify-center h-64 text-gray-500 dark:text-neutral-500">
+        <div className="admin-empty py-16">
           Нет данных для отображения графика
         </div>
       );
@@ -91,7 +88,7 @@ const AdminRevenue = () => {
           <svg 
             width={chartWidth} 
             height={chartHeight} 
-            className="border-b border-l border-gray-300 dark:border-neutral-700 shrink-0"
+            className="border-b border-l border-white/10 shrink-0"
           >
             {/* Сетка */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
@@ -103,7 +100,7 @@ const AdminRevenue = () => {
                   y1={y}
                   x2={chartWidth - rightPadding}
                   y2={y}
-                  stroke={isDark ? '#404040' : '#e5e7eb'}
+                  stroke='rgba(255,255,255,0.08)'
                   strokeWidth="1"
                   strokeDasharray="4 4"
                 />
@@ -114,7 +111,7 @@ const AdminRevenue = () => {
             <path
               d={pathData}
               fill="none"
-              stroke={isDark ? '#fff' : '#000'}
+              stroke='#22c55e'
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -132,17 +129,17 @@ const AdminRevenue = () => {
                     y={y - 10}
                     width="68"
                     height="20"
-                    fill={isDark ? '#262626' : '#fff'}
+                    fill='#0b0f14'
                     opacity="0.98"
                     rx="3"
-                    stroke={isDark ? '#404040' : '#e5e7eb'}
+                    stroke='rgba(255,255,255,0.08)'
                     strokeWidth="0.5"
                   />
                   <text
                     x="65"
                     y={y + 5}
                     fontSize="12"
-                    fill={isDark ? '#fff' : '#000'}
+                    fill='#22c55e'
                     fontWeight="500"
                     textAnchor="end"
                   >
@@ -168,8 +165,8 @@ const AdminRevenue = () => {
                     cx={point.x}
                     cy={point.y}
                     r="5"
-                    fill={isDark ? '#fff' : '#000'}
-                    stroke={isDark ? '#000' : '#fff'}
+                    fill='#22c55e'
+                    stroke='#0b0f14'
                     strokeWidth="2"
                     className="cursor-pointer transition-all"
                   />
@@ -182,17 +179,17 @@ const AdminRevenue = () => {
                         y={chartHeight - bottomPadding + 5}
                         width="56"
                         height="18"
-                        fill={isDark ? '#262626' : '#fff'}
+                        fill='#0b0f14'
                         opacity="0.98"
                         rx="3"
-                        stroke={isDark ? '#404040' : '#e5e7eb'}
+                        stroke='rgba(255,255,255,0.08)'
                         strokeWidth="0.5"
                       />
                       <text
                         x={point.x}
                         y={chartHeight - bottomPadding + 17}
                         fontSize="10"
-                        fill={isDark ? '#fff' : '#000'}
+                        fill='#22c55e'
                         fontWeight="500"
                         textAnchor="middle"
                       >
@@ -236,16 +233,16 @@ const AdminRevenue = () => {
                             y={tooltipY}
                             width={tooltipWidth}
                             height={tooltipHeight}
-                            fill={isDark ? '#fff' : '#000'}
+                            fill='#22c55e'
                             rx="4"
-                            stroke={isDark ? '#404040' : '#fff'}
+                            stroke='rgba(255,255,255,0.15)'
                             strokeWidth="1"
                           />
                           <text
                             x={tooltipX + tooltipWidth / 2}
                             y={tooltipY + tooltipHeight / 2 + 4}
                             fontSize="11"
-                            fill={isDark ? '#000' : '#fff'}
+                            fill='#0f172a'
                             fontWeight="600"
                             textAnchor="middle"
                           >
@@ -266,37 +263,37 @@ const AdminRevenue = () => {
 
   if (!isAdminAuthenticated) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
+      <div className="py-12 text-center text-white/50">
+        Доступ запрещен. Войдите как администратор.
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600 dark:text-neutral-400">Загрузка статистики...</div>
+      <div className="admin-loading">
+        Загрузка статистики…
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Доходы</h1>
-        <p className="text-gray-600 dark:text-neutral-400">Статистика продаж и доходов</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="admin-page-title">Доходы</h1>
+        <p className="admin-page-sub">Статистика продаж и доходов</p>
       </div>
 
       {/* Фильтр по датам */}
-      <div className="card mb-6">
-        <div className="card-content">
+      <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+        <div>
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-gray-600 dark:text-neutral-400" />
-              <label className="text-sm font-medium text-gray-700 dark:text-neutral-300">Период:</label>
+              <Calendar className="h-5 w-5 text-white/45" />
+              <label className="text-sm font-medium text-white/70">Период:</label>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 dark:text-neutral-400">С</label>
+              <label className="text-sm text-white/45">С</label>
               <DatePicker
                 value={startDate}
                 onChange={setStartDate}
@@ -305,7 +302,7 @@ const AdminRevenue = () => {
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600 dark:text-neutral-400">По</label>
+              <label className="text-sm text-white/45">По</label>
               <DatePicker
                 value={endDate}
                 onChange={setEndDate}
@@ -329,75 +326,75 @@ const AdminRevenue = () => {
       </div>
 
       {/* Статистические карточки */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="card">
-          <div className="card-content">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Общий доход</p>
-                <p className="text-2xl font-bold text-black dark:text-white">
+                <p className="text-sm text-white/45 mb-1">Общий доход</p>
+                <p className="font-[Syne] text-2xl font-bold text-white">
                   {stats ? formatCurrency(stats.total_revenue) : '0 ₽'}
                 </p>
               </div>
-              <div className="bg-black rounded-full p-3 flex items-center justify-center self-center">
-                <span className="text-white text-xl font-bold leading-none">₽</span>
+              <div className="admin-stat-icon">
+                <span className="text-xl font-bold leading-none">₽</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-content">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Продано битов</p>
-                <p className="text-2xl font-bold text-black dark:text-white">
+                <p className="text-sm text-white/45 mb-1">Продано битов</p>
+                <p className="font-[Syne] text-2xl font-bold text-white">
                   {stats ? stats.beat_count : 0}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   {stats ? formatCurrency(stats.beat_revenue) : '0 ₽'}
                 </p>
               </div>
-              <div className="bg-black rounded-full p-3">
-                <Music className="h-6 w-6 text-white" />
+              <div className="admin-stat-icon">
+                <Music className="h-5 w-5" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-content">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Продано курсов</p>
-                <p className="text-2xl font-bold text-black dark:text-white">
+                <p className="text-sm text-white/45 mb-1">Продано курсов</p>
+                <p className="font-[Syne] text-2xl font-bold text-white">
                   {stats ? stats.course_count : 0}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   {stats ? formatCurrency(stats.course_revenue) : '0 ₽'}
                 </p>
               </div>
-              <div className="bg-black rounded-full p-3">
-                <GraduationCap className="h-6 w-6 text-white" />
+              <div className="admin-stat-icon">
+                <GraduationCap className="h-5 w-5" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-content">
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+          <div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-neutral-400 mb-1">Выполнено заказов</p>
-                <p className="text-2xl font-bold text-black dark:text-white">
+                <p className="text-sm text-white/45 mb-1">Выполнено заказов</p>
+                <p className="font-[Syne] text-2xl font-bold text-white">
                   {stats ? stats.order_count : 0}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">
+                <p className="text-xs text-white/40 mt-1">
                   {stats ? formatCurrency(stats.order_revenue) : '0 ₽'}
                 </p>
               </div>
-              <div className="bg-black rounded-full p-3">
-                <FileText className="h-6 w-6 text-white" />
+              <div className="admin-stat-icon">
+                <FileText className="h-5 w-5" />
               </div>
             </div>
           </div>
@@ -405,14 +402,12 @@ const AdminRevenue = () => {
       </div>
 
       {/* График доходов */}
-      <div className="card">
-        <div className="card-header">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-black dark:text-white" />
-            <h2 className="text-lg font-semibold text-black dark:text-white">График доходов</h2>
-          </div>
+      <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-white/10 px-5 py-4">
+          <TrendingUp className="h-5 w-5 text-[#22c55e]" />
+          <h2 className="font-[Syne] text-lg font-semibold text-white">График доходов</h2>
         </div>
-        <div className="card-content overflow-x-auto">
+        <div className="overflow-x-auto p-5">
           {renderChart()}
         </div>
       </div>

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../utils/api';
 import { User, Mail, Lock, Save, Phone, X, LogOut, Sun, Moon } from 'lucide-react';
+
+const fieldClass =
+  'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
 
 const ProfilePage = () => {
   const { user, fetchUser, logout } = useAuth();
@@ -66,59 +69,67 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-black dark:text-white dark:text-white mb-2">Войдите для просмотра профиля</h1>
-          <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Вам нужно войти в систему, чтобы просмотреть профиль.</p>
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-12 text-center">
+          <User className="mx-auto mb-4 h-12 w-12 text-white/30" />
+          <h1 className="font-[Syne] text-2xl font-extrabold text-white">Войдите для просмотра профиля</h1>
+          <p className="mt-2 text-sm text-white/50">Вам нужно войти в систему, чтобы просмотреть профиль.</p>
+          <Link
+            to="/login"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+          >
+            Войти
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-2xl">
+    <div className="mx-auto max-w-2xl px-4 py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white dark:text-white mb-2">Личный кабинет</h1>
-        <p className="text-gray-600 dark:text-neutral-400 dark:text-neutral-400">Управление вашим профилем</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Account</p>
+        <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Личный кабинет</h1>
+        <p className="mt-2 text-sm text-white/50">Управление вашим профилем</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
         {/* Настройки темы */}
-        <div className="p-4 bg-gray-50 dark:bg-neutral-800 dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-700 dark:border-neutral-800">
-          <div className="flex items-center justify-between">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center">
               {isDarkMode ? (
-                <Moon className="h-5 w-5 text-gray-600 dark:text-neutral-400 dark:text-neutral-300 mr-3" />
+                <Moon className="mr-3 h-5 w-5 text-white/50" />
               ) : (
-                <Sun className="h-5 w-5 text-yellow-500 mr-3" />
+                <Sun className="mr-3 h-5 w-5 text-[#22c55e]" />
               )}
               <div>
-                <p className="text-sm font-medium text-black dark:text-white dark:text-white">Тема оформления</p>
-                <p className="text-xs text-gray-500 dark:text-neutral-500 dark:text-neutral-500">
+                <p className="text-sm font-medium text-white">Тема оформления</p>
+                <p className="text-xs text-white/40">
                   {isDarkMode ? 'Тёмная тема' : 'Светлая тема'}
                 </p>
               </div>
             </div>
-            <label className="inline-flex items-center gap-3 cursor-pointer">
-              <Moon className="h-5 w-5 text-gray-500 dark:text-neutral-400 shrink-0" />
-              <div className="relative w-11 h-6 flex-shrink-0">
+            <label className="inline-flex cursor-pointer items-center gap-3">
+              <Moon className="h-5 w-5 shrink-0 text-white/40" />
+              <div className="relative h-6 w-11 flex-shrink-0">
                 <input
                   type="checkbox"
                   checked={!isDarkMode}
                   onChange={toggleTheme}
-                  className="sr-only peer"
+                  className="peer sr-only"
                 />
-                <div className="relative w-full h-full bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-black dark:peer-focus:ring-white rounded-full peer dark:bg-neutral-700 peer-checked:bg-yellow-400 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:w-5 after:h-5 after:bg-white after:rounded-full after:border after:border-gray-300 dark:after:border-neutral-600 after:shadow-sm after:transition-transform after:duration-200 peer-checked:after:translate-x-5"></div>
+                <div className="relative h-full w-full rounded-full bg-white/15 transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-white/20 after:bg-white after:shadow-sm after:transition-transform after:duration-200 after:content-[''] peer-checked:bg-[#22c55e] peer-checked:after:translate-x-5 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/40"></div>
               </div>
-              <Sun className="h-5 w-5 text-yellow-500 shrink-0" />
+              <Sun className="h-5 w-5 shrink-0 text-[#22c55e]" />
             </label>
           </div>
         </div>
 
         {/* Имя пользователя */}
         <div>
-          <label htmlFor="profile_username" className="block text-sm font-medium text-black dark:text-white dark:text-white mb-2">
-            <User className="h-4 w-4 inline mr-2" />
+          <label htmlFor="profile_username" className="mb-2 block text-sm font-medium text-white/80">
+            <User className="mr-2 inline h-4 w-4" />
             Имя пользователя
           </label>
           <input
@@ -128,14 +139,14 @@ const ProfilePage = () => {
             value={formData.username}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-900 text-black dark:text-white dark:text-white"
+            className={fieldClass}
           />
         </div>
 
         {/* Email */}
         <div>
-          <label htmlFor="profile_email" className="block text-sm font-medium text-black dark:text-white dark:text-white mb-2">
-            <Mail className="h-4 w-4 inline mr-2" />
+          <label htmlFor="profile_email" className="mb-2 block text-sm font-medium text-white/80">
+            <Mail className="mr-2 inline h-4 w-4" />
             Email
           </label>
           <input
@@ -145,14 +156,14 @@ const ProfilePage = () => {
             value={formData.email}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-900 text-black dark:text-white dark:text-white"
+            className={fieldClass}
           />
         </div>
 
         {/* Дополнительная связь */}
         <div>
-          <label htmlFor="profile_additional_contact" className="block text-sm font-medium text-black dark:text-white dark:text-white mb-2">
-            <Phone className="h-4 w-4 inline mr-2" />
+          <label htmlFor="profile_additional_contact" className="mb-2 block text-sm font-medium text-white/80">
+            <Phone className="mr-2 inline h-4 w-4" />
             Дополнительная связь (Telegram, WhatsApp и т.д.)
           </label>
           <input
@@ -161,10 +172,10 @@ const ProfilePage = () => {
             name="additional_contact"
             value={formData.additional_contact}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-900 text-black dark:text-white dark:text-white"
+            className={fieldClass}
             placeholder="Например: @mytelegram, +79991234567"
           />
-          <p className="text-xs text-gray-500 dark:text-neutral-500 dark:text-neutral-500 mt-1">
+          <p className="mt-1 text-xs text-white/40">
             Эта информация будет автоматически добавляться в ваши заявки
           </p>
         </div>
@@ -174,9 +185,9 @@ const ProfilePage = () => {
           <button
             type="button"
             onClick={() => setShowPasswordModal(true)}
-            className="w-full btn btn-outline h-12 text-base flex items-center justify-center"
+            className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/15 text-base font-medium text-white transition hover:bg-white/5"
           >
-            <Lock className="h-4 w-4 mr-2" />
+            <Lock className="mr-2 h-4 w-4" />
             Изменить пароль
           </button>
         </div>
@@ -184,39 +195,39 @@ const ProfilePage = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full btn btn-primary h-12 text-base flex items-center justify-center"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
         >
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="mr-2 h-4 w-4" />
           {loading ? 'Сохранение...' : 'Сохранить изменения'}
         </button>
       </form>
 
       {/* Кнопка выхода */}
-      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-neutral-700 dark:border-neutral-800">
+      <div className="mt-8 border-t border-white/10 pt-6">
         <button
           onClick={() => {
             logout();
             navigate('/');
           }}
-          className="w-full btn btn-outline h-12 text-base flex items-center justify-center text-red-600 hover:text-red-700 hover:border-red-600 dark:text-red-400 dark:hover:text-red-300 dark:hover:border-red-400"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full border border-red-500/40 text-base font-medium text-red-400 transition hover:bg-red-500/10"
         >
-          <LogOut className="h-4 w-4 mr-2" />
+          <LogOut className="mr-2 h-4 w-4" />
           Выйти из аккаунта
         </button>
       </div>
 
       {/* Модалка изменения пароля */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-neutral-900 rounded-lg p-6 max-w-md w-full mx-4 border dark:border-neutral-800">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-black dark:text-white dark:text-white">Изменить пароль</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0b0f14] p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-[Syne] text-xl font-bold text-white">Изменить пароль</h2>
               <button
                 onClick={() => {
                   setShowPasswordModal(false);
                   setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 }}
-                className="text-gray-500 dark:text-neutral-500 hover:text-black dark:text-white dark:text-neutral-400 dark:hover:text-white"
+                className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -255,7 +266,7 @@ const ProfilePage = () => {
               }
             }} className="space-y-4">
               <div>
-                <label htmlFor="current_password" className="block text-sm font-medium text-black dark:text-white dark:text-white mb-2">
+                <label htmlFor="current_password" className="mb-2 block text-sm font-medium text-white/80">
                   Текущий пароль *
                 </label>
                 <input
@@ -264,12 +275,12 @@ const ProfilePage = () => {
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-800 text-black dark:text-white dark:text-white"
+                  className={fieldClass}
                 />
               </div>
 
               <div>
-                <label htmlFor="new_password" className="block text-sm font-medium text-black dark:text-white dark:text-white mb-2">
+                <label htmlFor="new_password" className="mb-2 block text-sm font-medium text-white/80">
                   Новый пароль *
                 </label>
                 <input
@@ -279,12 +290,12 @@ const ProfilePage = () => {
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-800 text-black dark:text-white dark:text-white"
+                  className={fieldClass}
                 />
               </div>
 
               <div>
-                <label htmlFor="confirm_new_password" className="block text-sm font-medium text-black dark:text-white dark:text-white mb-2">
+                <label htmlFor="confirm_new_password" className="mb-2 block text-sm font-medium text-white/80">
                   Подтверждение нового пароля *
                 </label>
                 <input
@@ -294,18 +305,18 @@ const ProfilePage = () => {
                   onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                   required
                   minLength={6}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-800 text-black dark:text-white dark:text-white"
+                  className={fieldClass}
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setShowPasswordModal(false);
                     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
                   }}
-                  className="flex-1 btn btn-outline h-12"
+                  className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 font-medium text-white transition hover:bg-white/5 disabled:opacity-60"
                   disabled={loading}
                 >
                   Отмена
@@ -313,7 +324,7 @@ const ProfilePage = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 btn btn-primary h-12"
+                  className="inline-flex h-12 flex-1 items-center justify-center rounded-full bg-[#22c55e] font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
                 >
                   {loading ? 'Сохранение...' : 'Изменить пароль'}
                 </button>
@@ -327,5 +338,3 @@ const ProfilePage = () => {
 };
 
 export default ProfilePage;
-
-

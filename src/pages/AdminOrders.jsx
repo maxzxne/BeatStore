@@ -153,12 +153,12 @@ const AdminOrders = () => {
   const formatDate = formatMoscowDate;
 
   const statusConfig = {
-    pending: { label: 'Ожидает', color: 'bg-amber-500 text-white', icon: Clock },
-    confirmed: { label: 'Подтверждено', color: 'bg-blue-600 text-white', icon: CheckCircle },
-    paid: { label: 'Оплачено', color: 'bg-green-600 text-white', icon: CheckCircle },
-    in_progress: { label: 'В работе', color: 'bg-violet-600 text-white', icon: AlertCircle },
-    completed: { label: 'Завершено', color: 'bg-emerald-600 text-white', icon: CheckCircle },
-    cancelled: { label: 'Отменено', color: 'bg-red-600 text-white', icon: XCircle }
+    pending: { label: 'Ожидает', color: 'bg-amber-500/15 text-amber-300', icon: Clock },
+    confirmed: { label: 'Подтверждено', color: 'bg-white/10 text-white/80', icon: CheckCircle },
+    paid: { label: 'Оплачено', color: 'bg-[#22c55e]/15 text-[#22c55e]', icon: CheckCircle },
+    in_progress: { label: 'В работе', color: 'bg-white/10 text-white/70', icon: AlertCircle },
+    completed: { label: 'Завершено', color: 'bg-[#22c55e]/15 text-[#22c55e]', icon: CheckCircle },
+    cancelled: { label: 'Отменено', color: 'bg-red-500/15 text-red-300', icon: XCircle }
   };
 
   const getStatusBadge = (status) => {
@@ -166,7 +166,7 @@ const AdminOrders = () => {
     const Icon = config.icon;
     
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${config.color}`}>
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${config.color}`}>
         <Icon className="h-3 w-3 shrink-0" />
         {config.label}
       </span>
@@ -176,26 +176,26 @@ const AdminOrders = () => {
 
   if (!isAdminAuthenticated) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-600 dark:text-neutral-400">Доступ запрещен. Войдите как администратор.</div>
+      <div className="py-12 text-center text-white/50">
+        Доступ запрещен. Войдите как администратор.
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-600 dark:text-neutral-400">Загрузка заявок...</div>
+      <div className="admin-loading">
+        Загрузка заявок…
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black dark:text-white mb-2">Заявки на услуги</h1>
-        <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
-          <p className="text-gray-600 dark:text-neutral-400">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="admin-page-title">Заявки</h1>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+          <p className="admin-page-sub !mt-0">{filteredOrders.length} заявок {statusFilter !== 'all' ? `(${statusConfig[statusFilter]?.label || statusFilter})` : 'всего'}</p>
           <div className="flex flex-wrap items-center gap-2">
             <CustomSelect
               value={sortBy}
@@ -235,9 +235,11 @@ const AdminOrders = () => {
       </div>
 
       {sortedOrders.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <div className="text-gray-600 dark:text-neutral-400 text-lg">Заявок пока нет</div>
+        <div className="admin-panel">
+          <div className="admin-empty">
+            <FileText className="mx-auto mb-3 h-10 w-10 text-white/25" />
+            Заявок пока нет
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -247,24 +249,24 @@ const AdminOrders = () => {
               <div
                 key={order.id}
                 className={`card cursor-pointer transition-all ${
-                  selectedOrder?.id === order.id ? 'ring-2 ring-black' : ''
+                  selectedOrder?.id === order.id ? 'ring-2 ring-[#22c55e]/60 border-[#22c55e]/30' : ''
                 }`}
                 onClick={() => setSelectedOrder(order)}
               >
                 <div className="card-content">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-black dark:text-white mb-1">
+                      <h3 className="font-semibold text-white mb-1">
                         {order.service_categories && order.service_categories.length > 0
                           ? order.service_categories.join(', ')
                           : order.service_category || 'Заказ'}
                       </h3>
                       {order.order_type === 'dont_know' && (
-                        <span className="text-xs bg-slate-500 text-white px-2 py-1 rounded mb-2 inline-block">
+                        <span className="text-xs bg-white/10 text-white/70 px-2 py-1 rounded-full mb-2 inline-block">
                           Требует обсуждения
                         </span>
                       )}
-                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-neutral-400">
+                      <div className="flex items-center gap-2 text-sm text-white/45">
                         <User className="h-4 w-4" />
                         <span>
                           {order.user_username || order.customer_name} 
@@ -275,7 +277,7 @@ const AdminOrders = () => {
                     {getStatusBadge(order.status)}
                   </div>
                   
-                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-neutral-500">
+                  <div className="flex items-center gap-4 text-xs text-white/40">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       <span>{formatDate(order.created_at)}</span>
@@ -284,12 +286,12 @@ const AdminOrders = () => {
                       <span>Дедлайн: {order.deadline_days} {order.deadline_days === 1 ? 'день' : order.deadline_days < 5 ? 'дня' : 'дней'}</span>
                     )}
                     {order.price && (
-                      <span className="font-semibold text-black dark:text-white">{order.price.toLocaleString('ru-RU')} ₽</span>
+                      <span className="font-semibold text-white">{order.price.toLocaleString('ru-RU')} ₽</span>
                     )}
                   </div>
                   
                   {order.description && (
-                    <p className="text-sm text-gray-600 dark:text-neutral-400 mt-2 line-clamp-2">
+                    <p className="text-sm text-white/45 mt-2 line-clamp-2">
                       {order.description}
                     </p>
                   )}
@@ -303,59 +305,59 @@ const AdminOrders = () => {
             {selectedOrder ? (
               <div className="card sticky top-4">
                 <div className="card-header">
-                  <h2 className="text-lg font-semibold text-black dark:text-white">Детали заявки</h2>
+                  <h2 className="text-lg font-semibold text-white">Детали заявки</h2>
                 </div>
                 
                 <div className="card-content space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Категории услуг</label>
+                    <label className="text-sm font-medium text-white/45">Категории услуг</label>
                     {selectedOrder.service_categories && selectedOrder.service_categories.length > 0 ? (
                       <div className="flex flex-wrap gap-2 mt-1">
                         {selectedOrder.service_categories.map((cat, idx) => (
-                          <span key={idx} className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-900 dark:bg-neutral-500 dark:text-white border border-gray-300 dark:border-neutral-600">
+                          <span key={idx} className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white/10 text-white/80 border border-white/10">
                             {cat}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-black dark:text-white font-semibold">{selectedOrder.service_category || 'Не указано'}</p>
+                      <p className="text-white font-semibold">{selectedOrder.service_category || 'Не указано'}</p>
                     )}
                   </div>
                   
                   {selectedOrder.order_type && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Тип заказа</label>
-                      <p className="text-black dark:text-white">
+                      <label className="text-sm font-medium text-white/45">Тип заказа</label>
+                      <p className="text-white">
                         {selectedOrder.order_type === 'know' ? 'Я знаю, что хочу' : 'Требует обсуждения'}
                       </p>
                     </div>
                   )}
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Пользователь</label>
-                    <p className="text-black dark:text-white">{selectedOrder.user_username || selectedOrder.customer_name || 'Не указано'}</p>
-                    <p className="text-sm text-gray-600 dark:text-neutral-400">{selectedOrder.user_email || selectedOrder.customer_email || 'Не указано'}</p>
+                    <label className="text-sm font-medium text-white/45">Пользователь</label>
+                    <p className="text-white">{selectedOrder.user_username || selectedOrder.customer_name || 'Не указано'}</p>
+                    <p className="text-sm text-white/45">{selectedOrder.user_email || selectedOrder.customer_email || 'Не указано'}</p>
                     {!selectedOrder.user_id && (
-                      <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Неавторизованный пользователь</p>
+                      <p className="text-xs text-white/40 mt-1">Неавторизованный пользователь</p>
                     )}
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Статус</label>
+                    <label className="text-sm font-medium text-white/45">Статус</label>
                     <div className="mt-1">{getStatusBadge(selectedOrder.status)}</div>
                   </div>
                   
                   {selectedOrder.description && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Описание (ТЗ)</label>
-                      <p className="text-black dark:text-white whitespace-pre-wrap">{selectedOrder.description}</p>
+                      <label className="text-sm font-medium text-white/45">Описание (ТЗ)</label>
+                      <p className="text-white whitespace-pre-wrap">{selectedOrder.description}</p>
                     </div>
                   )}
                   
                   {selectedOrder.deadline_days && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Дедлайн</label>
-                      <p className="text-black dark:text-white">
+                      <label className="text-sm font-medium text-white/45">Дедлайн</label>
+                      <p className="text-white">
                         {selectedOrder.deadline_days} {selectedOrder.deadline_days === 1 ? 'день' : selectedOrder.deadline_days < 5 ? 'дня' : 'дней'}
                       </p>
                     </div>
@@ -363,19 +365,19 @@ const AdminOrders = () => {
                   
                   {selectedOrder.prepayment_percent && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Процент предоплаты</label>
-                      <p className="text-black dark:text-white">{selectedOrder.prepayment_percent}%</p>
+                      <label className="text-sm font-medium text-white/45">Процент предоплаты</label>
+                      <p className="text-white">{selectedOrder.prepayment_percent}%</p>
                     </div>
                   )}
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Стоимость</label>
+                    <label className="text-sm font-medium text-white/45">Стоимость</label>
                     {selectedOrder.price ? (
                       <div>
-                        <p className="text-black dark:text-white font-semibold text-lg mb-2">
+                        <p className="text-white font-semibold text-lg mb-2">
                           {selectedOrder.price.toLocaleString('ru-RU')} ₽
                           {selectedOrder.prepayment_percent && (
-                            <span className="text-sm text-gray-600 dark:text-neutral-400 block mt-1">
+                            <span className="text-sm text-white/45 block mt-1">
                               Предоплата ({selectedOrder.prepayment_percent}%): {(selectedOrder.price * selectedOrder.prepayment_percent / 100).toLocaleString('ru-RU')} ₽
                             </span>
                           )}
@@ -387,7 +389,7 @@ const AdminOrders = () => {
                               type="number"
                               placeholder="Изменить стоимость"
                               defaultValue={selectedOrder.price}
-                              className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white rounded-lg"
+                              className="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-xl"
                               onBlur={(e) => {
                                 const price = parseFloat(e.target.value);
                                 if (price > 0 && price !== selectedOrder.price) {
@@ -395,7 +397,7 @@ const AdminOrders = () => {
                                 }
                               }}
                             />
-                            <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Можно изменить стоимость до подтверждения заказа</p>
+                            <p className="text-xs text-white/40 mt-1">Можно изменить стоимость до подтверждения заказа</p>
                           </div>
                         )}
                       </div>
@@ -404,7 +406,7 @@ const AdminOrders = () => {
                         <input
                           type="number"
                           placeholder="Укажите стоимость"
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white rounded-lg"
+                          className="w-full px-3 py-2 border border-white/10 bg-white/5 text-white rounded-xl"
                           onBlur={(e) => {
                             const price = parseFloat(e.target.value);
                             if (price > 0) {
@@ -413,7 +415,7 @@ const AdminOrders = () => {
                           }}
                         />
                         {selectedOrder.order_type === 'dont_know' && (
-                          <p className="text-xs text-gray-500 dark:text-neutral-500 mt-1">Укажите стоимость для заявки</p>
+                          <p className="text-xs text-white/40 mt-1">Укажите стоимость для заявки</p>
                         )}
                       </div>
                     )}
@@ -421,7 +423,7 @@ const AdminOrders = () => {
                   
                   {selectedOrder.reference_links && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 flex items-center gap-1">
+                      <label className="text-sm font-medium text-white/45 flex items-center gap-1">
                         <LinkIcon className="h-4 w-4" />
                         Ссылки на референсы
                       </label>
@@ -432,7 +434,7 @@ const AdminOrders = () => {
                             href={link.trim()}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline text-sm block truncate"
+                            className="text-[#22c55e] hover:underline text-sm block truncate"
                           >
                             {link.trim()}
                           </a>
@@ -443,7 +445,7 @@ const AdminOrders = () => {
                   
                   {selectedOrder.materials_url && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 flex items-center gap-1">
+                      <label className="text-sm font-medium text-white/45 flex items-center gap-1">
                         <Upload className="h-4 w-4" />
                         Материалы
                       </label>
@@ -451,7 +453,7 @@ const AdminOrders = () => {
                         href={buildMediaUrl(selectedOrder.materials_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm"
+                        className="text-[#22c55e] hover:underline text-sm"
                       >
                         Скачать материалы
                       </a>
@@ -460,7 +462,7 @@ const AdminOrders = () => {
                   
                   {selectedOrder.reference_files_url && (
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 flex items-center gap-1">
+                      <label className="text-sm font-medium text-white/45 flex items-center gap-1">
                         <Upload className="h-4 w-4" />
                         Референсы (файлы)
                       </label>
@@ -468,7 +470,7 @@ const AdminOrders = () => {
                         href={buildMediaUrl(selectedOrder.reference_files_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm"
+                        className="text-[#22c55e] hover:underline text-sm"
                       >
                         Скачать референсы
                       </a>
@@ -476,61 +478,61 @@ const AdminOrders = () => {
                   )}
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400">Дата создания</label>
-                    <p className="text-black dark:text-white text-sm">{formatDate(selectedOrder.created_at)}</p>
+                    <label className="text-sm font-medium text-white/45">Дата создания</label>
+                    <p className="text-white text-sm">{formatDate(selectedOrder.created_at)}</p>
                   </div>
                   
                   {/* Загрузка файлов результата (только для заказов типа "не знаю" после оплаты) */}
                   {selectedOrder.order_type === 'dont_know' && (selectedOrder.status === 'paid' || selectedOrder.status === 'in_progress' || selectedOrder.status === 'completed') && (
-                    <div className="pt-4 border-t border-gray-200 dark:border-neutral-700">
-                      <h3 className="text-md font-semibold text-black dark:text-white mb-3">Файлы результата</h3>
+                    <div className="pt-4 border-t border-white/10">
+                      <h3 className="text-md font-semibold text-white mb-3">Файлы результата</h3>
                       
                       {/* Текущие файлы */}
                       {(selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url) && (
                         <div className="mb-4 space-y-2">
                           {selectedOrder.result_wav_url && (
-                            <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-2 rounded">
+                            <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl">
                               <div className="flex items-center gap-2">
-                                <FileAudio className="h-4 w-4 text-gray-600 dark:text-neutral-400" />
-                                <span className="text-sm text-gray-700 dark:text-neutral-300">WAV файл</span>
+                                <FileAudio className="h-4 w-4 text-white/45" />
+                                <span className="text-sm text-white/70">WAV файл</span>
                               </div>
                               <a
                                 href={buildMediaUrl(selectedOrder.result_wav_url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline text-xs"
+                                className="text-[#22c55e] hover:underline text-xs"
                               >
                                 Скачать
                               </a>
                             </div>
                           )}
                           {selectedOrder.result_mp3_url && (
-                            <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-2 rounded">
+                            <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl">
                               <div className="flex items-center gap-2">
-                                <Music className="h-4 w-4 text-gray-600 dark:text-neutral-400" />
-                                <span className="text-sm text-gray-700 dark:text-neutral-300">MP3 файл</span>
+                                <Music className="h-4 w-4 text-white/45" />
+                                <span className="text-sm text-white/70">MP3 файл</span>
                               </div>
                               <a
                                 href={buildMediaUrl(selectedOrder.result_mp3_url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline text-xs"
+                                className="text-[#22c55e] hover:underline text-xs"
                               >
                                 Скачать
                               </a>
                             </div>
                           )}
                           {selectedOrder.result_zip_url && (
-                            <div className="flex items-center justify-between bg-gray-50 dark:bg-neutral-800 p-2 rounded">
+                            <div className="flex items-center justify-between bg-white/5 p-2.5 rounded-xl">
                               <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-gray-600 dark:text-neutral-400" />
-                                <span className="text-sm text-gray-700 dark:text-neutral-300">ZIP архив</span>
+                                <FileText className="h-4 w-4 text-white/45" />
+                                <span className="text-sm text-white/70">ZIP архив</span>
                               </div>
                               <a
                                 href={buildMediaUrl(selectedOrder.result_zip_url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline text-xs"
+                                className="text-[#22c55e] hover:underline text-xs"
                               >
                                 Скачать
                               </a>
@@ -542,7 +544,7 @@ const AdminOrders = () => {
                       {/* Форма загрузки файлов */}
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">WAV файл</label>
+                          <label className="block text-sm font-medium text-white/45 mb-1">WAV файл</label>
                           <div className="flex items-center gap-2">
                             <label
                               htmlFor="result-file-wav"
@@ -559,7 +561,7 @@ const AdminOrders = () => {
                             />
                             {resultFiles.wav ? (
                               <>
-                                <span className="text-sm text-gray-600 dark:text-neutral-400 truncate flex-1">{resultFiles.wav.name}</span>
+                                <span className="text-sm text-white/45 truncate flex-1">{resultFiles.wav.name}</span>
                                 <button
                                   type="button"
                                   onClick={() => setResultFiles(prev => ({ ...prev, wav: null }))}
@@ -569,13 +571,13 @@ const AdminOrders = () => {
                                 </button>
                               </>
                             ) : (
-                              <span className="text-sm text-gray-500 dark:text-neutral-500">Файл не выбран</span>
+                              <span className="text-sm text-white/40">Файл не выбран</span>
                             )}
                           </div>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">MP3 файл</label>
+                          <label className="block text-sm font-medium text-white/45 mb-1">MP3 файл</label>
                           <div className="flex items-center gap-2">
                             <label
                               htmlFor="result-file-mp3"
@@ -592,7 +594,7 @@ const AdminOrders = () => {
                             />
                             {resultFiles.mp3 ? (
                               <>
-                                <span className="text-sm text-gray-600 dark:text-neutral-400 truncate flex-1">{resultFiles.mp3.name}</span>
+                                <span className="text-sm text-white/45 truncate flex-1">{resultFiles.mp3.name}</span>
                                 <button
                                   type="button"
                                   onClick={() => setResultFiles(prev => ({ ...prev, mp3: null }))}
@@ -602,13 +604,13 @@ const AdminOrders = () => {
                                 </button>
                               </>
                             ) : (
-                              <span className="text-sm text-gray-500 dark:text-neutral-500">Файл не выбран</span>
+                              <span className="text-sm text-white/40">Файл не выбран</span>
                             )}
                           </div>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1">ZIP архив</label>
+                          <label className="block text-sm font-medium text-white/45 mb-1">ZIP архив</label>
                           <div className="flex items-center gap-2">
                             <label
                               htmlFor="result-file-zip"
@@ -625,7 +627,7 @@ const AdminOrders = () => {
                             />
                             {resultFiles.zip ? (
                               <>
-                                <span className="text-sm text-gray-600 dark:text-neutral-400 truncate flex-1">{resultFiles.zip.name}</span>
+                                <span className="text-sm text-white/45 truncate flex-1">{resultFiles.zip.name}</span>
                                 <button
                                   type="button"
                                   onClick={() => setResultFiles(prev => ({ ...prev, zip: null }))}
@@ -635,7 +637,7 @@ const AdminOrders = () => {
                                 </button>
                               </>
                             ) : (
-                              <span className="text-sm text-gray-500 dark:text-neutral-500">Файл не выбран</span>
+                              <span className="text-sm text-white/40">Файл не выбран</span>
                             )}
                           </div>
                         </div>
@@ -647,15 +649,15 @@ const AdminOrders = () => {
                         >
                           {uploadingResult ? 'Загрузка...' : selectedOrder.result_wav_url || selectedOrder.result_mp3_url || selectedOrder.result_zip_url ? 'Заменить файлы' : 'Загрузить файлы'}
                         </button>
-                        <p className="text-xs text-gray-500 dark:text-neutral-500">
+                        <p className="text-xs text-white/40">
                           Можно загрузить от 1 до 3 файлов. При повторной загрузке файлы будут заменены.
                         </p>
                       </div>
                     </div>
                   )}
                   
-                  <div className="pt-4 border-t border-gray-200 dark:border-neutral-700">
-                    <label className="text-sm font-medium text-gray-600 dark:text-neutral-400 mb-2 block">Изменить статус</label>
+                  <div className="pt-4 border-t border-white/10">
+                    <label className="text-sm font-medium text-white/45 mb-2 block">Изменить статус</label>
                     <div className="space-y-2">
                       {selectedOrder.status !== 'pending' && (
                         <button
@@ -676,7 +678,7 @@ const AdminOrders = () => {
                       {selectedOrder.status !== 'paid' && (
                         <button
                           onClick={() => updateOrderStatus(selectedOrder.id, 'paid')}
-                          className="btn btn-primary btn-sm w-full bg-green-600 hover:bg-green-700"
+                          className="btn btn-primary btn-sm w-full"
                         >
                           Отметить как оплачен
                         </button>
@@ -692,7 +694,7 @@ const AdminOrders = () => {
                       {selectedOrder.status !== 'completed' && (
                         <button
                           onClick={() => updateOrderStatus(selectedOrder.id, 'completed')}
-                          className="btn btn-primary btn-sm w-full bg-green-600 hover:bg-green-700"
+                          className="btn btn-primary btn-sm w-full"
                         >
                           Завершить
                         </button>
@@ -700,7 +702,7 @@ const AdminOrders = () => {
                       {selectedOrder.status !== 'cancelled' && (
                         <button
                           onClick={() => updateOrderStatus(selectedOrder.id, 'cancelled')}
-                          className="btn btn-outline btn-sm w-full text-red-600 hover:text-red-700 hover:border-red-600"
+                          className="btn btn-outline btn-sm w-full text-red-300 hover:text-red-200 hover:border-red-400"
                         >
                           Отменить
                         </button>
@@ -711,7 +713,7 @@ const AdminOrders = () => {
               </div>
             ) : (
               <div className="card">
-                <div className="card-content text-center text-gray-500 dark:text-neutral-500">
+                <div className="card-content text-center text-white/40">
                   Выберите заявку для просмотра деталей
                 </div>
               </div>
