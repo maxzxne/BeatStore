@@ -42,17 +42,24 @@ export const NotificationProvider = ({ children }) => {
       showInfo
     }}>
       {children}
-      
-      {/* Render notifications */}
-      {notifications.map(notification => (
-        <Notification
-          key={notification.id}
-          message={notification.message}
-          type={notification.type}
-          duration={notification.duration}
-          onClose={() => hideNotification(notification.id)}
-        />
-      ))}
+
+      {notifications.length > 0 && (
+        <div
+          className="pointer-events-none fixed inset-x-0 z-40 flex flex-col items-end gap-2 px-4"
+          style={{ top: 'calc(var(--header-h, 4.5rem) + 0.75rem)' }}
+          aria-live="polite"
+        >
+          {notifications.map(notification => (
+            <Notification
+              key={notification.id}
+              message={notification.message}
+              type={notification.type}
+              duration={notification.duration}
+              onClose={() => hideNotification(notification.id)}
+            />
+          ))}
+        </div>
+      )}
     </NotificationContext.Provider>
   );
 };

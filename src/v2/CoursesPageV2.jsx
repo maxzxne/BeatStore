@@ -9,6 +9,7 @@ import CustomSelect from '../components/CustomSelect';
 
 // Получаем API URL для построения полных URL файлов
 import { buildMediaUrl } from '../utils/api';
+import { ruCount } from '../utils/ruPlural';
 
 const CoursesPageV2 = () => {
   const { isAuthenticated } = useAuth();
@@ -153,7 +154,7 @@ const CoursesPageV2 = () => {
           <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Learn</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold">Курсы</h1>
           <p className="mt-2 text-sm text-white/50">
-            {loading ? 'Загрузка...' : `${courses.length} курсов`}
+            {loading ? 'Загрузка...' : ruCount(courses.length, 'курс', 'курса', 'курсов')}
           </p>
         </div>
 

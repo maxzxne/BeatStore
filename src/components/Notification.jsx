@@ -49,7 +49,10 @@ const Notification = ({ message, type = 'info', onClose, duration = 5000 }) => {
   if (!isVisible) return null;
 
   return (
-    <div className={`fixed top-4 right-4 z-50 max-w-sm w-full ${getBgColor()} border rounded-lg shadow-lg transition-all duration-300 transform translate-x-0`}>
+    <div
+      role="status"
+      className={`pointer-events-auto max-w-sm w-full ${getBgColor()} border rounded-lg shadow-lg transition-all duration-300`}
+    >
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">

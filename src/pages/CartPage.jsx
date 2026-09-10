@@ -7,7 +7,13 @@ import { api, buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
 import { loginPath } from '../utils/authRedirect';
 import { guestCartCount, readGuestCart, removeGuestBeat, removeGuestCourse } from '../utils/guestCart';
+import { ruCount } from '../utils/ruPlural';
 import { ShoppingCart, Trash2, Play, Pause } from 'lucide-react';
+
+const ITEM_FORMS = ['товар', 'товара', 'товаров'];
+const FREE_ITEM_FORMS = ['бесплатный товар', 'бесплатных товара', 'бесплатных товаров'];
+const FREE_BEAT_FORMS = ['бесплатный бит', 'бесплатных бита', 'бесплатных битов'];
+const FREE_COURSE_FORMS = ['бесплатный курс', 'бесплатных курса', 'бесплатных курсов'];
 
 const CartPage = () => {
   const { isAuthenticated } = useAuth();
@@ -53,6 +59,14 @@ const CartPage = () => {
         })
       );
       const items = [...beats, ...courses].filter(Boolean);
+      const keptBeatIds = new Set(items.filter((i) => i.type === 'beat').map((i) => Number(i.id)));
+      const keptCourseIds = new Set(items.filter((i) => i.type === 'course').map((i) => Number(i.id)));
+      guest.beats.forEach((b) => {
+        if (!keptBeatIds.has(Number(b.id))) removeGuestBeat(b.id);
+      });
+      guest.courses.forEach((c) => {
+        if (!keptCourseIds.has(Number(c.id))) removeGuestCourse(c.id);
+      });
       setCartItems(items);
       const formats = {};
       guest.beats.forEach((b) => {
@@ -79,10 +93,10 @@ const CartPage = () => {
         api.get('/cart').catch(() => ({ data: [] })),
         api.get('/course-cart').catch(() => ({ data: [] }))
       ]);
-      
-      // Объединяем биты и курсы, добавляя тип для различения
-      const beats = beatsResponse.data.map(item => ({ ...item, type: 'beat' }));
-      const courses = coursesResponse.data.map(item => ({ ...item, type: 'course' }));
+      const beatRows = Array.isArray(beatsResponse.data) ? beatsResponse.data : [];
+      const courseRows = Array.isArray(coursesResponse.data) ? coursesResponse.data : [];
+      const beats = beatRows.map(item => ({ ...item, type: 'beat' }));
+      const courses = courseRows.map(item => ({ ...item, type: 'course' }));
       setCartItems([...beats, ...courses]);
       
       // Инициализируем выбранные форматы для битов (по умолчанию mp3, если доступен)
@@ -194,9 +208,9 @@ const CartPage = () => {
       const beatsCount = freeItems.filter(item => item.type === 'beat').length;
       const coursesCount = freeItems.filter(item => item.type === 'course').length;
       let message = 'Успешно приобретено: ';
-      if (beatsCount > 0) message += `${beatsCount} бесплатных битов`;
+      if (beatsCount > 0) message += ruCount(beatsCount, ...FREE_BEAT_FORMS);
       if (beatsCount > 0 && coursesCount > 0) message += ' и ';
-      if (coursesCount > 0) message += `${coursesCount} бесплатных курсов`;
+      if (coursesCount > 0) message += ruCount(coursesCount, ...FREE_COURSE_FORMS);
       message += '!';
       
       showSuccess(message);
@@ -242,7 +256,7 @@ const CartPage = () => {
           <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Checkout</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Корзина</h1>
           <p className="mt-2 text-sm text-white/50">
-            {cartItems.length} товаров · войди, чтобы оформить
+            {ruCount(cartItems.length, ...ITEM_FORMS)} · войди, чтобы оформить
           </p>
         </div>
 
@@ -315,7 +329,7 @@ const CartPage = () => {
         <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Checkout</p>
         <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Корзина</h1>
         <p className="mt-2 text-sm text-white/50">
-          {cartItems.length} товаров в корзине
+          {ruCount(cartItems.length, ...ITEM_FORMS)} в корзине
         </p>
       </div>
 
@@ -409,13 +423,13 @@ const CartPage = () => {
                       )}
                     </div>
                     
-                    <div className="flex flex-col justify-center text-right">
+                    <div className="flex shrink-0 flex-col items-end justify-center text-right">
                       {item.type === 'beat' && (item.price_mp3 !== null || item.price_wav !== null || item.price_exclusive !== null) ? (
-                        <div className="space-y-2">
+                        <div className="flex w-full min-w-[10rem] flex-col items-end space-y-2">
                           <div className="mb-2 text-xs text-white/40">Формат:</div>
-                          <div className="space-y-1">
+                          <div className="w-full space-y-1">
                             {item.mp3_url && (item.price_mp3 !== null && item.price_mp3 !== undefined) && (
-                              <label className="flex cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
+                              <label className="flex w-full cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="radio"
@@ -433,7 +447,7 @@ const CartPage = () => {
                               </label>
                             )}
                             {item.wav_url && (item.price_wav !== null && item.price_wav !== undefined) && (
-                              <label className="flex cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
+                              <label className="flex w-full cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="radio"
@@ -451,7 +465,7 @@ const CartPage = () => {
                               </label>
                             )}
                             {item.exclusive_url && (item.price_exclusive !== null && item.price_exclusive !== undefined) && (
-                              <label className="flex cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
+                              <label className="flex w-full cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="radio"
@@ -480,8 +494,9 @@ const CartPage = () => {
                             })()}
                           </div>
                           <button
+                            type="button"
                             onClick={() => removeFromCart(item.id, item.type)}
-                            className="mt-1 text-white/40 transition hover:text-red-400"
+                            className="mt-1 inline-flex text-white/40 transition hover:text-red-400"
                             title="Удалить из корзины"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -493,8 +508,9 @@ const CartPage = () => {
                             {item.price === 0 ? 'Бесплатно' : `${item.price.toFixed(0)} ₽`}
                           </div>
                           <button
+                            type="button"
                             onClick={() => removeFromCart(item.id, item.type)}
-                            className="mt-2 text-white/40 transition hover:text-red-400"
+                            className="mt-2 inline-flex text-white/40 transition hover:text-red-400"
                             title="Удалить из корзины"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -539,7 +555,7 @@ const CartPage = () => {
                     disabled={purchasing}
                     className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
                   >
-                    {purchasing ? "Покупка..." : `Получить ${freeItemsCount} бесплатных товаров`}
+                    {purchasing ? "Покупка..." : `Получить ${ruCount(freeItemsCount, ...FREE_ITEM_FORMS)}`}
                   </button>
                 ) : (
                   <button

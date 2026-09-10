@@ -23,7 +23,7 @@ export function mergeMessages(prev, incoming) {
   return [...map.values()].sort((a, b) => a.id - b.id);
 }
 
-export function SupportTranscript({ messages, selfRole, emptyText }) {
+export function SupportTranscript({ messages, selfRole, emptyText, peerLabel = 'Поддержка' }) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function SupportTranscript({ messages, selfRole, emptyText }) {
             >
               {!mine && (
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
-                  {message.author_role === 'admin' ? 'Поддержка' : 'Вы'}
+                  {peerLabel}
                 </p>
               )}
               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.body}</p>

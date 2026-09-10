@@ -209,6 +209,7 @@ const AdminSupportPage = () => {
                 <SupportTranscript
                   messages={messages}
                   selfRole="admin"
+                  peerLabel={selectedMeta?.username || 'Клиент'}
                   emptyText="Пользователь ещё ничего не написал."
                 />
               )}

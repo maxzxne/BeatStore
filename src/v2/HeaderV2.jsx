@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Heart, ShoppingCart, User, Music, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,6 +6,7 @@ import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { api } from '../utils/api';
 import { loginPath } from '../utils/authRedirect';
 import { guestCartCount } from '../utils/guestCart';
+import { resolveCartBadge } from '../utils/cartBadge';
 
 const NavItem = ({ to, label, active }) => (
   <Link
@@ -22,30 +23,69 @@ const NavItem = ({ to, label, active }) => (
 );
 
 const HeaderV2 = ({ admin = false }) => {
-  const { user, adminUser, isAuthenticated, isAdminAuthenticated } = useAuth();
+  const { user, adminUser, isAuthenticated, isAdminAuthenticated, loading: authLoading } = useAuth();
   const { canSeeCourses } = useSiteSettings();
   const location = useLocation();
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const syncHeaderHeight = () => {
+      document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`);
+    };
+    syncHeaderHeight();
+    const observer = new ResizeObserver(syncHeaderHeight);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [admin]);
 
   useEffect(() => {
     const load = async () => {
+      if (authLoading) {
+        return;
+      }
       if (!isAuthenticated) {
         setFavoritesCount(0);
-        setCartCount(guestCartCount());
+        setCartCount(resolveCartBadge({
+          authLoading: false,
+          isAuthenticated: false,
+          guestCount: guestCartCount(),
+        }));
         return;
       }
       try {
-        const [fb, fc, cb, cc] = await Promise.all([
-          api.get('/favorites'),
-          api.get('/course-favorites'),
+        const [fb, fc] = await Promise.all([
+          api.get('/favorites').catch(() => ({ data: [] })),
+          api.get('/course-favorites').catch(() => ({ data: [] })),
+        ]);
+        const favBeats = Array.isArray(fb.data) ? fb.data.length : 0;
+        const favCourses = Array.isArray(fc.data) ? fc.data.length : 0;
+        setFavoritesCount(favBeats + favCourses);
+      } catch {
+        setFavoritesCount(0);
+      }
+      try {
+        const [cb, cc] = await Promise.all([
           api.get('/cart'),
           api.get('/course-cart'),
         ]);
-        setFavoritesCount((fb.data?.length || 0) + (fc.data?.length || 0));
-        setCartCount((cb.data?.length || 0) + (cc.data?.length || 0));
+        setCartCount(resolveCartBadge({
+          authLoading: false,
+          isAuthenticated: true,
+          guestCount: guestCartCount(),
+          serverBeats: cb.data,
+          serverCourses: cc.data,
+        }));
       } catch {
-        /* ignore */
+        setCartCount(resolveCartBadge({
+          authLoading: false,
+          isAuthenticated: true,
+          guestCount: guestCartCount(),
+          serverError: true,
+        }));
       }
     };
     load();
@@ -57,11 +97,11 @@ const HeaderV2 = ({ admin = false }) => {
       window.removeEventListener('favoritesUpdated', onFav);
       window.removeEventListener('cartUpdated', onCart);
     };
-  }, [isAuthenticated, location.pathname]);
+  }, [authLoading, isAuthenticated, location.pathname]);
 
   if (admin) {
     return (
-      <header className="px-6 py-4 border-b border-white/10 bg-black/30 backdrop-blur-xl">
+      <header ref={headerRef} className="px-6 py-4 border-b border-white/10 bg-black/30 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <div className="font-[Syne] text-lg font-bold tracking-tight">XWinner Admin</div>
           <span className="text-sm text-white/50">{adminUser?.username}</span>
@@ -73,7 +113,7 @@ const HeaderV2 = ({ admin = false }) => {
   const iconBtn = 'relative inline-flex h-10 w-10 items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors';
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07070f]/70 backdrop-blur-xl">
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-white/10 bg-[#07070f]/70 backdrop-blur-xl">
       <div className="mx-auto max-w-6xl px-4 py-3">
         <div className="flex items-center justify-between gap-4 min-h-[44px]">
           <div className="flex items-center gap-6 min-w-0">

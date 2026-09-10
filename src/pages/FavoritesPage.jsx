@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import BeatCardV2 from '../v2/BeatCardV2';
 import { api } from '../utils/api';
 import { loginPath } from '../utils/authRedirect';
+import { ruCount } from '../utils/ruPlural';
 import { Heart } from 'lucide-react';
 
 const FavoritesPage = () => {
@@ -76,7 +77,7 @@ const FavoritesPage = () => {
         <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Saved</p>
         <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Избранное</h1>
         <p className="mt-2 text-sm text-white/50">
-          {favorites.length} избранных битов
+          {ruCount(favorites.length, 'избранный бит', 'избранных бита', 'избранных битов')}
         </p>
       </div>
 

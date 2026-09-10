@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
 
 html.ui-v2 {
+  --header-h: 4.5rem;
   --color-primary: #1e1b4b;
   --color-on-primary: #ffffff;
   --color-secondary: #4338ca;
@@ -16,6 +17,12 @@ html.ui-v2 {
   --font-display: 'Syne', sans-serif;
   --font-body: 'Poppins', sans-serif;
   color-scheme: dark;
+}
+
+@media (max-width: 1023px) {
+  html.ui-v2 {
+    --header-h: 8rem;
+  }
 }
 
 html.ui-v2,
