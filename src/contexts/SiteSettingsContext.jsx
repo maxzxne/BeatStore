@@ -4,6 +4,33 @@ import { useAuth } from './AuthContext';
 
 const SiteSettingsContext = createContext();
 
+export const DEFAULT_HOME_HERO = {
+  enabled: true,
+  eyebrow: 'XWinner',
+  title: 'Инструменталы.\nЧёрный экран.\nЗелёный удар.',
+  subtitle: 'Каталог битов, заказы под ключ и курсы по битмейкингу. Слушай демо, бери лицензию, работай дальше.',
+  image_url: null,
+  cta_label: null,
+  cta_href: null,
+};
+
+function normalizeHomeHero(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return { ...DEFAULT_HOME_HERO };
+  }
+  return {
+    ...DEFAULT_HOME_HERO,
+    ...raw,
+    enabled: raw.enabled !== false,
+    eyebrow: raw.eyebrow ?? DEFAULT_HOME_HERO.eyebrow,
+    title: raw.title ?? DEFAULT_HOME_HERO.title,
+    subtitle: raw.subtitle ?? DEFAULT_HOME_HERO.subtitle,
+    image_url: raw.image_url || null,
+    cta_label: raw.cta_label || null,
+    cta_href: raw.cta_href || null,
+  };
+}
+
 export const useSiteSettings = () => {
   const context = useContext(SiteSettingsContext);
   if (!context) {
@@ -21,6 +48,7 @@ export const useSiteSettings = () => {
 export const SiteSettingsProvider = ({ children }) => {
   const { user, isAdminAuthenticated } = useAuth();
   const [coursesVisibility, setCoursesVisibility] = useState('all');
+  const [homeHero, setHomeHero] = useState(() => ({ ...DEFAULT_HOME_HERO }));
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
@@ -32,9 +60,11 @@ export const SiteSettingsProvider = ({ children }) => {
       } else {
         setCoursesVisibility('all');
       }
+      setHomeHero(normalizeHomeHero(response.data?.home_hero));
     } catch (error) {
       console.error('Error fetching site settings:', error);
       setCoursesVisibility('all');
+      setHomeHero({ ...DEFAULT_HOME_HERO });
     } finally {
       setLoading(false);
     }
@@ -60,6 +90,7 @@ export const SiteSettingsProvider = ({ children }) => {
     coursesVisibility,
     setCoursesVisibility,
     canSeeCourses,
+    homeHero,
     loading,
     refreshSiteSettings: fetchSettings,
   };
