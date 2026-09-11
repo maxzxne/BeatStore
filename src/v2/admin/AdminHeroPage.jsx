@@ -179,7 +179,7 @@ const AdminHeroPage = () => {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Сохранить
@@ -231,7 +231,7 @@ const AdminHeroPage = () => {
                 {form.cta_label && (
                   <a
                     href={form.cta_href || '#'}
-                    className="mt-5 inline-flex rounded-xl bg-[#22c55e] px-4 py-2 text-sm font-semibold text-[#0f172a]"
+                    className="mt-5 inline-flex rounded-xl bg-[#22c55e] px-4 py-2 text-sm font-semibold text-[#052e16]"
                     onClick={(e) => e.preventDefault()}
                   >
                     {form.cta_label}

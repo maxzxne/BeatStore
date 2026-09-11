@@ -103,7 +103,7 @@ const SupportPageV2 = () => {
           </p>
           <Link
             to={loginPath('/support')}
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
           >
             Войти
           </Link>

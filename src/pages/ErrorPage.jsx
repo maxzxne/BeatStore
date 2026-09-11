@@ -66,7 +66,7 @@ const ErrorPage = () => {
         <div className="mt-8 space-y-3">
           <Link
             to="/"
-            className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#052e16] transition hover:brightness-110"
           >
             <Home className="mr-2 h-5 w-5" />
             На главную

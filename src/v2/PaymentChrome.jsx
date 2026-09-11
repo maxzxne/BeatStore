@@ -39,7 +39,7 @@ export function PayActions({ primary, secondary }) {
 
 export function PayLink({ to, children, accent }) {
   const cls = accent
-    ? 'inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110'
+    ? 'inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110'
     : 'inline-flex h-12 w-full items-center justify-center rounded-full border border-white/15 bg-white/5 px-6 text-sm font-medium text-white transition hover:bg-white/10';
   return (
     <Link to={to} className={cls}>

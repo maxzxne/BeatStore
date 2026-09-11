@@ -317,7 +317,7 @@ const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
+              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60"
             >
               {loading ? 'Регистрация...' : 'Зарегистрироваться'}
             </button>

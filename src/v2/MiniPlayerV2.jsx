@@ -80,7 +80,7 @@ const MiniPlayerV2 = () => {
             <button
               type="button"
               onClick={() => (isPlaying ? pauseTrack() : resumeTrack())}
-              className="grid h-11 w-11 place-items-center rounded-full bg-[#22c55e] text-[#0f172a] shadow-[0_0_24px_rgba(34,197,94,0.45)]"
+              className="grid h-11 w-11 place-items-center rounded-full bg-[#22c55e] text-[#052e16] shadow-[0_0_24px_rgba(34,197,94,0.45)]"
               aria-label={isPlaying ? 'Пауза' : 'Воспроизведение'}
             >
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}

@@ -172,7 +172,7 @@ const PurchasesPage = () => {
 
   const tabClass = (active) =>
     `rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-      active ? 'bg-[#22c55e] text-[#0f172a]' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+      active ? 'bg-[#22c55e] text-[#052e16]' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
     }`;
 
   if (!isAuthenticated) {
@@ -184,7 +184,7 @@ const PurchasesPage = () => {
           <p className="mt-2 text-sm text-white/50">Вам нужно войти в систему, чтобы увидеть купленные биты.</p>
           <Link
             to={loginPath('/purchases')}
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
           >
             Войти
           </Link>
@@ -242,7 +242,7 @@ const PurchasesPage = () => {
             </p>
             <Link
               to="/"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
             >
               Смотреть биты
             </Link>
@@ -274,7 +274,7 @@ const PurchasesPage = () => {
             </p>
             <Link
               to="/courses"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
             >
               Смотреть курсы
             </Link>
@@ -297,7 +297,7 @@ const PurchasesPage = () => {
                         onClick={(e) => handlePlayCourse(course, e)}
                         className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                       >
-                        <div className="rounded-full bg-[#22c55e] p-3 text-[#0f172a]">
+                        <div className="rounded-full bg-[#22c55e] p-3 text-[#052e16]">
                           {isCurrentTrackPlaying(`course_${course.id}`) ? (
                             <Pause className="h-6 w-6" />
                           ) : (
@@ -317,7 +317,7 @@ const PurchasesPage = () => {
                         onClick={(e) => handlePlayCourse(course, e)}
                         className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                       >
-                        <div className="rounded-full bg-[#22c55e] p-3 text-[#0f172a]">
+                        <div className="rounded-full bg-[#22c55e] p-3 text-[#052e16]">
                           {isCurrentTrackPlaying(`course_${course.id}`) ? (
                             <Pause className="h-6 w-6" />
                           ) : (
@@ -329,7 +329,7 @@ const PurchasesPage = () => {
                   )}
                   
                   {/* Purchased badge */}
-                  <div className="absolute right-3 top-3 z-40 rounded-full bg-[#22c55e] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#0f172a]">
+                  <div className="absolute right-3 top-3 z-40 rounded-full bg-[#22c55e] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#052e16]">
                     Куплено
                   </div>
                 </div>
@@ -377,7 +377,7 @@ const PurchasesPage = () => {
             </p>
             <Link
               to="/order"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
             >
               Оформить заказ
             </Link>
@@ -533,7 +533,7 @@ const PurchasesPage = () => {
                             showError(checkoutErrorMessage(error));
                           }
                         }}
-                        className="mt-3 inline-flex h-10 items-center justify-center rounded-full bg-[#22c55e] px-5 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+                        className="mt-3 inline-flex h-10 items-center justify-center rounded-full bg-[#22c55e] px-5 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
                       >
                         Оплатить
                       </button>

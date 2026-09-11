@@ -100,12 +100,12 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
             className="absolute inset-0 grid place-items-center opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
             aria-label={playing ? 'Пауза' : 'Слушать'}
           >
-            <span className="grid h-14 w-14 place-items-center rounded-full bg-[#22c55e] text-[#0f172a] shadow-[0_0_30px_rgba(34,197,94,0.55)]">
+            <span className="grid h-14 w-14 place-items-center rounded-full bg-[#22c55e] text-[#052e16] shadow-[0_0_30px_rgba(34,197,94,0.55)]">
               {playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
             </span>
           </button>
           {isPurchased && (
-            <span className="absolute top-3 left-3 rounded-full bg-[#22c55e] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#0f172a]">
+            <span className="absolute top-3 left-3 rounded-full bg-[#22c55e] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#052e16]">
               Куплено
             </span>
           )}

@@ -368,7 +368,7 @@ const CourseDetailPage = () => {
                   className="absolute inset-x-0 top-0 bottom-[4.5rem] z-10 flex cursor-pointer items-center justify-center bg-black/40 transition-opacity hover:bg-black/50"
                   type="button"
                 >
-                  <span className="grid h-20 w-20 place-items-center rounded-full bg-[#22c55e] text-[#0f172a] shadow-[0_0_40px_rgba(34,197,94,0.55)]">
+                  <span className="grid h-20 w-20 place-items-center rounded-full bg-[#22c55e] text-[#052e16] shadow-[0_0_40px_rgba(34,197,94,0.55)]">
                     <Play className="ml-1 h-8 w-8" />
                   </span>
                 </button>
@@ -450,7 +450,7 @@ const CourseDetailPage = () => {
               <button
                 type="button"
                 onClick={handlePurchase}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110"
               >
                 {course.price === 0 ? 'Получить бесплатно' : `Купить за ${course.price.toFixed(0)} ₽`}
               </button>

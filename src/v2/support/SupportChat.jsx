@@ -48,7 +48,7 @@ export function SupportTranscript({ messages, selfRole, emptyText, peerLabel = '
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
                 mine
-                  ? 'bg-[#22c55e] text-[#0f172a]'
+                  ? 'bg-[#22c55e] text-[#052e16]'
                   : 'border border-white/10 bg-white/[0.06] text-white'
               }`}
             >
@@ -58,7 +58,7 @@ export function SupportTranscript({ messages, selfRole, emptyText, peerLabel = '
                 </p>
               )}
               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.body}</p>
-              <p className={`mt-1 text-[10px] ${mine ? 'text-[#0f172a]/55' : 'text-white/35'}`}>
+              <p className={`mt-1 text-[10px] ${mine ? 'text-[#052e16]/55' : 'text-white/35'}`}>
                 {formatSupportTime(message.created_at)}
               </p>
             </div>
@@ -118,7 +118,7 @@ export function SupportComposer({ onSend, sending, placeholder }) {
           type="submit"
           disabled={!canSend}
           aria-label="Отправить"
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#22c55e] text-[#0f172a] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#22c55e] text-[#052e16] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Send className="h-4 w-4" />
         </button>

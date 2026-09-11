@@ -259,7 +259,7 @@ const BeatPageV2 = () => {
   const playing = beat && isCurrentTrack(beat.id) && isCurrentTrackPlaying(beat.id);
   const licenseBtn = (active) =>
     `px-4 h-11 rounded-full text-sm font-medium transition-colors ${
-      active ? 'bg-[#22c55e] text-[#0f172a]' : 'bg-white/5 text-white/70 hover:bg-white/10'
+      active ? 'bg-[#22c55e] text-[#052e16]' : 'bg-white/5 text-white/70 hover:bg-white/10'
     }`;
 
   if (loading) {
@@ -303,7 +303,7 @@ const BeatPageV2 = () => {
               className="absolute inset-0 grid place-items-center bg-black/25"
               aria-label={playing ? 'Пауза' : 'Слушать'}
             >
-              <span className="grid h-20 w-20 place-items-center rounded-full bg-[#22c55e] text-[#0f172a] shadow-[0_0_40px_rgba(34,197,94,0.55)]">
+              <span className="grid h-20 w-20 place-items-center rounded-full bg-[#22c55e] text-[#052e16] shadow-[0_0_40px_rgba(34,197,94,0.55)]">
                 {playing ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8 ml-1" />}
               </span>
             </button>
@@ -357,7 +357,7 @@ const BeatPageV2 = () => {
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={handlePurchase} className="h-12 rounded-full bg-[#22c55e] px-6 font-semibold text-[#0f172a]">
+              <button type="button" onClick={handlePurchase} className="h-12 rounded-full bg-[#22c55e] px-6 font-semibold text-[#052e16]">
                 Купить в один клик
               </button>
               {isAuthenticated && (

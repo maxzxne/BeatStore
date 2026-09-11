@@ -180,7 +180,7 @@ const AdminSupportPage = () => {
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm font-semibold text-white">{thread.username}</span>
                       {thread.unread_for_admin > 0 && (
-                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#22c55e] px-1.5 text-[10px] font-bold text-[#0f172a]">
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#22c55e] px-1.5 text-[10px] font-bold text-[#052e16]">
                           {thread.unread_for_admin}
                         </span>
                       )}

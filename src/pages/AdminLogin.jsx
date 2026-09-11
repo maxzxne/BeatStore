@@ -89,7 +89,7 @@ const AdminLogin = () => {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#22c55e] text-sm font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#22c55e] text-sm font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {loading ? 'Вход…' : 'Войти'}

@@ -245,7 +245,7 @@ const AdminUpload = () => {
           onClick={() => setActiveTab('beat')}
           className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
             activeTab === 'beat'
-              ? 'bg-[#22c55e] text-[#0f172a]'
+              ? 'bg-[#22c55e] text-[#052e16]'
               : 'text-white/55 hover:bg-white/5 hover:text-white'
           }`}
         >
@@ -257,7 +257,7 @@ const AdminUpload = () => {
           onClick={() => setActiveTab('course')}
           className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
             activeTab === 'course'
-              ? 'bg-[#22c55e] text-[#0f172a]'
+              ? 'bg-[#22c55e] text-[#052e16]'
               : 'text-white/55 hover:bg-white/5 hover:text-white'
           }`}
         >

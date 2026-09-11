@@ -36,13 +36,13 @@ const Notification = ({ message, type = 'info', onClose, duration = 5000 }) => {
   const getBgColor = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+        return 'bg-[#0a0a0a] border-[#22c55e]/35';
       case 'error':
-        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+        return 'bg-[#0a0a0a] border-red-500/40';
       case 'warning':
-        return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
+        return 'bg-[#0a0a0a] border-yellow-500/35';
       default:
-        return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+        return 'bg-[#0a0a0a] border-white/10';
     }
   };
 
@@ -59,14 +59,14 @@ const Notification = ({ message, type = 'info', onClose, duration = 5000 }) => {
             {getIcon()}
           </div>
           <div className="ml-3 flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+            <p className="text-sm font-medium text-white">
               {message}
             </p>
           </div>
           <div className="ml-4 flex-shrink-0">
             <button
               onClick={handleClose}
-              className="inline-flex text-gray-400 dark:text-neutral-400 hover:text-gray-600 dark:hover:text-neutral-200 focus:outline-none focus:text-gray-600 dark:focus:text-neutral-200 transition-colors"
+              className="inline-flex text-white/40 hover:text-white focus:outline-none focus:text-white transition-colors"
             >
               <X className="h-4 w-4" />
             </button>

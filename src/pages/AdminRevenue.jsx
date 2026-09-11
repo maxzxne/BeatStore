@@ -242,7 +242,7 @@ const AdminRevenue = () => {
                             x={tooltipX + tooltipWidth / 2}
                             y={tooltipY + tooltipHeight / 2 + 4}
                             fontSize="11"
-                            fill='#0f172a'
+                            fill='#052e16'
                             fontWeight="600"
                             textAnchor="middle"
                           >

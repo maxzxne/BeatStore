@@ -147,7 +147,7 @@ const DatePicker = ({ value = '', onChange, placeholder = 'ДД.ММ.ГГГГ', 
                     h-9 w-9 rounded-md text-sm transition-colors
                     ${!cell.isCurrentMonth ? 'text-white/20' : 'text-white'}
                     ${isSelected
-                      ? 'bg-[#22c55e] font-medium text-[#0f172a]'
+                      ? 'bg-[#22c55e] font-medium text-[#052e16]'
                       : 'hover:bg-white/5'
                     }
                     ${isToday && !isSelected ? 'ring-1 ring-[#22c55e]/40' : ''}
@@ -171,7 +171,7 @@ const DatePicker = ({ value = '', onChange, placeholder = 'ДД.ММ.ГГГГ', 
             <button
               type="button"
               onClick={setToday}
-              className="rounded-full bg-[#22c55e] px-3 py-1.5 text-sm font-medium text-[#0f172a] transition hover:brightness-110"
+              className="rounded-full bg-[#22c55e] px-3 py-1.5 text-sm font-medium text-[#052e16] transition hover:brightness-110"
             >
               Сегодня
             </button>

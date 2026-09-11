@@ -53,7 +53,7 @@ const WelcomePopupV2 = () => {
           <button
             type="button"
             onClick={() => go('/')}
-            className="h-14 w-full rounded-2xl bg-[#22c55e] font-semibold text-[#0f172a] transition hover:brightness-110"
+            className="h-14 w-full rounded-2xl bg-[#22c55e] font-semibold text-[#052e16] transition hover:brightness-110"
           >
             Слушать биты
           </button>

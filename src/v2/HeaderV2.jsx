@@ -133,7 +133,7 @@ const HeaderV2 = ({ admin = false }) => {
             <Link to="/cart" className={iconBtn} aria-label="Корзина">
               <ShoppingCart className="h-4 w-4" />
               {cartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#22c55e] text-[#0f172a] text-[10px] font-bold">
+                <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#22c55e] text-[#052e16] text-[10px] font-bold">
                   {cartCount}
                 </span>
               )}
@@ -143,7 +143,7 @@ const HeaderV2 = ({ admin = false }) => {
                 <Link to="/favorites" className={iconBtn} aria-label="Избранное">
                   <Heart className="h-4 w-4" fill={favoritesCount ? 'currentColor' : 'none'} />
                   {favoritesCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#22c55e] text-[#0f172a] text-[10px] font-bold">
+                    <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#22c55e] text-[#052e16] text-[10px] font-bold">
                       {favoritesCount}
                     </span>
                   )}

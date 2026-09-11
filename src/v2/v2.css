@@ -30,6 +30,7 @@ html.ui-v2 body {
   background-color: var(--color-background) !important;
   color: var(--color-foreground) !important;
   font-family: var(--font-body);
+  accent-color: var(--color-accent);
 }
 
 html.ui-v2 #root {
@@ -65,17 +66,48 @@ html.ui-v2 .input,
 html.ui-v2 input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.v2-search-input),
 html.ui-v2 textarea,
 html.ui-v2 select {
-  background: rgba(0, 0, 0, 0.45) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid var(--color-border) !important;
   color: var(--color-foreground) !important;
+  caret-color: var(--color-foreground);
   border-radius: 0.9rem !important;
 }
 
+html.ui-v2 input:-webkit-autofill,
+html.ui-v2 input:-webkit-autofill:hover,
+html.ui-v2 input:-webkit-autofill:focus,
+html.ui-v2 textarea:-webkit-autofill,
+html.ui-v2 textarea:-webkit-autofill:hover,
+html.ui-v2 textarea:-webkit-autofill:focus,
+html.ui-v2 select:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-foreground) !important;
+  caret-color: var(--color-foreground);
+  border-color: var(--color-border) !important;
+  box-shadow: 0 0 0 1000px #111111 inset !important;
+  transition: background-color 99999s ease-out;
+}
+
+html.ui-v2 input:-webkit-autofill:focus,
+html.ui-v2 textarea:-webkit-autofill:focus,
+html.ui-v2 select:-webkit-autofill:focus {
+  border-color: rgba(34, 197, 94, 0.55) !important;
+  box-shadow:
+    0 0 0 1000px #111111 inset,
+    0 0 0 3px rgba(34, 197, 94, 0.16) !important;
+}
+
 html.ui-v2 a:focus-visible,
-html.ui-v2 button:focus-visible,
-html.ui-v2 input:not(.v2-search-input):focus-visible {
+html.ui-v2 button:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
+}
+
+html.ui-v2 input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.v2-search-input):focus-visible,
+html.ui-v2 textarea:focus-visible,
+html.ui-v2 select:focus-visible {
+  outline: none;
+  border-color: rgba(34, 197, 94, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
 }
 
 /* Catalog is first under the sticky header when hero/banners are off. */
@@ -146,7 +178,7 @@ html.ui-v2 .v2-filters .card {
 html.ui-v2 .v2-filters .input {
   height: 44px;
   border-radius: 999px !important;
-  background: rgba(0, 0, 0, 0.45) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .v2-search:focus-within {
@@ -168,7 +200,7 @@ html.ui-v2 .v2-filters .input {
   background: transparent !important;
   box-shadow: none !important;
   outline: none !important;
-  color: #f8fafc;
+  color: var(--color-foreground);
   font-size: 16px;
   line-height: 1.2;
   appearance: none;
@@ -184,7 +216,7 @@ html.ui-v2 .card .text-black,
 html.ui-v2 .card-header,
 html.ui-v2 .card-content,
 html.ui-v2 .card-footer {
-  color: #f8fafc;
+  color: var(--color-foreground);
 }
 
 html.ui-v2 h1,
@@ -362,7 +394,7 @@ html.ui-v2 .min-h-screen.bg-white {
   font-family: 'Syne', sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #f8fafc;
+  color: var(--color-foreground);
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
 }
 
@@ -379,7 +411,7 @@ html.ui-v2 .min-h-screen.bg-white {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(0, 0, 0, 0.45);
-  color: #f8fafc;
+  color: var(--color-foreground);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s ease, background 0.2s ease;
@@ -474,7 +506,7 @@ html.ui-v2 .min-h-screen.bg-white {
 .v2-pay-btn-accent {
   border: 0;
   background: #22c55e;
-  color: #0f172a;
+  color: var(--color-on-accent);
 }
 
 .v2-pay-btn-accent:hover {

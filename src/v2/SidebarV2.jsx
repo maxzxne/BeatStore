@@ -85,7 +85,7 @@ const SidebarV2 = () => {
                       className={({ isActive }) =>
                         `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
                           isActive
-                            ? 'bg-[#22c55e] text-[#0f172a] font-semibold'
+                            ? 'bg-[#22c55e] text-[#052e16] font-semibold'
                             : 'text-white/55 hover:text-white hover:bg-white/5'
                         }`
                       }

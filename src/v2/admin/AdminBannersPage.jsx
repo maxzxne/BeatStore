@@ -231,7 +231,7 @@ const AdminBannersPage = () => {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
         >
           <Plus className="h-4 w-4" />
           Добавить
@@ -467,7 +467,7 @@ const AdminBannersPage = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#0f172a] disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#052e16] disabled:opacity-60"
               >
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {editingId ? 'Сохранить' : 'Создать'}

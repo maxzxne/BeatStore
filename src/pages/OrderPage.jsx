@@ -35,7 +35,7 @@ const OrderPage = () => {
     'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
   const cardClass = 'rounded-3xl border border-white/10 bg-white/[0.03]';
   const primaryBtnClass =
-    'inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60';
+    'inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60';
   const labelClass = 'mb-2 block text-sm font-medium text-white';
   const hintClass = 'mt-1 text-xs text-white/40';
   const accordionBtnClass =
@@ -473,6 +473,7 @@ const OrderPage = () => {
               value={formData.customer_name}
               onChange={handleInputChange}
               required
+              autoComplete="name"
               className={fieldClass}
               placeholder="Введите ваше имя"
             />
@@ -490,6 +491,7 @@ const OrderPage = () => {
               value={formData.customer_email}
               onChange={handleInputChange}
               required
+              autoComplete="email"
               className={fieldClass}
               placeholder="Введите ваш email"
             />
@@ -613,7 +615,7 @@ const OrderPage = () => {
                 onClick={() => goToWizardStep(s.n)}
                 className={`flex-1 rounded-full py-2 text-center text-xs font-semibold uppercase tracking-wide transition ${
                   current
-                    ? 'bg-[#22c55e] text-[#0f172a]'
+                    ? 'bg-[#22c55e] text-[#052e16]'
                     : done
                       ? 'cursor-pointer border border-[#22c55e]/40 text-[#22c55e] hover:bg-[#22c55e]/10'
                       : 'cursor-pointer border border-white/10 text-white/35 hover:border-white/25 hover:text-white/60'
@@ -653,6 +655,7 @@ const OrderPage = () => {
                   value={formData.customer_name}
                   onChange={handleInputChange}
                   required
+                  autoComplete="name"
                   className={fieldClass}
                   placeholder="Введите ваше имя"
                 />
@@ -666,6 +669,7 @@ const OrderPage = () => {
                   value={formData.customer_email}
                   onChange={handleInputChange}
                   required
+                  autoComplete="email"
                   className={fieldClass}
                   placeholder="Введите ваш email"
                 />
@@ -745,7 +749,7 @@ const OrderPage = () => {
               return (
                 <div
                   key={`${category}-${index}`}
-                  className="group relative flex items-center gap-2 rounded-full bg-[#22c55e] px-4 py-2 text-[#0f172a]"
+                  className="group relative flex items-center gap-2 rounded-full bg-[#22c55e] px-4 py-2 text-[#052e16]"
                   title={description || undefined}
                 >
                   <span>{getCategoryLabel(category)}</span>
@@ -935,7 +939,7 @@ const OrderPage = () => {
               <button type="button" onClick={goWizardBack} className="inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5">
                 К контактам
               </button>
-              <button type="button" onClick={goWizardNext} className="inline-flex h-12 flex-[2] items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] hover:brightness-110">
+              <button type="button" onClick={goWizardNext} className="inline-flex h-12 flex-[2] items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#052e16] hover:brightness-110">
                 {totalPrice > 0 ? `Далее · ${rub(prepaymentAmount)}` : 'Далее — файлы'}
               </button>
             </div>

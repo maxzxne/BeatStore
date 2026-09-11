@@ -234,7 +234,7 @@ const CoursesPageV2 = () => {
                       onLoadedMetadata={(e) => { if (e.target) e.target.currentTime = 0.1; }}
                     />
                     <div className="absolute inset-0 grid place-items-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                      <span className="grid h-12 w-12 place-items-center rounded-full bg-[#22c55e] text-[#0f172a]">
+                      <span className="grid h-12 w-12 place-items-center rounded-full bg-[#22c55e] text-[#052e16]">
                         <Play className="h-5 w-5 ml-0.5" />
                       </span>
                     </div>

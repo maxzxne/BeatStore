@@ -268,7 +268,7 @@ const CartPage = () => {
             <p className="mt-2 text-sm text-white/50">Добавь биты с каталога — можно без входа.</p>
             <Link
               to="/"
-              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+              className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
             >
               В каталог
             </Link>
@@ -303,7 +303,7 @@ const CartPage = () => {
               <p className="text-sm text-white/80">Чтобы оплатить или скачать бесплатное — войди в аккаунт.</p>
               <Link
                 to={loginPath('/cart')}
-                className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#0f172a] transition hover:brightness-110 sm:w-auto sm:px-8"
+                className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#052e16] transition hover:brightness-110 sm:w-auto sm:px-8"
               >
                 Войти и оформить ({guestCartCount()})
               </Link>
@@ -343,7 +343,7 @@ const CartPage = () => {
           </p>
           <Link
             to="/"
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#0f172a] transition hover:brightness-110"
+            className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
           >
             Смотреть биты
           </Link>
@@ -393,7 +393,7 @@ const CartPage = () => {
                           onClick={() => handlePlay(item)}
                           className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                         >
-                          <div className="rounded-full bg-[#22c55e] p-1.5 text-[#0f172a]">
+                          <div className="rounded-full bg-[#22c55e] p-1.5 text-[#052e16]">
                             {isCurrentTrackPlaying(item.id) ? (
                               <Pause className="h-4 w-4" />
                             ) : (
@@ -554,7 +554,7 @@ const CartPage = () => {
                   <button
                     onClick={handleBulkPurchase}
                     disabled={purchasing}
-                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
+                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60"
                   >
                     {purchasing ? "Покупка..." : `Получить ${ruCount(freeItemsCount, ...FREE_ITEM_FORMS)}`}
                   </button>
@@ -570,7 +570,7 @@ const CartPage = () => {
                         showError(checkoutErrorMessage(error));
                       }
                     }}
-                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#0f172a] transition hover:brightness-110 disabled:opacity-60"
+                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60"
                     disabled={cartItems.length === 0}
                   >
                     {totalPrice > 0 ? `Оформить заказ на ${totalPrice.toLocaleString('ru-RU')} ₽` : "Перейти к оплате"}
