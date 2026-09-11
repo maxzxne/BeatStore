@@ -476,6 +476,41 @@ class ApiTestCase(unittest.TestCase):
         )
         self.assertEqual(stolen.status_code, 403)
 
+    def test_admin_replace_beat_files_updates_urls(self):
+        beat = add_beat(self.db)
+        beat.cover_url = "/static/covers/old-cover.jpg"
+        beat.demo_url = "/static/demos/old-demo.mp3"
+        self.db.commit()
+        old_mp3 = beat.mp3_url
+
+        denied = self.client.put(
+            f"/api/admin/beats/{beat.id}/files",
+            headers=auth(self.token),
+            files={"mp3_file": ("n.mp3", b"ID3xxxx", "audio/mpeg")},
+        )
+        self.assertIn(denied.status_code, (401, 403))
+
+        response = self.client.put(
+            f"/api/admin/beats/{beat.id}/files",
+            headers=auth(self.admin_token),
+            files={
+                "mp3_file": ("fresh.mp3", b"ID3xxxx", "audio/mpeg"),
+                "cover_file": ("fresh.jpg", b"\xff\xd8\xff\xe0" + b"\x00" * 32, "image/jpeg"),
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertNotEqual(body["mp3_url"], old_mp3)
+        self.assertTrue(body["mp3_url"].startswith("/static/audio/"))
+        self.assertTrue(body["cover_url"].startswith("/static/covers/"))
+        self.assertTrue(body["cover_url"].endswith("fresh.jpg") or "fresh" in body["cover_url"])
+        self.assertTrue(os.path.exists(body["mp3_url"].lstrip("/")), body["mp3_url"])
+        self.assertTrue(os.path.exists(body["cover_url"].lstrip("/")), body["cover_url"])
+        self.db.refresh(beat)
+        self.assertEqual(beat.mp3_url, body["mp3_url"])
+        self.assertEqual(beat.cover_url, body["cover_url"])
+        self.assertEqual(beat.demo_url, "/static/demos/old-demo.mp3")
+
 
 if __name__ == "__main__":
     unittest.main()
