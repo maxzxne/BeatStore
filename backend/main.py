@@ -37,13 +37,14 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, SupportThread, SupportMessage, cart_table, course_cart_table, course_favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, SupportThread, SupportMessage, cart_table, course_cart_table, course_favorites_table, favorites_table
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
 from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
 from payments.robokassa import format_out_sum, verify_result
 from payments.service import PaymentError, create_checkout, intent_view, public_config as payment_public_config
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
+from contacts import parse_contacts, serialize_contacts
 print("Импорт database и models завершен")
 
 # Импорт функций отправки сообщений и файлов в Telegram
@@ -633,6 +634,11 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class ContactItem(BaseModel):
+    type: str
+    value: str
+
+
 class UserResponse(BaseModel):
     """Схема ответа с информацией о пользователе"""
     id: int
@@ -641,13 +647,33 @@ class UserResponse(BaseModel):
     is_active: bool
     is_admin: bool
     additional_contact: Optional[str] = None
+    contacts: List[ContactItem] = []
     created_at: datetime
     consent_personal_data: Optional[bool] = None
     consent_personal_data_at: Optional[datetime] = None
     consent_personal_data_version: Optional[str] = None
+    has_password: bool = False
 
     class Config:
         from_attributes = True
+
+
+def user_to_response(user: User) -> UserResponse:
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        username=user.username,
+        is_active=bool(user.is_active),
+        is_admin=bool(user.is_admin),
+        additional_contact=user.additional_contact,
+        contacts=parse_contacts(user.additional_contact),
+        created_at=user.created_at,
+        consent_personal_data=user.consent_personal_data,
+        consent_personal_data_at=user.consent_personal_data_at,
+        consent_personal_data_version=user.consent_personal_data_version,
+        has_password=bool(user.password_hash),
+    )
+
 
 class UserUpdate(BaseModel):
     """Схема для обновления пользователя"""
@@ -655,6 +681,12 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
     additional_contact: Optional[str] = None
+    contacts: Optional[List[ContactItem]] = None
+
+
+class UserDeleteRequest(BaseModel):
+    password: Optional[str] = None
+    confirmation: Optional[str] = None
 
 class SupportMessageCreate(BaseModel):
     body: str
@@ -1102,7 +1134,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     
     # Получаем пользователя из базы данных
     user = db.query(User).filter(User.username == username).first()
-    if user is None:
+    if user is None or not user.is_active:
         raise credentials_exception
     return user
 
@@ -1121,6 +1153,8 @@ def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials
         if username is None:
             return None
         user = db.query(User).filter(User.username == username).first()
+        if user is None or not user.is_active:
+            return None
         return user
     except JWTError:
         return None
@@ -1170,7 +1204,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_user)
         print(f"User registered successfully: {db_user.username}")
-        return db_user
+        return user_to_response(db_user)
     except HTTPException:
         raise
     except Exception as e:
@@ -1218,6 +1252,13 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
                 detail="Неверное имя пользователя или пароль",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Аккаунт удалён или деактивирован",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         
         # Создаем JWT токен
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -1237,7 +1278,7 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
 
 @app.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user
+    return user_to_response(current_user)
 
 @app.put("/me", response_model=UserResponse)
 def update_user_profile(
@@ -1268,13 +1309,67 @@ def update_user_profile(
     
     if user_update.password:
         current_user.password_hash = get_password_hash(user_update.password)
-    
-    if user_update.additional_contact is not None:
-        current_user.additional_contact = user_update.additional_contact
+
+    if user_update.contacts is not None:
+        current_user.additional_contact = serialize_contacts(
+            [c.model_dump() if hasattr(c, "model_dump") else c.dict() for c in user_update.contacts]
+        )
+    elif user_update.additional_contact is not None:
+        current_user.additional_contact = user_update.additional_contact or None
     
     db.commit()
     db.refresh(current_user)
-    return current_user
+    return user_to_response(current_user)
+
+
+@app.delete("/me")
+def delete_user_account(
+    payload: UserDeleteRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Анонимизация аккаунта: покупки сохраняются, вход блокируется."""
+    if current_user.is_admin:
+        other_admins = (
+            db.query(User)
+            .filter(User.is_admin == True, User.is_active == True, User.id != current_user.id)
+            .count()
+        )
+        if other_admins == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Нельзя удалить последнего администратора",
+            )
+
+    if current_user.password_hash:
+        if not payload.password or not verify_password(payload.password, current_user.password_hash):
+            raise HTTPException(status_code=400, detail="Неверный пароль")
+    else:
+        expected = (current_user.email or current_user.username or "").strip().lower()
+        given = (payload.confirmation or "").strip().lower()
+        if not given or given != expected:
+            raise HTTPException(
+                status_code=400,
+                detail="Введите email или имя пользователя для подтверждения",
+            )
+
+    user_id = current_user.id
+    db.query(cart_table).filter(cart_table.c.user_id == user_id).delete(synchronize_session=False)
+    db.query(course_cart_table).filter(course_cart_table.c.user_id == user_id).delete(synchronize_session=False)
+    db.query(favorites_table).filter(favorites_table.c.user_id == user_id).delete(synchronize_session=False)
+    db.query(course_favorites_table).filter(course_favorites_table.c.user_id == user_id).delete(synchronize_session=False)
+
+    current_user.username = f"deleted_{user_id}"
+    current_user.email = None
+    current_user.password_hash = None
+    current_user.additional_contact = None
+    current_user.oauth_provider = None
+    current_user.oauth_provider_id = None
+    current_user.is_active = False
+    current_user.is_admin = False
+
+    db.commit()
+    return {"message": "Аккаунт удалён"}
 
 @app.put("/me/change-password")
 def change_password(

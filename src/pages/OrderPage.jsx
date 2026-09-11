@@ -4,7 +4,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { contactsFromUser, formatContacts } from '../utils/contacts';
 import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Phone, Plus, X, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+
+const orderContactFromUser = (user) => {
+  if (!user) return '';
+  const formatted = formatContacts(contactsFromUser(user));
+  if (formatted) return formatted;
+  return user.additional_contact || '';
+};
 
 const OrderPage = () => {
   const navigate = useNavigate();
@@ -162,7 +170,7 @@ const OrderPage = () => {
         ...prev,
         customer_name: prev.customer_name || user.username || '',
         customer_email: prev.customer_email || user.email || '',
-        contact_info: prev.contact_info || user.additional_contact || ''
+        contact_info: prev.contact_info || orderContactFromUser(user)
       }));
     }
   }, [isAuthenticated, user]);
@@ -281,7 +289,7 @@ const OrderPage = () => {
       setFormData({
         customer_name: isAuthenticated && user ? user.username || '' : '',
         customer_email: isAuthenticated && user ? user.email || '' : '',
-        contact_info: isAuthenticated && user ? user.additional_contact || '' : '',
+        contact_info: isAuthenticated && user ? orderContactFromUser(user) : '',
         service_categories: [],
         materials: [],
         reference_links: '',
@@ -384,7 +392,7 @@ const OrderPage = () => {
         setFormData({
           customer_name: isAuthenticated && user ? user.username || '' : '',
           customer_email: isAuthenticated && user ? user.email || '' : '',
-          contact_info: isAuthenticated && user ? user.additional_contact || '' : '',
+          contact_info: isAuthenticated && user ? orderContactFromUser(user) : '',
           service_categories: [],
           materials: [],
           reference_links: '',

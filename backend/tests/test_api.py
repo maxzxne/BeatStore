@@ -10,6 +10,7 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from helpers import (  # noqa: E402
+    PASSWORD,
     add_beat,
     add_course,
     add_user,
@@ -510,6 +511,93 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(beat.mp3_url, body["mp3_url"])
         self.assertEqual(beat.cover_url, body["cover_url"])
         self.assertEqual(beat.demo_url, "/static/demos/old-demo.mp3")
+
+    def test_me_returns_parsed_contacts_and_put_saves_json(self):
+        self.user.additional_contact = "@legacy_nick"
+        self.db.commit()
+
+        me = self.client.get("/me", headers=auth(self.token))
+        self.assertEqual(me.status_code, 200, me.text)
+        body = me.json()
+        self.assertEqual(
+            body["contacts"],
+            [{"type": "other", "value": "@legacy_nick"}],
+        )
+        self.assertEqual(body["additional_contact"], "@legacy_nick")
+
+        updated = self.client.put(
+            "/me",
+            headers=auth(self.token),
+            json={
+                "contacts": [
+                    {"type": "telegram", "value": " @nick "},
+                    {"type": "whatsapp", "value": ""},
+                    {"type": "phone", "value": "+79991234567"},
+                ]
+            },
+        )
+        self.assertEqual(updated.status_code, 200, updated.text)
+        payload = updated.json()
+        self.assertEqual(
+            payload["contacts"],
+            [
+                {"type": "telegram", "value": "@nick"},
+                {"type": "phone", "value": "+79991234567"},
+            ],
+        )
+        self.db.refresh(self.user)
+        self.assertIn('"type": "telegram"', self.user.additional_contact)
+        self.assertIn("@nick", self.user.additional_contact)
+
+    def test_delete_account_anonymizes_and_blocks_login(self):
+        beat = add_beat(self.db)
+        self.db.add(
+            Purchase(
+                user_id=self.user.id,
+                beat_id=beat.id,
+                price_paid=1000,
+                purchase_type="mp3",
+            )
+        )
+        self.db.commit()
+        user_id = self.user.id
+
+        deleted = self.client.request(
+            "DELETE",
+            "/me",
+            headers=auth(self.token),
+            json={"password": PASSWORD},
+        )
+        self.assertEqual(deleted.status_code, 200, deleted.text)
+
+        login_again = self.client.post(
+            "/login", json={"username": "buyer", "password": PASSWORD}
+        )
+        self.assertEqual(login_again.status_code, 401)
+
+        me = self.client.get("/me", headers=auth(self.token))
+        self.assertEqual(me.status_code, 401)
+
+        from models import User
+
+        self.db.expire_all()
+        row = self.db.query(User).filter(User.id == user_id).first()
+        self.assertIsNotNone(row)
+        self.assertFalse(row.is_active)
+        self.assertTrue(row.username.startswith("deleted_"))
+        self.assertIsNone(row.email)
+        self.assertIsNone(row.additional_contact)
+        self.assertEqual(self.db.query(Purchase).filter(Purchase.user_id == user_id).count(), 1)
+
+    def test_delete_last_admin_is_forbidden(self):
+        response = self.client.request(
+            "DELETE",
+            "/me",
+            headers=auth(self.admin_token),
+            json={"password": PASSWORD},
+        )
+        self.assertEqual(response.status_code, 400, response.text)
+        self.assertIn("админ", response.json()["detail"].lower())
 
 
 if __name__ == "__main__":
