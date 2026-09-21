@@ -4,13 +4,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, buildMediaUrl } from '../utils/api';
 
 const AUTO_MS = 5500;
+const DRAG_CLICK_PX = 8;
+const DRAG_COMMIT_RATIO = 0.18;
 
 function isInternalHref(href) {
   if (!href) return false;
   return href.startsWith('/') && !href.startsWith('//');
 }
 
-function SlideMedia({ banner }) {
+function SlideMedia({ banner, blockNav }) {
   const src = buildMediaUrl(banner.image_url);
   const href = banner.link_url || null;
   const title = banner.title || '';
@@ -26,6 +28,13 @@ function SlideMedia({ banner }) {
 
   const caption = title ? <span className="v2-promo-caption">{title}</span> : null;
 
+  const onNavClick = (event) => {
+    if (blockNav?.current) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+
   if (!href) {
     return (
       <div className="v2-promo-link">
@@ -37,7 +46,7 @@ function SlideMedia({ banner }) {
 
   if (isInternalHref(href)) {
     return (
-      <Link to={href} className="v2-promo-link" tabIndex={-1}>
+      <Link to={href} className="v2-promo-link" tabIndex={-1} onClick={onNavClick}>
         {media}
         {caption}
       </Link>
@@ -45,7 +54,14 @@ function SlideMedia({ banner }) {
   }
 
   return (
-    <a href={href} className="v2-promo-link" target="_blank" rel="noopener noreferrer" tabIndex={-1}>
+    <a
+      href={href}
+      className="v2-promo-link"
+      target="_blank"
+      rel="noopener noreferrer"
+      tabIndex={-1}
+      onClick={onNavClick}
+    >
       {media}
       {caption}
     </a>
@@ -56,12 +72,20 @@ const PromoSliderV2 = () => {
   const [banners, setBanners] = useState([]);
   const [trackIndex, setTrackIndex] = useState(0);
   const [animate, setAnimate] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const [paused, setPaused] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const touchStartX = useRef(null);
+
+  const viewportRef = useRef(null);
   const jumpingRef = useRef(false);
   const animatingRef = useRef(false);
   const trackIndexRef = useRef(0);
+  const dragOffsetRef = useRef(0);
+  const pointerIdRef = useRef(null);
+  const dragStartXRef = useRef(0);
+  const dragMovedRef = useRef(false);
+  const blockNavRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -116,7 +140,7 @@ const PromoSliderV2 = () => {
   }, []);
 
   const go = useCallback((dir) => {
-    if (count < 2 || jumpingRef.current || animatingRef.current) return;
+    if (count < 2 || jumpingRef.current || animatingRef.current || dragging) return;
     if (reduceMotion) {
       const nextReal = (realIndex + dir + count) % count;
       jumpTo(nextReal + 1, false);
@@ -124,14 +148,14 @@ const PromoSliderV2 = () => {
     }
     animatingRef.current = true;
     jumpTo(trackIndexRef.current + dir, true);
-  }, [count, reduceMotion, realIndex, jumpTo]);
+  }, [count, reduceMotion, realIndex, jumpTo, dragging]);
 
   const goToReal = useCallback((i) => {
-    if (count < 2 || jumpingRef.current || animatingRef.current) return;
+    if (count < 2 || jumpingRef.current || animatingRef.current || dragging) return;
     if (i === realIndex) return;
     if (!reduceMotion) animatingRef.current = true;
     jumpTo(i + 1, !reduceMotion);
-  }, [count, reduceMotion, jumpTo, realIndex]);
+  }, [count, reduceMotion, jumpTo, realIndex, dragging]);
 
   const handleTransitionEnd = useCallback((event) => {
     if (event.target !== event.currentTarget) return;
@@ -167,45 +191,136 @@ const PromoSliderV2 = () => {
     }
   }, [loop, reduceMotion, count]);
 
+  const endDrag = useCallback((clientX) => {
+    if (pointerIdRef.current == null) return;
+    pointerIdRef.current = null;
+    setDragging(false);
+
+    const width = viewportRef.current?.clientWidth || 1;
+    const offset = dragOffsetRef.current;
+    const abs = Math.abs(offset);
+    const commit = abs > width * DRAG_COMMIT_RATIO;
+
+    dragOffsetRef.current = 0;
+    setDragOffset(0);
+
+    const root = viewportRef.current?.closest('.v2-promo');
+    if (root?.matches(':hover') || root?.contains(document.activeElement)) {
+      setPaused(true);
+    } else {
+      setPaused(false);
+    }
+
+    if (!commit || count < 2) {
+      if (abs > 0 && !reduceMotion) {
+        setAnimate(true);
+        animatingRef.current = true;
+      }
+      window.setTimeout(() => {
+        blockNavRef.current = false;
+      }, 0);
+      return;
+    }
+
+    const dir = offset < 0 ? 1 : -1;
+    blockNavRef.current = true;
+    if (reduceMotion) {
+      const nextReal = (realIndex + dir + count) % count;
+      jumpTo(nextReal + 1, false);
+    } else {
+      animatingRef.current = true;
+      jumpTo(trackIndexRef.current + dir, true);
+    }
+    window.setTimeout(() => {
+      blockNavRef.current = false;
+    }, 300);
+  }, [count, reduceMotion, realIndex, jumpTo]);
+
+  const onPointerDown = (event) => {
+    if (count < 2 || jumpingRef.current || animatingRef.current) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    // Don't steal clicks from nav/dots
+    if (event.target.closest?.('.v2-promo-nav, .v2-promo-dot')) return;
+
+    pointerIdRef.current = event.pointerId;
+    dragStartXRef.current = event.clientX;
+    dragMovedRef.current = false;
+    blockNavRef.current = false;
+    setDragging(true);
+    setPaused(true);
+    setAnimate(false);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const onPointerMove = (event) => {
+    if (pointerIdRef.current !== event.pointerId) return;
+    const delta = event.clientX - dragStartXRef.current;
+    if (Math.abs(delta) > DRAG_CLICK_PX) {
+      dragMovedRef.current = true;
+      blockNavRef.current = true;
+    }
+    dragOffsetRef.current = delta;
+    setDragOffset(delta);
+  };
+
+  const onPointerUp = (event) => {
+    if (pointerIdRef.current !== event.pointerId) return;
+    try {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    } catch {
+      /* ignore */
+    }
+    endDrag(event.clientX);
+  };
+
+  const onPointerCancel = (event) => {
+    if (pointerIdRef.current !== event.pointerId) return;
+    pointerIdRef.current = null;
+    dragOffsetRef.current = 0;
+    setDragOffset(0);
+    setDragging(false);
+    setAnimate(true);
+    blockNavRef.current = false;
+  };
+
   useEffect(() => {
-    if (count < 2 || paused) return undefined;
+    if (count < 2 || paused || dragging) return undefined;
     const id = window.setInterval(() => go(1), AUTO_MS);
     return () => window.clearInterval(id);
-  }, [count, paused, go]);
+  }, [count, paused, dragging, go]);
 
   if (count === 0) return null;
 
-  const shouldAnimate = animate && !reduceMotion;
+  const shouldAnimate = animate && !reduceMotion && !dragging;
+  const transform = `translate3d(calc(-${trackIndex * 100}% + ${dragOffset}px), 0, 0)`;
 
   return (
     <div
-      className="v2-promo"
+      className={`v2-promo${dragging ? ' is-dragging' : ''}`}
       onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseLeave={() => {
+        if (!dragging) setPaused(false);
+      }}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false);
-      }}
-      onTouchStart={(e) => {
-        touchStartX.current = e.changedTouches[0]?.clientX ?? null;
-      }}
-      onTouchEnd={(e) => {
-        const start = touchStartX.current;
-        const end = e.changedTouches[0]?.clientX;
-        touchStartX.current = null;
-        if (start == null || end == null) return;
-        const delta = end - start;
-        if (Math.abs(delta) < 40) return;
-        go(delta < 0 ? 1 : -1);
       }}
       role="region"
       aria-roledescription="carousel"
       aria-label="Промо"
     >
-      <div className="v2-promo-viewport" aria-live="polite">
+      <div
+        ref={viewportRef}
+        className="v2-promo-viewport"
+        aria-live="polite"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+      >
         <div
           className={`v2-promo-track${shouldAnimate ? '' : ' is-instant'}`}
-          style={{ transform: `translate3d(-${trackIndex * 100}%, 0, 0)` }}
+          style={{ transform }}
           onTransitionEnd={handleTransitionEnd}
         >
           {trackSlides.map((banner, i) => (
@@ -214,7 +329,7 @@ const PromoSliderV2 = () => {
               key={`${banner.id ?? 'b'}-${i}`}
               aria-hidden={loop ? i !== trackIndex : i !== 0}
             >
-              <SlideMedia banner={banner} />
+              <SlideMedia banner={banner} blockNav={blockNavRef} />
             </div>
           ))}
         </div>

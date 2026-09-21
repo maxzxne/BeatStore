@@ -370,6 +370,13 @@ html.ui-v2 .min-h-screen.bg-white {
   position: relative;
   overflow: hidden;
   width: 100%;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.v2-promo.is-dragging .v2-promo-viewport {
+  cursor: grabbing;
 }
 
 .v2-promo-track {
