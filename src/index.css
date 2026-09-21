@@ -47,7 +47,7 @@
   }
   
   /* Предотвращаем неожиданное редактирование */
-  *:not(input):not(textarea):not(select):not([contenteditable="true"]) {
+  *:not(input):not(textarea):not(select):not([contenteditable="true"]):not([data-selectable]) {
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -55,7 +55,8 @@
   }
   
   /* Разрешаем выделение текста в нужных местах */
-  p, span, h1, h2, h3, h4, h5, h6, label, a, button {
+  p, span, h1, h2, h3, h4, h5, h6, label, a, button,
+  input, textarea, select, [data-selectable], [data-selectable] * {
     user-select: text;
     -webkit-user-select: text;
     -moz-user-select: text;

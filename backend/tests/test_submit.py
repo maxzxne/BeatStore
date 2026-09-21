@@ -27,6 +27,18 @@ def _mp3_file(name: str = "demo.mp3"):
     return (name, BytesIO(b"ID3" + b"\x00" * 64), "audio/mpeg")
 
 
+def _wav_file(name: str = "full.wav"):
+    return (name, BytesIO(b"RIFF" + b"\x00" * 64), "audio/wav")
+
+
+def _zip_file(name: str = "stems.zip"):
+    return (name, BytesIO(b"PK" + b"\x00" * 64), "application/zip")
+
+
+def _cover_file(name: str = "cover.jpg"):
+    return (name, BytesIO(b"\xff\xd8\xff" + b"\x00" * 64), "image/jpeg")
+
+
 class SubmitApiTests(unittest.TestCase):
     def setUp(self):
         self.db = reset_schema()
@@ -259,6 +271,29 @@ class SubmitApiTests(unittest.TestCase):
         me = self.client.get("/api/submit/me", headers=auth(self.friend_token))
         self.assertEqual(me.status_code, 403)
 
+    def test_create_submission_accepts_all_file_slots(self):
+        person = self._create_contributor()
+        self._join(self._invite(person["id"])["token"])
+        created = self.client.post(
+            "/api/submit/submissions",
+            headers=auth(self.friend_token),
+            data={"title": "Pack", "artist": "Vasya", "genre": "trap", "bpm": "140", "price": "1000"},
+            files={
+                "demo_file": _mp3_file("demo.mp3"),
+                "mp3_file": _mp3_file("sale.mp3"),
+                "wav_file": _wav_file(),
+                "exclusive_file": _zip_file(),
+                "cover_file": _cover_file(),
+            },
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        body = created.json()
+        self.assertTrue(body["demo_url"])
+        self.assertTrue(body["mp3_url"])
+        self.assertTrue(body["wav_url"])
+        self.assertTrue(body["exclusive_url"])
+        self.assertTrue(body["cover_url"])
+
     def test_admin_approve_creates_unpublished_beat_with_beneficiary(self):
         person = self._create_contributor()
         self._join(self._invite(person["id"])["token"])
@@ -272,8 +307,19 @@ class SubmitApiTests(unittest.TestCase):
                 "bpm": "150",
                 "price": "2000",
                 "price_mp3": "2000",
+                "price_wav": "3500",
+                "price_exclusive": "9000",
+                "key": "Am",
+                "description": "dark night beat",
+                "allow_multiple_purchases": "true",
             },
-            files={"demo_file": _mp3_file()},
+            files={
+                "demo_file": _mp3_file("demo.mp3"),
+                "mp3_file": _mp3_file("sale.mp3"),
+                "wav_file": _wav_file(),
+                "exclusive_file": _zip_file(),
+                "cover_file": _cover_file(),
+            },
         ).json()
         sent = self.client.post(
             f"/api/submit/submissions/{created['id']}/send",
@@ -288,6 +334,17 @@ class SubmitApiTests(unittest.TestCase):
         beat = self.db.get(Beat, approved.json()["beat_id"])
         self.assertEqual(beat.title, "Night")
         self.assertEqual(beat.artist, "XWinner")
+        self.assertEqual(beat.key, "Am")
+        self.assertEqual(beat.description, "dark night beat")
+        self.assertEqual(beat.price_mp3, 2000)
+        self.assertEqual(beat.price_wav, 3500)
+        self.assertEqual(beat.price_exclusive, 9000)
+        self.assertTrue(beat.allow_multiple_purchases)
+        self.assertTrue(beat.demo_url)
+        self.assertTrue(beat.mp3_url)
+        self.assertTrue(beat.wav_url)
+        self.assertTrue(beat.exclusive_url)
+        self.assertTrue(beat.cover_url)
         self.assertEqual(beat.beneficiary_id, person["id"])
         self.assertFalse(beat.is_available)
         public = self.client.get("/beats")

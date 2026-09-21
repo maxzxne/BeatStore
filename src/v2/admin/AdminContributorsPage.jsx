@@ -10,6 +10,11 @@ const copyText = async (value, input) => {
   if (input) {
     input.focus();
     input.select();
+    try {
+      input.setSelectionRange(0, value.length);
+    } catch {
+      /* some browsers reject setSelectionRange on type=text in edge cases */
+    }
   }
   try {
     await navigator.clipboard.writeText(value);
@@ -124,7 +129,11 @@ const AdminContributorsPage = () => {
       </form>
 
       {inviteUrl && (
-        <div className="rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 p-4">
+        <div
+          data-selectable
+          className="rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 p-4"
+          style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
+        >
           <p className="mb-2 text-sm text-[#86efac]">Приглашение (одноразовое, 7 дней)</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <input
@@ -133,7 +142,8 @@ const AdminContributorsPage = () => {
               value={inviteUrl}
               onFocus={(event) => event.target.select()}
               onClick={(event) => event.target.select()}
-              className={`${fieldClass} font-mono text-xs sm:text-sm`}
+              className={`${fieldClass} cursor-text font-mono text-xs sm:text-sm`}
+              style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
               aria-label="Ссылка приглашения"
             />
             <button type="button" className="admin-primary-btn shrink-0" onClick={handleCopyInvite}>
@@ -141,6 +151,9 @@ const AdminContributorsPage = () => {
               {copied ? 'Скопировано' : 'Копировать'}
             </button>
           </div>
+          <p className="mt-2 text-xs text-white/40">
+            Клик по ссылке выделяет всё. Можно Ctrl/⌘C или кнопку «Копировать».
+          </p>
         </div>
       )}
 
