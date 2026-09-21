@@ -62,6 +62,20 @@ from payments.service import (
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
 from submit_rules import STORE_BENEFICIARY_NAME
 from contacts import parse_contacts, serialize_contacts
+from totp_auth import (
+    generate_backup_codes,
+    generate_totp_secret,
+    provisioning_uri,
+    qr_svg_data_url,
+    serialize_backup_hashes,
+    verify_user_second_factor,
+)
+from smartcaptcha import (
+    captcha_client_key,
+    captcha_keys_configured,
+    is_testing as captcha_is_testing,
+    verify_smartcaptcha_token,
+)
 print("Импорт database и models завершен")
 
 # Импорт функций отправки сообщений и файлов в Telegram
@@ -169,7 +183,10 @@ def update_database_schema():
             user_new_columns = {
                 'consent_personal_data': 'BOOLEAN DEFAULT 1',
                 'consent_personal_data_at': 'DATETIME',
-                'consent_personal_data_version': 'VARCHAR'
+                'consent_personal_data_version': 'VARCHAR',
+                'totp_secret': 'VARCHAR',
+                'totp_enabled': 'BOOLEAN DEFAULT 0',
+                'totp_backup_codes': 'TEXT',
             }
             for col_name, col_type in user_new_columns.items():
                 if col_name not in columns:
@@ -253,6 +270,16 @@ def update_database_schema():
                 db.add(SiteSetting(key="ads_orders_enabled", value="true"))
                 db.commit()
                 print("Настройка ads_orders_enabled создана (true)")
+
+            if not db.query(SiteSetting).filter(SiteSetting.key == "totp_enabled").first():
+                db.add(SiteSetting(key="totp_enabled", value="false"))
+                db.commit()
+                print("Настройка totp_enabled создана (false)")
+
+            if not db.query(SiteSetting).filter(SiteSetting.key == "captcha_enabled").first():
+                db.add(SiteSetting(key="captcha_enabled", value="false"))
+                db.commit()
+                print("Настройка captcha_enabled создана (false)")
 
             home_hero = db.query(SiteSetting).filter(SiteSetting.key == "home_hero").first()
             if not home_hero:
@@ -669,16 +696,37 @@ class UserCreate(BaseModel):
     email: EmailStr
     username: str
     password: str
+    captcha_token: Optional[str] = None
 
 class UserLogin(BaseModel):
     """Схема для входа пользователя в систему"""
     username: str
     password: str
+    captcha_token: Optional[str] = None
 
 class Token(BaseModel):
     """Схема JWT токена"""
     access_token: str
     token_type: str
+
+class LoginResponse(BaseModel):
+    """Логин: либо JWT, либо шаг 2FA."""
+    access_token: Optional[str] = None
+    token_type: str = "bearer"
+    requires_2fa: bool = False
+    temp_token: Optional[str] = None
+
+class TwoFactorConfirm(BaseModel):
+    code: str
+
+class TwoFactorDisable(BaseModel):
+    password: str
+    code: str
+
+class TwoFactorLogin(BaseModel):
+    temp_token: str
+    code: str
+    as_admin: bool = False
 
 class ContactItem(BaseModel):
     type: str
@@ -701,6 +749,7 @@ class UserResponse(BaseModel):
     has_password: bool = False
     is_contributor: bool = False
     contributor_id: Optional[int] = None
+    totp_enabled: bool = False
 
     class Config:
         from_attributes = True
@@ -729,6 +778,7 @@ def user_to_response(user: User, db: Optional[Session] = None) -> UserResponse:
         has_password=bool(user.password_hash),
         is_contributor=bool(contributor),
         contributor_id=contributor.id if contributor else None,
+        totp_enabled=bool(getattr(user, "totp_enabled", False)),
     )
 
 
@@ -938,6 +988,8 @@ class SiteSettingsUpdate(BaseModel):
     """Схема обновления настроек сайта"""
     courses_visibility: Optional[str] = None
     ads_orders_enabled: Optional[bool] = None
+    totp_enabled: Optional[bool] = None
+    captcha_enabled: Optional[bool] = None
 
 class HomeHeroUpdate(BaseModel):
     """Схема обновления hero главной"""
@@ -1051,6 +1103,12 @@ def get_courses_visibility(db: Session) -> str:
 
 def get_ads_orders_enabled(db: Session) -> bool:
     return parse_bool_setting(get_site_setting_value(db, "ads_orders_enabled", "true"), True)
+
+def get_totp_enabled(db: Session) -> bool:
+    return parse_bool_setting(get_site_setting_value(db, "totp_enabled", "false"), False)
+
+def get_captcha_enabled(db: Session) -> bool:
+    return parse_bool_setting(get_site_setting_value(db, "captcha_enabled", "false"), False)
 
 def get_home_hero(db: Session) -> dict:
     raw = get_site_setting_value(db, "home_hero", "")
@@ -1303,6 +1361,56 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
+def captcha_is_required(db: Session) -> bool:
+    if not get_captcha_enabled(db):
+        return False
+    if not captcha_keys_configured():
+        return False
+    force = os.getenv("BEATSTORE_CAPTCHA_FORCE", "").strip() in ("1", "true", "True")
+    if captcha_is_testing() and not force:
+        return False
+    return True
+
+
+def enforce_captcha(db: Session, token: Optional[str], request: Optional[Request] = None) -> None:
+    if not captcha_is_required(db):
+        return
+    ip = None
+    if request is not None:
+        forwarded = request.headers.get("x-forwarded-for")
+        ip = (forwarded.split(",")[0].strip() if forwarded else None) or (
+            request.client.host if request.client else None
+        )
+    if not verify_smartcaptcha_token(token, ip=ip):
+        raise HTTPException(status_code=400, detail="Подтвердите капчу")
+
+
+def user_needs_2fa(db: Session, user: User) -> bool:
+    return bool(get_totp_enabled(db) and getattr(user, "totp_enabled", False) and user.totp_secret)
+
+
+def issue_pending_2fa(user: User, *, as_admin: bool = False) -> LoginResponse:
+    payload = {"sub": user.username, "type": "2fa_pending"}
+    if as_admin:
+        payload["admin"] = True
+    temp = create_access_token(payload, expires_delta=timedelta(minutes=5))
+    return LoginResponse(requires_2fa=True, temp_token=temp, token_type="2fa_pending")
+
+
+def issue_session_token(user: User, *, as_admin: bool = False) -> LoginResponse:
+    if as_admin:
+        token = create_access_token(
+            {"sub": user.username, "type": "admin"},
+            expires_delta=timedelta(minutes=480),
+        )
+    else:
+        token = create_access_token(
+            {"sub": user.username},
+            expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        )
+    return LoginResponse(access_token=token, token_type="bearer", requires_2fa=False)
+
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), 
                     db: Session = Depends(get_db)):
     """
@@ -1315,10 +1423,11 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        # Декодируем JWT токен
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
+            raise credentials_exception
+        if payload.get("type") == "2fa_pending":
             raise credentials_exception
     except JWTError:
         raise credentials_exception
@@ -1354,13 +1463,14 @@ def get_current_user_optional(credentials: Optional[HTTPAuthorizationCredentials
 print("Определение эндпоинтов аутентификации...")
 
 @app.post("/register", response_model=UserResponse)
-def register(user: UserCreate, db: Session = Depends(get_db)):
+def register(user: UserCreate, request: Request, db: Session = Depends(get_db)):
     """
     Регистрация нового пользователя
     Проверяет уникальность email и username
     """
     try:
         print(f"Registration attempt: email={user.email}, username={user.username}")
+        enforce_captcha(db, user.captcha_token, request)
         
         # Проверяем существующих пользователей по email
         if user.email:
@@ -1405,14 +1515,15 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             detail=f"Ошибка регистрации: {str(e)}"
         )
 
-@app.post("/login", response_model=Token)
-def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
+@app.post("/login", response_model=LoginResponse)
+def login(user_credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
     """
     Вход пользователя в систему
     Возвращает JWT токен при успешной аутентификации
     """
     try:
         print(f"Login attempt: username={user_credentials.username}")
+        enforce_captcha(db, user_credentials.captcha_token, request)
         
         user = db.query(User).filter(User.username == user_credentials.username).first()
         
@@ -1450,14 +1561,12 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
                 detail="Аккаунт удалён или деактивирован",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+        if user_needs_2fa(db, user):
+            return issue_pending_2fa(user, as_admin=False)
         
-        # Создаем JWT токен
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user.username}, expires_delta=access_token_expires
-        )
         print(f"Login successful for user: {user_credentials.username}")
-        return {"access_token": access_token, "token_type": "bearer"}
+        return issue_session_token(user, as_admin=False)
     except HTTPException:
         raise
     except Exception as e:
@@ -1466,6 +1575,120 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             status_code=500,
             detail=f"Ошибка входа: {str(e)}"
         )
+
+
+@app.post("/login/2fa", response_model=LoginResponse)
+def login_2fa(payload: TwoFactorLogin, db: Session = Depends(get_db)):
+    try:
+        data = jwt.decode(payload.temp_token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Сессия 2FA истекла, войдите снова")
+    if data.get("type") != "2fa_pending":
+        raise HTTPException(status_code=401, detail="Неверный токен 2FA")
+    username = data.get("sub")
+    as_admin = bool(payload.as_admin or data.get("admin"))
+    user = db.query(User).filter(User.username == username).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="Пользователь не найден")
+    if as_admin and not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if not get_totp_enabled(db) or not user.totp_enabled or not user.totp_secret:
+        raise HTTPException(status_code=400, detail="2FA отключена")
+
+    ok, new_backup = verify_user_second_factor(
+        secret=user.totp_secret,
+        backup_store=user.totp_backup_codes,
+        code=payload.code,
+    )
+    if not ok:
+        raise HTTPException(status_code=401, detail="Неверный код 2FA")
+    if new_backup is not None:
+        user.totp_backup_codes = new_backup
+        db.commit()
+    return issue_session_token(user, as_admin=as_admin)
+
+
+@app.get("/auth-settings")
+def get_auth_settings(db: Session = Depends(get_db)):
+    captcha_on = get_captcha_enabled(db) and captcha_keys_configured()
+    return {
+        "totp_enabled": get_totp_enabled(db),
+        "captcha_enabled": captcha_on,
+        "captcha_provider": "yandex",
+        "captcha_client_key": captcha_client_key() if captcha_on else "",
+    }
+
+
+@app.post("/me/2fa/setup")
+def setup_2fa(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not get_totp_enabled(db):
+        raise HTTPException(status_code=400, detail="2FA выключена администратором")
+    if not current_user.password_hash:
+        raise HTTPException(status_code=400, detail="2FA доступна только для аккаунтов с паролем")
+    secret = generate_totp_secret()
+    current_user.totp_secret = secret
+    current_user.totp_enabled = False
+    current_user.totp_backup_codes = None
+    db.commit()
+    otpauth_url = provisioning_uri(secret, current_user.username)
+    return {
+        "secret": secret,
+        "otpauth_url": otpauth_url,
+        "qr_data_url": qr_svg_data_url(otpauth_url),
+        "totp_enabled": False,
+    }
+
+
+@app.post("/me/2fa/confirm")
+def confirm_2fa(
+    payload: TwoFactorConfirm,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not get_totp_enabled(db):
+        raise HTTPException(status_code=400, detail="2FA выключена администратором")
+    if not current_user.totp_secret:
+        raise HTTPException(status_code=400, detail="Сначала запустите настройку 2FA")
+    ok, _ = verify_user_second_factor(
+        secret=current_user.totp_secret,
+        backup_store=None,
+        code=payload.code,
+    )
+    if not ok:
+        raise HTTPException(status_code=400, detail="Неверный код подтверждения")
+    plain, hashed = generate_backup_codes(8)
+    current_user.totp_enabled = True
+    current_user.totp_backup_codes = serialize_backup_hashes(hashed)
+    db.commit()
+    return {
+        "totp_enabled": True,
+        "backup_codes": plain,
+    }
+
+
+@app.post("/me/2fa/disable")
+def disable_2fa(
+    payload: TwoFactorDisable,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not current_user.password_hash or not verify_password(payload.password, current_user.password_hash):
+        raise HTTPException(status_code=401, detail="Неверный пароль")
+    if current_user.totp_enabled and current_user.totp_secret:
+        ok, new_backup = verify_user_second_factor(
+            secret=current_user.totp_secret,
+            backup_store=current_user.totp_backup_codes,
+            code=payload.code,
+        )
+        if not ok:
+            raise HTTPException(status_code=401, detail="Неверный код 2FA")
+        if new_backup is not None:
+            current_user.totp_backup_codes = new_backup
+    current_user.totp_enabled = False
+    current_user.totp_secret = None
+    current_user.totp_backup_codes = None
+    db.commit()
+    return {"totp_enabled": False}
 
 @app.get("/me", response_model=UserResponse)
 def read_users_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -2797,9 +3020,10 @@ async def create_beat_with_audio(
         raise HTTPException(status_code=500, detail=f"Error saving files: {str(e)}")
 
 # Админские эндпоинты
-@app.post("/api/admin/login", response_model=Token)
-def admin_login(login_data: UserLogin, db: Session = Depends(get_db)):
+@app.post("/api/admin/login", response_model=LoginResponse)
+def admin_login(login_data: UserLogin, request: Request, db: Session = Depends(get_db)):
     print(f"Admin login attempt: username={login_data.username}")
+    enforce_captcha(db, login_data.captcha_token, request)
     
     # Проверяем пользователя
     user = db.query(User).filter(User.username == login_data.username).first()
@@ -2813,7 +3037,7 @@ def admin_login(login_data: UserLogin, db: Session = Depends(get_db)):
     
     print(f"User found: {user.username}, is_admin: {user.is_admin}")
     
-    if not verify_password(login_data.password, user.password_hash):
+    if not user.password_hash or not verify_password(login_data.password, user.password_hash):
         print(f"Password verification failed for user: {login_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -2827,15 +3051,12 @@ def admin_login(login_data: UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
         )
-    
-    # Создаем токен
-    access_token_expires = timedelta(minutes=480)  # 8 часов для админа
-    access_token = create_access_token(
-        data={"sub": user.username, "type": "admin"}, expires_delta=access_token_expires
-    )
+
+    if user_needs_2fa(db, user):
+        return issue_pending_2fa(user, as_admin=True)
     
     print(f"Admin login successful for: {login_data.username}")
-    return {"access_token": access_token, "token_type": "bearer"}
+    return issue_session_token(user, as_admin=True)
 
 def get_current_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
     try:
@@ -4138,6 +4359,8 @@ def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user
     return {
         "courses_visibility": get_courses_visibility(db),
         "ads_orders_enabled": get_ads_orders_enabled(db),
+        "totp_enabled": get_totp_enabled(db),
+        "captcha_enabled": get_captcha_enabled(db),
         "home_hero": get_home_hero(db),
     }
 
@@ -4158,11 +4381,19 @@ def update_admin_site_settings(
     if update_data.ads_orders_enabled is not None:
         upsert_site_setting(db, "ads_orders_enabled", "true" if update_data.ads_orders_enabled else "false")
 
+    if update_data.totp_enabled is not None:
+        upsert_site_setting(db, "totp_enabled", "true" if update_data.totp_enabled else "false")
+
+    if update_data.captcha_enabled is not None:
+        upsert_site_setting(db, "captcha_enabled", "true" if update_data.captcha_enabled else "false")
+
     return {
         "message": "Site settings updated successfully",
         "settings": {
             "courses_visibility": get_courses_visibility(db),
             "ads_orders_enabled": get_ads_orders_enabled(db),
+            "totp_enabled": get_totp_enabled(db),
+            "captcha_enabled": get_captcha_enabled(db),
             "home_hero": get_home_hero(db),
         }
     }

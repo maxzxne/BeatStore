@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Megaphone } from 'lucide-react';
+import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Megaphone, Shield, KeyRound } from 'lucide-react';
 
 const COURSES_VISIBILITY_OPTIONS = [
   {
@@ -26,10 +26,14 @@ const AdminOAuthSettings = () => {
   const [settings, setSettings] = useState([]);
   const [coursesVisibility, setCoursesVisibility] = useState('all');
   const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
+  const [totpEnabled, setTotpEnabled] = useState(false);
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
   const [savingCourses, setSavingCourses] = useState(false);
   const [savingAds, setSavingAds] = useState(false);
+  const [savingTotp, setSavingTotp] = useState(false);
+  const [savingCaptcha, setSavingCaptcha] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -58,6 +62,8 @@ const AdminOAuthSettings = () => {
         setCoursesVisibility(value);
       }
       setAdsOrdersEnabled(response.data?.ads_orders_enabled !== false);
+      setTotpEnabled(!!response.data?.totp_enabled);
+      setCaptchaEnabled(!!response.data?.captcha_enabled);
     } catch (error) {
       console.error('Error fetching site settings:', error);
     }
@@ -92,6 +98,36 @@ const AdminOAuthSettings = () => {
       alert(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
     } finally {
       setSavingAds(false);
+    }
+  };
+
+  const updateTotpEnabled = async (enabled) => {
+    const previous = totpEnabled;
+    try {
+      setSavingTotp(true);
+      setTotpEnabled(enabled);
+      await api.put('/api/admin/site-settings', { totp_enabled: enabled });
+      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+    } catch (error) {
+      setTotpEnabled(previous);
+      alert(error.response?.data?.detail || error.message || 'Ошибка обновления 2FA');
+    } finally {
+      setSavingTotp(false);
+    }
+  };
+
+  const updateCaptchaEnabled = async (enabled) => {
+    const previous = captchaEnabled;
+    try {
+      setSavingCaptcha(true);
+      setCaptchaEnabled(enabled);
+      await api.put('/api/admin/site-settings', { captcha_enabled: enabled });
+      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+    } catch (error) {
+      setCaptchaEnabled(previous);
+      alert(error.response?.data?.detail || error.message || 'Ошибка обновления капчи');
+    } finally {
+      setSavingCaptcha(false);
     }
   };
 
@@ -290,6 +326,76 @@ const AdminOAuthSettings = () => {
             Сохранение…
           </p>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="admin-stat-icon">
+            <Shield className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-[Syne] text-lg font-semibold text-white">Двухфакторка (TOTP)</h2>
+            <p className="text-xs text-white/40">
+              Мастер-выключатель. Если выкл — 2FA не спрашивается даже у тех, кто её настроил в профиле.
+            </p>
+          </div>
+        </div>
+        <div className="flex min-h-[44px] items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <div>
+            <div className="text-sm font-medium text-white">
+              {totpEnabled ? '2FA разрешена' : '2FA выключена'}
+            </div>
+            <div className="mt-0.5 text-xs text-white/40">
+              Приложение-аутентификатор (Google Authenticator, Authy, 1Password)
+            </div>
+          </div>
+          <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
+            <input
+              type="checkbox"
+              checked={totpEnabled}
+              onChange={(e) => updateTotpEnabled(e.target.checked)}
+              disabled={savingTotp}
+              className="peer sr-only"
+              aria-label="Включить 2FA"
+            />
+            <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
+          </label>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="admin-stat-icon">
+            <KeyRound className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-[Syne] text-lg font-semibold text-white">Капча (Yandex SmartCaptcha)</h2>
+            <p className="text-xs text-white/40">
+              Для РФ. Нужны env: SMARTCAPTCHA_CLIENT_KEY и SMARTCAPTCHA_SERVER_KEY из кабинета Yandex Cloud.
+            </p>
+          </div>
+        </div>
+        <div className="flex min-h-[44px] items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <div>
+            <div className="text-sm font-medium text-white">
+              {captchaEnabled ? 'Капча включена' : 'Капча выключена'}
+            </div>
+            <div className="mt-0.5 text-xs text-white/40">
+              Login / register / admin login. Без ключей тумблер не даст эффект.
+            </div>
+          </div>
+          <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
+            <input
+              type="checkbox"
+              checked={captchaEnabled}
+              onChange={(e) => updateCaptchaEnabled(e.target.checked)}
+              disabled={savingCaptcha}
+              className="peer sr-only"
+              aria-label="Включить капчу"
+            />
+            <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
+          </label>
+        </div>
       </div>
 
       <div>

@@ -8,7 +8,7 @@ import json
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from database import SessionLocal
-from models import Beat, Course, User, ServiceOrder, Purchase, CoursePurchase
+from models import Beat, Course, User, ServiceOrder, Purchase, CoursePurchase, PromoBanner
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -16,11 +16,76 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
+def seed_demo_banners(db: Session) -> None:
+    """Идемпотентно кладёт демо-баннеры из static/demo-banners."""
+    existing = db.query(PromoBanner).count()
+    if existing > 0:
+        print("🖼️  Промо-баннеры уже есть, пропускаем")
+        return
+
+    banners_dir = "static/demo-banners"
+    if not os.path.isdir(banners_dir):
+        print(f"⚠️  Нет каталога {banners_dir}, баннеры не созданы")
+        return
+
+    now = datetime.utcnow()
+    specs = [
+        {
+            "file": "01-novyi-drop.png",
+            "title": "Новый drop",
+            "body": "Свежие инструменталы в каталоге — слушай демо и бери лицензию.",
+            "link_url": "/",
+            "sort_order": 0,
+        },
+        {
+            "file": "02-nedelya-licenzij.png",
+            "title": "Неделя лицензий",
+            "body": "Спецпредложение на MP3 / WAV — успей до конца недели.",
+            "link_url": "/",
+            "sort_order": 1,
+        },
+        {
+            "file": "03-masterklass.png",
+            "title": "Мастер-класс",
+            "body": "Разбор битмейкинга и сведения — смотри курсы.",
+            "link_url": "/courses",
+            "sort_order": 2,
+        },
+    ]
+
+    created = 0
+    for spec in specs:
+        path = os.path.join(banners_dir, spec["file"])
+        if not os.path.isfile(path):
+            print(f"⚠️  Файл баннера не найден: {path}")
+            continue
+        banner = PromoBanner(
+            title=spec["title"],
+            body=spec["body"],
+            image_url=f"/static/demo-banners/{spec['file']}",
+            link_url=spec["link_url"],
+            sort_order=spec["sort_order"],
+            enabled=True,
+            starts_at=now - timedelta(days=1),
+            ends_at=now + timedelta(days=60),
+        )
+        db.add(banner)
+        created += 1
+        print(f"✅ Баннер: {spec['title']}")
+
+    if created:
+        db.commit()
+        print(f"✅ Создано баннеров: {created}")
+
+
 def seed_test_data():
     """Заполняет базу данных тестовыми битами, курсами и заявками"""
     db = SessionLocal()
     
     try:
+        # Баннеры — отдельно: можно досыпать даже если каталог уже есть
+        seed_demo_banners(db)
+
         # Проверяем, есть ли уже данные
         existing_beats = db.query(Beat).count()
         existing_courses = db.query(Course).count()

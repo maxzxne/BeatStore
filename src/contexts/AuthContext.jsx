@@ -89,10 +89,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (username, password) => {
+  const login = async (username, password, captchaToken = null) => {
     try {
-      const response = await api.post('/login', { username, password });
+      const payload = { username, password };
+      if (captchaToken) payload.captcha_token = captchaToken;
+      const response = await api.post('/login', payload);
+      if (response.data?.requires_2fa) {
+        return {
+          success: false,
+          requires_2fa: true,
+          temp_token: response.data.temp_token,
+        };
+      }
       const { access_token } = response.data;
+      if (!access_token) {
+        return { success: false, error: 'Login failed' };
+      }
       localStorage.setItem('token', access_token);
       await fetchUser();
       try {
@@ -109,12 +121,58 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const adminLogin = async (username, password) => {
+  const complete2fa = async (tempToken, code, { asAdmin = false } = {}) => {
+    try {
+      const response = await api.post('/login/2fa', {
+        temp_token: tempToken,
+        code,
+        as_admin: asAdmin,
+      });
+      const { access_token } = response.data || {};
+      if (!access_token) {
+        return { success: false, error: '2FA failed' };
+      }
+      if (asAdmin) {
+        localStorage.setItem('adminToken', access_token);
+        localStorage.removeItem('token');
+        setUser(null);
+        await fetchAdminUser();
+      } else {
+        localStorage.setItem('token', access_token);
+        await fetchUser();
+        try {
+          await mergeGuestCartToServer();
+        } catch (e) {
+          console.warn('Guest cart merge failed', e);
+        }
+      }
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Неверный код 2FA',
+      };
+    }
+  };
+
+  const adminLogin = async (username, password, captchaToken = null) => {
     try {
       console.log('Attempting admin login:', { username });
-      const response = await api.post('/api/admin/login', { username, password });
+      const payload = { username, password };
+      if (captchaToken) payload.captcha_token = captchaToken;
+      const response = await api.post('/api/admin/login', payload);
       console.log('Admin login successful:', response.data);
+      if (response.data?.requires_2fa) {
+        return {
+          success: false,
+          requires_2fa: true,
+          temp_token: response.data.temp_token,
+        };
+      }
       const { access_token } = response.data;
+      if (!access_token) {
+        return { success: false, error: 'Admin login failed' };
+      }
       localStorage.setItem('adminToken', access_token);
       localStorage.removeItem('token'); // Удаляем обычный токен
       setUser(null); // Сбрасываем обычного пользователя
@@ -129,10 +187,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, username, password) => {
+  const register = async (email, username, password, captchaToken = null) => {
     try {
       console.log('Attempting registration:', { email, username });
-      const response = await api.post('/register', { email, username, password });
+      const payload = { email, username, password };
+      if (captchaToken) payload.captcha_token = captchaToken;
+      const response = await api.post('/register', payload);
       console.log('Registration successful:', response.data);
       return { success: true };
     } catch (error) {
@@ -217,6 +277,7 @@ export const AuthProvider = ({ children }) => {
     adminUser,
     loading,
     login,
+    complete2fa,
     adminLogin,
     register,
     loginWithTelegram,

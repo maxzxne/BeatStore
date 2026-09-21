@@ -44,6 +44,12 @@ const ProfilePage = () => {
     newPassword: '',
     confirmPassword: '',
   });
+  const [siteTotpAllowed, setSiteTotpAllowed] = useState(false);
+  const [totpSetup, setTotpSetup] = useState(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [backupCodes, setBackupCodes] = useState(null);
+  const [disable2faPassword, setDisable2faPassword] = useState('');
+  const [disable2faCode, setDisable2faCode] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -57,6 +63,13 @@ const ProfilePage = () => {
     }));
     setContacts(rows.length ? rows : []);
   }, [user]);
+
+  useEffect(() => {
+    api
+      .get('/auth-settings')
+      .then((res) => setSiteTotpAllowed(!!res.data?.totp_enabled))
+      .catch(() => setSiteTotpAllowed(false));
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -284,6 +297,150 @@ const ProfilePage = () => {
             <Lock className="mr-2 h-4 w-4" />
             Изменить пароль
           </button>
+        )}
+
+        {siteTotpAllowed && user.has_password !== false && (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-sm font-medium text-white">
+              Двухфакторная аутентификация:{' '}
+              <span className={user.totp_enabled ? 'text-[#22c55e]' : 'text-white/50'}>
+                {user.totp_enabled ? 'включена' : 'выключена'}
+              </span>
+            </p>
+            {!user.totp_enabled && !totpSetup && (
+              <button
+                type="button"
+                className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full border border-white/15 text-sm text-white hover:bg-white/5"
+                onClick={async () => {
+                  try {
+                    const res = await api.post('/me/2fa/setup');
+                    setTotpSetup(res.data);
+                    setTotpCode('');
+                  } catch (err) {
+                    showError(err.response?.data?.detail || 'Не удалось начать настройку двухфакторки');
+                  }
+                }}
+              >
+                Включить двухфакторку
+              </button>
+            )}
+            {totpSetup && (
+              <div className="mt-3 space-y-3">
+                <p className="text-xs text-white/50">
+                  Отсканируй QR в приложении-аутентификаторе. Если сканера нет — введи ключ вручную.
+                </p>
+                {totpSetup.qr_data_url && (
+                  <div className="flex justify-center rounded-2xl border border-white/10 bg-white p-3">
+                    <img
+                      src={totpSetup.qr_data_url}
+                      alt="QR-код для настройки двухфакторной аутентификации"
+                      className="h-44 w-44"
+                      width={176}
+                      height={176}
+                    />
+                  </div>
+                )}
+                <div>
+                  <p className="mb-1 text-xs text-white/40">Ключ вручную</p>
+                  <code className="block break-all rounded-xl border border-white/10 bg-black/40 px-3 py-2 font-mono text-xs tracking-wide text-[#22c55e]">
+                    {totpSetup.secret}
+                  </code>
+                </div>
+                <input
+                  className={fieldClass}
+                  placeholder="Код из приложения"
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+                <button
+                  type="button"
+                  className="inline-flex h-11 w-full items-center justify-center rounded-full bg-[#22c55e] text-sm font-semibold text-[#052e16]"
+                  onClick={async () => {
+                    try {
+                      const res = await api.post('/me/2fa/confirm', { code: totpCode });
+                      setBackupCodes(res.data.backup_codes || []);
+                      setTotpSetup(null);
+                      setTotpCode('');
+                      showSuccess('Двухфакторка включена — сохрани резервные коды');
+                      await fetchUser();
+                    } catch (err) {
+                      showError(err.response?.data?.detail || 'Неверный код');
+                    }
+                  }}
+                >
+                  Подтвердить
+                </button>
+                <button
+                  type="button"
+                  className="text-xs text-white/40 underline hover:text-white/70"
+                  onClick={() => {
+                    setTotpSetup(null);
+                    setTotpCode('');
+                  }}
+                >
+                  Отмена
+                </button>
+              </div>
+            )}
+            {backupCodes && (
+              <div className="mt-3 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/5 p-3">
+                <p className="mb-2 text-xs text-white/70">
+                  Резервные коды (покажи один раз — сохрани сейчас):
+                </p>
+                <ul className="space-y-1 font-mono text-xs text-white">
+                  {backupCodes.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="mt-2 text-xs text-white/50 underline"
+                  onClick={() => setBackupCodes(null)}
+                >
+                  Скрыть
+                </button>
+              </div>
+            )}
+            {user.totp_enabled && (
+              <div className="mt-3 space-y-2">
+                <input
+                  type="password"
+                  className={fieldClass}
+                  placeholder="Текущий пароль"
+                  value={disable2faPassword}
+                  onChange={(e) => setDisable2faPassword(e.target.value)}
+                />
+                <input
+                  className={fieldClass}
+                  placeholder="Код из приложения или резервный"
+                  value={disable2faCode}
+                  onChange={(e) => setDisable2faCode(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="inline-flex h-11 w-full items-center justify-center rounded-full border border-red-500/40 text-sm text-red-300 hover:bg-red-500/10"
+                  onClick={async () => {
+                    try {
+                      await api.post('/me/2fa/disable', {
+                        password: disable2faPassword,
+                        code: disable2faCode,
+                      });
+                      setDisable2faPassword('');
+                      setDisable2faCode('');
+                      showSuccess('Двухфакторка выключена');
+                      await fetchUser();
+                    } catch (err) {
+                      showError(err.response?.data?.detail || 'Не удалось выключить двухфакторку');
+                    }
+                  }}
+                >
+                  Выключить двухфакторку
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
         <button

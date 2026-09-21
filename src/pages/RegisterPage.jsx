@@ -5,6 +5,7 @@ import { User, Lock, Mail, ArrowLeft } from 'lucide-react';
 import { api } from '../utils/api';
 import { mergeGuestCartToServer } from '../utils/guestCart';
 import { loginPath, readNextParam } from '../utils/authRedirect';
+import YandexSmartCaptcha from '../components/YandexSmartCaptcha';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -17,6 +18,9 @@ const RegisterPage = () => {
   const [error, setError] = useState('');
   const [oauthSettings, setOauthSettings] = useState({});
   const [oauthSettingsLoading, setOauthSettingsLoading] = useState(true);
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaClientKey, setCaptchaClientKey] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -52,6 +56,12 @@ const RegisterPage = () => {
 
     // Первичная загрузка с индикатором
     fetchOAuthSettings(true);
+    api.get('/auth-settings')
+      .then((res) => {
+        setCaptchaEnabled(!!res.data?.captcha_enabled);
+        setCaptchaClientKey(res.data?.captcha_client_key || '');
+      })
+      .catch(() => {});
     
     // Обновляем настройки каждые 5 секунд и при фокусе окна (без скрытия блока)
     const interval = setInterval(() => fetchOAuthSettings(false), 5000);
@@ -144,7 +154,18 @@ const RegisterPage = () => {
       return;
     }
 
-    const result = await register(formData.email, formData.username, formData.password);
+    if (captchaEnabled && !captchaToken) {
+      setError('Подтвердите капчу');
+      setLoading(false);
+      return;
+    }
+
+    const result = await register(
+      formData.email,
+      formData.username,
+      formData.password,
+      captchaToken || null
+    );
     
     if (result.success) {
       navigate(loginPath(nextPath));
@@ -313,6 +334,10 @@ const RegisterPage = () => {
                 </span>
               </label>
             </div>
+
+            {captchaEnabled && (
+              <YandexSmartCaptcha sitekey={captchaClientKey} onToken={setCaptchaToken} />
+            )}
 
             <button
               type="submit"

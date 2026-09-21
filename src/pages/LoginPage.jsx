@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Lock, ArrowLeft } from 'lucide-react';
+import { User, Lock, ArrowLeft, Shield } from 'lucide-react';
 import { api } from '../utils/api';
 import { mergeGuestCartToServer } from '../utils/guestCart';
 import { readNextParam, registerPath } from '../utils/authRedirect';
+import YandexSmartCaptcha from '../components/YandexSmartCaptcha';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -13,8 +14,13 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [oauthSettings, setOauthSettings] = useState({});
   const [oauthSettingsLoading, setOauthSettingsLoading] = useState(true);
+  const [captchaEnabled, setCaptchaEnabled] = useState(false);
+  const [captchaClientKey, setCaptchaClientKey] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [pending2fa, setPending2fa] = useState(null);
+  const [otpCode, setOtpCode] = useState('');
   
-  const { login } = useAuth();
+  const { login, complete2fa } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const nextPath = readNextParam(searchParams);
@@ -49,6 +55,12 @@ const LoginPage = () => {
 
     // Первичная загрузка с индикатором
     fetchOAuthSettings(true);
+    api.get('/auth-settings')
+      .then((res) => {
+        setCaptchaEnabled(!!res.data?.captcha_enabled);
+        setCaptchaClientKey(res.data?.captcha_client_key || '');
+      })
+      .catch(() => {});
     
     // Обновляем настройки каждые 5 секунд и при фокусе окна (без скрытия блока)
     const interval = setInterval(() => fetchOAuthSettings(false), 5000);
@@ -130,9 +142,29 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
 
-    const result = await login(username, password);
+    if (pending2fa) {
+      const result = await complete2fa(pending2fa, otpCode, { asAdmin: false });
+      if (result.success) {
+        navigate(nextPath);
+      } else {
+        setError(result.error);
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (captchaEnabled && !captchaToken) {
+      setError('Подтвердите капчу');
+      setLoading(false);
+      return;
+    }
+
+    const result = await login(username, password, captchaToken || null);
     
-    if (result.success) {
+    if (result.requires_2fa) {
+      setPending2fa(result.temp_token);
+      setError('');
+    } else if (result.success) {
       navigate(nextPath);
     } else {
       setError(result.error);
@@ -182,8 +214,12 @@ const LoginPage = () => {
               <User className="h-8 w-8 text-[#22c55e]" />
             </div>
             <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">XWinner</p>
-            <h1 className="mt-2 font-[Syne] text-3xl font-extrabold text-white">Вход</h1>
-            <p className="mt-2 text-sm text-white/50">Войдите в свой аккаунт</p>
+            <h1 className="mt-2 font-[Syne] text-3xl font-extrabold text-white">
+              {pending2fa ? 'Двухфакторная проверка' : 'Вход'}
+            </h1>
+            <p className="mt-2 text-sm text-white/50">
+              {pending2fa ? 'Введите код из приложения-аутентификатора' : 'Войдите в свой аккаунт'}
+            </p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -192,7 +228,39 @@ const LoginPage = () => {
                 {error}
               </div>
             )}
-            
+
+            {pending2fa ? (
+              <div>
+                <label htmlFor="login_otp" className="mb-2 block text-sm font-medium text-white/80">
+                  Код подтверждения
+                </label>
+                <div className="relative">
+                  <Shield className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="text"
+                    id="login_otp"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    className={fieldClass}
+                    placeholder="6 цифр или резервный код"
+                    required
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="mt-2 text-xs text-white/40 hover:text-white/70"
+                  onClick={() => {
+                    setPending2fa(null);
+                    setOtpCode('');
+                  }}
+                >
+                  ← Назад к паролю
+                </button>
+              </div>
+            ) : (
+              <>
             <div>
               <label htmlFor="login_username" className="mb-2 block text-sm font-medium text-white/80">
                 Имя пользователя
@@ -228,17 +296,23 @@ const LoginPage = () => {
                 />
               </div>
             </div>
+
+            {captchaEnabled && (
+              <YandexSmartCaptcha sitekey={captchaClientKey} onToken={setCaptchaToken} />
+            )}
+              </>
+            )}
             
             <button
               type="submit"
               disabled={loading}
               className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60"
             >
-              {loading ? 'Вход...' : 'Войти'}
+              {loading ? 'Вход...' : pending2fa ? 'Подтвердить' : 'Войти'}
             </button>
           </form>
           
-          {!oauthSettingsLoading && (
+          {!pending2fa && !oauthSettingsLoading && (
             (oauthSettings.google && !oauthSettings.google.is_hidden) ||
             (oauthSettings.vk && !oauthSettings.vk.is_hidden) ||
             (oauthSettings.yandex && !oauthSettings.yandex.is_hidden) ||
@@ -254,7 +328,7 @@ const LoginPage = () => {
             </div>
           )}
           
-          {!oauthSettingsLoading && (
+          {!pending2fa && !oauthSettingsLoading && (
             <div className="space-y-3">
             {oauthSettings.google && !oauthSettings.google.is_hidden && (
               <button

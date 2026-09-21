@@ -81,6 +81,11 @@ class User(Base):
     
     # Дополнительные поля
     additional_contact = Column(String, nullable=True)  # Дополнительная связь (Telegram и т.д.)
+
+    # TOTP 2FA (секреты только на сервере; backup codes — хеши)
+    totp_secret = Column(String, nullable=True)
+    totp_enabled = Column(Boolean, default=False)
+    totp_backup_codes = Column(Text, nullable=True)
     
     # Связи с другими таблицами
     favorites = relationship("Beat", secondary=favorites_table, back_populates="favorited_by")
