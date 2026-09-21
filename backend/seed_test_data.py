@@ -1,20 +1,127 @@
 """
 Скрипт для заполнения базы данных тестовыми данными
-Запускается автоматически при деплое, если данных нет
+Запускается автоматически при деплое, если данных нет.
+Досыпает биты/курсы до целевого объёма, если уже есть, но мало
+(чтобы каталог и обучение занимали несколько экранов).
 """
 
-import os
+from __future__ import annotations
+
 import json
+import os
 from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
-from database import SessionLocal
-from models import Beat, Course, User, ServiceOrder, Purchase, CoursePurchase, PromoBanner
+
 from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+from database import SessionLocal
+from models import Beat, Course, CoursePurchase, PromoBanner, Purchase, ServiceOrder, User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Чтобы на десктопе/мобиле было «несколько страниц» скролла
+TARGET_BEATS = 28
+TARGET_COURSES = 14
+
+BEAT_TITLES = [
+    "Midnight Run",
+    "Acid Rain",
+    "Neon Drift",
+    "Glass House",
+    "Smoke Signal",
+    "Low Voltage",
+    "Chrome Heart",
+    "After Hours",
+    "Static Bloom",
+    "Velvet Trap",
+    "Iron Lungs",
+    "Soft Launch",
+    "Cold Open",
+    "Pocket Knife",
+    "Red Mirror",
+    "Blue Room",
+    "Ghost Note",
+    "Hard Reset",
+    "Slow Burn",
+    "Night Bus",
+    "Flatline",
+    "Gold Dust",
+    "Black Ice",
+    "Warm Up",
+    "Cut Scene",
+    "Echo Chamber",
+    "Paper Thin",
+    "Last Frame",
+    "Wide Angle",
+    "Deep Focus",
+]
+
+COURSE_TITLES = [
+    "Бит с нуля: FL Studio",
+    "Сведение вокала под трэп",
+    "Саунддизайн 808",
+    "Аранжировка за вечер",
+    "Микс в наушниках",
+    "Мелодии без теории",
+    "Драм-паттерны Drill",
+    "Автотюн без пластика",
+    "Сэмплы и клиринг",
+    "Экспорт под витрину",
+    "Стем-сведение",
+    "Мастеринг лёгкий",
+    "Ритм и свинг",
+    "Патчи Serum",
+    "Рабочий шаблон проекта",
+    "От демо до релиза",
+]
+
+ARTISTS = ["XWinner", "maxzxne", "sint", "Studio North", "Night Desk"]
+GENRES = ["Hip-Hop", "Trap", "R&B", "Pop", "Drill", "Boom Bap", "Afro"]
+KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "Am", "Em", "Gm"]
+BPMS = [128, 132, 140, 144, 150, 155, 160, 170, 92, 98, 110]
+PURPOSES = ["битмэйкинг", "сведение", "саунддизайн", "аранжировка", "микс"]
+
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+def _list_media(directory: str, exts: tuple[str, ...]) -> list[str]:
+    if not os.path.isdir(directory):
+        return []
+    files = [
+        f
+        for f in os.listdir(directory)
+        if f.lower().endswith(exts) and not f.startswith(".")
+    ]
+    return sorted(files)
+
+
+def collect_media() -> dict:
+    demos = _list_media("static/demos", (".mp3", ".wav", ".m4a"))
+    audio = _list_media("static/audio", (".mp3", ".wav", ".m4a"))
+    covers = _list_media("static/covers", (".jpg", ".jpeg", ".png", ".webp"))
+    # svg — декоративные, для обложек каталога лучше растр
+    covers = [c for c in covers if not c.lower().endswith(".svg")]
+    previews = _list_media("static/course_previews", (".mp4", ".mov", ".avi", ".webm"))
+    videos = _list_media("static/course_videos", (".mp4", ".mov", ".avi", ".webm"))
+    wavs = _list_media("static/test_files", (".wav",))
+    zips = _list_media("static/test_files", (".zip",))
+    # seed-*.wav в demos тоже можно как demo
+    print(
+        f"📁 Медиа: {len(demos)} demo, {len(audio)} audio, {len(covers)} covers, "
+        f"{len(previews)} previews, {len(videos)} videos, {len(wavs)} wav, {len(zips)} zip"
+    )
+    return {
+        "demos": demos,
+        "audio": audio,
+        "covers": covers,
+        "previews": previews,
+        "videos": videos,
+        "wavs": wavs,
+        "zips": zips,
+    }
+
 
 def seed_demo_banners(db: Session) -> None:
     """Идемпотентно кладёт демо-баннеры из static/demo-banners."""
@@ -59,17 +166,18 @@ def seed_demo_banners(db: Session) -> None:
         if not os.path.isfile(path):
             print(f"⚠️  Файл баннера не найден: {path}")
             continue
-        banner = PromoBanner(
-            title=spec["title"],
-            body=spec["body"],
-            image_url=f"/static/demo-banners/{spec['file']}",
-            link_url=spec["link_url"],
-            sort_order=spec["sort_order"],
-            enabled=True,
-            starts_at=now - timedelta(days=1),
-            ends_at=now + timedelta(days=60),
+        db.add(
+            PromoBanner(
+                title=spec["title"],
+                body=spec["body"],
+                image_url=f"/static/demo-banners/{spec['file']}",
+                link_url=spec["link_url"],
+                sort_order=spec["sort_order"],
+                enabled=True,
+                starts_at=now - timedelta(days=1),
+                ends_at=now + timedelta(days=60),
+            )
         )
-        db.add(banner)
         created += 1
         print(f"✅ Баннер: {spec['title']}")
 
@@ -78,235 +186,186 @@ def seed_demo_banners(db: Session) -> None:
         print(f"✅ Создано баннеров: {created}")
 
 
-def seed_test_data():
-    """Заполняет базу данных тестовыми битами, курсами и заявками"""
-    db = SessionLocal()
-    
-    try:
-        # Баннеры — отдельно: можно досыпать даже если каталог уже есть
-        seed_demo_banners(db)
+def _beat_pricing(index: int) -> tuple[float, float, float, float]:
+    """Первые 2 — бесплатные, дальше платные."""
+    if index < 2:
+        return 0.0, 0.0, 0.0, 0.0
+    base = 4000.0 + (index % 10) * 800.0
+    return base, base, base * 1.5, base * 2.5
 
-        # Проверяем, есть ли уже данные
-        existing_beats = db.query(Beat).count()
-        existing_courses = db.query(Course).count()
-        
-        # Обновляем существующие биты - делаем биты с "(одноразовый)" в названии одноразовыми
-        # Также обновляем биты Test Beat 4, 5, 6 если они еще не обновлены
-        if existing_beats > 0:
-            print("🔄 Обновление существующих битов...")
-            all_beats = sorted(db.query(Beat).all(), key=lambda b: b.id)  # Сортируем по ID
-            updated_count = 0
-            for i, beat in enumerate(all_beats, 1):
-                # Обновляем биты с "(одноразовый)" в названии
-                if "(одноразовый)" in beat.title and beat.allow_multiple_purchases:
-                    beat.allow_multiple_purchases = False
-                    updated_count += 1
-                    print(f"✅ Обновлен бит: {beat.title} - теперь одноразовый")
-                # Также обновляем биты Test Beat 4, 5, 6 если они еще не имеют "(одноразовый)" в названии
-                elif beat.title.startswith("Test Beat") and i >= 4 and i <= 6:
-                    if beat.allow_multiple_purchases:
-                        beat.allow_multiple_purchases = False
-                        if "(одноразовый)" not in beat.title:
-                            beat.title = beat.title + " (одноразовый)"
-                        updated_count += 1
-                        print(f"✅ Обновлен бит: {beat.title} - теперь одноразовый")
-            if updated_count > 0:
-                db.commit()
-                print(f"✅ Обновлено {updated_count} битов")
-        
-        if existing_beats > 0 or existing_courses > 0:
-            print("📦 Тестовые данные уже существуют, пропускаем заполнение")
-            return
-        
-        print("🌱 Начинаем заполнение тестовыми данными...")
-        
-        # Получаем список существующих файлов из static
-        demos_dir = "static/demos"
-        audio_dir = "static/audio"
-        covers_dir = "static/covers"
-        previews_dir = "static/course_previews"
-        videos_dir = "static/course_videos"
-        test_files_dir = "static/test_files"
-        
-        demo_files = sorted([f for f in os.listdir(demos_dir) if f.endswith('.mp3')]) if os.path.exists(demos_dir) else []
-        audio_files = sorted([f for f in os.listdir(audio_dir) if f.endswith('.mp3')]) if os.path.exists(audio_dir) else []
-        cover_files = sorted([f for f in os.listdir(covers_dir) if any(f.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp'])]) if os.path.exists(covers_dir) else []
-        preview_files = sorted([f for f in os.listdir(previews_dir) if f.endswith(('.mp4', '.mov', '.avi'))]) if os.path.exists(previews_dir) else []
-        video_files = sorted([f for f in os.listdir(videos_dir) if f.endswith(('.mp4', '.mov', '.avi'))]) if os.path.exists(videos_dir) else []
-        
-        # Файлы для битов (WAV и ZIP)
-        wav_files = sorted([f for f in os.listdir(test_files_dir) if f.endswith('.wav')]) if os.path.exists(test_files_dir) else []
-        zip_files = sorted([f for f in os.listdir(test_files_dir) if f.endswith('.zip')]) if os.path.exists(test_files_dir) else []
-        
-        print(f"📁 Найдено файлов: {len(demo_files)} demo, {len(audio_files)} audio, {len(cover_files)} covers, {len(preview_files)} previews, {len(video_files)} videos")
-        print(f"📁 Файлы для битов: {len(wav_files)} WAV, {len(zip_files)} ZIP")
-        
-        # Создаем тестовые биты (с нулевыми и ненулевыми ценами)
-        genres = ["Hip-Hop", "Trap", "R&B", "Pop", "Drill"]
-        keys = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-        bpms = [140, 150, 160, 120, 130]
-        
-        test_beats = []
-        for i in range(min(7, len(demo_files))):  # Создаем до 7 битов
-            base_price = 0.0 if i < 2 else (5000.0 + i * 1000.0)  # Первые 2 бесплатные, остальные платные
-            
-            # Устанавливаем отдельные цены для каждого типа файла
-            # MP3 - самая дешевая, WAV - средняя, Exclusive - самая дорогая
-            if base_price == 0:
-                price_mp3 = 0.0
-                price_wav = 0.0
-                price_exclusive = 0.0
+
+def create_beats(db: Session, media: dict, *, start_index: int, count: int) -> int:
+    demos = media["demos"]
+    audio = media["audio"]
+    covers = media["covers"]
+    wavs = media["wavs"]
+    zips = media["zips"]
+    if not demos and not audio:
+        print("⚠️  Нет demo/audio — биты не создаём")
+        return 0
+
+    created = 0
+    for i in range(start_index, start_index + count):
+        title = BEAT_TITLES[i % len(BEAT_TITLES)]
+        if i >= len(BEAT_TITLES):
+            title = f"{title} {i // len(BEAT_TITLES) + 1}"
+        # 3–5 индексы в первой партии — одноразовые (как раньше)
+        is_one_shot = 3 <= i <= 5
+        if is_one_shot and "(одноразовый)" not in title:
+            title = f"{title} (одноразовый)"
+
+        price, price_mp3, price_wav, price_exclusive = _beat_pricing(i)
+        demo_file = demos[i % len(demos)] if demos else None
+        if audio:
+            mp3_url = f"/static/audio/{audio[i % len(audio)]}"
+        elif demo_file:
+            mp3_url = f"/static/demos/{demo_file}"
+        else:
+            mp3_url = None
+        cover_file = covers[i % len(covers)] if covers else None
+
+        beat = Beat(
+            title=title,
+            artist=ARTISTS[i % len(ARTISTS)],
+            genre=GENRES[i % len(GENRES)],
+            bpm=BPMS[i % len(BPMS)],
+            key=KEYS[i % len(KEYS)],
+            price=price,
+            price_mp3=price_mp3,
+            price_wav=price_wav,
+            price_exclusive=price_exclusive,
+            demo_url=f"/static/demos/{demo_file}" if demo_file else None,
+            mp3_url=mp3_url,
+            wav_url=f"/static/test_files/{wavs[0]}" if wavs else None,
+            exclusive_url=f"/static/test_files/{zips[0]}" if zips else None,
+            cover_url=f"/static/covers/{cover_file}" if cover_file else None,
+            is_available=True,
+            allow_multiple_purchases=not is_one_shot,
+        )
+
+        db.add(beat)
+        created += 1
+        print(f"✅ Бит: {title} ({price_mp3}₽)")
+
+    if created:
+        db.commit()
+    return created
+
+
+def create_courses(db: Session, media: dict, *, start_index: int, count: int) -> int:
+    previews = media["previews"]
+    videos = media["videos"]
+    if not videos and not previews:
+        print("⚠️  Нет course videos/previews — курсы не создаём")
+        return 0
+
+    # Превью можно крутить, полное видео — по кругу из имеющихся
+    pool_videos = videos or previews
+    pool_previews = previews or videos
+
+    created = 0
+    for i in range(start_index, start_index + count):
+        title = COURSE_TITLES[i % len(COURSE_TITLES)]
+        if i >= len(COURSE_TITLES):
+            title = f"{title} · часть {i // len(COURSE_TITLES) + 1}"
+        price = 0.0 if i == 0 else (9000.0 + (i % 8) * 1500.0)
+        purpose = PURPOSES[i % len(PURPOSES)]
+        preview = pool_previews[i % len(pool_previews)]
+        video = pool_videos[i % len(pool_videos)]
+        preview_dir = "course_previews" if preview in (previews or []) else "course_videos"
+        video_dir = "course_videos" if video in (videos or []) else "course_previews"
+
+        course = Course(
+            title=title,
+            description=f"Практический курс: {purpose}. Разборы, шаблоны и экспорт под витрину.",
+            purpose=purpose,
+            price=price,
+            preview_video_url=f"/static/{preview_dir}/{preview}",
+            full_video_url=f"/static/{video_dir}/{video}",
+        )
+        db.add(course)
+        created += 1
+        print(f"✅ Курс: {title} ({price}₽)")
+
+    if created:
+        db.commit()
+    return created
+
+
+def ensure_catalog_volume(db: Session, media: dict) -> None:
+    """Досыпает биты/курсы до TARGET_*, если уже есть каталог, но он короткий."""
+    beat_count = db.query(Beat).count()
+    course_count = db.query(Course).count()
+
+    if beat_count < TARGET_BEATS:
+        need = TARGET_BEATS - beat_count
+        print(f"📈 Досыпаем биты: есть {beat_count}, нужно +{need}")
+        create_beats(db, media, start_index=beat_count, count=need)
+    else:
+        print(f"📦 Битов достаточно: {beat_count}")
+
+    if course_count < TARGET_COURSES:
+        need = TARGET_COURSES - course_count
+        print(f"📈 Досыпаем курсы: есть {course_count}, нужно +{need}")
+        create_courses(db, media, start_index=course_count, count=need)
+    else:
+        print(f"📦 Курсов достаточно: {course_count}")
+
+
+def seed_orders_and_purchases(db: Session) -> None:
+    now = datetime.utcnow()
+    test_user = db.query(User).filter(User.username == "test_user").first()
+    if not test_user:
+        test_user = User(
+            username="test_user",
+            email="test@example.com",
+            password_hash=get_password_hash("test123"),
+            is_active=True,
+        )
+        db.add(test_user)
+        db.commit()
+        db.refresh(test_user)
+        print("✅ Создан тестовый пользователь test_user / test123")
+
+    all_beats = db.query(Beat).order_by(Beat.id).all()
+    all_courses = db.query(Course).order_by(Course.id).all()
+
+    if len(all_beats) >= 3 and db.query(Purchase).filter(Purchase.user_id == test_user.id).count() == 0:
+        for i, beat in enumerate(all_beats[:3]):
+            purchase_type = "mp3" if i < 2 else "wav"
+            if purchase_type == "mp3":
+                actual_price = beat.price_mp3 if beat.price_mp3 is not None else beat.price
+            elif purchase_type == "wav":
+                actual_price = beat.price_wav if beat.price_wav is not None else beat.price
             else:
-                price_mp3 = base_price  # MP3 - базовая цена
-                price_wav = base_price * 1.5  # WAV - на 50% дороже
-                price_exclusive = base_price * 2.5  # Exclusive - в 2.5 раза дороже
-            
-            # Делаем биты с индексом 3, 4, 5 одноразовыми (после покупки исчезают)
-            is_exclusive = i >= 3 and i <= 5
-            title = f"Test Beat {i+1}" + (" (одноразовый)" if is_exclusive else "")
-            test_beats.append({
-                "title": title,
-                "artist": f"Producer {i+1}",
-                "genre": genres[i % len(genres)],
-                "bpm": bpms[i % len(bpms)],
-                "key": keys[i % len(keys)],
-                "price": base_price,  # Базовая цена для обратной совместимости
-                "price_mp3": price_mp3,
-                "price_wav": price_wav,
-                "price_exclusive": price_exclusive,
-                "demo_index": i,
-                "audio_index": i if i < len(audio_files) else None,
-                "cover_index": i if i < len(cover_files) else None,
-                "allow_multiple": not is_exclusive,  # Одноразовые биты не разрешают множественные покупки
-            })
-        
-        for beat_data in test_beats:
-            demo_url = f"/static/demos/{demo_files[beat_data['demo_index']]}" if beat_data['demo_index'] < len(demo_files) else None
-            mp3_url = f"/static/audio/{audio_files[beat_data['audio_index']]}" if beat_data['audio_index'] is not None and beat_data['audio_index'] < len(audio_files) else None
-            cover_url = f"/static/covers/{cover_files[beat_data['cover_index']]}" if beat_data['cover_index'] is not None and beat_data['cover_index'] < len(cover_files) else None
-            
-            # Добавляем WAV и ZIP файлы для всех битов
-            wav_url = f"/static/test_files/{wav_files[0]}" if len(wav_files) > 0 else None
-            exclusive_url = f"/static/test_files/{zip_files[0]}" if len(zip_files) > 0 else None
-            
-            beat = Beat(
-                title=beat_data["title"],
-                artist=beat_data["artist"],
-                genre=beat_data["genre"],
-                bpm=beat_data["bpm"],
-                key=beat_data["key"],
-                price=beat_data["price"],  # Базовая цена
-                price_mp3=beat_data.get("price_mp3"),
-                price_wav=beat_data.get("price_wav"),
-                price_exclusive=beat_data.get("price_exclusive"),
-                demo_url=demo_url,
-                mp3_url=mp3_url,
-                wav_url=wav_url,
-                exclusive_url=exclusive_url,
-                cover_url=cover_url,
-                is_available=True,
-                allow_multiple_purchases=beat_data.get("allow_multiple", True)  # Одноразовые биты имеют False
-            )
-            db.add(beat)
-            price_info = f"MP3: {beat_data.get('price_mp3', beat_data['price'])}₽, WAV: {beat_data.get('price_wav', beat_data['price'])}₽, Exclusive: {beat_data.get('price_exclusive', beat_data['price'])}₽"
-            print(f"✅ Создан бит: {beat_data['title']} ({price_info}) - MP3: {'✓' if mp3_url else '✗'}, WAV: {'✓' if wav_url else '✗'}, ZIP: {'✓' if exclusive_url else '✗'}")
-        
-        # Создаем тестовые курсы (с нулевыми и ненулевыми ценами)
-        purposes = ["битмэйкинг", "сведение", "саунддизайн"]
-        test_courses = []
-        for i in range(min(4, len(preview_files))):  # Создаем до 4 курсов
-            price = 0.0 if i < 1 else (10000.0 + i * 2000.0)  # Первый бесплатный, остальные платные
-            test_courses.append({
-                "title": f"Test Course {i+1}",
-                "description": f"Тестовый курс по {purposes[i % len(purposes)]}",
-                "purpose": purposes[i % len(purposes)],
-                "price": price,
-                "preview_index": i,
-                "video_index": i if i < len(video_files) else None,
-            })
-        
-        for course_data in test_courses:
-            preview_url = f"/static/course_previews/{preview_files[course_data['preview_index']]}" if course_data['preview_index'] < len(preview_files) else None
-            full_url = f"/static/course_videos/{video_files[course_data['video_index']]}" if course_data['video_index'] is not None and course_data['video_index'] < len(video_files) else None
-            
-            course = Course(
-                title=course_data["title"],
-                description=course_data["description"],
-                purpose=course_data["purpose"],
-                price=course_data["price"],
-                preview_video_url=preview_url,
-                full_video_url=full_url
-            )
-            db.add(course)
-            print(f"✅ Создан курс: {course_data['title']} ({course_data['price']}₽)")
-        
-        db.commit()  # Сохраняем биты и курсы перед созданием покупок
-        
-        # Определяем текущее время для использования в покупках и заявках
-        now = datetime.utcnow()
-        
-        # Создаем тестового пользователя для заявок и покупок
-        test_user = db.query(User).filter(User.username == "test_user").first()
-        if not test_user:
-            test_user = User(
-                username="test_user",
-                email="test@example.com",
-                password_hash=get_password_hash("test123"),
-                is_active=True
-            )
-            db.add(test_user)
-            db.commit()
-            db.refresh(test_user)
-            print("✅ Создан тестовый пользователь")
-        
-        # Получаем созданные биты и курсы для покупок
-        all_beats = db.query(Beat).all()
-        all_courses = db.query(Course).all()
-        
-        # Создаем тестовые покупки битов
-        if len(all_beats) >= 3:
-            # Покупаем первые 3 бита (2 бесплатных + 1 платный)
-            for i, beat in enumerate(all_beats[:3]):
-                # Определяем тип покупки и соответствующую цену
-                purchase_type = "mp3" if i < 2 else "wav"  # Для платного - WAV
-                
-                # Определяем цену в зависимости от типа покупки
-                if purchase_type == 'mp3':
-                    actual_price = beat.price_mp3 if beat.price_mp3 is not None else beat.price
-                elif purchase_type == 'wav':
-                    actual_price = beat.price_wav if beat.price_wav is not None else beat.price
-                else:
-                    actual_price = beat.price_exclusive if beat.price_exclusive is not None else beat.price
-                
-                purchase = Purchase(
+                actual_price = beat.price_exclusive if beat.price_exclusive is not None else beat.price
+            db.add(
+                Purchase(
                     user_id=test_user.id,
                     beat_id=beat.id,
-                    purchase_date=now - timedelta(days=10-i*2),  # Разные даты
+                    purchase_date=now - timedelta(days=10 - i * 2),
                     price_paid=actual_price,
-                    purchase_type=purchase_type
+                    purchase_type=purchase_type,
                 )
-                db.add(purchase)
-                print(f"✅ Создана покупка бита: {beat.title} ({purchase_type.upper()}, {actual_price}₽)")
-        
-        # Создаем тестовые покупки курсов
-        if len(all_courses) >= 2:
-            # Покупаем первые 2 курса (1 бесплатный + 1 платный)
-            for i, course in enumerate(all_courses[:2]):
-                course_purchase = CoursePurchase(
+            )
+            print(f"✅ Покупка бита: {beat.title}")
+        db.commit()
+
+    if len(all_courses) >= 2 and db.query(CoursePurchase).filter(CoursePurchase.user_id == test_user.id).count() == 0:
+        for i, course in enumerate(all_courses[:2]):
+            db.add(
+                CoursePurchase(
                     user_id=test_user.id,
                     course_id=course.id,
-                    purchase_date=now - timedelta(days=8-i*3),  # Разные даты
-                    price_paid=course.price
+                    purchase_date=now - timedelta(days=8 - i * 3),
+                    price_paid=course.price,
                 )
-                db.add(course_purchase)
-                print(f"✅ Создана покупка курса: {course.title} ({course.price}₽)")
-        
-        db.commit()  # Сохраняем покупки
-        
-        # Создаем тестовые заявки (старые и новые)
-        
-        # Старые заявки (2-3 недели назад)
-        old_orders = [
+            )
+            print(f"✅ Покупка курса: {course.title}")
+        db.commit()
+
+    if db.query(ServiceOrder).count() == 0:
+        orders = [
             {
                 "order_type": "know",
                 "service_categories": json.dumps(["бит", "сведение"]),
@@ -327,10 +386,6 @@ def seed_test_data():
                 "description": "Старая заявка - не знаю что хочу",
                 "created_at": now - timedelta(days=15),
             },
-        ]
-        
-        # Новые заявки (несколько дней назад и сегодня)
-        new_orders = [
             {
                 "order_type": "know",
                 "service_categories": json.dumps(["бит в стиле трэп", "бит"]),
@@ -362,37 +417,74 @@ def seed_test_data():
                 "created_at": now - timedelta(days=5),
             },
         ]
-        
-        all_orders = old_orders + new_orders
-        
-        for order_data in all_orders:
-            order = ServiceOrder(
-                user_id=test_user.id,
-                order_type=order_data["order_type"],
-                service_categories=order_data["service_categories"],
-                deadline_days=order_data["deadline_days"],
-                prepayment_percent=order_data["prepayment_percent"],
-                price=order_data["price"],
-                status=order_data["status"],
-                description=order_data["description"],
-                created_at=order_data["created_at"],
-                updated_at=order_data["created_at"]
+        for order_data in orders:
+            db.add(
+                ServiceOrder(
+                    user_id=test_user.id,
+                    order_type=order_data["order_type"],
+                    service_categories=order_data["service_categories"],
+                    deadline_days=order_data["deadline_days"],
+                    prepayment_percent=order_data["prepayment_percent"],
+                    price=order_data["price"],
+                    status=order_data["status"],
+                    description=order_data["description"],
+                    created_at=order_data["created_at"],
+                    updated_at=order_data["created_at"],
+                )
             )
-            db.add(order)
-            print(f"✅ Создана заявка: {order_data['order_type']} ({order_data['status']})")
-        
+            print(f"✅ Заявка: {order_data['order_type']} ({order_data['status']})")
         db.commit()
-        print("✅ Тестовые данные успешно созданы!")
-        
+
+
+def seed_test_data():
+    """Заполняет / досыпает тестовые биты, курсы, заявки и баннеры."""
+    db = SessionLocal()
+
+    try:
+        seed_demo_banners(db)
+        media = collect_media()
+
+        existing_beats = db.query(Beat).count()
+        existing_courses = db.query(Course).count()
+
+        if existing_beats == 0 and existing_courses == 0:
+            print("🌱 Полное заполнение тестовыми данными...")
+            create_beats(db, media, start_index=0, count=TARGET_BEATS)
+            create_courses(db, media, start_index=0, count=TARGET_COURSES)
+            seed_orders_and_purchases(db)
+            print("✅ Тестовые данные успешно созданы!")
+        else:
+            print("🔄 Каталог уже есть — проверяем объём и досыпаем при необходимости")
+            # Старое поведение: починить одноразовые Test Beat 4–6
+            if existing_beats > 0:
+                updated = 0
+                for i, beat in enumerate(sorted(db.query(Beat).all(), key=lambda b: b.id), 1):
+                    if "(одноразовый)" in beat.title and beat.allow_multiple_purchases:
+                        beat.allow_multiple_purchases = False
+                        updated += 1
+                    elif beat.title.startswith("Test Beat") and 4 <= i <= 6:
+                        if beat.allow_multiple_purchases:
+                            beat.allow_multiple_purchases = False
+                            if "(одноразовый)" not in beat.title:
+                                beat.title = beat.title + " (одноразовый)"
+                            updated += 1
+                if updated:
+                    db.commit()
+                    print(f"✅ Обновлено одноразовых битов: {updated}")
+
+            ensure_catalog_volume(db, media)
+            seed_orders_and_purchases(db)
+            print("✅ Объём каталога проверен")
+
     except Exception as e:
         print(f"❌ Ошибка при создании тестовых данных: {e}")
         import traceback
+
         traceback.print_exc()
         db.rollback()
     finally:
         db.close()
 
+
 if __name__ == "__main__":
     seed_test_data()
-
-
