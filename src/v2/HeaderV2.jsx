@@ -125,7 +125,7 @@ const HeaderV2 = ({ admin = false }) => {
               {canSeeCourses && (
                 <NavItem to="/courses" label="Обучение" active={location.pathname.startsWith('/course')} />
               )}
-              <NavItem to="/order" label="Услуги" active={location.pathname === '/order'} />
+              <NavItem to="/order" label="Услуги" active={location.pathname.startsWith('/order')} />
             </nav>
           </div>
 
@@ -181,7 +181,7 @@ const HeaderV2 = ({ admin = false }) => {
           {canSeeCourses && (
             <NavItem to="/courses" label="Обучение" active={location.pathname.startsWith('/course')} />
           )}
-          <NavItem to="/order" label="Услуги" active={location.pathname === '/order'} />
+          <NavItem to="/order" label="Услуги" active={location.pathname.startsWith('/order')} />
         </nav>
       </div>
     </header>

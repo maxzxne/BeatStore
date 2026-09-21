@@ -402,7 +402,7 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(admin_hit.status_code, 200)
 
     def test_courses_hidden_from_public(self):
-        add_course(self.db)
+        course = add_course(self.db)
         self.db.add(SiteSetting(key="courses_visibility", value="hidden"))
         self.db.commit()
         public = self.client.get("/courses")
@@ -412,6 +412,57 @@ class ApiTestCase(unittest.TestCase):
         as_admin = self.client.get("/courses", headers=auth(self.admin_token))
         self.assertEqual(as_admin.status_code, 200)
         self.assertEqual(len(as_admin.json()), 1)
+        detail = self.client.get(f"/courses/{course.id}")
+        self.assertEqual(detail.status_code, 403)
+
+    def test_ads_orders_disabled_rejects_create_and_is_in_site_settings(self):
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.status_code, 200)
+        self.assertTrue(public.json().get("ads_orders_enabled"))
+
+        off = self.client.put(
+            "/api/admin/site-settings",
+            headers=auth(self.admin_token),
+            json={"ads_orders_enabled": False},
+        )
+        self.assertEqual(off.status_code, 200, off.text)
+        self.assertFalse(off.json()["settings"]["ads_orders_enabled"])
+        public_off = self.client.get("/site-settings")
+        self.assertFalse(public_off.json()["ads_orders_enabled"])
+
+        blocked = self.client.post(
+            "/service-orders",
+            json={
+                "order_type": "ads",
+                "customer_name": "Ann",
+                "customer_email": "ann@example.com",
+                "description": "баннер",
+                "reference_links": "https://example.com",
+                "deadline_days": 7,
+            },
+        )
+        self.assertEqual(blocked.status_code, 403, blocked.text)
+
+        on = self.client.put(
+            "/api/admin/site-settings",
+            headers=auth(self.admin_token),
+            json={"ads_orders_enabled": True},
+        )
+        self.assertEqual(on.status_code, 200, on.text)
+        created = self.client.post(
+            "/service-orders",
+            json={
+                "order_type": "ads",
+                "customer_name": "Ann",
+                "customer_email": "ann@example.com",
+                "description": "баннер",
+                "reference_links": "https://example.com",
+                "deadline_days": 7,
+                "service_categories": ["реклама на витрине"],
+            },
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        self.assertEqual(created.json()["order_type"], "ads")
 
     def test_public_promo_banners_filter_window(self):
         now = datetime.utcnow()

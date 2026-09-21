@@ -418,10 +418,10 @@ const AdminOrders = () => {
                       </td>
                       <td>
                         <div className="max-w-[220px] truncate text-white/80">
-                          {categoriesOf(order).join(', ') || (order.order_type === 'dont_know' ? 'Нужно обсуждение' : 'Заказ')}
+                          {categoriesOf(order).join(', ') || (order.order_type === 'dont_know' ? 'Нужно обсуждение' : order.order_type === 'ads' ? 'Реклама на витрине' : 'Заказ')}
                         </div>
                         <div className="text-xs text-white/35">
-                          {order.order_type === 'dont_know' ? 'Обсуждение' : 'Бриф'}
+                          {order.order_type === 'dont_know' ? 'Обсуждение' : order.order_type === 'ads' ? 'Реклама' : 'Бриф'}
                         </div>
                       </td>
                       <td className={`whitespace-nowrap text-xs ${overdue ? 'text-red-300' : 'text-white/45'}`}>
@@ -619,10 +619,10 @@ function OrderDrawer({
                 ))}
               </div>
             ) : (
-              <p className="text-white/70">{order.order_type === 'dont_know' ? 'Клиент не знает, что нужно — обсудить' : 'Не указано'}</p>
+              <p className="text-white/70">{order.order_type === 'dont_know' ? 'Клиент не знает, что нужно — обсудить' : order.order_type === 'ads' ? 'Реклама на витрине' : 'Не указано'}</p>
             )}
             <p className="mt-2 text-xs text-white/40">
-              {order.order_type === 'dont_know' ? 'Тип: обсуждение' : 'Тип: бриф'} · {formatMoscowDate(order.created_at)}
+              {order.order_type === 'dont_know' ? 'Тип: обсуждение' : order.order_type === 'ads' ? 'Тип: реклама' : 'Тип: бриф'} · {formatMoscowDate(order.created_at)}
               {order.deadline_days ? ` · срок ${ruCount(order.deadline_days, 'день', 'дня', 'дней')}` : ''}
               {due ? ` · до ${due.toLocaleDateString('ru-RU')}` : ''}
             </p>

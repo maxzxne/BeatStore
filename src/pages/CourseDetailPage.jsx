@@ -31,11 +31,6 @@ const CourseDetailPage = () => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
 
-  useEffect(() => {
-    if (!settingsLoading && !canSeeCourses) {
-      navigate('/', { replace: true });
-    }
-  }, [settingsLoading, canSeeCourses, navigate]);
 
   useEffect(() => {
     if (canSeeCourses) {

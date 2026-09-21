@@ -216,7 +216,7 @@ class ServiceOrder(Base):
     customer_email = Column(String, nullable=True)  # Email заказчика
     
     # Тип заказа
-    order_type = Column(String, default="know")  # "know" или "dont_know"
+    order_type = Column(String, default="know")  # "know", "dont_know" или "ads"
     
     # Категории услуг (JSON строка с массивом категорий)
     service_category = Column(String, nullable=True)  # Старое поле для обратной совместимости

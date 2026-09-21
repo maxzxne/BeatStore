@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
@@ -15,7 +15,6 @@ import { PriceLabel } from './DiscountUi';
 const CoursesPageV2 = () => {
   const { isAuthenticated } = useAuth();
   const { canSeeCourses, loading: settingsLoading } = useSiteSettings();
-  const navigate = useNavigate();
   const { playTrack, isCurrentTrackPlaying, pauseTrack } = useAudioPlayer();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,11 +26,6 @@ const CoursesPageV2 = () => {
   const isFirstLoad = useRef(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  useEffect(() => {
-    if (!settingsLoading && !canSeeCourses) {
-      navigate('/', { replace: true });
-    }
-  }, [settingsLoading, canSeeCourses, navigate]);
 
   const fetchCourses = async () => {
     try {

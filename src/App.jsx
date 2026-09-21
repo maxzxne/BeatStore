@@ -52,6 +52,7 @@ import SubmitCabinetPage from './v2/submit/SubmitCabinetPage';
 import AdminContributorsPage from './v2/admin/AdminContributorsPage';
 import AdminSubmissionsPage from './v2/admin/AdminSubmissionsPage';
 import ErrorPage from './pages/ErrorPage';
+import { RequireAdsOrders, RequireCourses } from './v2/SectionClosed';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfUsePage from './pages/TermsOfUsePage';
 import PersonalDataConsentPage from './pages/PersonalDataConsentPage';
@@ -70,9 +71,10 @@ function App() {
                   <Route path="/" element={<LayoutV2 />}>
                     <Route index element={<HomePageV2 />} />
                     <Route path="beat/:id" element={<BeatPageV2 />} />
-                    <Route path="courses" element={<CoursesPageV2 />} />
-                    <Route path="course/:id" element={<CourseDetailPage />} />
+                    <Route path="courses" element={<RequireCourses><CoursesPageV2 /></RequireCourses>} />
+                    <Route path="course/:id" element={<RequireCourses><CourseDetailPage /></RequireCourses>} />
                     <Route path="order" element={<OrderPage />} />
+                    <Route path="order/ads" element={<RequireAdsOrders><OrderPage initialType="ads" /></RequireAdsOrders>} />
                     <Route path="profile" element={<ProfilePage />} />
                     <Route path="support" element={<SupportPageV2 />} />
                     <Route path="favorites" element={<FavoritesPage />} />

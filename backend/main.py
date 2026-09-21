@@ -248,6 +248,12 @@ def update_database_schema():
                 db.commit()
                 print("Настройка courses_visibility создана (all)")
 
+            ads_orders = db.query(SiteSetting).filter(SiteSetting.key == "ads_orders_enabled").first()
+            if not ads_orders:
+                db.add(SiteSetting(key="ads_orders_enabled", value="true"))
+                db.commit()
+                print("Настройка ads_orders_enabled создана (true)")
+
             home_hero = db.query(SiteSetting).filter(SiteSetting.key == "home_hero").first()
             if not home_hero:
                 default_hero = {
@@ -931,6 +937,7 @@ def normalize_hero_image_position(value) -> str:
 class SiteSettingsUpdate(BaseModel):
     """Схема обновления настроек сайта"""
     courses_visibility: Optional[str] = None
+    ads_orders_enabled: Optional[bool] = None
 
 class HomeHeroUpdate(BaseModel):
     """Схема обновления hero главной"""
@@ -1021,9 +1028,29 @@ def get_site_setting_value(db: Session, key: str, default: str = "") -> str:
     setting = db.query(SiteSetting).filter(SiteSetting.key == key).first()
     return setting.value if setting else default
 
+def parse_bool_setting(value, default: bool = True) -> bool:
+    if value is None:
+        return default
+    text = str(value).strip()
+    if not text:
+        return default
+    return text.lower() not in {"0", "false", "off", "no"}
+
+def upsert_site_setting(db: Session, key: str, value: str):
+    setting = db.query(SiteSetting).filter(SiteSetting.key == key).first()
+    if not setting:
+        db.add(SiteSetting(key=key, value=value))
+    else:
+        setting.value = value
+        setting.updated_at = datetime.utcnow()
+    db.commit()
+
 def get_courses_visibility(db: Session) -> str:
     value = get_site_setting_value(db, "courses_visibility", "all")
     return value if value in COURSES_VISIBILITY_VALUES else "all"
+
+def get_ads_orders_enabled(db: Session) -> bool:
+    return parse_bool_setting(get_site_setting_value(db, "ads_orders_enabled", "true"), True)
 
 def get_home_hero(db: Session) -> dict:
     raw = get_site_setting_value(db, "home_hero", "")
@@ -1139,6 +1166,13 @@ def ensure_courses_catalog_access(db: Session, current_user: Optional[User]):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Раздел курсов временно недоступен"
+        )
+
+def ensure_ads_orders_access(db: Session):
+    if not get_ads_orders_enabled(db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Заказ рекламы временно недоступен"
         )
 
 class ServiceOrderResponseFull(BaseModel):
@@ -2391,6 +2425,9 @@ def create_service_order(order: ServiceOrderCreate,
         import json
         
         print(f"Creating service order: type={order.order_type}, user={current_user.username if current_user else 'anonymous'}")
+
+        if order.order_type == "ads":
+            ensure_ads_orders_access(db)
         
         # Если пользователь авторизован, используем его данные
         # Если нет, используем переданные имя и email
@@ -3851,6 +3888,7 @@ def get_public_site_settings(db: Session = Depends(get_db)):
     """Публичные настройки сайта (видимость разделов + hero)"""
     return {
         "courses_visibility": get_courses_visibility(db),
+        "ads_orders_enabled": get_ads_orders_enabled(db),
         "home_hero": get_home_hero(db),
     }
 
@@ -3858,6 +3896,7 @@ def get_public_site_settings(db: Session = Depends(get_db)):
 def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     return {
         "courses_visibility": get_courses_visibility(db),
+        "ads_orders_enabled": get_ads_orders_enabled(db),
         "home_hero": get_home_hero(db),
     }
 
@@ -3873,19 +3912,16 @@ def update_admin_site_settings(
                 status_code=400,
                 detail=f"courses_visibility must be one of: {', '.join(sorted(COURSES_VISIBILITY_VALUES))}"
             )
-        setting = db.query(SiteSetting).filter(SiteSetting.key == "courses_visibility").first()
-        if not setting:
-            setting = SiteSetting(key="courses_visibility", value=update_data.courses_visibility)
-            db.add(setting)
-        else:
-            setting.value = update_data.courses_visibility
-            setting.updated_at = datetime.utcnow()
-        db.commit()
+        upsert_site_setting(db, "courses_visibility", update_data.courses_visibility)
+
+    if update_data.ads_orders_enabled is not None:
+        upsert_site_setting(db, "ads_orders_enabled", "true" if update_data.ads_orders_enabled else "false")
 
     return {
         "message": "Site settings updated successfully",
         "settings": {
             "courses_visibility": get_courses_visibility(db),
+            "ads_orders_enabled": get_ads_orders_enabled(db),
             "home_hero": get_home_hero(db),
         }
     }
@@ -4238,7 +4274,6 @@ def reorder_admin_footer_pages(
         .all()
     )
     return [footer_page_to_dict(p) for p in ordered]
-
 
 
 @app.get("/api/admin/footer-pages/{page_id}/default-body")

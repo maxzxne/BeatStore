@@ -423,6 +423,11 @@ const PurchasesPage = () => {
                             Требует обсуждения
                           </span>
                         )}
+                        {order.order_type === 'ads' && (
+                          <span className="rounded-full bg-[#22c55e]/15 px-3 py-1 text-xs font-medium text-[#22c55e]">
+                            Реклама
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">

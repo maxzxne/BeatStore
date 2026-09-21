@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { api } from '../utils/api';
 import { checkoutErrorMessage, startCheckout, withPromo } from '../utils/checkout';
 import {
@@ -27,8 +28,10 @@ import {
   ArrowRight,
   ClipboardList,
   MessageSquare,
+  Megaphone,
 } from 'lucide-react';
 import { PromoCodeField } from '../v2/DiscountUi';
+import { SectionClosed } from '../v2/SectionClosed';
 
 const orderContactFromUser = (user) => {
   if (!user) return '';
@@ -46,11 +49,22 @@ const rowsFromUser = (user) => {
   }));
 };
 
-const OrderPage = () => {
+const ADS_DURATION_OPTIONS = [
+  { days: 3, label: '3 дня', hint: 'короткий слот' },
+  { days: 7, label: '7 дней', hint: 'неделя' },
+  { days: 14, label: '14 дней', hint: 'две недели' },
+];
+
+const ADS_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+const OrderPage = ({ initialType = null }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useNotification();
-  const [orderType, setOrderType] = useState(null); // null, "know", "dont_know"
+  const { adsOrdersEnabled, loading: settingsLoading } = useSiteSettings();
+  const wantsAds = initialType === 'ads' || searchParams.get('type') === 'ads';
+  const [orderType, setOrderType] = useState(wantsAds ? 'ads' : null); // null, "know", "dont_know", "ads"
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_email: '',
@@ -88,6 +102,18 @@ const OrderPage = () => {
   const secondaryBtnClass =
     'inline-flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 bg-transparent text-base font-semibold text-white transition hover:bg-white/5 disabled:opacity-60';
   const [filesBlockOpen, setFilesBlockOpen] = useState(true);
+  const [adsImage, setAdsImage] = useState(null);
+  const [adsPreviewUrl, setAdsPreviewUrl] = useState('');
+
+  React.useEffect(() => {
+    if (!adsImage) {
+      setAdsPreviewUrl('');
+      return undefined;
+    }
+    const url = URL.createObjectURL(adsImage);
+    setAdsPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [adsImage]);
 
   // Категории услуг с описаниями
   const serviceCategories = [
@@ -256,8 +282,21 @@ const OrderPage = () => {
   }, [wizardStep, orderType]);
 
   const selectOrderType = (type) => {
+    if (type === 'ads') {
+      navigate('/order/ads');
+      setOrderType('ads');
+      return;
+    }
     setOrderType(type);
     setWizardStep(1);
+  };
+
+  const backToChoice = () => {
+    setOrderType(null);
+    setAdsImage(null);
+    if (initialType === 'ads' || window.location.pathname === '/order/ads' || searchParams.get('type') === 'ads') {
+      navigate('/order');
+    }
   };
 
   const goWizardNext = () => {
@@ -473,6 +512,99 @@ const OrderPage = () => {
     }
   };
 
+  const handleAdsImageChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!ADS_IMAGE_TYPES.includes(file.type)) {
+      showError('Нужен JPEG, PNG или WebP');
+      event.target.value = '';
+      return;
+    }
+    setAdsImage(file);
+  };
+
+  const handleAdsSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!adsOrdersEnabled) {
+      showError('Заказ рекламы сейчас выключен');
+      return;
+    }
+
+    if (!formData.customer_name || !formData.customer_email) {
+      showError('Укажите ваше имя и email');
+      return;
+    }
+
+    const destination = (formData.reference_links || '').trim();
+    if (!destination) {
+      showError('Укажите ссылку, куда ведёт баннер');
+      return;
+    }
+
+    if (!adsImage) {
+      showError('Загрузите картинку баннера 16:9');
+      return;
+    }
+
+    if (!formData.deadline_days) {
+      showError('Выберите срок размещения');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const materialsFormData = new FormData();
+      materialsFormData.append('file', adsImage);
+      const materialsResponse = await api.post('/upload-materials', materialsFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const caption = (formData.description || '').trim();
+      const contact_info = formatContacts(contactRows) || null;
+      const normalizedLink = /^https?:\/\//i.test(destination) ? destination : `https://${destination}`;
+
+      await api.post('/service-orders', {
+        order_type: 'ads',
+        customer_name: formData.customer_name,
+        customer_email: formData.customer_email,
+        description: caption || 'Реклама на витрине',
+        reference_links: normalizedLink,
+        materials_url: JSON.stringify([materialsResponse.data.url]),
+        deadline_days: parseInt(formData.deadline_days, 10),
+        service_categories: ['реклама на витрине'],
+        contact_info,
+      });
+
+      showSuccess('Заявка на рекламу отправлена. Пришлём стоимость и слоты.');
+      resetSimpleForm();
+      setAdsImage(null);
+      backToChoice();
+    } catch (error) {
+      console.error('Error creating ads order:', error);
+      showError(error.response?.data?.detail || 'Ошибка при создании заявки');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (settingsLoading && wantsAds) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center px-4 text-sm text-white/40">
+        Загрузка…
+      </div>
+    );
+  }
+
+  if (!settingsLoading && wantsAds && !adsOrdersEnabled) {
+    return (
+      <SectionClosed
+        title="Реклама недоступна"
+        message="Заказ рекламы на витрине сейчас выключен. Даже по прямой ссылке форма не открывается."
+      />
+    );
+  }
+
   // Если тип заказа не выбран
   if (orderType === null) {
     return (
@@ -480,7 +612,7 @@ const OrderPage = () => {
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Заказать услугу</h1>
-          <p className="mt-2 text-sm text-white/50">Выбери формат — подробный расчёт или короткая заявка</p>
+          <p className="mt-2 text-sm text-white/50">Подробный расчёт, короткая заявка или реклама на витрине</p>
         </div>
 
         <div className="space-y-4">
@@ -531,7 +663,293 @@ const OrderPage = () => {
               <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
             </div>
           </button>
+
+          {adsOrdersEnabled && (
+            <button
+              type="button"
+              onClick={() => selectOrderType('ads')}
+              className="group w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/50 hover:bg-[#22c55e]/[0.04]"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e]">
+                  <Megaphone className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <h3 className="font-[Syne] text-xl font-bold text-white">Заказать рекламу</h3>
+                    <span className="rounded-full border border-[#22c55e]/35 bg-[#22c55e]/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#22c55e]">
+                      Витрина
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed text-white/50">
+                    Баннер 16:9 на главной — заявка, стоимость пришлём отдельно
+                  </p>
+                </div>
+                <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-[#22c55e] transition group-hover:translate-x-0.5" />
+              </div>
+            </button>
+          )}
         </div>
+      </div>
+    );
+  }
+
+  if (orderType === 'ads') {
+    const contactPreview = formatContacts(contactRows);
+    const previewCaption = (formData.description || '').trim();
+    const previewLink = (formData.reference_links || '').trim();
+
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <div className="mb-8">
+          <button
+            type="button"
+            onClick={backToChoice}
+            className="mb-4 inline-flex min-h-11 items-center border-none bg-transparent p-0 text-sm text-white/50 hover:text-white"
+          >
+            ← Назад к выбору
+          </button>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Ads</p>
+          <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Реклама на витрине</h1>
+          <p className="mt-2 text-sm text-white/50">
+            Картинка 16:9, ссылка и срок. Это заявка — цену и слот подтвердим в переписке.
+          </p>
+        </div>
+
+        <form onSubmit={handleAdsSubmit} className="space-y-5">
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <User className="h-4 w-4 text-[#22c55e]" />
+              <h2 className="font-[Syne] text-lg font-bold text-white">Контакты</h2>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="ads_customer_name" className={labelClass}>Имя *</label>
+                <input
+                  type="text"
+                  id="ads_customer_name"
+                  name="customer_name"
+                  value={formData.customer_name}
+                  onChange={handleInputChange}
+                  required
+                  autoComplete="name"
+                  className={fieldClass}
+                  placeholder="Как к тебе обращаться"
+                />
+              </div>
+              <div>
+                <label htmlFor="ads_customer_email" className={labelClass}>
+                  <Mail className="mr-2 inline h-4 w-4" />
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  id="ads_customer_email"
+                  name="customer_email"
+                  value={formData.customer_email}
+                  onChange={handleInputChange}
+                  required
+                  autoComplete="email"
+                  className={fieldClass}
+                  placeholder="email@example.com"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className={sectionClass}>
+            <div className="mb-2 flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-[#22c55e]" />
+              <h2 className="font-[Syne] text-lg font-bold text-white">Связь</h2>
+            </div>
+            <p className="mb-5 text-xs text-white/40">Telegram, WhatsApp — необязательно, но так быстрее ответим.</p>
+            <div className="space-y-3">
+              {contactRows.length === 0 && (
+                <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">
+                  Пока пусто. Добавь удобный канал.
+                </p>
+              )}
+              {contactRows.map((row) => {
+                const meta = CONTACT_TYPES.find((t) => t.value === row.type) || CONTACT_TYPES[5];
+                return (
+                  <div
+                    key={row.key}
+                    className="grid gap-2 rounded-2xl border border-white/10 bg-black/20 p-3 sm:grid-cols-[140px_1fr_auto] sm:items-center"
+                  >
+                    <label className="sr-only" htmlFor={`ads-contact-type-${row.key}`}>Тип связи</label>
+                    <select
+                      id={`ads-contact-type-${row.key}`}
+                      value={row.type}
+                      onChange={(e) => updateContactRow(row.key, { type: e.target.value })}
+                      className={`${fieldClass} cursor-pointer`}
+                    >
+                      {CONTACT_TYPES.map((t) => (
+                        <option key={t.value} value={t.value} className="bg-[#0a0a0a]">
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={row.value}
+                      onChange={(e) => updateContactRow(row.key, { value: e.target.value })}
+                      placeholder={meta.placeholder}
+                      className={fieldClass}
+                      aria-label={`Значение ${meta.label}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeContactRow(row.key)}
+                      className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-white/10 text-white/50 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 sm:w-11"
+                      aria-label="Удалить контакт"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              onClick={addContactRow}
+              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-sm font-medium text-white transition hover:bg-white/5"
+            >
+              <Plus className="h-4 w-4" />
+              Добавить связь
+            </button>
+            {contactPreview ? (
+              <p className="mt-3 text-xs text-white/35">В заявке: {contactPreview}</p>
+            ) : null}
+          </section>
+
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <Megaphone className="h-4 w-4 text-[#22c55e]" />
+              <h2 className="font-[Syne] text-lg font-bold text-white">Баннер</h2>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+              {adsPreviewUrl ? (
+                <div className="relative">
+                  <img src={adsPreviewUrl} alt="Предпросмотр баннера" className="v2-promo-img" />
+                  {previewCaption ? <div className="v2-promo-caption">{previewCaption}</div> : null}
+                </div>
+              ) : (
+                <div className="flex aspect-video flex-col items-center justify-center gap-2 px-6 text-center">
+                  <Upload className="h-6 w-6 text-white/35" aria-hidden="true" />
+                  <p className="text-sm text-white/45">Предпросмотр 16:9 появится после загрузки</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <label htmlFor="ads_banner" className={labelClass}>Картинка 16:9 *</label>
+              <input
+                type="file"
+                id="ads_banner"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleAdsImageChange}
+                className="block w-full text-sm text-white/60 file:mr-4 file:inline-flex file:h-11 file:cursor-pointer file:rounded-full file:border-0 file:bg-[#22c55e] file:px-4 file:text-sm file:font-semibold file:text-[#052e16]"
+              />
+              <p className={hintClass}>JPEG, PNG или WebP. Лучше сразу кадр 16:9 — так баннер не обрежется.</p>
+              {adsImage ? (
+                <p className="mt-2 text-xs text-white/45">{adsImage.name}</p>
+              ) : null}
+            </div>
+
+            <div className="mt-4">
+              <label htmlFor="ads_link" className={labelClass}>
+                <LinkIcon className="mr-2 inline h-4 w-4" />
+                Ссылка по клику *
+              </label>
+              <input
+                type="text"
+                id="ads_link"
+                name="reference_links"
+                value={formData.reference_links}
+                onChange={handleInputChange}
+                required
+                inputMode="url"
+                autoComplete="url"
+                className={fieldClass}
+                placeholder="https://example.com"
+              />
+              {previewLink ? (
+                <p className={hintClass}>Ведёт на: {previewLink}</p>
+              ) : (
+                <p className={hintClass}>Куда откроется баннер на главной.</p>
+              )}
+            </div>
+
+            <div className="mt-4">
+              <label htmlFor="ads_caption" className={labelClass}>Подпись на баннере</label>
+              <input
+                type="text"
+                id="ads_caption"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                maxLength={80}
+                className={fieldClass}
+                placeholder="Короткий текст поверх картинки"
+              />
+              <p className={hintClass}>Необязательно. До 80 символов.</p>
+            </div>
+          </section>
+
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-[#22c55e]" />
+              <h2 className="font-[Syne] text-lg font-bold text-white">Срок размещения</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {ADS_DURATION_OPTIONS.map((option) => {
+                const selected = String(formData.deadline_days) === String(option.days);
+                return (
+                  <button
+                    key={option.days}
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, deadline_days: String(option.days) }))}
+                    className={`inline-flex min-h-11 min-w-[7.5rem] flex-col items-start justify-center rounded-2xl border px-4 py-2 text-left transition ${
+                      selected
+                        ? 'border-[#22c55e]/50 bg-[#22c55e]/10 text-white'
+                        : 'border-white/10 bg-white/5 text-white/70 hover:border-white/25'
+                    }`}
+                    aria-pressed={selected}
+                  >
+                    <span className="text-sm font-semibold">{option.label}</span>
+                    <span className="text-[11px] text-white/40">{option.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <div className="pt-1">
+            <label className="flex items-start gap-2 text-xs text-white/50">
+              <input
+                type="checkbox"
+                required
+                className="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/5 accent-[#22c55e] focus:ring-[#22c55e]/40"
+              />
+              <span>
+                Я подтверждаю, что ознакомился(ась) и принимаю условия{' '}
+                <a href="/terms" className="text-[#22c55e] underline hover:opacity-80" target="_blank" rel="noopener noreferrer">
+                  Пользовательского соглашения
+                </a>
+                {' '}и{' '}
+                <a href="/privacy" className="text-[#22c55e] underline hover:opacity-80" target="_blank" rel="noopener noreferrer">
+                  Политики конфиденциальности
+                </a>
+                , а также даю согласие на обработку моих персональных данных.
+              </span>
+            </label>
+          </div>
+
+          <button type="submit" disabled={uploading} className={primaryBtnClass}>
+            {uploading ? 'Отправляем…' : 'Отправить заявку'}
+          </button>
+        </form>
       </div>
     );
   }

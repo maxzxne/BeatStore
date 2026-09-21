@@ -11,6 +11,7 @@ import bootstrap  # noqa: F401, E402
 from main import (  # noqa: E402
     is_promo_banner_active,
     normalize_hero_image_position,
+    parse_bool_setting,
     user_can_access_courses_catalog,
 )
 
@@ -69,6 +70,20 @@ class CoursesVisibilityTests(unittest.TestCase):
         self.assertTrue(user_can_access_courses_catalog("hidden", admin))
         self.assertFalse(user_can_access_courses_catalog("admins_only", user))
         self.assertTrue(user_can_access_courses_catalog("admins_only", admin))
+
+
+class AdsOrdersEnabledTests(unittest.TestCase):
+    def test_missing_defaults_to_on(self):
+        self.assertTrue(parse_bool_setting(None, True))
+        self.assertTrue(parse_bool_setting("", True))
+
+    def test_falsey_strings_are_off(self):
+        for value in ("false", "0", "off", "no", "FALSE"):
+            self.assertFalse(parse_bool_setting(value, True))
+
+    def test_truthy_strings_are_on(self):
+        for value in ("true", "1", "on", "yes"):
+            self.assertTrue(parse_bool_setting(value, True))
 
 
 if __name__ == "__main__":

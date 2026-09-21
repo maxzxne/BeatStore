@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Megaphone } from 'lucide-react';
 
 const COURSES_VISIBILITY_OPTIONS = [
   {
@@ -25,9 +25,11 @@ const AdminOAuthSettings = () => {
   const { isAdminAuthenticated } = useAuth();
   const [settings, setSettings] = useState([]);
   const [coursesVisibility, setCoursesVisibility] = useState('all');
+  const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
   const [savingCourses, setSavingCourses] = useState(false);
+  const [savingAds, setSavingAds] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -55,6 +57,7 @@ const AdminOAuthSettings = () => {
       if (value === 'all' || value === 'admins_only' || value === 'hidden') {
         setCoursesVisibility(value);
       }
+      setAdsOrdersEnabled(response.data?.ads_orders_enabled !== false);
     } catch (error) {
       console.error('Error fetching site settings:', error);
     }
@@ -73,6 +76,22 @@ const AdminOAuthSettings = () => {
       alert(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
     } finally {
       setSavingCourses(false);
+    }
+  };
+
+  const updateAdsOrdersEnabled = async (enabled) => {
+    const previous = adsOrdersEnabled;
+    try {
+      setSavingAds(true);
+      setAdsOrdersEnabled(enabled);
+      await api.put('/api/admin/site-settings', { ads_orders_enabled: enabled });
+      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+    } catch (error) {
+      console.error('Error updating ads orders setting:', error);
+      setAdsOrdersEnabled(previous);
+      alert(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
+    } finally {
+      setSavingAds(false);
     }
   };
 
@@ -224,6 +243,48 @@ const AdminOAuthSettings = () => {
           })}
         </div>
         {savingCourses && (
+          <p className="mt-3 flex items-center gap-2 text-xs text-white/40">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Сохранение…
+          </p>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="admin-stat-icon">
+            <Megaphone className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-[Syne] text-lg font-semibold text-white">Заказ рекламы</h2>
+            <p className="text-xs text-white/40">
+              Карточка на /order и форма /order/ads. Если выключено — страница не открывается даже по ссылке.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex min-h-[44px] items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <div>
+            <div className="text-sm font-medium text-white">
+              {adsOrdersEnabled ? 'Раздел включён' : 'Раздел выключен'}
+            </div>
+            <div className="mt-0.5 text-xs text-white/40">
+              {adsOrdersEnabled ? 'Посетители могут отправить заявку на баннер' : 'Форма и URL закрыты для всех'}
+            </div>
+          </div>
+          <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
+            <input
+              type="checkbox"
+              checked={adsOrdersEnabled}
+              onChange={(e) => updateAdsOrdersEnabled(e.target.checked)}
+              disabled={savingAds}
+              className="peer sr-only"
+              aria-label="Включить заказ рекламы"
+            />
+            <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
+          </label>
+        </div>
+        {savingAds && (
           <p className="mt-3 flex items-center gap-2 text-xs text-white/40">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Сохранение…
