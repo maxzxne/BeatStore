@@ -4,14 +4,45 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
 import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
-import { contactsFromUser, formatContacts } from '../utils/contacts';
-import { Upload, Link as LinkIcon, FileText, Calendar, User, Mail, Phone, Plus, X, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  CONTACT_TYPES,
+  contactsFromUser,
+  emptyContactRow,
+  formatContacts,
+} from '../utils/contacts';
+import {
+  Upload,
+  Link as LinkIcon,
+  FileText,
+  Calendar,
+  User,
+  Mail,
+  Plus,
+  X,
+  Trash2,
+  MessageCircle,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  ClipboardList,
+  MessageSquare,
+} from 'lucide-react';
 
 const orderContactFromUser = (user) => {
   if (!user) return '';
   const formatted = formatContacts(contactsFromUser(user));
   if (formatted) return formatted;
   return user.additional_contact || '';
+};
+
+const rowsFromUser = (user) => {
+  const existing = contactsFromUser(user);
+  if (!existing.length) return [];
+  return existing.map((c) => ({
+    ...c,
+    key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  }));
 };
 
 const OrderPage = () => {
@@ -38,10 +69,14 @@ const OrderPage = () => {
   // Сворачиваемые блоки: пользователь свернут, если авторизован и поля предзаполнены
   const [userBlockOpen, setUserBlockOpen] = useState(true);
   const [orderInfoBlockOpen, setOrderInfoBlockOpen] = useState(true);
+  const [contactRows, setContactRows] = useState([]);
+  const [contactsSeeded, setContactsSeeded] = useState(false);
 
   const fieldClass =
     'w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
   const cardClass = 'rounded-3xl border border-white/10 bg-white/[0.03]';
+  const sectionClass =
+    'rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6';
   const primaryBtnClass =
     'inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60';
   const labelClass = 'mb-2 block text-sm font-medium text-white';
@@ -172,8 +207,43 @@ const OrderPage = () => {
         customer_email: prev.customer_email || user.email || '',
         contact_info: prev.contact_info || orderContactFromUser(user)
       }));
+      if (!contactsSeeded) {
+        setContactRows(rowsFromUser(user));
+        setContactsSeeded(true);
+      }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, contactsSeeded]);
+
+  const addContactRow = () => {
+    setContactRows((prev) => [...prev, emptyContactRow()]);
+  };
+
+  const updateContactRow = (key, patch) => {
+    setContactRows((prev) =>
+      prev.map((row) => (row.key === key ? { ...row, ...patch } : row))
+    );
+  };
+
+  const removeContactRow = (key) => {
+    setContactRows((prev) => prev.filter((row) => row.key !== key));
+  };
+
+  const resetSimpleForm = () => {
+    setFormData({
+      customer_name: isAuthenticated && user ? user.username || '' : '',
+      customer_email: isAuthenticated && user ? user.email || '' : '',
+      contact_info: isAuthenticated && user ? orderContactFromUser(user) : '',
+      service_categories: [],
+      materials: [],
+      reference_links: '',
+      reference_files: [],
+      description: '',
+      deadline_days: '',
+      prepayment_percent: 50
+    });
+    setContactRows(isAuthenticated && user ? rowsFromUser(user) : []);
+    setContactsSeeded(true);
+  };
 
   // Keep accordion open state synced with wizard step
   React.useEffect(() => {
@@ -273,31 +343,21 @@ const OrderPage = () => {
 
     try {
       setUploading(true);
+
+      const contact_info = formatContacts(contactRows) || null;
       
       const orderData = {
         order_type: "dont_know",
         customer_name: formData.customer_name,
         customer_email: formData.customer_email,
         description: formData.description || "Пользователь не знает, что хочет. Требуется обсуждение.",
-        contact_info: formData.contact_info || null
+        contact_info
       };
 
       await api.post('/service-orders', orderData);
       showSuccess('Заявка успешно отправлена! Мы свяжемся с вами для обсуждения заказа.');
       
-      // Сбрасываем форму (для авторизованных сохраняем данные из профиля)
-      setFormData({
-        customer_name: isAuthenticated && user ? user.username || '' : '',
-        customer_email: isAuthenticated && user ? user.email || '' : '',
-        contact_info: isAuthenticated && user ? orderContactFromUser(user) : '',
-        service_categories: [],
-        materials: [],
-        reference_links: '',
-        reference_files: [],
-        description: '',
-        deadline_days: '',
-        prepayment_percent: 50
-      });
+      resetSimpleForm();
       setOrderType(null);
     } catch (error) {
       console.error('Error creating order:', error);
@@ -417,34 +477,56 @@ const OrderPage = () => {
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
-          <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Форма заказа услуг</h1>
-          <p className="mt-2 text-sm text-white/50">Выберите тип заказа</p>
+          <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Заказать услугу</h1>
+          <p className="mt-2 text-sm text-white/50">Выбери формат — подробный расчёт или короткая заявка</p>
         </div>
 
         <div className="space-y-4">
           <button
+            type="button"
             onClick={() => selectOrderType("know")}
-            className="w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/40"
+            className="group w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/50 hover:bg-[#22c55e]/[0.04]"
           >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="mb-2 font-[Syne] text-xl font-bold text-white">Я знаю, что я хочу!</h3>
-                <p className="text-sm text-white/50">Заполните подробную форму с выбором услуг и расчетом стоимости</p>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e]">
+                <ClipboardList className="h-5 w-5" />
               </div>
-              <div className="text-2xl text-[#22c55e]">→</div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h3 className="font-[Syne] text-xl font-bold text-white">Знаю, что нужно</h3>
+                  <span className="rounded-full border border-[#22c55e]/35 bg-[#22c55e]/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#22c55e]">
+                    Подробно
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-white/50">
+                  Услуги, срок и предоплата — сразу видна стоимость
+                </p>
+              </div>
+              <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-[#22c55e] transition group-hover:translate-x-0.5" />
             </div>
           </button>
 
           <button
+            type="button"
             onClick={() => setOrderType("dont_know")}
-            className="w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/40"
+            className="group w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-white/25 hover:bg-white/[0.05]"
           >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="mb-2 font-[Syne] text-xl font-bold text-white">Я не знаю, что я хочу!</h3>
-                <p className="text-sm text-white/50">Отправьте простую заявку, мы свяжемся с вами для обсуждения</p>
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-white/70">
+                <MessageSquare className="h-5 w-5" />
               </div>
-              <div className="text-2xl text-[#22c55e]">→</div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <h3 className="font-[Syne] text-xl font-bold text-white">Пока не уверен</h3>
+                  <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-white/55">
+                    Быстро
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-white/50">
+                  Короткая заявка — обсудим детали в переписке
+                </p>
+              </div>
+              <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
             </div>
           </button>
         </div>
@@ -454,93 +536,165 @@ const OrderPage = () => {
 
   // Простая форма для "не знаю"
   if (orderType === "dont_know") {
+    const contactPreview = formatContacts(contactRows);
+
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-8">
           <button
+            type="button"
             onClick={() => setOrderType(null)}
             className="mb-4 flex items-center border-none bg-transparent p-0 text-sm text-white/50 hover:text-white"
           >
-            ← Назад к выбору типа заказа
+            ← Назад к выбору
           </button>
           <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Простая заявка</h1>
-          <p className="mt-2 text-sm text-white/50">Заполните форму, и мы свяжемся с вами для обсуждения заказа</p>
+          <p className="mt-2 text-sm text-white/50">Контакты и коротко — что нужно. Остальное обсудим.</p>
         </div>
 
-        <form onSubmit={handleSimpleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="customer_name" className={labelClass}>
-              <User className="h-4 w-4 inline mr-2" />
-              Ваше имя *
-            </label>
-            <input
-              type="text"
-              id="customer_name"
-              name="customer_name"
-              value={formData.customer_name}
-              onChange={handleInputChange}
-              required
-              autoComplete="name"
-              className={fieldClass}
-              placeholder="Введите ваше имя"
-            />
-          </div>
+        <form onSubmit={handleSimpleSubmit} className="space-y-5">
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <User className="h-4 w-4 text-[#22c55e]" />
+              <h2 className="font-[Syne] text-lg font-bold text-white">Контакты</h2>
+            </div>
 
-          <div>
-            <label htmlFor="customer_email" className={labelClass}>
-              <Mail className="h-4 w-4 inline mr-2" />
-              Email *
-            </label>
-            <input
-              type="email"
-              id="customer_email"
-              name="customer_email"
-              value={formData.customer_email}
-              onChange={handleInputChange}
-              required
-              autoComplete="email"
-              className={fieldClass}
-              placeholder="Введите ваш email"
-            />
-          </div>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="customer_name" className={labelClass}>
+                  Имя *
+                </label>
+                <input
+                  type="text"
+                  id="customer_name"
+                  name="customer_name"
+                  value={formData.customer_name}
+                  onChange={handleInputChange}
+                  required
+                  autoComplete="name"
+                  className={fieldClass}
+                  placeholder="Как к тебе обращаться"
+                />
+              </div>
 
-          <div>
-            <label htmlFor="description" className={labelClass}>
-              <FileText className="h-4 w-4 inline mr-2" />
-              Дополнительная информация (необязательно)
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Расскажите, что вас интересует..."
-              rows={4}
-              className={fieldClass}
-            />
-          </div>
+              <div>
+                <label htmlFor="customer_email" className={labelClass}>
+                  <Mail className="mr-2 inline h-4 w-4" />
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  id="customer_email"
+                  name="customer_email"
+                  value={formData.customer_email}
+                  onChange={handleInputChange}
+                  required
+                  autoComplete="email"
+                  className={fieldClass}
+                  placeholder="email@example.com"
+                />
+              </div>
+            </div>
+          </section>
 
-          <div>
-            <label htmlFor="contact_info" className={labelClass}>
-              <Mail className="h-4 w-4 inline mr-2" />
-              Дополнительная информация для обратной связи
-            </label>
-            <input
-              type="text"
-              id="contact_info"
-              name="contact_info"
-              value={formData.contact_info}
-              onChange={handleInputChange}
-              placeholder="Например: Telegram @username, WhatsApp +7..., или другой способ связи"
-              className={fieldClass}
-            />
-            <p className={hintClass}>
-              Укажите удобный способ связи (Telegram, WhatsApp, другой email и т.д.)
+          <section className={sectionClass}>
+            <div className="mb-2 flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-[#22c55e]" />
+              <h2 className="font-[Syne] text-lg font-bold text-white">Связь</h2>
+            </div>
+            <p className="mb-5 text-xs text-white/40">
+              Telegram, WhatsApp и т.д. — необязательно, но так быстрее ответим.
             </p>
-          </div>
 
-          <div className="pt-2">
+            <div className="space-y-3">
+              {contactRows.length === 0 && (
+                <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">
+                  Пока пусто. Добавь удобный канал.
+                </p>
+              )}
+
+              {contactRows.map((row) => {
+                const meta = CONTACT_TYPES.find((t) => t.value === row.type) || CONTACT_TYPES[5];
+                return (
+                  <div
+                    key={row.key}
+                    className="grid gap-2 rounded-2xl border border-white/10 bg-black/20 p-3 sm:grid-cols-[140px_1fr_auto] sm:items-center"
+                  >
+                    <label className="sr-only" htmlFor={`order-contact-type-${row.key}`}>
+                      Тип связи
+                    </label>
+                    <select
+                      id={`order-contact-type-${row.key}`}
+                      value={row.type}
+                      onChange={(e) => updateContactRow(row.key, { type: e.target.value })}
+                      className={`${fieldClass} cursor-pointer`}
+                    >
+                      {CONTACT_TYPES.map((t) => (
+                        <option key={t.value} value={t.value} className="bg-[#0a0a0a]">
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={row.value}
+                      onChange={(e) => updateContactRow(row.key, { value: e.target.value })}
+                      placeholder={meta.placeholder}
+                      className={fieldClass}
+                      aria-label={`Значение ${meta.label}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeContactRow(row.key)}
+                      className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-white/10 text-white/50 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 sm:w-11"
+                      aria-label="Удалить контакт"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={addContactRow}
+              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-sm font-medium text-white transition hover:bg-white/5"
+            >
+              <Plus className="h-4 w-4" />
+              Добавить связь
+            </button>
+
+            {contactPreview ? (
+              <p className="mt-3 text-xs text-white/35">В заявке: {contactPreview}</p>
+            ) : null}
+          </section>
+
+          <section className={sectionClass}>
+            <div className="mb-5 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-[#22c55e]" />
+              <h2 className="font-[Syne] text-lg font-bold text-white">О заказе</h2>
+            </div>
+
+            <div>
+              <label htmlFor="description" className={labelClass}>
+                Что нужно
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Бит, сведение, трек под ключ — или просто «хочу обсудить»"
+                rows={4}
+                className={fieldClass}
+              />
+              <p className={hintClass}>Можно оставить пустым — напишем сами.</p>
+            </div>
+          </section>
+
+          <div className="pt-1">
             <label className="flex items-start gap-2 text-xs text-white/50">
               <input
                 type="checkbox"
