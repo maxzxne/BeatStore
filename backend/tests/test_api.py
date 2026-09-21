@@ -722,6 +722,21 @@ class ApiTestCase(unittest.TestCase):
         self.assertIn("support", by_slug)
         self.assertEqual(by_slug["support"]["kind"], "support")
         self.assertTrue(by_slug["support"]["is_builtin"])
+        self.assertTrue((by_slug["privacy"].get("body") or "").strip())
+        self.assertTrue((by_slug["terms"].get("body") or "").strip())
+        self.assertIn("152", by_slug["privacy"]["body"])
+
+        template = self.client.get(
+            f"/api/admin/footer-pages/{by_slug['privacy']['id']}/default-body",
+            headers=auth(self.admin_token),
+        )
+        self.assertEqual(template.status_code, 200, template.text)
+        self.assertTrue(template.json()["body"].strip())
+
+        public_privacy = self.client.get("/footer-pages/privacy")
+        self.assertEqual(public_privacy.status_code, 200, public_privacy.text)
+        self.assertFalse(public_privacy.json()["use_legacy"])
+        self.assertTrue(public_privacy.json()["body"].strip())
 
         created = self.client.post(
             "/api/admin/footer-pages",

@@ -59,7 +59,7 @@ export default function FooterLegalPageV2({ slug: slugProp, legacy = null }) {
         <h1 className="mb-6 font-[Syne] text-3xl font-extrabold text-white">{data.title}</h1>
         {looksLikeHtml(body) ? (
           <div
-            className="prose-invert space-y-4 text-sm leading-relaxed text-white/70 [&_a]:text-[#22c55e] [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-white [&_li]:ml-5 [&_li]:list-disc [&_p]:mb-3 [&_ul]:space-y-1"
+            className="prose-invert space-y-4 text-sm leading-relaxed text-white/70 [&_a]:text-[#22c55e] [&_a]:underline-offset-2 hover:[&_a]:underline [&_em]:italic [&_h2]:mb-2 [&_h2]:mt-6 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-white [&_li]:ml-5 [&_li]:list-disc [&_p.lead]:mb-6 [&_p.lead]:text-white/50 [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-white/90 [&_ul]:space-y-1"
             dangerouslySetInnerHTML={{ __html: body }}
           />
         ) : (

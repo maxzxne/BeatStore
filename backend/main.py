@@ -45,6 +45,7 @@ from footer_pages import (
     normalize_slug,
     validate_slug,
 )
+from footer_templates_loader import default_body_for_slug
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
 from payments.discounts import DISCOUNT_KINDS, SALE_SCOPES
@@ -4237,6 +4238,24 @@ def reorder_admin_footer_pages(
         .all()
     )
     return [footer_page_to_dict(p) for p in ordered]
+
+
+
+@app.get("/api/admin/footer-pages/{page_id}/default-body")
+def get_admin_footer_page_default_body(
+    page_id: int,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    page = db.query(FooterPage).filter(FooterPage.id == page_id).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Страница не найдена")
+    if page.kind == "support":
+        raise HTTPException(status_code=400, detail="У чата поддержки нет шаблона текста")
+    body = default_body_for_slug(page.slug)
+    if not body:
+        raise HTTPException(status_code=404, detail="Шаблона для этой страницы нет")
+    return {"slug": page.slug, "body": body}
 
 
 @app.put("/api/admin/footer-pages/{page_id}")

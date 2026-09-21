@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from typing import Optional
 
+from footer_templates_loader import default_body_for_slug
 from models import FooterPage
 
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -39,6 +41,20 @@ BUILTIN_PAGE_SLUGS = frozenset(
     {"terms", "privacy", "consent-personal-data", "cookies"}
 )
 
+def _page_seed(*, slug: str, label: str, title: str, sort_order: int) -> dict:
+    return {
+        "slug": slug,
+        "label": label,
+        "title": title,
+        "body": default_body_for_slug(slug),
+        "kind": "page",
+        "sort_order": sort_order,
+        "enabled": True,
+        "is_builtin": True,
+        "show_icon": False,
+    }
+
+
 DEFAULT_FOOTER_PAGES = (
     {
         "slug": "support",
@@ -51,50 +67,30 @@ DEFAULT_FOOTER_PAGES = (
         "is_builtin": True,
         "show_icon": True,
     },
-    {
-        "slug": "terms",
-        "label": "Соглашение",
-        "title": "Пользовательское соглашение (публичная оферта)",
-        "body": "",
-        "kind": "page",
-        "sort_order": 1,
-        "enabled": True,
-        "is_builtin": True,
-        "show_icon": False,
-    },
-    {
-        "slug": "privacy",
-        "label": "Приватность",
-        "title": "Политика конфиденциальности и обработки персональных данных",
-        "body": "",
-        "kind": "page",
-        "sort_order": 2,
-        "enabled": True,
-        "is_builtin": True,
-        "show_icon": False,
-    },
-    {
-        "slug": "consent-personal-data",
-        "label": "ПДн",
-        "title": "Согласие на обработку персональных данных",
-        "body": "",
-        "kind": "page",
-        "sort_order": 3,
-        "enabled": True,
-        "is_builtin": True,
-        "show_icon": False,
-    },
-    {
-        "slug": "cookies",
-        "label": "Cookie",
-        "title": "Политика использования файлов cookie",
-        "body": "",
-        "kind": "page",
-        "sort_order": 4,
-        "enabled": True,
-        "is_builtin": True,
-        "show_icon": False,
-    },
+    _page_seed(
+        slug="terms",
+        label="Соглашение",
+        title="Пользовательское соглашение (публичная оферта)",
+        sort_order=1,
+    ),
+    _page_seed(
+        slug="privacy",
+        label="Приватность",
+        title="Политика конфиденциальности и обработки персональных данных",
+        sort_order=2,
+    ),
+    _page_seed(
+        slug="consent-personal-data",
+        label="ПДн",
+        title="Согласие на обработку персональных данных",
+        sort_order=3,
+    ),
+    _page_seed(
+        slug="cookies",
+        label="Cookie",
+        title="Политика использования файлов cookie",
+        sort_order=4,
+    ),
 )
 
 
@@ -151,12 +147,22 @@ def footer_page_public_detail(page: FooterPage) -> dict:
 
 
 def ensure_default_footer_pages(db) -> None:
-    existing = {row.slug for row in db.query(FooterPage.slug).all()}
-    created = False
+    """Create missing builtins and one-time backfill empty legal bodies into CMS."""
+    rows = {row.slug: row for row in db.query(FooterPage).all()}
+    changed = False
     for item in DEFAULT_FOOTER_PAGES:
-        if item["slug"] in existing:
+        row = rows.get(item["slug"])
+        if row is None:
+            db.add(FooterPage(**item))
+            changed = True
             continue
-        db.add(FooterPage(**item))
-        created = True
-    if created:
+        if row.kind == "support":
+            continue
+        if not (row.body or "").strip():
+            template = default_body_for_slug(row.slug)
+            if template:
+                row.body = template
+                row.updated_at = datetime.utcnow()
+                changed = True
+    if changed:
         db.commit()
