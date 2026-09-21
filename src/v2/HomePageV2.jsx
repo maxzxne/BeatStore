@@ -6,6 +6,7 @@ import PromoSliderV2 from './PromoSliderV2';
 import Filters from '../components/Filters';
 import { useAuth } from '../contexts/AuthContext';
 import { normalizeHeroImagePosition, useSiteSettings } from '../contexts/SiteSettingsContext';
+import { DEFAULT_SEARCH_PLACEHOLDER } from '../utils/searchPlaceholder';
 import { api, buildMediaUrl } from '../utils/api';
 import { ruCount } from '../utils/ruPlural';
 
@@ -67,6 +68,7 @@ const HomePageV2 = () => {
   const showSearch = homeHero?.show_search !== false;
   const showFilters = homeHero?.show_filters !== false;
   const showToolbar = showSearch || showFilters;
+  const searchPlaceholder = homeHero?.search_placeholder || DEFAULT_SEARCH_PLACEHOLDER;
 
   useEffect(() => {
     fetchBeats();
@@ -212,9 +214,9 @@ const HomePageV2 = () => {
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Поиск по названию, артисту, жанру"
+                  placeholder={searchPlaceholder}
                   className="v2-search-input"
-                  aria-label="Поиск по названию, артисту, жанру"
+                  aria-label={searchPlaceholder}
                 />
               </form>
             ) : null}

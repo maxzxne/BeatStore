@@ -568,6 +568,10 @@ class ApiTestCase(unittest.TestCase):
         hero = public.json()["home_hero"]
         self.assertTrue(hero["show_search"])
         self.assertTrue(hero["show_filters"])
+        self.assertEqual(
+            hero.get("search_placeholder"),
+            "Поиск по названию, артисту, жанру",
+        )
 
         response = self.client.put(
             "/api/admin/site-settings/hero",
@@ -584,6 +588,28 @@ class ApiTestCase(unittest.TestCase):
         hero_again = public_again.json()["home_hero"]
         self.assertFalse(hero_again["show_search"])
         self.assertFalse(hero_again["show_filters"])
+
+    def test_admin_hero_search_placeholder_saves_and_falls_back(self):
+        custom = self.client.put(
+            "/api/admin/site-settings/hero",
+            headers=auth(self.admin_token),
+            json={"search_placeholder": "Найди бит по вайбу"},
+        )
+        self.assertEqual(custom.status_code, 200, custom.text)
+        self.assertEqual(custom.json()["home_hero"]["search_placeholder"], "Найди бит по вайбу")
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.json()["home_hero"]["search_placeholder"], "Найди бит по вайбу")
+
+        blank = self.client.put(
+            "/api/admin/site-settings/hero",
+            headers=auth(self.admin_token),
+            json={"search_placeholder": "   "},
+        )
+        self.assertEqual(blank.status_code, 200, blank.text)
+        self.assertEqual(
+            blank.json()["home_hero"]["search_placeholder"],
+            "Поиск по названию, артисту, жанру",
+        )
 
     def test_download_after_pay_without_file_is_not_granted_to_stranger(self):
         beat = add_beat(self.db)

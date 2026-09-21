@@ -668,16 +668,16 @@ const OrderPage = ({ initialType = null }) => {
             <button
               type="button"
               onClick={() => selectOrderType('ads')}
-              className="group w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-[#22c55e]/50 hover:bg-[#22c55e]/[0.04]"
+              className="group w-full rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-left transition hover:border-white/25 hover:bg-white/[0.05]"
             >
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/5 text-white/70">
                   <Megaphone className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <h3 className="font-[Syne] text-xl font-bold text-white">Заказать рекламу</h3>
-                    <span className="rounded-full border border-[#22c55e]/35 bg-[#22c55e]/10 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-[#22c55e]">
+                    <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-white/55">
                       Витрина
                     </span>
                   </div>
@@ -685,7 +685,7 @@ const OrderPage = ({ initialType = null }) => {
                     Баннер 16:9 на главной — заявка, стоимость пришлём отдельно
                   </p>
                 </div>
-                <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-[#22c55e] transition group-hover:translate-x-0.5" />
+                <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
               </div>
             </button>
           )}

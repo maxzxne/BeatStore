@@ -294,6 +294,7 @@ def update_database_schema():
                     "cta_href": None,
                     "show_search": True,
                     "show_filters": True,
+                    "search_placeholder": "Поиск по названию, артисту, жанру",
                 }
                 db.add(SiteSetting(key="home_hero", value=json.dumps(default_hero, ensure_ascii=False)))
                 db.commit()
@@ -976,6 +977,7 @@ DEFAULT_HOME_HERO = {
     "cta_href": None,
     "show_search": True,
     "show_filters": True,
+    "search_placeholder": "Поиск по названию, артисту, жанру",
 }
 
 
@@ -983,6 +985,11 @@ def normalize_hero_image_position(value) -> str:
     if value in HERO_IMAGE_POSITIONS:
         return value
     return "left"
+
+
+def normalize_search_placeholder(value) -> str:
+    text = str(value or "").strip()
+    return text or DEFAULT_HOME_HERO["search_placeholder"]
 
 class SiteSettingsUpdate(BaseModel):
     """Схема обновления настроек сайта"""
@@ -1004,6 +1011,7 @@ class HomeHeroUpdate(BaseModel):
     cta_href: Optional[str] = None
     show_search: Optional[bool] = None
     show_filters: Optional[bool] = None
+    search_placeholder: Optional[str] = None
 
 class AdminGuideNotesUpdate(BaseModel):
     """Личные заметки админа к инструкции (персист в site_settings)."""
@@ -1133,6 +1141,7 @@ def get_home_hero(db: Session) -> dict:
         merged["enabled"] = merged.get("enabled") is not False
         merged["show_search"] = merged.get("show_search") is not False
         merged["show_filters"] = merged.get("show_filters") is not False
+        merged["search_placeholder"] = normalize_search_placeholder(merged.get("search_placeholder"))
         return merged
     except (json.JSONDecodeError, TypeError):
         return dict(DEFAULT_HOME_HERO)
@@ -1144,6 +1153,7 @@ def save_home_hero(db: Session, hero: dict) -> dict:
     normalized["enabled"] = normalized.get("enabled") is not False
     normalized["show_search"] = normalized.get("show_search") is not False
     normalized["show_filters"] = normalized.get("show_filters") is not False
+    normalized["search_placeholder"] = normalize_search_placeholder(normalized.get("search_placeholder"))
     setting = db.query(SiteSetting).filter(SiteSetting.key == "home_hero").first()
     payload = json.dumps(normalized, ensure_ascii=False)
     if not setting:

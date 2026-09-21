@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ImagePlus, Loader2, Save, Trash2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { normalizeHeroImagePosition } from '../../contexts/SiteSettingsContext';
+import { DEFAULT_SEARCH_PLACEHOLDER } from '../../utils/searchPlaceholder';
 import { api, buildMediaUrl } from '../../utils/api';
 
 const IMAGE_POSITIONS = [
@@ -22,6 +23,7 @@ const emptyHero = {
   cta_href: '',
   show_search: true,
   show_filters: true,
+  search_placeholder: DEFAULT_SEARCH_PLACEHOLDER,
 };
 
 function formFromHero(data) {
@@ -36,6 +38,7 @@ function formFromHero(data) {
     cta_href: data?.cta_href ?? '',
     show_search: data?.show_search !== false,
     show_filters: data?.show_filters !== false,
+    search_placeholder: data?.search_placeholder ?? DEFAULT_SEARCH_PLACEHOLDER,
   };
 }
 
@@ -139,6 +142,7 @@ const AdminHeroPage = () => {
         cta_href: form.cta_href || null,
         show_search: Boolean(form.show_search),
         show_filters: Boolean(form.show_filters),
+        search_placeholder: form.search_placeholder || '',
       };
       const { data } = await api.put('/api/admin/site-settings/hero', payload);
       const saved = data?.home_hero || payload;
@@ -276,6 +280,25 @@ const AdminHeroPage = () => {
               className="h-5 w-5 accent-[#22c55e]"
             />
           </label>
+
+          {form.show_search ? (
+            <div>
+              <label className={labelClass} htmlFor="hero-search-placeholder">
+                Плейсхолдер поиска
+              </label>
+              <input
+                id="hero-search-placeholder"
+                className={fieldClass}
+                value={form.search_placeholder}
+                onChange={(e) => setField('search_placeholder', e.target.value)}
+                placeholder={DEFAULT_SEARCH_PLACEHOLDER}
+                maxLength={120}
+              />
+              <p className="mt-1.5 text-xs text-white/35">
+                Пустое значение вернёт дефолт при сохранении
+              </p>
+            </div>
+          ) : null}
 
           <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
             <div>

@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
+import {
+  DEFAULT_SEARCH_PLACEHOLDER,
+  normalizeSearchPlaceholder,
+} from '../utils/searchPlaceholder';
 
 const SiteSettingsContext = createContext();
 
@@ -17,11 +21,14 @@ export const DEFAULT_HOME_HERO = {
   cta_href: null,
   show_search: true,
   show_filters: true,
+  search_placeholder: DEFAULT_SEARCH_PLACEHOLDER,
 };
 
 export function normalizeHeroImagePosition(value) {
   return HERO_IMAGE_POSITIONS.includes(value) ? value : 'left';
 }
+
+export { normalizeSearchPlaceholder, DEFAULT_SEARCH_PLACEHOLDER };
 
 function normalizeHomeHero(raw) {
   if (!raw || typeof raw !== 'object') {
@@ -40,6 +47,7 @@ function normalizeHomeHero(raw) {
     cta_href: raw.cta_href || null,
     show_search: raw.show_search !== false,
     show_filters: raw.show_filters !== false,
+    search_placeholder: normalizeSearchPlaceholder(raw.search_placeholder),
   };
 }
 

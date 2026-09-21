@@ -507,6 +507,7 @@ export const guideSections = [
           'enabled — выключить hero, оставив каталог',
           'image_position — top / left / right / bottom',
           'show_search / show_filters — спрятать поиск или фильтры без правки кода',
+          'search_placeholder — текст в поле поиска битов (пусто → дефолт)',
           'CTA: label + href (внутренняя или внешняя ссылка)',
         ],
       },
