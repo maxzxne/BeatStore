@@ -244,10 +244,33 @@ const AdminSalesPage = () => {
               </div>
               <div>
                 <label className={labelClass}>Тип</label>
-                <select className={fieldClass} value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
-                  <option value="percent">Процент</option>
-                  <option value="amount">Сумма ₽</option>
-                </select>
+                <div
+                  role="group"
+                  aria-label="Тип скидки"
+                  className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 bg-white/5 p-1"
+                >
+                  {[
+                    { id: 'percent', label: 'Процент' },
+                    { id: 'amount', label: 'Сумма ₽' },
+                  ].map((opt) => {
+                    const active = form.kind === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setForm({ ...form, kind: opt.id })}
+                        className={`rounded-lg px-2 py-2 text-sm font-medium transition-colors ${
+                          active
+                            ? 'bg-[#22c55e] text-[#052e16]'
+                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        }`}
+                        aria-pressed={active}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
             <div>
