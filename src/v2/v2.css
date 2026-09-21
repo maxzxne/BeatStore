@@ -375,8 +375,16 @@ html.ui-v2 .min-h-screen.bg-white {
   user-select: none;
 }
 
+.v2-promo.has-link .v2-promo-viewport {
+  cursor: pointer;
+}
+
 .v2-promo.is-dragging .v2-promo-viewport {
   cursor: grabbing;
+}
+
+.v2-promo-link.is-linked {
+  cursor: pointer;
 }
 
 .v2-promo-track {
@@ -411,6 +419,37 @@ html.ui-v2 .min-h-screen.bg-white {
   object-fit: cover;
   object-position: center;
   background: rgba(255, 255, 255, 0.04);
+}
+
+.v2-promo.is-peek {
+  overflow: visible;
+}
+
+.v2-promo.is-peek .v2-promo-viewport {
+  overflow: hidden;
+}
+
+.v2-promo.is-peek .v2-promo-img {
+  aspect-ratio: 21 / 9;
+  max-height: 220px;
+}
+
+@media (min-width: 768px) {
+  .v2-promo.is-peek .v2-promo-img {
+    max-height: 260px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .v2-promo.is-peek .v2-promo-img {
+    max-height: 280px;
+  }
+}
+
+.v2-promo.is-peek .v2-promo-link,
+.v2-promo.is-peek .v2-promo-slide {
+  border-radius: 1.25rem;
+  overflow: hidden;
 }
 
 .v2-promo-caption {

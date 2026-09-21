@@ -464,6 +464,35 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(created.status_code, 200, created.text)
         self.assertEqual(created.json()["order_type"], "ads")
 
+    def test_promo_banners_fullscreen_flag_defaults_true_and_toggles(self):
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.status_code, 200)
+        self.assertTrue(public.json().get("promo_banners_fullscreen"))
+
+        admin = self.client.get("/api/admin/site-settings", headers=auth(self.admin_token))
+        self.assertEqual(admin.status_code, 200, admin.text)
+        self.assertTrue(admin.json().get("promo_banners_fullscreen"))
+
+        off = self.client.put(
+            "/api/admin/site-settings",
+            headers=auth(self.admin_token),
+            json={"promo_banners_fullscreen": False},
+        )
+        self.assertEqual(off.status_code, 200, off.text)
+        self.assertFalse(off.json()["settings"]["promo_banners_fullscreen"])
+        public_off = self.client.get("/site-settings")
+        self.assertFalse(public_off.json()["promo_banners_fullscreen"])
+
+        on = self.client.put(
+            "/api/admin/site-settings",
+            headers=auth(self.admin_token),
+            json={"promo_banners_fullscreen": True},
+        )
+        self.assertEqual(on.status_code, 200, on.text)
+        self.assertTrue(on.json()["settings"]["promo_banners_fullscreen"])
+        public_on = self.client.get("/site-settings")
+        self.assertTrue(public_on.json()["promo_banners_fullscreen"])
+
     def test_public_promo_banners_filter_window(self):
         now = datetime.utcnow()
         self.db.add_all(

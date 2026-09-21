@@ -2,20 +2,27 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, buildMediaUrl } from '../utils/api';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
+import {
+  isInternalPromoHref,
+  promoDragExceededThreshold,
+  shouldBlockPromoNav,
+} from '../utils/promoNav';
+import {
+  PROMO_PEEK_GAP_PX,
+  promoSlideStepPx,
+  promoSlideWidthPx,
+  promoTrackOffsetPx,
+} from '../utils/promoLayout';
 
 const AUTO_MS = 5500;
-const DRAG_CLICK_PX = 8;
 const DRAG_COMMIT_RATIO = 0.18;
 
-function isInternalHref(href) {
-  if (!href) return false;
-  return href.startsWith('/') && !href.startsWith('//');
-}
-
-function SlideMedia({ banner, blockNav }) {
+function SlideMedia({ banner, blockNav, dragMoved }) {
   const src = buildMediaUrl(banner.image_url);
   const href = banner.link_url || null;
   const title = banner.title || '';
+  const linked = Boolean(href);
 
   const media = (
     <img
@@ -29,13 +36,13 @@ function SlideMedia({ banner, blockNav }) {
   const caption = title ? <span className="v2-promo-caption">{title}</span> : null;
 
   const onNavClick = (event) => {
-    if (blockNav?.current) {
+    if (shouldBlockPromoNav({ dragMoved: dragMoved?.current, blockNav: blockNav?.current })) {
       event.preventDefault();
       event.stopPropagation();
     }
   };
 
-  if (!href) {
+  if (!linked) {
     return (
       <div className="v2-promo-link">
         {media}
@@ -44,9 +51,14 @@ function SlideMedia({ banner, blockNav }) {
     );
   }
 
-  if (isInternalHref(href)) {
+  if (isInternalPromoHref(href)) {
     return (
-      <Link to={href} className="v2-promo-link" tabIndex={-1} onClick={onNavClick}>
+      <Link
+        to={href}
+        className="v2-promo-link is-linked"
+        onClick={onNavClick}
+        aria-label={title ? `Открыть: ${title}` : 'Открыть промо'}
+      >
         {media}
         {caption}
       </Link>
@@ -56,11 +68,11 @@ function SlideMedia({ banner, blockNav }) {
   return (
     <a
       href={href}
-      className="v2-promo-link"
+      className="v2-promo-link is-linked"
       target="_blank"
       rel="noopener noreferrer"
-      tabIndex={-1}
       onClick={onNavClick}
+      aria-label={title ? `Открыть: ${title}` : 'Открыть промо'}
     >
       {media}
       {caption}
@@ -69,6 +81,8 @@ function SlideMedia({ banner, blockNav }) {
 }
 
 const PromoSliderV2 = () => {
+  const { promoBannersFullscreen } = useSiteSettings();
+  const fullscreen = promoBannersFullscreen !== false;
   const [banners, setBanners] = useState([]);
   const [trackIndex, setTrackIndex] = useState(0);
   const [animate, setAnimate] = useState(false);
@@ -76,6 +90,7 @@ const PromoSliderV2 = () => {
   const [dragging, setDragging] = useState(false);
   const [paused, setPaused] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(0);
 
   const viewportRef = useRef(null);
   const jumpingRef = useRef(false);
@@ -86,6 +101,12 @@ const PromoSliderV2 = () => {
   const dragStartXRef = useRef(0);
   const dragMovedRef = useRef(false);
   const blockNavRef = useRef(false);
+  const capturingRef = useRef(false);
+  const fullscreenRef = useRef(fullscreen);
+
+  useEffect(() => {
+    fullscreenRef.current = fullscreen;
+  }, [fullscreen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,6 +139,22 @@ const PromoSliderV2 = () => {
   useEffect(() => {
     trackIndexRef.current = trackIndex;
   }, [trackIndex]);
+
+  useEffect(() => {
+    const node = viewportRef.current;
+    if (!node || typeof ResizeObserver === 'undefined') {
+      setViewportWidth(node?.clientWidth || 0);
+      return undefined;
+    }
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const w = entry?.contentRect?.width ?? node.clientWidth;
+      setViewportWidth(Math.round(w));
+    });
+    ro.observe(node);
+    setViewportWidth(node.clientWidth);
+    return () => ro.disconnect();
+  }, [banners.length]);
 
   const count = banners.length;
   const loop = count > 1;
@@ -194,12 +231,14 @@ const PromoSliderV2 = () => {
   const endDrag = useCallback((clientX) => {
     if (pointerIdRef.current == null) return;
     pointerIdRef.current = null;
+    capturingRef.current = false;
     setDragging(false);
 
     const width = viewportRef.current?.clientWidth || 1;
+    const step = promoSlideStepPx(width, fullscreenRef.current) || width;
     const offset = dragOffsetRef.current;
     const abs = Math.abs(offset);
-    const commit = abs > width * DRAG_COMMIT_RATIO;
+    const commit = dragMovedRef.current && abs > step * DRAG_COMMIT_RATIO;
 
     dragOffsetRef.current = 0;
     setDragOffset(0);
@@ -212,12 +251,13 @@ const PromoSliderV2 = () => {
     }
 
     if (!commit || count < 2) {
-      if (abs > 0 && !reduceMotion) {
+      if (abs > 0 && dragMovedRef.current && !reduceMotion) {
         setAnimate(true);
         animatingRef.current = true;
       }
       window.setTimeout(() => {
         blockNavRef.current = false;
+        dragMovedRef.current = false;
       }, 0);
       return;
     }
@@ -233,32 +273,43 @@ const PromoSliderV2 = () => {
     }
     window.setTimeout(() => {
       blockNavRef.current = false;
+      dragMovedRef.current = false;
     }, 300);
   }, [count, reduceMotion, realIndex, jumpTo]);
 
   const onPointerDown = (event) => {
     if (count < 2 || jumpingRef.current || animatingRef.current) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    // Don't steal clicks from nav/dots
     if (event.target.closest?.('.v2-promo-nav, .v2-promo-dot')) return;
 
     pointerIdRef.current = event.pointerId;
     dragStartXRef.current = event.clientX;
     dragMovedRef.current = false;
     blockNavRef.current = false;
-    setDragging(true);
-    setPaused(true);
+    capturingRef.current = false;
+    dragOffsetRef.current = 0;
+    setDragOffset(0);
     setAnimate(false);
-    event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
   const onPointerMove = (event) => {
     if (pointerIdRef.current !== event.pointerId) return;
     const delta = event.clientX - dragStartXRef.current;
-    if (Math.abs(delta) > DRAG_CLICK_PX) {
+    if (!promoDragExceededThreshold(delta)) return;
+
+    if (!capturingRef.current) {
+      capturingRef.current = true;
       dragMovedRef.current = true;
       blockNavRef.current = true;
+      setDragging(true);
+      setPaused(true);
+      try {
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+      } catch {
+        /* ignore */
+      }
     }
+
     dragOffsetRef.current = delta;
     setDragOffset(delta);
   };
@@ -266,7 +317,9 @@ const PromoSliderV2 = () => {
   const onPointerUp = (event) => {
     if (pointerIdRef.current !== event.pointerId) return;
     try {
-      event.currentTarget.releasePointerCapture?.(event.pointerId);
+      if (capturingRef.current) {
+        event.currentTarget.releasePointerCapture?.(event.pointerId);
+      }
     } catch {
       /* ignore */
     }
@@ -276,11 +329,13 @@ const PromoSliderV2 = () => {
   const onPointerCancel = (event) => {
     if (pointerIdRef.current !== event.pointerId) return;
     pointerIdRef.current = null;
+    capturingRef.current = false;
     dragOffsetRef.current = 0;
     setDragOffset(0);
     setDragging(false);
     setAnimate(true);
     blockNavRef.current = false;
+    dragMovedRef.current = false;
   };
 
   useEffect(() => {
@@ -292,11 +347,14 @@ const PromoSliderV2 = () => {
   if (count === 0) return null;
 
   const shouldAnimate = animate && !reduceMotion && !dragging;
-  const transform = `translate3d(calc(-${trackIndex * 100}% + ${dragOffset}px), 0, 0)`;
+  const vw = viewportWidth || viewportRef.current?.clientWidth || 0;
+  const slideW = promoSlideWidthPx(vw, fullscreen) || undefined;
+  const transform = `translate3d(${promoTrackOffsetPx(trackIndex, vw, fullscreen, dragOffset)}px, 0, 0)`;
+  const activeHasLink = Boolean(banners[realIndex]?.link_url);
 
   return (
     <div
-      className={`v2-promo${dragging ? ' is-dragging' : ''}`}
+      className={`v2-promo${fullscreen ? ' is-fullscreen' : ' is-peek'}${dragging ? ' is-dragging' : ''}${activeHasLink ? ' has-link' : ''}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => {
         if (!dragging) setPaused(false);
@@ -328,8 +386,18 @@ const PromoSliderV2 = () => {
               className="v2-promo-slide"
               key={`${banner.id ?? 'b'}-${i}`}
               aria-hidden={loop ? i !== trackIndex : i !== 0}
+              style={
+                slideW
+                  ? {
+                      flex: `0 0 ${slideW}px`,
+                      width: `${slideW}px`,
+                      minWidth: `${slideW}px`,
+                      marginRight: fullscreen ? 0 : PROMO_PEEK_GAP_PX,
+                    }
+                  : undefined
+              }
             >
-              <SlideMedia banner={banner} blockNav={blockNavRef} />
+              <SlideMedia banner={banner} blockNav={blockNavRef} dragMoved={dragMovedRef} />
             </div>
           ))}
         </div>

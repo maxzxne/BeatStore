@@ -19,6 +19,12 @@ import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import api, { buildMediaUrl } from '../utils/api';
 import { checkoutErrorMessage, startCheckout, withPromo } from '../utils/checkout';
+import {
+  beatHasDeliverableFile,
+  beatLicenseOptions,
+  buyButtonLabel,
+  resolveBeatPayAmount,
+} from '../utils/beatPricing';
 import { licensePriceText, PromoCodeField } from './DiscountUi';
 import { loginPath } from '../utils/authRedirect';
 import { addGuestBeat, isInGuestCart, removeGuestBeat } from '../utils/guestCart';
@@ -51,6 +57,15 @@ const BeatPageV2 = () => {
   useEffect(() => {
     fetchBeat();
   }, [id]);
+
+  useEffect(() => {
+    if (!beat) return;
+    const opts = beatLicenseOptions(beat);
+    if (!opts.length) return;
+    if (!opts.some((o) => o.type === selectedPurchaseType)) {
+      setSelectedPurchaseType(opts[0].type);
+    }
+  }, [beat]);
 
   useEffect(() => {
     if (!isAuthenticated && id) {
@@ -156,14 +171,17 @@ const BeatPageV2 = () => {
       if (isInCart) {
         removeGuestBeat(id);
         setIsInCart(false);
+        showSuccess('Удалено из корзины');
+        window.dispatchEvent(new Event('cartUpdated'));
       } else {
         addGuestBeat(id, selectedPurchaseType);
         setIsInCart(true);
         showSuccess('Добавлено в корзину — войди, чтобы оформить');
+        window.dispatchEvent(new Event('cartUpdated'));
       }
       return;
     }
-    
+
     try {
       if (isInCart) {
         await api.delete(`/beats/${id}/cart`);
@@ -171,10 +189,10 @@ const BeatPageV2 = () => {
         await api.post(`/beats/${id}/cart`);
       }
       setIsInCart(!isInCart);
-      // Уведомляем хедер об обновлении корзины
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error toggling cart:', error);
+      showError('Не удалось обновить корзину');
     }
   };
 
@@ -183,17 +201,9 @@ const BeatPageV2 = () => {
       navigate(loginPath(`/beat/${id}`));
       return;
     }
-    
-    // Определяем цену в зависимости от типа покупки
-    let actualPrice = beat.price;
-    if (selectedPurchaseType === 'mp3' && beat.price_mp3 !== null && beat.price_mp3 !== undefined) {
-      actualPrice = beat.price_mp3;
-    } else if (selectedPurchaseType === 'wav' && beat.price_wav !== null && beat.price_wav !== undefined) {
-      actualPrice = beat.price_wav;
-    } else if (selectedPurchaseType === 'exclusive' && beat.price_exclusive !== null && beat.price_exclusive !== undefined) {
-      actualPrice = beat.price_exclusive;
-    }
-    
+
+    const actualPrice = resolveBeatPayAmount(beat, selectedPurchaseType);
+
     try {
       if (!actualPrice) {
         const formData = new FormData();
@@ -276,22 +286,22 @@ const BeatPageV2 = () => {
     );
   }
 
-  let selectedPay = beat.price;
-  if (selectedPurchaseType === 'mp3' && beat.price_mp3 != null) selectedPay = beat.price_mp3;
-  else if (selectedPurchaseType === 'wav' && beat.price_wav != null) selectedPay = beat.price_wav;
-  else if (selectedPurchaseType === 'exclusive' && beat.price_exclusive != null) selectedPay = beat.price_exclusive;
+  const licenseOptions = beatLicenseOptions(beat);
+  const selectedPay = resolveBeatPayAmount(beat, selectedPurchaseType);
+  const hasFile = beatHasDeliverableFile(beat);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <button
+        type="button"
         onClick={() => navigate(-1)}
-        className="mb-8 inline-flex items-center text-sm text-white/50 hover:text-white bg-transparent border-none p-0"
+        className="mb-8 inline-flex cursor-pointer items-center border-none bg-transparent p-0 text-sm text-white/50 hover:text-white"
       >
-        <ArrowLeft className="h-4 w-4 mr-2" />
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Назад
       </button>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,420px)_1fr] items-start">
+      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
         <div className="relative aspect-square overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
           {beat.cover_url ? (
             <img src={buildMediaUrl(beat.cover_url)} alt={beat.title} className={`h-full w-full object-cover ${playing ? 'v2-spin' : ''}`} />
@@ -307,11 +317,11 @@ const BeatPageV2 = () => {
                 if (playing) pauseTrack();
                 else playTrack(beat.id, buildMediaUrl(beat.demo_url), beat.title, beat.cover_url ? buildMediaUrl(beat.cover_url) : null);
               }}
-              className="absolute inset-0 grid place-items-center bg-black/25"
+              className="absolute inset-0 grid cursor-pointer place-items-center bg-black/25"
               aria-label={playing ? 'Пауза' : 'Слушать'}
             >
               <span className="grid h-20 w-20 place-items-center rounded-full bg-[#22c55e] text-[#052e16] shadow-[0_0_40px_rgba(34,197,94,0.55)]">
-                {playing ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8 ml-1" />}
+                {playing ? <Pause className="h-8 w-8" /> : <Play className="ml-1 h-8 w-8" />}
               </span>
             </button>
           )}
@@ -329,35 +339,36 @@ const BeatPageV2 = () => {
             {beat.key && <span className="rounded-full border border-white/10 px-3 py-1">{beat.key}</span>}
           </div>
 
-          {(beat.price_mp3 !== null || beat.price_wav !== null || beat.price_exclusive !== null) && (
+          {licenseOptions.length > 0 && (
             <div>
               <p className="mb-3 text-sm text-white/50">Лицензия</p>
               <div className="flex flex-wrap gap-2">
-                {beat.mp3_url && beat.price_mp3 != null && (
-                  <button type="button" onClick={() => setSelectedPurchaseType('mp3')} className={licenseBtn(selectedPurchaseType === 'mp3')}>
-                    MP3 · {licensePriceText(beat.price_mp3, beat.price_mp3_was)}
+                {licenseOptions.map((opt) => (
+                  <button
+                    key={opt.type}
+                    type="button"
+                    onClick={() => setSelectedPurchaseType(opt.type)}
+                    className={licenseBtn(selectedPurchaseType === opt.type)}
+                  >
+                    {opt.label} · {licensePriceText(opt.amount, opt.was)}
                   </button>
-                )}
-                {beat.wav_url && beat.price_wav != null && (
-                  <button type="button" onClick={() => setSelectedPurchaseType('wav')} className={licenseBtn(selectedPurchaseType === 'wav')}>
-                    WAV · {licensePriceText(beat.price_wav, beat.price_wav_was)}
-                  </button>
-                )}
-                {beat.exclusive_url && beat.price_exclusive != null && (
-                  <button type="button" onClick={() => setSelectedPurchaseType('exclusive')} className={licenseBtn(selectedPurchaseType === 'exclusive')}>
-                    Exclusive · {licensePriceText(beat.price_exclusive, beat.price_exclusive_was)}
-                  </button>
-                )}
+                ))}
               </div>
             </div>
           )}
 
           {beat.description && <p className="text-sm leading-relaxed text-white/70">{beat.description}</p>}
 
+          {!hasFile && !isPurchased && (
+            <p className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+              Файл лицензии ещё не загружен. Можно оформить — доступ появится, как только админ добавит файл.
+            </p>
+          )}
+
           {isPurchased ? (
             <div className="flex flex-wrap items-center gap-3">
               {purchasedTypes.map((t) => (
-                <button key={t} type="button" onClick={() => handleDownload(t)} className="inline-flex h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm hover:bg-white/5">
+                <button key={t} type="button" onClick={() => handleDownload(t)} className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-full border border-white/15 px-4 text-sm hover:bg-white/5">
                   <Download className="h-4 w-4" /> {t.toUpperCase()}
                 </button>
               ))}
@@ -368,19 +379,31 @@ const BeatPageV2 = () => {
                 <PromoCodeField value={promoCode} onChange={setPromoCode} className="max-w-xs" />
               )}
               <div className="flex flex-wrap items-center gap-3">
-                <button type="button" onClick={handlePurchase} className="h-12 rounded-full bg-[#22c55e] px-6 font-semibold text-[#052e16]">
-                  Купить в один клик
+                <button
+                  type="button"
+                  onClick={handlePurchase}
+                  className="h-12 cursor-pointer rounded-full bg-[#22c55e] px-6 font-semibold text-[#052e16] transition hover:brightness-110"
+                >
+                  {buyButtonLabel(selectedPay)}
                 </button>
                 {isAuthenticated && (
-                  <>
-                    <button type="button" onClick={handleFavorite} className="grid h-12 w-12 place-items-center rounded-full border border-white/15 hover:bg-white/5" aria-label="Избранное">
-                      <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
-                    </button>
-                    <button type="button" onClick={handleAddToCart} className="grid h-12 w-12 place-items-center rounded-full border border-white/15 hover:bg-white/5" aria-label="Корзина">
-                      {isInCart ? <Check className="h-5 w-5 text-[#22c55e]" /> : <ShoppingCart className="h-5 w-5" />}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={handleFavorite}
+                    className="grid h-12 w-12 cursor-pointer place-items-center rounded-full border border-white/15 hover:bg-white/5"
+                    aria-label="Избранное"
+                  >
+                    <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                  </button>
                 )}
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="grid h-12 w-12 cursor-pointer place-items-center rounded-full border border-white/15 hover:bg-white/5"
+                  aria-label={isInCart ? 'Убрать из корзины' : 'В корзину'}
+                >
+                  {isInCart ? <Check className="h-5 w-5 text-[#22c55e]" /> : <ShoppingCart className="h-5 w-5" />}
+                </button>
               </div>
             </div>
           )}

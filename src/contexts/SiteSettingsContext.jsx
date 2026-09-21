@@ -61,6 +61,7 @@ export const SiteSettingsProvider = ({ children }) => {
   const { user, isAdminAuthenticated } = useAuth();
   const [coursesVisibility, setCoursesVisibility] = useState('all');
   const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
+  const [promoBannersFullscreen, setPromoBannersFullscreen] = useState(true);
   const [homeHero, setHomeHero] = useState(() => ({ ...DEFAULT_HOME_HERO }));
   const [loading, setLoading] = useState(true);
 
@@ -74,11 +75,13 @@ export const SiteSettingsProvider = ({ children }) => {
         setCoursesVisibility('all');
       }
       setAdsOrdersEnabled(response.data?.ads_orders_enabled !== false);
+      setPromoBannersFullscreen(response.data?.promo_banners_fullscreen !== false);
       setHomeHero(normalizeHomeHero(response.data?.home_hero));
     } catch (error) {
       console.error('Error fetching site settings:', error);
       setCoursesVisibility('all');
       setAdsOrdersEnabled(true);
+      setPromoBannersFullscreen(true);
       setHomeHero({ ...DEFAULT_HOME_HERO });
     } finally {
       setLoading(false);
@@ -106,6 +109,7 @@ export const SiteSettingsProvider = ({ children }) => {
     setCoursesVisibility,
     canSeeCourses,
     adsOrdersEnabled,
+    promoBannersFullscreen,
     homeHero,
     loading,
     refreshSiteSettings: fetchSettings,

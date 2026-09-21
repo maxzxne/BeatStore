@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -87,12 +87,18 @@ const SidebarV2 = () => {
   const { pathname } = useLocation();
   const [collapsedLabels, setCollapsedLabels] = useState([]);
   const activeGroupLabel = findActiveGroupLabel(navGroups, pathname);
+  const navRef = useRef(null);
+
+  useEffect(() => {
+    const active = navRef.current?.querySelector('[aria-current="page"]');
+    active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [pathname, activeGroupLabel]);
 
   return (
-    <aside className="w-64 h-full flex flex-col border-r border-white/10 bg-black/40 backdrop-blur-xl">
-      <div className="p-6 flex-1 overflow-y-auto">
-        <h2 className="font-[Syne] text-lg font-bold mb-6">Админ</h2>
-        <nav className="space-y-5">
+    <aside className="flex h-full w-64 flex-col border-r border-white/10 bg-black/40 backdrop-blur-xl">
+      <div className="flex-1 overflow-y-auto p-6">
+        <h2 className="mb-6 font-[Syne] text-lg font-bold">Админ</h2>
+        <nav ref={navRef} className="space-y-5">
           {navGroups.map((group) => {
             const open = isNavGroupOpen(group.label, collapsedLabels, activeGroupLabel);
             return (
@@ -118,10 +124,10 @@ const SidebarV2 = () => {
                           key={item.path}
                           to={item.path}
                           className={({ isActive }) =>
-                            `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
+                            `flex cursor-pointer items-center space-x-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
                               isActive
-                                ? 'bg-[#22c55e] text-[#052e16] font-semibold'
-                                : 'text-white/55 hover:text-white hover:bg-white/5'
+                                ? 'bg-[#22c55e] font-semibold text-[#052e16]'
+                                : 'text-white/55 hover:bg-white/5 hover:text-white'
                             }`
                           }
                         >
@@ -137,15 +143,15 @@ const SidebarV2 = () => {
           })}
         </nav>
       </div>
-      <div className="p-4 border-t border-white/10">
-        <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/55 hover:text-white hover:bg-white/5">
+      <div className="border-t border-white/10 p-4">
+        <Link to="/" className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/55 hover:bg-white/5 hover:text-white">
           <ExternalLink className="h-4 w-4" />
           Сайт
         </Link>
         <button
           type="button"
           onClick={() => { logout(); navigate('/'); }}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/55 hover:text-white hover:bg-white/5"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm text-white/55 hover:bg-white/5 hover:text-white"
         >
           <LogOut className="h-4 w-4" />
           Выйти

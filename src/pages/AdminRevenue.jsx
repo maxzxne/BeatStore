@@ -279,7 +279,7 @@ const AdminRevenue = () => {
     );
   }
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <div className="admin-loading">
         Загрузка статистики…
@@ -288,7 +288,7 @@ const AdminRevenue = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${loading ? 'opacity-70' : ''}`}>
       <div>
         <h1 className="admin-page-title">Доходы</h1>
         <p className="admin-page-sub">Статистика продаж и доходов</p>

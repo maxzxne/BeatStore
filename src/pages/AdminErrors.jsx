@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { AlertTriangle, Calendar, Filter } from 'lucide-react';
+import { AlertTriangle, Filter } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 import DatePicker from '../components/DatePicker';
 
 const AdminErrors = () => {
   const { isAdminAuthenticated } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [errors, setErrors] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,6 +23,24 @@ const AdminErrors = () => {
       fetchErrorStats();
     }
   }, [isAdminAuthenticated, startDate, endDate, errorTypeFilter]);
+
+  useEffect(() => {
+    const raw = searchParams.get('id');
+    if (!raw || !errors.length) return;
+    const id = Number(raw);
+    if (!Number.isFinite(id)) return;
+    const match = errors.find((e) => Number(e.id) === id);
+    if (match) setSelectedError(match);
+  }, [errors, searchParams]);
+
+  const selectError = (error) => {
+    const next = selectedError?.id === error.id ? null : error;
+    setSelectedError(next);
+    const params = new URLSearchParams(searchParams);
+    if (next) params.set('id', String(next.id));
+    else params.delete('id');
+    setSearchParams(params, { replace: true });
+  };
 
   const fetchErrors = async () => {
     try {
@@ -326,8 +346,19 @@ const AdminErrors = () => {
               {errors.map((error) => (
                 <div
                   key={error.id}
-                  className="rounded-xl border border-white/10 bg-white/[0.02] p-4 cursor-pointer transition-colors hover:bg-white/[0.04]"
-                  onClick={() => setSelectedError(selectedError?.id === error.id ? null : error)}
+                  id={`admin-error-${error.id}`}
+                  role="button"
+                  tabIndex={0}
+                  className={`cursor-pointer rounded-xl border bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22c55e]/50 ${
+                    selectedError?.id === error.id ? 'border-[#22c55e]/40' : 'border-white/10'
+                  }`}
+                  onClick={() => selectError(error)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      selectError(error);
+                    }
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

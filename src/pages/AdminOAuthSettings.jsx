@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
 import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Megaphone, Shield, KeyRound } from 'lucide-react';
 
@@ -23,6 +24,7 @@ const COURSES_VISIBILITY_OPTIONS = [
 
 const AdminOAuthSettings = () => {
   const { isAdminAuthenticated } = useAuth();
+  const { showSuccess, showError } = useNotification();
   const [settings, setSettings] = useState([]);
   const [coursesVisibility, setCoursesVisibility] = useState('all');
   const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
@@ -76,10 +78,11 @@ const AdminOAuthSettings = () => {
       setCoursesVisibility(value);
       await api.put('/api/admin/site-settings', { courses_visibility: value });
       window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+      showSuccess('Видимость «Обучение» сохранена');
     } catch (error) {
       console.error('Error updating courses visibility:', error);
       setCoursesVisibility(previous);
-      alert(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
+      showError(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
     } finally {
       setSavingCourses(false);
     }
@@ -92,10 +95,11 @@ const AdminOAuthSettings = () => {
       setAdsOrdersEnabled(enabled);
       await api.put('/api/admin/site-settings', { ads_orders_enabled: enabled });
       window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+      showSuccess(enabled ? 'Заказ рекламы включён' : 'Заказ рекламы выключен');
     } catch (error) {
       console.error('Error updating ads orders setting:', error);
       setAdsOrdersEnabled(previous);
-      alert(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
+      showError(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
     } finally {
       setSavingAds(false);
     }
@@ -108,9 +112,10 @@ const AdminOAuthSettings = () => {
       setTotpEnabled(enabled);
       await api.put('/api/admin/site-settings', { totp_enabled: enabled });
       window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+      showSuccess(enabled ? '2FA разрешена' : '2FA выключена');
     } catch (error) {
       setTotpEnabled(previous);
-      alert(error.response?.data?.detail || error.message || 'Ошибка обновления 2FA');
+      showError(error.response?.data?.detail || error.message || 'Ошибка обновления 2FA');
     } finally {
       setSavingTotp(false);
     }
@@ -123,9 +128,10 @@ const AdminOAuthSettings = () => {
       setCaptchaEnabled(enabled);
       await api.put('/api/admin/site-settings', { captcha_enabled: enabled });
       window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+      showSuccess(enabled ? 'Капча включена' : 'Капча выключена');
     } catch (error) {
       setCaptchaEnabled(previous);
-      alert(error.response?.data?.detail || error.message || 'Ошибка обновления капчи');
+      showError(error.response?.data?.detail || error.message || 'Ошибка обновления капчи');
     } finally {
       setSavingCaptcha(false);
     }
@@ -159,11 +165,12 @@ const AdminOAuthSettings = () => {
       await api.put(`/api/admin/oauth-settings/${provider}`, updateData);
       await fetchSettings();
       window.dispatchEvent(new CustomEvent('oauthSettingsUpdated'));
+      showSuccess(`${getProviderName(provider)}: сохранено`);
     } catch (error) {
       console.error('Error updating OAuth setting:', error);
       await fetchSettings();
       const errorMessage = error.response?.data?.detail || error.message || 'Ошибка обновления настройки';
-      alert(errorMessage);
+      showError(errorMessage);
     } finally {
       setSaving((prev) => ({ ...prev, [provider]: false }));
     }
@@ -428,17 +435,18 @@ const AdminOAuthSettings = () => {
                     <Eye className="h-5 w-5 text-[#22c55e]" />
                   )}
                   <div>
-                    <div className="text-sm font-medium text-white">Скрыть кнопку</div>
-                    <div className="text-xs text-white/40">Убрать с форм входа</div>
+                    <div className="text-sm font-medium text-white">Показывать кнопку</div>
+                    <div className="text-xs text-white/40">На формах входа</div>
                   </div>
                 </div>
-                <label className="relative inline-flex cursor-pointer items-center">
+                <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
                   <input
                     type="checkbox"
-                    checked={setting.is_hidden}
-                    onChange={(e) => updateSetting(setting.provider, 'is_hidden', e.target.checked)}
+                    checked={!setting.is_hidden}
+                    onChange={(e) => updateSetting(setting.provider, 'is_hidden', !e.target.checked)}
                     disabled={saving[setting.provider]}
                     className="peer sr-only"
+                    aria-label={`Показывать ${getProviderName(setting.provider)}`}
                   />
                   <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
                 </label>
@@ -452,17 +460,18 @@ const AdminOAuthSettings = () => {
                     <Unlock className="h-5 w-5 text-[#22c55e]" />
                   )}
                   <div>
-                    <div className="text-sm font-medium text-white">Отключить</div>
-                    <div className="text-xs text-white/40">Показать, но неактивной</div>
+                    <div className="text-sm font-medium text-white">Разрешить вход</div>
+                    <div className="text-xs text-white/40">Кнопка активна</div>
                   </div>
                 </div>
-                <label className="relative inline-flex cursor-pointer items-center">
+                <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
                   <input
                     type="checkbox"
-                    checked={setting.is_disabled}
-                    onChange={(e) => updateSetting(setting.provider, 'is_disabled', e.target.checked)}
+                    checked={!setting.is_disabled}
+                    onChange={(e) => updateSetting(setting.provider, 'is_disabled', !e.target.checked)}
                     disabled={saving[setting.provider]}
                     className="peer sr-only"
+                    aria-label={`Разрешить вход через ${getProviderName(setting.provider)}`}
                   />
                   <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
                 </label>

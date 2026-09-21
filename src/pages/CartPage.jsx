@@ -417,8 +417,10 @@ const CartPage = () => {
                       
                       {item.type === 'beat' && item.demo_url && (
                         <button
+                          type="button"
                           onClick={() => handlePlay(item)}
-                          className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+                          className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-xl bg-black/50 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+                          aria-label={isCurrentTrackPlaying(item.id) ? 'Пауза' : 'Слушать'}
                         >
                           <div className="rounded-full bg-[#22c55e] p-1.5 text-[#052e16]">
                             {isCurrentTrackPlaying(item.id) ? (
@@ -457,7 +459,7 @@ const CartPage = () => {
                           <div className="mb-2 text-xs text-white/40">Формат:</div>
                           <div className="w-full space-y-1">
                             {item.mp3_url && (item.price_mp3 !== null && item.price_mp3 !== undefined) && (
-                              <label className="flex w-full cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
+                              <label className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-lg p-2 text-sm transition-colors hover:bg-white/5">
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="radio"
@@ -465,7 +467,7 @@ const CartPage = () => {
                                     value="mp3"
                                     checked={selectedFormats[item.id] === 'mp3'}
                                     onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'mp3' })}
-                                    className="h-3 w-3 accent-[#22c55e]"
+                                    className="h-4 w-4 accent-[#22c55e]"
                                   />
                                   <span className="text-white">MP3</span>
                                 </div>
@@ -475,7 +477,7 @@ const CartPage = () => {
                               </label>
                             )}
                             {item.wav_url && (item.price_wav !== null && item.price_wav !== undefined) && (
-                              <label className="flex w-full cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
+                              <label className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-lg p-2 text-sm transition-colors hover:bg-white/5">
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="radio"
@@ -483,7 +485,7 @@ const CartPage = () => {
                                     value="wav"
                                     checked={selectedFormats[item.id] === 'wav'}
                                     onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'wav' })}
-                                    className="h-3 w-3 accent-[#22c55e]"
+                                    className="h-4 w-4 accent-[#22c55e]"
                                   />
                                   <span className="text-white">WAV</span>
                                 </div>
@@ -493,7 +495,7 @@ const CartPage = () => {
                               </label>
                             )}
                             {item.exclusive_url && (item.price_exclusive !== null && item.price_exclusive !== undefined) && (
-                              <label className="flex w-full cursor-pointer items-center justify-between rounded-lg p-1.5 text-xs transition-colors hover:bg-white/5">
+                              <label className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-lg p-2 text-sm transition-colors hover:bg-white/5">
                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="radio"
@@ -501,7 +503,7 @@ const CartPage = () => {
                                     value="exclusive"
                                     checked={selectedFormats[item.id] === 'exclusive'}
                                     onChange={() => setSelectedFormats({ ...selectedFormats, [item.id]: 'exclusive' })}
-                                    className="h-3 w-3 accent-[#22c55e]"
+                                    className="h-4 w-4 accent-[#22c55e]"
                                   />
                                   <span className="text-white">Exclusive</span>
                                 </div>
