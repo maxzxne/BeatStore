@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookOpen,
@@ -72,7 +72,7 @@ function SectionCard({ section }) {
         </div>
         <div className="admin-guide-section-links">
           {section.adminPath ? (
-            <Link to={section.adminPath} className="admin-ghost-btn admin-guide-jump">
+            <Link to={section.adminPath} className="admin-primary-btn admin-guide-jump min-h-[40px]">
               Открыть раздел
               <ExternalLink className="h-3.5 w-3.5" aria-hidden />
             </Link>
@@ -100,19 +100,31 @@ function SectionCard({ section }) {
   );
 }
 
+const START_HERE = [
+  { id: 'dashboard', label: 'Сводка и очередь' },
+  { id: 'beats', label: 'Каталог битов' },
+  { id: 'errors', label: 'Оплаты / ошибки' },
+];
+
 const AdminGuidePage = () => {
   const { isAdminAuthenticated } = useAuth();
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
   const [activeId, setActiveId] = useState(guideSections[0]?.id || '');
   const [notes, setNotes] = useState('');
+  const [savedNotes, setSavedNotes] = useState('');
   const [notesLoading, setNotesLoading] = useState(true);
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesMessage, setNotesMessage] = useState('');
   const [notesError, setNotesError] = useState('');
   const notesRef = useRef(null);
 
-  const filtered = useMemo(() => filterGuideSections(guideSections, query), [query]);
+  const filtered = useMemo(
+    () => filterGuideSections(guideSections, deferredQuery),
+    [deferredQuery],
+  );
   const grouped = useMemo(() => groupGuideSections(filtered), [filtered]);
+  const notesDirty = notes !== savedNotes;
 
   useEffect(() => {
     if (!isAdminAuthenticated) return undefined;
@@ -122,7 +134,11 @@ const AdminGuidePage = () => {
         setNotesLoading(true);
         setNotesError('');
         const { data } = await api.get('/api/admin/guide-notes');
-        if (!cancelled) setNotes(data?.notes || '');
+        if (!cancelled) {
+          const value = data?.notes || '';
+          setNotes(value);
+          setSavedNotes(value);
+        }
       } catch (err) {
         if (!cancelled) {
           setNotesError(err.response?.data?.detail || 'Не удалось загрузить заметки');
@@ -161,7 +177,9 @@ const AdminGuidePage = () => {
       setNotesError('');
       setNotesMessage('');
       const { data } = await api.put('/api/admin/guide-notes', { notes });
-      setNotes(data?.notes ?? notes);
+      const value = data?.notes ?? notes;
+      setNotes(value);
+      setSavedNotes(value);
       setNotesMessage('Заметки сохранены в базе — деплой их не сотрёт');
     } catch (err) {
       setNotesError(err.response?.data?.detail || 'Не удалось сохранить заметки');
@@ -173,6 +191,11 @@ const AdminGuidePage = () => {
   const jumpToNotes = () => {
     notesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const startHereSections = START_HERE.map((item) => ({
+    ...item,
+    section: guideSections.find((s) => s.id === item.id),
+  })).filter((item) => item.section);
 
   return (
     <div className="admin-guide">
@@ -189,6 +212,20 @@ const AdminGuidePage = () => {
             </p>
           </div>
         </div>
+
+        {startHereSections.length > 0 && !query ? (
+          <div className="admin-guide-start">
+            <p className="admin-guide-kicker">Начать здесь</p>
+            <div className="flex flex-wrap gap-2">
+              {startHereSections.map((item) => (
+                <a key={item.id} href={`#${item.id}`} className="admin-filter-chip">
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div className="admin-guide-toolbar">
           <label className="admin-guide-search">
             <Search className="h-4 w-4 shrink-0 text-white/40" aria-hidden />
@@ -205,9 +242,28 @@ const AdminGuidePage = () => {
           <button type="button" onClick={jumpToNotes} className="admin-ghost-btn admin-guide-jump">
             <StickyNote className="h-4 w-4" aria-hidden />
             Мои заметки
+            {notesDirty ? <span className="admin-guide-dirty-dot" title="Есть несохранённые изменения" /> : null}
           </button>
         </div>
       </header>
+
+      <nav className="admin-guide-mobile-toc" aria-label="Разделы инструкции">
+        {grouped.map(({ group, sections }) => (
+          <div key={group} className="admin-guide-mobile-toc-group">
+            <span className="admin-guide-mobile-toc-label">{group}</span>
+            {sections.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className={`admin-filter-chip ${activeId === section.id ? 'is-active' : ''}`}
+                onClick={() => setActiveId(section.id)}
+              >
+                {section.title}
+              </a>
+            ))}
+          </div>
+        ))}
+      </nav>
 
       <div className="admin-guide-layout">
         <nav className="admin-guide-toc" aria-label="Содержание инструкции">
@@ -243,7 +299,8 @@ const AdminGuidePage = () => {
         <div className="admin-guide-main">
           {filtered.length === 0 ? (
             <div className="admin-panel p-6 text-sm text-white/55">
-              По запросу «{query}» разделов нет. Очистите поиск или смените формулировку.
+              По запросу «{deferredQuery}» разделов нет. Очистите поиск или смените формулировку —
+              попробуйте «бит», «промокод», «заявка», «oauth».
             </div>
           ) : (
             filtered.map((section) => <SectionCard key={section.id} section={section} />)
@@ -266,15 +323,15 @@ const AdminGuidePage = () => {
               <button
                 type="button"
                 onClick={saveNotes}
-                disabled={notesSaving || notesLoading}
-                className="admin-primary-btn inline-flex min-h-[44px] items-center gap-2"
+                disabled={notesSaving || notesLoading || !notesDirty}
+                className="admin-primary-btn inline-flex min-h-[44px] items-center gap-2 disabled:opacity-40"
               >
                 {notesSaving ? (
                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 ) : (
                   <Save className="h-4 w-4" aria-hidden />
                 )}
-                Сохранить
+                {notesDirty ? 'Сохранить' : 'Сохранено'}
               </button>
             </div>
 
@@ -294,11 +351,18 @@ const AdminGuidePage = () => {
               />
             )}
 
-            {notesMessage ? (
-              <p className="mt-3 text-sm text-[#22c55e]" role="status">
-                {notesMessage}
-              </p>
-            ) : null}
+            <div aria-live="polite">
+              {notesDirty && !notesMessage ? (
+                <p className="mt-3 text-sm text-amber-300/90" role="status">
+                  Есть несохранённые изменения
+                </p>
+              ) : null}
+              {notesMessage ? (
+                <p className="mt-3 text-sm text-[#22c55e]" role="status">
+                  {notesMessage}
+                </p>
+              ) : null}
+            </div>
             {notesError ? (
               <p className="mt-3 text-sm text-red-400" role="alert">
                 {notesError}

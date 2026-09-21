@@ -1,10 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
-import { AlertTriangle, Filter } from 'lucide-react';
+import { AlertTriangle, Filter, ExternalLink } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 import DatePicker from '../components/DatePicker';
+import { DATE_PRESET_OPTIONS, datePresetRange, matchDatePreset } from '../utils/adminDatePresets';
+import { groupErrorsByMessage } from '../utils/adminErrorGroups';
+
+const ERROR_TYPES = [
+  { value: '', label: 'Все типы' },
+  { value: 'auth', label: 'Авторизация' },
+  { value: 'registration', label: 'Регистрация' },
+  { value: 'purchase', label: 'Покупка' },
+  { value: 'payment', label: 'Оплата' },
+  { value: 'unknown', label: 'Неизвестно' },
+];
 
 const AdminErrors = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -17,11 +28,40 @@ const AdminErrors = () => {
   const [errorTypeFilter, setErrorTypeFilter] = useState('');
   const [selectedError, setSelectedError] = useState(null);
 
+  const activePreset = useMemo(
+    () => matchDatePreset(startDate, endDate),
+    [startDate, endDate],
+  );
+
   useEffect(() => {
-    if (isAdminAuthenticated) {
-      fetchErrors();
-      fetchErrorStats();
-    }
+    if (!isAdminAuthenticated) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        if (errorTypeFilter) params.append('error_type', errorTypeFilter);
+        const statsParams = new URLSearchParams();
+        if (startDate) statsParams.append('start_date', startDate);
+        if (endDate) statsParams.append('end_date', endDate);
+        const [listRes, statsRes] = await Promise.all([
+          api.get(`/api/admin/errors?${params.toString()}`),
+          api.get(`/api/admin/errors/stats?${statsParams.toString()}`),
+        ]);
+        if (cancelled) return;
+        setErrors(listRes.data || []);
+        setStats(statsRes.data);
+      } catch (error) {
+        console.error('Error fetching errors:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [isAdminAuthenticated, startDate, endDate, errorTypeFilter]);
 
   useEffect(() => {
@@ -33,370 +73,329 @@ const AdminErrors = () => {
     if (match) setSelectedError(match);
   }, [errors, searchParams]);
 
+  const groups = useMemo(() => groupErrorsByMessage(errors), [errors]);
+
   const selectError = (error) => {
-    const next = selectedError?.id === error.id ? null : error;
-    setSelectedError(next);
+    setSelectedError(error);
     const params = new URLSearchParams(searchParams);
-    if (next) params.set('id', String(next.id));
+    if (error) params.set('id', String(error.id));
     else params.delete('id');
     setSearchParams(params, { replace: true });
   };
 
-  const fetchErrors = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (startDate) params.append('start_date', startDate);
-      if (endDate) params.append('end_date', endDate);
-      if (errorTypeFilter) params.append('error_type', errorTypeFilter);
-      
-      const response = await api.get(`/api/admin/errors?${params.toString()}`);
-      setErrors(response.data);
-    } catch (error) {
-      console.error('Error fetching errors:', error);
-    } finally {
-      setLoading(false);
-    }
+  const applyPreset = (preset) => {
+    const range = datePresetRange(preset);
+    setStartDate(range.startDate);
+    setEndDate(range.endDate);
   };
 
-  const fetchErrorStats = async () => {
-    try {
-      const params = new URLSearchParams();
-      if (startDate) params.append('start_date', startDate);
-      if (endDate) params.append('end_date', endDate);
-      
-      const response = await api.get(`/api/admin/errors/stats?${params.toString()}`);
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error fetching error stats:', error);
-    }
+  const toggleTypeFilter = (type) => {
+    setErrorTypeFilter((prev) => (prev === type ? '' : type));
   };
 
-  const getErrorTypeLabel = (type) => {
-    const labels = {
-      'auth': 'Авторизация',
-      'registration': 'Регистрация',
-      'purchase': 'Покупка',
-      'payment': 'Оплата',
-      'unknown': 'Неизвестно'
-    };
-    return labels[type] || type;
-  };
-
-  const getErrorTypeColor = (type) => {
-    const colors = {
-      'auth': 'bg-red-500/15 text-red-300',
-      'registration': 'bg-amber-500/15 text-amber-300',
-      'purchase': 'bg-yellow-500/15 text-yellow-300',
-      'payment': 'bg-white/10 text-white/70',
-      'unknown': 'bg-white/10 text-white/50'
-    };
-    return colors[type] || 'bg-white/10 text-white/50';
-  };
+  const getErrorTypeLabel = (type) =>
+    ERROR_TYPES.find((t) => t.value === type)?.label || type || 'Неизвестно';
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleString('ru-RU', {
+    return new Date(dateString).toLocaleString('ru-RU', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   const renderChart = () => {
-    if (!stats || !stats.errors_by_day || Object.keys(stats.errors_by_day).length === 0) {
-      return (
-        <div className="admin-empty py-16">
-          Нет данных для отображения графика
-        </div>
-      );
+    if (!stats?.errors_by_day || Object.keys(stats.errors_by_day).length === 0) {
+      return <div className="admin-empty py-12">Нет данных для графика</div>;
     }
 
     const days = Object.keys(stats.errors_by_day).sort();
-    const values = days.map(day => stats.errors_by_day[day]);
+    const values = days.map((day) => stats.errors_by_day[day]);
     const maxValue = Math.max(...values, 1);
-    const chartHeight = 300;
-    const chartWidth = Math.max(600, days.length * 60);
+    const chartHeight = 220;
+    const chartWidth = Math.max(560, days.length * 48);
+    const leftPadding = 40;
+    const bottomPadding = 32;
+    const topPadding = 16;
+    const rightPadding = 16;
 
-    const leftPadding = 60;
-    const bottomPadding = 40;
-    const topPadding = 20;
-    const rightPadding = 20;
-    
     const points = days.map((day, index) => {
       const value = stats.errors_by_day[day];
-      const x = (index / (days.length - 1 || 1)) * (chartWidth - leftPadding - rightPadding) + leftPadding;
-      const y = chartHeight - (value / maxValue) * (chartHeight - topPadding - bottomPadding) - bottomPadding;
+      const x =
+        (index / (days.length - 1 || 1)) * (chartWidth - leftPadding - rightPadding) + leftPadding;
+      const y =
+        chartHeight - (value / maxValue) * (chartHeight - topPadding - bottomPadding) - bottomPadding;
       return { x, y, value, day };
     });
-
-    const pathData = points.map((point, index) => {
-      return `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`;
-    }).join(' ');
+    const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 
     return (
-      <div className="space-y-2">
-        <div className="relative" style={{ height: `${chartHeight}px`, width: '100%', overflowX: 'auto' }}>
-          <svg 
-            width={chartWidth} 
-            height={chartHeight} 
-            className="border-b border-l border-white/10"
-            style={{ minWidth: '100%' }}
-          >
-            {/* Сетка */}
-            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-              const y = chartHeight - (ratio * (chartHeight - topPadding - bottomPadding)) - bottomPadding;
-              return (
+      <div className="overflow-x-auto">
+        <svg width={chartWidth} height={chartHeight} className="border-b border-l border-white/10">
+          {[0, 0.5, 1].map((ratio) => {
+            const y =
+              chartHeight - ratio * (chartHeight - topPadding - bottomPadding) - bottomPadding;
+            return (
+              <g key={ratio}>
                 <line
-                  key={ratio}
                   x1={leftPadding}
                   y1={y}
                   x2={chartWidth - rightPadding}
                   y2={y}
-                  stroke='rgba(255,255,255,0.08)'
-                  strokeWidth="1"
+                  stroke="rgba(255,255,255,0.08)"
                 />
-              );
-            })}
-
-            {/* Линия графика */}
-            <path
-              d={pathData}
-              fill="none"
-              stroke="#ef4444"
-              strokeWidth="2"
-            />
-
-            {/* Точки */}
-            {points.map((point, index) => (
-              <g key={index}>
-                <circle
-                  cx={point.x}
-                  cy={point.y}
-                  r="4"
-                  fill="#ef4444"
-                />
-                <title>{`${point.day}: ${point.value} ошибок`}</title>
+                <text x={leftPadding - 8} y={y + 4} textAnchor="end" fontSize="11" fill="rgba(255,255,255,0.4)">
+                  {Math.round(ratio * maxValue)}
+                </text>
               </g>
-            ))}
-
-            {/* Ось Y - значения */}
-            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-              const value = Math.round(ratio * maxValue);
-              const y = chartHeight - (ratio * (chartHeight - topPadding - bottomPadding)) - bottomPadding;
-              return (
-                <text
-                  key={ratio}
-                  x={leftPadding - 10}
-                  y={y + 5}
-                  textAnchor="end"
-                  fontSize="12"
-                  fill='rgba(255,255,255,0.45)'
-                >
-                  {value}
-                </text>
-              );
-            })}
-
-            {/* Ось X - даты */}
-            {days.map((day, index) => {
-              const point = points[index];
-              if (!point) return null;
-              const date = new Date(day);
-              const dateStr = `${date.getDate()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
-              return (
-                <text
-                  key={index}
-                  x={point.x}
-                  y={chartHeight - bottomPadding + 20}
-                  textAnchor="middle"
-                  fontSize="11"
-                  fill='rgba(255,255,255,0.45)'
-                >
-                  {dateStr}
-                </text>
-              );
-            })}
-          </svg>
-        </div>
+            );
+          })}
+          <path d={pathData} fill="none" stroke="#f87171" strokeWidth="2" />
+          {points.map((point) => (
+            <circle key={point.day} cx={point.x} cy={point.y} r="3" fill="#f87171">
+              <title>{`${point.day}: ${point.value}`}</title>
+            </circle>
+          ))}
+        </svg>
       </div>
     );
   };
 
-  if (loading && !stats) {
+  if (!isAdminAuthenticated) {
     return (
-      <div className="admin-loading">
-        Загрузка ошибок…
+      <div className="py-12 text-center text-white/50">
+        Доступ запрещен. Войдите как администратор.
       </div>
     );
   }
 
+  if (loading && !stats) {
+    return <div className="admin-loading">Загрузка ошибок…</div>;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-5 ${loading ? 'opacity-70' : ''}`}>
       <div>
         <h1 className="admin-page-title">Ошибки</h1>
         <p className="admin-page-sub">Авторизация, регистрация, покупки и оплата</p>
       </div>
 
-      {/* Фильтры */}
-      <div className="rounded-2xl border border-white/10 bg-black/30">
-        <div className="p-5">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm text-white/45 mb-1">Период:</label>
-              <div className="flex gap-2">
-                <DatePicker
-                  value={startDate}
-                  onChange={setStartDate}
-                  placeholder="С дд.мм.гггг"
-                  className="flex-1"
-                />
-                <DatePicker
-                  value={endDate}
-                  onChange={setEndDate}
-                  placeholder="По дд.мм.гггг"
-                  className="flex-1"
-                />
-              </div>
-            </div>
-            
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm text-white/45 mb-1">Тип ошибки:</label>
-              <CustomSelect
-                value={errorTypeFilter}
-                onChange={setErrorTypeFilter}
-                options={[
-                  { value: '', label: 'Все типы' },
-                  { value: 'auth', label: 'Авторизация' },
-                  { value: 'registration', label: 'Регистрация' },
-                  { value: 'purchase', label: 'Покупка' },
-                  { value: 'payment', label: 'Оплата' },
-                  { value: 'unknown', label: 'Неизвестно' }
-                ]}
-                placeholder="Все типы"
-                className="input-bordered"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Статистические карточки */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-black/30">
-            <div className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-white/45 mb-1">Всего ошибок</p>
-                  <p className="text-2xl font-bold text-white">
-                    {stats.total_errors || 0}
-                  </p>
-                </div>
-                <div className="bg-red-500/20 rounded-xl p-3 flex items-center justify-center self-center">
-                  <AlertTriangle className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {Object.entries(stats.errors_by_type || {}).map(([type, count]) => (
-            <div key={type} className="rounded-2xl border border-white/10 bg-black/30">
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-white/45 mb-1">{getErrorTypeLabel(type)}</p>
-                    <p className="text-2xl font-bold text-white">{count}</p>
-                  </div>
-                  <div className={`rounded-full p-3 flex items-center justify-center self-center ${getErrorTypeColor(type)}`}>
-                    <AlertTriangle className="h-6 w-6" />
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div className="admin-sticky-filters rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
+        <div className="mb-3 flex flex-wrap gap-2">
+          {DATE_PRESET_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => applyPreset(opt.id)}
+              aria-pressed={activePreset === opt.id}
+              className={`admin-filter-chip ${activePreset === opt.id ? 'is-active' : ''}`}
+            >
+              {opt.label}
+            </button>
           ))}
         </div>
-      )}
-
-      {/* График ошибок */}
-      <div className="rounded-2xl border border-white/10 bg-black/30">
-        <div className="p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="h-5 w-5 text-white/45" />
-            <h2 className="text-xl font-semibold text-white">График ошибок</h2>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[200px] flex-1">
+            <label className="mb-1 block text-sm text-white/45">Период</label>
+            <div className="flex gap-2">
+              <DatePicker value={startDate} onChange={setStartDate} placeholder="С дд.мм.гггг" className="flex-1" />
+              <DatePicker value={endDate} onChange={setEndDate} placeholder="По дд.мм.гггг" className="flex-1" />
+            </div>
           </div>
-          {renderChart()}
+          <div className="min-w-[180px]">
+            <label className="mb-1 block text-sm text-white/45">Тип</label>
+            <CustomSelect
+              value={errorTypeFilter}
+              onChange={setErrorTypeFilter}
+              options={ERROR_TYPES}
+              placeholder="Все типы"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Список ошибок */}
-      <div className="rounded-2xl border border-white/10 bg-black/30">
-        <div className="p-5">
-          <h2 className="text-xl font-semibold text-white mb-4">Последние ошибки</h2>
-          
-          {errors.length === 0 ? (
-            <div className="text-center py-8 text-white/40">
-              Ошибок не найдено
+      {stats ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          <button
+            type="button"
+            onClick={() => setErrorTypeFilter('')}
+            aria-pressed={!errorTypeFilter}
+            className={`rounded-2xl border bg-black/30 p-4 text-left transition duration-200 ${
+              !errorTypeFilter ? 'border-[#22c55e]/40' : 'border-white/10 hover:border-white/20'
+            }`}
+          >
+            <p className="text-sm text-white/45">Всего</p>
+            <p className="mt-1 font-[Syne] text-2xl font-bold tabular-nums text-white">
+              {stats.total_errors || 0}
+            </p>
+          </button>
+          {Object.entries(stats.errors_by_type || {}).map(([type, count]) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => toggleTypeFilter(type)}
+              aria-pressed={errorTypeFilter === type}
+              className={`rounded-2xl border bg-black/30 p-4 text-left transition duration-200 ${
+                errorTypeFilter === type
+                  ? 'border-[#22c55e]/40'
+                  : 'border-white/10 hover:border-white/20'
+              }`}
+            >
+              <p className="text-sm text-white/45">{getErrorTypeLabel(type)}</p>
+              <p className="mt-1 font-[Syne] text-2xl font-bold tabular-nums text-white">{count}</p>
+              <p className="mt-1 text-[11px] text-white/30">
+                {errorTypeFilter === type ? 'Фильтр активен' : 'Клик — фильтр'}
+              </p>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Filter className="h-4 w-4 text-white/45" aria-hidden />
+          <h2 className="font-[Syne] text-base font-semibold text-white">График ошибок</h2>
+        </div>
+        {renderChart()}
+      </div>
+
+      <div className="admin-errors-split">
+        <div className="admin-errors-list rounded-2xl border border-white/10 bg-black/30">
+          <div className="border-b border-white/10 px-4 py-3">
+            <h2 className="font-[Syne] text-base font-semibold text-white">
+              Группы ({groups.length})
+            </h2>
+            <p className="text-xs text-white/40">Повторяющиеся сообщения свёрнуты</p>
+          </div>
+          {groups.length === 0 ? (
+            <div className="admin-empty px-4 py-10">
+              <AlertTriangle className="mx-auto mb-2 h-6 w-6 text-white/25" aria-hidden />
+              <p>Ошибок не найдено</p>
+              <p className="mt-1 text-xs text-white/35">
+                Сбросьте фильтры или откройте{' '}
+                <Link to="/admin/guide" className="text-[#22c55e] hover:underline">
+                  инструкцию
+                </Link>
+              </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {errors.map((error) => (
-                <div
-                  key={error.id}
-                  id={`admin-error-${error.id}`}
-                  role="button"
-                  tabIndex={0}
-                  className={`cursor-pointer rounded-xl border bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22c55e]/50 ${
-                    selectedError?.id === error.id ? 'border-[#22c55e]/40' : 'border-white/10'
-                  }`}
-                  onClick={() => selectError(error)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      selectError(error);
-                    }
-                  }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getErrorTypeColor(error.error_type)}`}>
-                          {getErrorTypeLabel(error.error_type)}
+            <ul className="max-h-[28rem] divide-y divide-white/5 overflow-y-auto lg:max-h-[36rem]">
+              {groups.map((group) => {
+                const active = selectedError && group.items.some((i) => i.id === selectedError.id);
+                return (
+                  <li key={group.key}>
+                    <button
+                      type="button"
+                      onClick={() => selectError(group.latest)}
+                      className={`flex w-full cursor-pointer flex-col gap-1 px-4 py-3 text-left transition duration-150 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#22c55e]/50 ${
+                        active ? 'bg-[#22c55e]/10' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md bg-white/10 px-2 py-0.5 text-[11px] text-white/70">
+                          {getErrorTypeLabel(group.error_type)}
                         </span>
-                        <span className="text-sm text-white/45">{formatDate(error.created_at)}</span>
+                        {group.count > 1 ? (
+                          <span className="rounded-md bg-red-500/15 px-2 py-0.5 text-[11px] tabular-nums text-red-300">
+                            ×{group.count}
+                          </span>
+                        ) : null}
+                        <span className="ml-auto text-[11px] text-white/40">
+                          {formatDate(group.latest.created_at)}
+                        </span>
                       </div>
-                      <p className="text-white font-medium mb-1">{error.error_message}</p>
-                      {error.endpoint && (
-                        <p className="text-sm text-white/45">Endpoint: {error.endpoint}</p>
-                      )}
-                      {selectedError?.id === error.id && (
-                        <div className="mt-3 pt-3 border-t border-white/10">
-                          {error.error_details && (
-                            <div className="mb-2">
-                              <p className="text-xs text-white/40 mb-1">Детали:</p>
-                              <pre className="text-xs bg-black/40 border border-white/10 p-3 rounded-xl overflow-auto max-h-40 text-white/70">
-                                {error.error_details}
-                              </pre>
-                            </div>
-                          )}
-                          {error.user_id && (
-                            <p className="text-xs text-white/45">User ID: {error.user_id}</p>
-                          )}
-                          {error.ip_address && (
-                            <p className="text-xs text-white/45">IP: {error.ip_address}</p>
-                          )}
-                          {error.user_agent && (
-                            <p className="text-xs text-white/45 truncate">User-Agent: {error.user_agent}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                      <p className="line-clamp-2 text-sm font-medium text-white">{group.message}</p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <div className="admin-errors-detail rounded-2xl border border-white/10 bg-black/30 p-4">
+          {!selectedError ? (
+            <div className="flex h-full min-h-[12rem] items-center justify-center text-sm text-white/40">
+              Выберите группу слева, чтобы увидеть детали
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-white/10 px-2 py-0.5 text-xs text-white/70">
+                    {getErrorTypeLabel(selectedError.error_type)}
+                  </span>
+                  <span className="text-xs text-white/40">{formatDate(selectedError.created_at)}</span>
+                  <span className="text-xs text-white/30">#{selectedError.id}</span>
                 </div>
-              ))}
+                <h3 className="font-[Syne] text-lg font-semibold text-white">
+                  {selectedError.error_message}
+                </h3>
+              </div>
+
+              {selectedError.endpoint ? (
+                <p className="font-mono text-xs text-white/55">{selectedError.endpoint}</p>
+              ) : null}
+
+              {selectedError.error_details ? (
+                <div>
+                  <p className="mb-1 text-xs text-white/40">Детали</p>
+                  <pre className="max-h-48 overflow-auto rounded-xl border border-white/10 bg-black/40 p-3 text-xs text-white/70">
+                    {selectedError.error_details}
+                  </pre>
+                </div>
+              ) : null}
+
+              <div className="space-y-1 text-sm text-white/55">
+                {selectedError.user_id ? (
+                  <p>
+                    User:{' '}
+                    <Link
+                      to={`/admin/users/${selectedError.user_id}`}
+                      className="inline-flex items-center gap-1 text-[#22c55e] hover:underline"
+                    >
+                      #{selectedError.user_id}
+                      <ExternalLink className="h-3 w-3" aria-hidden />
+                    </Link>
+                  </p>
+                ) : null}
+                {selectedError.ip_address ? (
+                  <p className="font-mono text-xs">IP: {selectedError.ip_address}</p>
+                ) : null}
+                {selectedError.user_agent ? (
+                  <p className="truncate font-mono text-xs text-white/40" title={selectedError.user_agent}>
+                    UA: {selectedError.user_agent}
+                  </p>
+                ) : null}
+              </div>
+
+              {groups.find((g) => g.items.some((i) => i.id === selectedError.id))?.count > 1 ? (
+                <div>
+                  <p className="mb-2 text-xs uppercase tracking-wide text-white/35">
+                    Все вхождения
+                  </p>
+                  <ul className="max-h-40 space-y-1 overflow-y-auto">
+                    {groups
+                      .find((g) => g.items.some((i) => i.id === selectedError.id))
+                      .items.map((item) => (
+                        <li key={item.id}>
+                          <button
+                            type="button"
+                            onClick={() => selectError(item)}
+                            className={`w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-xs transition hover:bg-white/5 ${
+                              item.id === selectedError.id ? 'bg-white/10 text-white' : 'text-white/50'
+                            }`}
+                          >
+                            #{item.id} · {formatDate(item.created_at)}
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           )}
         </div>
@@ -406,6 +405,3 @@ const AdminErrors = () => {
 };
 
 export default AdminErrors;
-
-
-
