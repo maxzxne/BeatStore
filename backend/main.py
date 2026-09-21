@@ -48,10 +48,16 @@ from footer_pages import (
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
 from payments.discounts import DISCOUNT_KINDS, SALE_SCOPES
-from payments.pricing import load_active_sales, overlay_sale_on_mapping
+from payments.pricing import generate_promo_code, load_active_sales, overlay_sale_on_mapping
 from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
 from payments.robokassa import format_out_sum, verify_result
-from payments.service import PaymentError, create_checkout, intent_view, public_config as payment_public_config
+from payments.service import (
+    PaymentError,
+    create_checkout,
+    intent_view,
+    preview_checkout,
+    public_config as payment_public_config,
+)
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
 from submit_rules import STORE_BENEFICIARY_NAME
 from contacts import parse_contacts, serialize_contacts
@@ -171,6 +177,15 @@ def update_database_schema():
                         conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
                         conn.commit()
                     print(f"Колонка {col_name} добавлена")
+        
+        if 'contributors' in inspector.get_table_names():
+            contributor_columns = [col['name'] for col in inspector.get_columns('contributors')]
+            if 'quota_reset_at' not in contributor_columns:
+                print("Добавление колонки quota_reset_at в contributors...")
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE contributors ADD COLUMN quota_reset_at DATETIME"))
+                    conn.commit()
+                print("Колонка quota_reset_at добавлена")
         
         # Проверяем таблицу oauth_settings
         if 'oauth_settings' not in inspector.get_table_names():
@@ -952,6 +967,34 @@ class PromoBannerUpdate(BaseModel):
     ends_at: Optional[datetime] = None
 
 
+class SaleCampaignCreate(BaseModel):
+    title: Optional[str] = None
+    scope: str = "all"
+    kind: str = "percent"
+    value: float
+    enabled: bool = True
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+
+
+class SaleCampaignUpdate(BaseModel):
+    title: Optional[str] = None
+    scope: Optional[str] = None
+    kind: Optional[str] = None
+    value: Optional[float] = None
+    enabled: Optional[bool] = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+
+
+class PromoCodeCreate(BaseModel):
+    username: str
+    kind: str = "percent"
+    value: float
+    code: Optional[str] = None
+    note: Optional[str] = None
+
+
 class FooterPageCreate(BaseModel):
     slug: str
     label: str
@@ -1031,6 +1074,47 @@ def promo_banner_to_dict(banner: PromoBanner) -> dict:
         "created_at": banner.created_at.isoformat() if banner.created_at else None,
         "updated_at": banner.updated_at.isoformat() if banner.updated_at else None,
     }
+
+
+def sale_campaign_to_dict(sale: SaleCampaign) -> dict:
+    return {
+        "id": sale.id,
+        "title": sale.title,
+        "scope": sale.scope,
+        "kind": sale.kind,
+        "value": sale.value,
+        "enabled": sale.enabled,
+        "starts_at": sale.starts_at.isoformat() if sale.starts_at else None,
+        "ends_at": sale.ends_at.isoformat() if sale.ends_at else None,
+        "created_at": sale.created_at.isoformat() if sale.created_at else None,
+        "updated_at": sale.updated_at.isoformat() if sale.updated_at else None,
+    }
+
+
+def promo_code_to_dict(promo: PromoCode) -> dict:
+    return {
+        "id": promo.id,
+        "code": promo.code,
+        "user_id": promo.user_id,
+        "username": promo.user.username if promo.user else None,
+        "kind": promo.kind,
+        "value": promo.value,
+        "note": promo.note,
+        "used_at": promo.used_at.isoformat() if promo.used_at else None,
+        "reserved_intent_id": promo.reserved_intent_id,
+        "created_at": promo.created_at.isoformat() if promo.created_at else None,
+    }
+
+
+def validate_discount_fields(scope: Optional[str], kind: Optional[str], value: Optional[float], *, require_value: bool = True):
+    if scope is not None and scope not in SALE_SCOPES:
+        raise HTTPException(status_code=400, detail="scope: all, beats, courses или services")
+    if kind is not None and kind not in DISCOUNT_KINDS:
+        raise HTTPException(status_code=400, detail="kind: percent или amount")
+    if require_value and (value is None or float(value) <= 0):
+        raise HTTPException(status_code=400, detail="value должен быть больше 0")
+    if kind == "percent" and value is not None and float(value) > 100:
+        raise HTTPException(status_code=400, detail="Процент не больше 100")
 
 def is_promo_banner_active(banner: PromoBanner, now: Optional[datetime] = None) -> bool:
     if not banner.enabled:
@@ -2156,6 +2240,18 @@ class SimulatePaymentRequest(BaseModel):
 @app.get("/payments/config")
 def payments_config():
     return payment_public_config()
+
+
+@app.post("/payments/quote")
+def payments_quote(
+    body: CreatePaymentRequest,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    try:
+        return preview_checkout(db, current_user, body.dict())
+    except PaymentError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.post("/payments/create")
@@ -3930,6 +4026,125 @@ async def upload_promo_banner_image(
 
     url = f"/static/site/{filename}"
     return {"url": url, "image_url": url}
+
+# Storefront sales + personal promo codes
+@app.get("/api/admin/sales")
+def get_admin_sales(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    rows = db.query(SaleCampaign).order_by(SaleCampaign.id.desc()).all()
+    return [sale_campaign_to_dict(row) for row in rows]
+
+
+@app.post("/api/admin/sales")
+def create_admin_sale(
+    data: SaleCampaignCreate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    validate_discount_fields(data.scope, data.kind, data.value)
+    sale = SaleCampaign(
+        title=data.title,
+        scope=data.scope,
+        kind=data.kind,
+        value=float(data.value),
+        enabled=bool(data.enabled),
+        starts_at=data.starts_at,
+        ends_at=data.ends_at,
+    )
+    db.add(sale)
+    db.commit()
+    db.refresh(sale)
+    return sale_campaign_to_dict(sale)
+
+
+@app.put("/api/admin/sales/{sale_id}")
+def update_admin_sale(
+    sale_id: int,
+    data: SaleCampaignUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    sale = db.query(SaleCampaign).filter(SaleCampaign.id == sale_id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Скидка не найдена")
+    patch = data.dict(exclude_unset=True)
+    validate_discount_fields(
+        patch.get("scope", sale.scope),
+        patch.get("kind", sale.kind),
+        patch.get("value", sale.value),
+        require_value="value" in patch,
+    )
+    for key, value in patch.items():
+        setattr(sale, key, value)
+    sale.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(sale)
+    return sale_campaign_to_dict(sale)
+
+
+@app.delete("/api/admin/sales/{sale_id}")
+def delete_admin_sale(
+    sale_id: int,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    sale = db.query(SaleCampaign).filter(SaleCampaign.id == sale_id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Скидка не найдена")
+    db.delete(sale)
+    db.commit()
+    return {"message": "Скидка удалена", "id": sale_id}
+
+
+@app.get("/api/admin/promo-codes")
+def get_admin_promo_codes(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    rows = db.query(PromoCode).order_by(PromoCode.id.desc()).all()
+    return [promo_code_to_dict(row) for row in rows]
+
+
+@app.post("/api/admin/promo-codes")
+def create_admin_promo_code(
+    data: PromoCodeCreate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    validate_discount_fields("all", data.kind, data.value)
+    user = db.query(User).filter(User.username == data.username.strip()).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    code = (data.code or "").strip().upper() or generate_promo_code()
+    if db.query(PromoCode).filter(PromoCode.code == code).first():
+        raise HTTPException(status_code=400, detail="Такой промокод уже есть")
+    promo = PromoCode(
+        code=code,
+        user_id=user.id,
+        kind=data.kind,
+        value=float(data.value),
+        note=data.note,
+    )
+    db.add(promo)
+    db.commit()
+    db.refresh(promo)
+    return promo_code_to_dict(promo)
+
+
+@app.delete("/api/admin/promo-codes/{promo_id}")
+def delete_admin_promo_code(
+    promo_id: int,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    promo = db.query(PromoCode).filter(PromoCode.id == promo_id).first()
+    if not promo:
+        raise HTTPException(status_code=404, detail="Промокод не найден")
+    db.delete(promo)
+    db.commit()
+    return {"message": "Промокод удалён", "id": promo_id}
 
 # Footer pages CMS
 @app.get("/footer-pages")

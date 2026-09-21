@@ -75,6 +75,7 @@ def contributor_out(contributor: Contributor) -> dict:
         "notes": contributor.notes,
         "is_active": bool(contributor.is_active),
         "user_id": contributor.user_id,
+        "quota_reset_at": contributor.quota_reset_at,
         "created_at": contributor.created_at,
     }
 
@@ -119,13 +120,18 @@ def _open_count(db: Session, contributor_id: int) -> int:
     )
 
 
-def _created_today(db: Session, contributor_id: int, now: datetime) -> int:
+def _created_today(
+    db: Session,
+    contributor_id: int,
+    now: datetime,
+    reset_at: Optional[datetime] = None,
+) -> int:
     rows = (
         db.query(BeatSubmission.created_at)
         .filter(BeatSubmission.contributor_id == contributor_id)
         .all()
     )
-    return created_today_count([row[0] for row in rows if row[0]], now)
+    return created_today_count([row[0] for row in rows if row[0]], now, reset_at=reset_at)
 
 
 def _storage_bytes(db: Session, contributor_id: int) -> int:
@@ -314,6 +320,21 @@ def register_submit_routes(app):
             person.notes = payload.notes.strip() or None
         if payload.is_active is not None:
             person.is_active = bool(payload.is_active)
+        db.commit()
+        db.refresh(person)
+        return contributor_out(person)
+
+    @app.post("/api/admin/contributors/{contributor_id}/reset-quota")
+    def reset_contributor_quota(
+        contributor_id: int,
+        current_admin: User = Depends(get_current_admin_user),
+        db: Session = Depends(get_db),
+    ):
+        person = db.query(Contributor).filter(Contributor.id == contributor_id).first()
+        if not person:
+            raise HTTPException(status_code=404, detail="Человек не найден")
+        person.quota_reset_at = datetime.utcnow()
+        upload_limiter.reset(person.id)
         db.commit()
         db.refresh(person)
         return contributor_out(person)
@@ -529,7 +550,9 @@ def register_submit_routes(app):
             assert_can_create_submission(
                 is_active=bool(contributor.is_active),
                 open_count=_open_count(db, contributor.id),
-                created_today=_created_today(db, contributor.id, now),
+                created_today=_created_today(
+                    db, contributor.id, now, getattr(contributor, "quota_reset_at", None)
+                ),
                 storage_bytes=_storage_bytes(db, contributor.id),
             )
         except SubmitDenied as exc:

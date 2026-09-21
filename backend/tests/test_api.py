@@ -867,6 +867,52 @@ class ApiTestCase(unittest.TestCase):
         )
         self.assertEqual(again.status_code, 400, again.text)
 
+    def test_quote_preview_applies_promo_without_intent(self):
+        beat = add_beat(self.db, price_mp3=1000)
+        self.db.add(PromoCode(code="PREVIEW", user_id=self.user.id, kind="amount", value=100))
+        self.db.commit()
+        quoted = self.client.post(
+            "/payments/quote",
+            headers=auth(self.token),
+            json={
+                "kind": "beat",
+                "item_id": beat.id,
+                "purchase_type": "mp3",
+                "promo_code": "preview",
+            },
+        )
+        self.assertEqual(quoted.status_code, 200, quoted.text)
+        self.assertEqual(quoted.json()["amount"], 900)
+        self.assertEqual(quoted.json()["list_amount"], 1000)
+        self.assertEqual(self.db.query(PaymentIntent).count(), 0)
+
+    def test_public_beats_show_sale_price(self):
+        add_beat(self.db, price_mp3=1000)
+        self.db.add(SaleCampaign(scope="beats", kind="percent", value=20, enabled=True))
+        self.db.commit()
+        public = self.client.get("/beats")
+        self.assertEqual(public.status_code, 200)
+        beat = public.json()[0]
+        self.assertEqual(beat["price"], 800)
+        self.assertEqual(beat["price_was"], 1000)
+
+    def test_admin_creates_sale_and_promo_code(self):
+        sale = self.client.post(
+            "/api/admin/sales",
+            headers=auth(self.admin_token),
+            json={"scope": "courses", "kind": "amount", "value": 500, "enabled": True},
+        )
+        self.assertEqual(sale.status_code, 200, sale.text)
+        self.assertEqual(sale.json()["scope"], "courses")
+        promo = self.client.post(
+            "/api/admin/promo-codes",
+            headers=auth(self.admin_token),
+            json={"username": "buyer", "kind": "percent", "value": 10},
+        )
+        self.assertEqual(promo.status_code, 200, promo.text)
+        self.assertEqual(promo.json()["username"], "buyer")
+        self.assertTrue(promo.json()["code"])
+
 
 if __name__ == "__main__":
     unittest.main()

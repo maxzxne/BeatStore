@@ -446,6 +446,7 @@ class Contributor(Base):
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=True, index=True)
+    quota_reset_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", foreign_keys=[user_id])

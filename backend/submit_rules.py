@@ -7,11 +7,11 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Iterable
 
-MAX_OPEN_SUBMISSIONS = 5
-MAX_SUBMISSIONS_PER_DAY = 3
-MAX_UPLOAD_HITS = 10
+MAX_OPEN_SUBMISSIONS = 25
+MAX_SUBMISSIONS_PER_DAY = 20
+MAX_UPLOAD_HITS = 40
 UPLOAD_WINDOW_SECONDS = 15 * 60
-MAX_STORAGE_BYTES = 2 * 1024 * 1024 * 1024
+MAX_STORAGE_BYTES = 10 * 1024 * 1024 * 1024
 INVITE_TTL = timedelta(days=7)
 STORE_BENEFICIARY_NAME = "Магазин"
 OPEN_STATUSES = frozenset({"draft", "pending"})
@@ -91,6 +91,9 @@ class UploadRateLimiter:
         recent.append(now)
         self._hits[contributor_id] = recent
 
+    def reset(self, contributor_id: int) -> None:
+        self._hits.pop(contributor_id, None)
+
 
 def assert_file_size(kind: str, size: int) -> None:
     limit = FILE_MAX_BYTES.get(kind)
@@ -100,6 +103,17 @@ def assert_file_size(kind: str, size: int) -> None:
         raise SubmitDenied("Файл слишком большой", 400)
 
 
-def created_today_count(created_ats: Iterable[datetime], now: datetime) -> int:
-    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+def quota_window_start(now: datetime, reset_at: datetime | None = None) -> datetime:
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if reset_at and reset_at > midnight:
+        return reset_at
+    return midnight
+
+
+def created_today_count(
+    created_ats: Iterable[datetime],
+    now: datetime,
+    reset_at: datetime | None = None,
+) -> int:
+    start = quota_window_start(now, reset_at)
     return sum(1 for stamp in created_ats if stamp >= start)

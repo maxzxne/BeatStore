@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Copy, UserPlus } from 'lucide-react';
+import { Copy, UserPlus, RotateCcw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../utils/api';
 
@@ -78,6 +78,14 @@ const AdminContributorsPage = () => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleResetQuota = async (person) => {
+    if (!window.confirm(`Сбросить лимит загрузок для ${person.name}? Он снова сможет заливать сегодня.`)) {
+      return;
+    }
+    await api.post(`/api/admin/contributors/${person.id}/reset-quota`);
+    await load();
   };
 
   const handleToggle = async (person) => {
@@ -164,6 +172,10 @@ const AdminContributorsPage = () => {
                     <button type="button" className="admin-ghost-btn" onClick={() => handleInvite(person.id)}>
                       <Copy className="mr-1 inline h-3.5 w-3.5" />
                       Инвайт
+                    </button>
+                    <button type="button" className="admin-ghost-btn" onClick={() => handleResetQuota(person)}>
+                      <RotateCcw className="mr-1 inline h-3.5 w-3.5" />
+                      Сбросить лимит
                     </button>
                     <button type="button" className="admin-ghost-btn" onClick={() => handleToggle(person)}>
                       {person.is_active ? 'Выключить' : 'Включить'}

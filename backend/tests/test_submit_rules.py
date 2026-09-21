@@ -102,12 +102,14 @@ class CreateSubmissionQuotaTests(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 429)
 
     def test_storage_cap_blocks_new_upload(self):
+        from submit_rules import MAX_STORAGE_BYTES
+
         with self.assertRaises(SubmitDenied) as ctx:
             assert_can_create_submission(
                 is_active=True,
                 open_count=0,
                 created_today=0,
-                storage_bytes=2 * 1024 * 1024 * 1024,
+                storage_bytes=MAX_STORAGE_BYTES,
             )
         self.assertEqual(ctx.exception.status_code, 429)
 
@@ -127,6 +129,15 @@ class CreateSubmissionQuotaTests(unittest.TestCase):
         ]
         self.assertEqual(created_today_count(stamps, NOW), 2)
 
+    def test_quota_reset_ignores_uploads_before_reset(self):
+        stamps = [
+            datetime(2026, 9, 21, 10, 0, 0),
+            datetime(2026, 9, 21, 14, 0, 0),
+            datetime(2026, 9, 21, 15, 30, 0),
+        ]
+        reset_at = datetime(2026, 9, 21, 15, 0, 0)
+        self.assertEqual(created_today_count(stamps, NOW, reset_at=reset_at), 1)
+
 
 class UploadRateLimitTests(unittest.TestCase):
     def test_eleventh_hit_in_window_is_blocked(self):
@@ -141,6 +152,15 @@ class UploadRateLimitTests(unittest.TestCase):
         limiter = UploadRateLimiter(max_hits=1, window_seconds=60)
         limiter.assert_allowed(1, NOW)
         limiter.assert_allowed(2, NOW)
+
+    def test_reset_clears_only_that_contributor(self):
+        limiter = UploadRateLimiter(max_hits=1, window_seconds=60)
+        limiter.assert_allowed(1, NOW)
+        limiter.assert_allowed(2, NOW)
+        limiter.reset(1)
+        limiter.assert_allowed(1, NOW + timedelta(seconds=1))
+        with self.assertRaises(SubmitDenied):
+            limiter.assert_allowed(2, NOW + timedelta(seconds=1))
 
 
 class FileSizeLimitTests(unittest.TestCase):

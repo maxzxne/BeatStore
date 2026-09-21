@@ -136,22 +136,26 @@ class SubmitApiTests(unittest.TestCase):
         self.assertEqual(stolen.status_code, 404)
 
     def test_daily_create_cap_returns_429(self):
+        from submit_rules import MAX_SUBMISSIONS_PER_DAY
+
         person = self._create_contributor()
         self._join(self._invite(person["id"])["token"])
-        for index in range(3):
-            response = self.client.post(
-                "/api/submit/submissions",
-                headers=auth(self.friend_token),
-                data={
-                    "title": f"Beat {index}",
-                    "artist": "Vasya",
-                    "genre": "trap",
-                    "bpm": "140",
-                    "price": "1000",
-                },
-                files={"demo_file": _mp3_file()},
+        contributor = self.db.get(Contributor, person["id"])
+        now = datetime.utcnow()
+        for index in range(MAX_SUBMISSIONS_PER_DAY):
+            self.db.add(
+                BeatSubmission(
+                    contributor_id=contributor.id,
+                    title=f"Today {index}",
+                    artist="Vasya",
+                    genre="trap",
+                    bpm=140,
+                    price=1000,
+                    status="draft",
+                    created_at=now,
+                )
             )
-            self.assertEqual(response.status_code, 200, response.text)
+        self.db.commit()
         blocked = self.client.post(
             "/api/submit/submissions",
             headers=auth(self.friend_token),
@@ -159,6 +163,55 @@ class SubmitApiTests(unittest.TestCase):
             files={"demo_file": _mp3_file()},
         )
         self.assertEqual(blocked.status_code, 429)
+
+    def test_admin_reset_quota_allows_upload_again_today(self):
+        from submit_rules import MAX_SUBMISSIONS_PER_DAY
+
+        person = self._create_contributor()
+        self._join(self._invite(person["id"])["token"])
+        contributor = self.db.get(Contributor, person["id"])
+        now = datetime.utcnow()
+        for index in range(MAX_SUBMISSIONS_PER_DAY):
+            self.db.add(
+                BeatSubmission(
+                    contributor_id=contributor.id,
+                    title=f"Today {index}",
+                    artist="Vasya",
+                    genre="trap",
+                    bpm=140,
+                    price=1000,
+                    status="draft",
+                    created_at=now,
+                )
+            )
+        self.db.commit()
+        blocked = self.client.post(
+            "/api/submit/submissions",
+            headers=auth(self.friend_token),
+            data={"title": "Blocked", "artist": "Vasya", "genre": "trap", "bpm": "140", "price": "1000"},
+            files={"demo_file": _mp3_file()},
+        )
+        self.assertEqual(blocked.status_code, 429)
+        reset = self.client.post(
+            f"/api/admin/contributors/{person['id']}/reset-quota",
+            headers=auth(self.admin_token),
+        )
+        self.assertEqual(reset.status_code, 200, reset.text)
+        allowed = self.client.post(
+            "/api/submit/submissions",
+            headers=auth(self.friend_token),
+            data={"title": "After reset", "artist": "Vasya", "genre": "trap", "bpm": "140", "price": "1000"},
+            files={"demo_file": _mp3_file()},
+        )
+        self.assertEqual(allowed.status_code, 200, allowed.text)
+
+    def test_buyer_cannot_reset_quota(self):
+        person = self._create_contributor()
+        denied = self.client.post(
+            f"/api/admin/contributors/{person['id']}/reset-quota",
+            headers=auth(self.token),
+        )
+        self.assertIn(denied.status_code, (401, 403))
 
     def test_open_queue_cap_blocks_even_if_created_on_other_days(self):
         person = self._create_contributor()

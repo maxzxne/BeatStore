@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Optional
+import secrets
 
 from sqlalchemy.orm import Session
 
@@ -68,6 +69,11 @@ def _promo_on_after_sale(listed: float, after_sale: float, promo: Optional[Promo
 
     reduced = apply_kind(after_sale, getattr(promo, "kind", None), getattr(promo, "value", None)) if promo else after_sale
     return finalize_pay(listed, reduced)
+
+
+def generate_promo_code() -> str:
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    return "".join(secrets.choice(alphabet) for _ in range(8))
 
 
 def normalize_promo_code(raw: Any) -> str:
