@@ -160,6 +160,18 @@
   padding-right: 2rem;
 }
 
+/* User CRM history: details are short labels, not action buttons */
+.v2-admin table.admin-user-history th:last-child,
+.v2-admin table.admin-user-history td:last-child {
+  min-width: 0;
+  padding-right: 1.5rem;
+}
+
+.v2-admin table.admin-user-history th:nth-child(3),
+.v2-admin table.admin-user-history td:nth-child(3) {
+  text-align: right;
+}
+
 .v2-admin table th:first-child,
 .v2-admin table td:first-child {
   padding-left: 1.5rem;

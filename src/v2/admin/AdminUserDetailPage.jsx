@@ -4,9 +4,24 @@ import { ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../utils/api';
 import { CONTACT_TYPES } from '../../utils/contacts';
-import { formatMoscowDate } from '../../utils/dateUtils';
+import { formatMoscowDate, formatMoscowDateOnly } from '../../utils/dateUtils';
 
 const LABELS = Object.fromEntries(CONTACT_TYPES.map((t) => [t.value, t.label]));
+
+const SERVICE_STATUS_UI = {
+  pending: { label: 'Новая', badge: 'admin-badge-warn' },
+  confirmed: { label: 'Ждёт оплату', badge: 'admin-badge-warn' },
+  paid: { label: 'В работе', badge: 'admin-badge-ok' },
+  in_progress: { label: 'В работе', badge: 'admin-badge-ok' },
+  completed: { label: 'Сдано', badge: 'admin-badge-ok' },
+  cancelled: { label: 'Отменено', badge: 'admin-badge-err' },
+};
+
+const PURCHASE_TYPE_LABELS = {
+  mp3: 'MP3',
+  wav: 'WAV',
+  exclusive: 'Эксклюзив',
+};
 
 const formatMoney = (value) =>
   `${Number(value || 0).toLocaleString('ru-RU', { maximumFractionDigits: 0 })} ₽`;
@@ -36,6 +51,21 @@ const typeLabel = (type) => {
   if (type === 'course') return 'Курс';
   if (type === 'service') return 'Услуга';
   return type;
+};
+
+const historyDetail = (row) => {
+  if (row.type === 'beat' && row.meta?.purchase_type) {
+    const key = String(row.meta.purchase_type).toLowerCase();
+    return { text: PURCHASE_TYPE_LABELS[key] || row.meta.purchase_type, badge: null };
+  }
+  if (row.type === 'service' && row.meta?.status) {
+    const ui = SERVICE_STATUS_UI[row.meta.status];
+    return {
+      text: ui?.label || row.meta.status,
+      badge: ui?.badge || null,
+    };
+  }
+  return { text: '—', badge: null };
 };
 
 const AdminUserDetailPage = () => {
@@ -124,7 +154,7 @@ const AdminUserDetailPage = () => {
             {user.username}
             {user.is_admin ? (
               <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-medium uppercase tracking-wide text-white/50">
-                Admin
+                Админ
               </span>
             ) : null}
           </h1>
@@ -161,7 +191,7 @@ const AdminUserDetailPage = () => {
         ))}
       </div>
 
-      <div className="admin-panel space-y-3">
+      <div className="admin-panel space-y-3 p-4 sm:p-5">
         <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-white/40">Контакты</h2>
         {(user.contacts || []).length === 0 ? (
           <p className="text-sm text-white/40">Не указаны</p>
@@ -186,46 +216,55 @@ const AdminUserDetailPage = () => {
         )}
       </div>
 
-      <div className="admin-panel">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.14em] text-white/40">История</h2>
+      <div className="admin-panel overflow-hidden">
+        <h2 className="px-4 pt-4 text-sm font-semibold uppercase tracking-[0.14em] text-white/40 sm:px-5 sm:pt-5">
+          История
+        </h2>
         {(user.history || []).length === 0 ? (
-          <p className="text-sm text-white/40">Покупок и заявок пока нет</p>
+          <p className="px-4 pb-4 pt-3 text-sm text-white/40 sm:px-5">Покупок и заявок пока нет</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
+          <div className="mt-3 overflow-x-auto">
+            <table className="admin-user-history min-w-full text-left text-sm">
               <thead>
                 <tr>
                   <th>Тип</th>
                   <th>Название</th>
-                  <th>Сумма</th>
+                  <th className="text-right">Сумма</th>
                   <th>Дата</th>
                   <th>Детали</th>
                 </tr>
               </thead>
               <tbody>
-                {user.history.map((row) => (
-                  <tr key={`${row.type}-${row.id}`}>
-                    <td className="text-white/50">{typeLabel(row.type)}</td>
-                    <td className="text-white">
-                      {row.type === 'service' ? (
-                        <Link to={`/admin/orders?id=${row.id}`} className="hover:text-[#22c55e]">
-                          {row.title}
-                        </Link>
-                      ) : (
-                        row.title || '—'
-                      )}
-                    </td>
-                    <td className="text-white/80">{formatMoney(row.amount)}</td>
-                    <td className="text-white/50">{formatMoscowDate(row.date)}</td>
-                    <td className="text-white/40">
-                      {row.type === 'beat' && row.meta?.purchase_type
-                        ? row.meta.purchase_type
-                        : row.type === 'service' && row.meta?.status
-                          ? row.meta.status
-                          : '—'}
-                    </td>
-                  </tr>
-                ))}
+                {user.history.map((row) => {
+                  const detail = historyDetail(row);
+                  return (
+                    <tr key={`${row.type}-${row.id}`}>
+                      <td className="whitespace-nowrap text-white/50">{typeLabel(row.type)}</td>
+                      <td className="max-w-[18rem] text-white sm:max-w-none">
+                        {row.type === 'service' ? (
+                          <Link to={`/admin/orders?id=${row.id}`} className="hover:text-[#22c55e]">
+                            {row.title}
+                          </Link>
+                        ) : (
+                          row.title || '—'
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap text-right tabular-nums text-white/80">
+                        {formatMoney(row.amount)}
+                      </td>
+                      <td className="whitespace-nowrap text-white/50">
+                        {formatMoscowDateOnly(row.date)}
+                      </td>
+                      <td className="whitespace-nowrap">
+                        {detail.badge ? (
+                          <span className={`admin-badge ${detail.badge}`}>{detail.text}</span>
+                        ) : (
+                          <span className="text-white/50">{detail.text}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
