@@ -276,6 +276,11 @@ const BeatPageV2 = () => {
     );
   }
 
+  let selectedPay = beat.price;
+  if (selectedPurchaseType === 'mp3' && beat.price_mp3 != null) selectedPay = beat.price_mp3;
+  else if (selectedPurchaseType === 'wav' && beat.price_wav != null) selectedPay = beat.price_wav;
+  else if (selectedPurchaseType === 'exclusive' && beat.price_exclusive != null) selectedPay = beat.price_exclusive;
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <button
@@ -359,22 +364,24 @@ const BeatPageV2 = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              <PromoCodeField value={promoCode} onChange={setPromoCode} className="max-w-xs" />
-              <div className="flex flex-wrap items-center gap-3">
-              <button type="button" onClick={handlePurchase} className="h-12 rounded-full bg-[#22c55e] px-6 font-semibold text-[#052e16]">
-                Купить в один клик
-              </button>
-              {isAuthenticated && (
-                <>
-                  <button type="button" onClick={handleFavorite} className="grid h-12 w-12 place-items-center rounded-full border border-white/15 hover:bg-white/5" aria-label="Избранное">
-                    <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
-                  </button>
-                  <button type="button" onClick={handleAddToCart} className="grid h-12 w-12 place-items-center rounded-full border border-white/15 hover:bg-white/5" aria-label="Корзина">
-                    {isInCart ? <Check className="h-5 w-5 text-[#22c55e]" /> : <ShoppingCart className="h-5 w-5" />}
-                  </button>
-                </>
+              {selectedPay > 0 && (
+                <PromoCodeField value={promoCode} onChange={setPromoCode} className="max-w-xs" />
               )}
-            </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" onClick={handlePurchase} className="h-12 rounded-full bg-[#22c55e] px-6 font-semibold text-[#052e16]">
+                  Купить в один клик
+                </button>
+                {isAuthenticated && (
+                  <>
+                    <button type="button" onClick={handleFavorite} className="grid h-12 w-12 place-items-center rounded-full border border-white/15 hover:bg-white/5" aria-label="Избранное">
+                      <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                    </button>
+                    <button type="button" onClick={handleAddToCart} className="grid h-12 w-12 place-items-center rounded-full border border-white/15 hover:bg-white/5" aria-label="Корзина">
+                      {isInCart ? <Check className="h-5 w-5 text-[#22c55e]" /> : <ShoppingCart className="h-5 w-5" />}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
