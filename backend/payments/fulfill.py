@@ -6,10 +6,12 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from models import (
+    AdOrder,
     Beat,
     Course,
     CoursePurchase,
     PaymentIntent,
+    PromoBanner,
     Purchase,
     ServiceOrder,
     User,
@@ -36,6 +38,8 @@ def fulfill_intent(db: Session, intent: PaymentIntent) -> PaymentIntent:
         _fulfill_cart(db, intent, payload)
     elif intent.kind == "order":
         _fulfill_order(db, intent, payload)
+    elif intent.kind == "ads":
+        _fulfill_ads(db, intent, payload)
 
     intent.status = "paid"
     intent.paid_at = datetime.utcnow()
@@ -73,6 +77,9 @@ def _notify_telegram_purchase(db: Session, intent: PaymentIntent, payload: dict)
     elif intent.kind == "order":
         title = f"заявка #{payload.get('order_id')}"
         kind = "услуга"
+    elif intent.kind == "ads":
+        title = f"реклама #{payload.get('ad_order_id')}"
+        kind = "реклама"
 
     try:
         from telegram_bot import send_message
@@ -149,6 +156,20 @@ def _fulfill_order(db: Session, intent: PaymentIntent, payload: dict) -> None:
     if not order.price:
         percent = int(order.prepayment_percent or 50) or 50
         order.price = round(float(intent.amount) * 100 / percent, 2)
+
+
+def _fulfill_ads(db: Session, intent: PaymentIntent, payload: dict) -> None:
+    from ad_orders import publish_ad_order_banner
+
+    ad_order_id = int(payload.get("ad_order_id") or 0)
+    order = db.query(AdOrder).filter(AdOrder.id == ad_order_id).first()
+    if not order:
+        raise ValueError("Заявка на рекламу не найдена")
+    if order.status == "опубликована" and order.promo_banner_id:
+        return
+    if order.status not in {"одобрена", "опубликована"}:
+        raise ValueError("Заявка ещё не одобрена")
+    publish_ad_order_banner(db, order)
 
 
 def _add_beat_purchase(db: Session, user_id: int | None, beat: Beat, purchase_type: str) -> None:

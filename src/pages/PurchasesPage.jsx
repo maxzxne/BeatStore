@@ -21,6 +21,7 @@ const PurchasesPage = () => {
   const [purchases, setPurchases] = useState([]);
   const [coursePurchases, setCoursePurchases] = useState([]);
   const [serviceOrders, setServiceOrders] = useState([]);
+  const [adOrders, setAdOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [promoCode, setPromoCode] = useState('');
   const tabFromUrl = searchParams.get('tab');
@@ -44,6 +45,7 @@ const PurchasesPage = () => {
       fetchPurchases();
       fetchCoursePurchases();
       fetchServiceOrders();
+      fetchAdOrders();
     } else {
       setLoading(false);
     }
@@ -75,6 +77,15 @@ const PurchasesPage = () => {
       console.error('Error fetching service orders:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAdOrders = async () => {
+    try {
+      const response = await api.get('/ad-orders');
+      setAdOrders(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error fetching ad orders:', error);
     }
   };
 
@@ -370,12 +381,12 @@ const PurchasesPage = () => {
           </div>
         )
       ) : (
-        serviceOrders.length === 0 ? (
+        serviceOrders.length === 0 && adOrders.length === 0 ? (
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] px-6 py-16 text-center">
             <FileText className="mx-auto mb-4 h-12 w-12 text-white/30" />
             <div className="font-[Syne] text-xl font-bold text-white">Заказов пока нет</div>
             <p className="mt-2 text-sm text-white/50">
-              Оформите заказ услуг, чтобы увидеть его здесь
+              Оформите заказ услуг или рекламы, чтобы увидеть его здесь
             </p>
             <Link
               to="/order"
@@ -386,6 +397,47 @@ const PurchasesPage = () => {
           </div>
         ) : (
           <div className="space-y-4">
+            {adOrders.map((order) => (
+              <div key={`ad-${order.id}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="mb-2 font-[Syne] text-lg font-bold text-white">
+                      Реклама #{order.id}
+                    </h3>
+                    <span className="rounded-full bg-[#22c55e]/15 px-3 py-1 text-xs font-medium text-[#22c55e]">
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="text-right text-lg font-bold text-[#22c55e]">
+                    {Number(order.price).toLocaleString('ru-RU')} ₽
+                  </div>
+                </div>
+                <div className="mb-2 text-sm text-white/50">
+                  {order.days} дн. · {order.caption || 'Баннер на витрине'}
+                </div>
+                <div className="text-xs text-white/40">
+                  Создан: {formatMoscowDate(order.created_at)}
+                </div>
+                {order.can_pay ? (
+                  <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+                    <PromoCodeField value={promoCode} onChange={setPromoCode} />
+                    <button
+                      type="button"
+                      className="inline-flex h-11 items-center justify-center rounded-full bg-[#22c55e] px-6 text-sm font-semibold text-[#052e16]"
+                      onClick={async () => {
+                        try {
+                          await startCheckout(withPromo({ kind: 'ads', ad_order_id: order.id }, promoCode));
+                        } catch (err) {
+                          showError(checkoutErrorMessage(err));
+                        }
+                      }}
+                    >
+                      Оплатить
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ))}
             {serviceOrders.map(order => {
               const statusColors = {
                 pending: 'bg-amber-500/20 text-amber-300',

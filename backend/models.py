@@ -349,6 +349,43 @@ class PromoBanner(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+AD_ORDER_STATUSES = frozenset({"новая", "одобрена", "опубликована", "отклонена", "отменена"})
+AD_ORDER_LOCKED_STATUSES = frozenset({"одобрена", "опубликована"})
+
+
+class AdOrder(Base):
+    """Заявка на платный баннер: модерация → оплата → PromoBanner."""
+    __tablename__ = "ad_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    customer_name = Column(String, nullable=True)
+    customer_email = Column(String, nullable=True)
+    contact_info = Column(String, nullable=True)
+
+    image_url = Column(String, nullable=False)
+    link_url = Column(String, nullable=False)
+    caption = Column(String, nullable=True)
+
+    days = Column(Integer, nullable=False)
+    price_per_day = Column(Float, nullable=False)
+    list_amount = Column(Float, nullable=False)
+    price = Column(Float, nullable=False)
+
+    status = Column(String, default="новая", nullable=False, index=True)
+    admin_note = Column(Text, nullable=True)
+    reject_reason = Column(String, nullable=True)
+
+    promo_banner_id = Column(Integer, ForeignKey("promo_banners.id"), nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])
+    promo_banner = relationship("PromoBanner", foreign_keys=[promo_banner_id])
+
+
 class SaleCampaign(Base):
     """Витринная скидка: all / beats / courses / services."""
     __tablename__ = "sale_campaigns"

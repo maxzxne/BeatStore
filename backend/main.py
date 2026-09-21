@@ -37,7 +37,7 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, PromoCode, SaleCampaign, FooterPage, ErrorLog, PaymentIntent, SupportThread, SupportMessage, Contributor, cart_table, course_cart_table, course_favorites_table, favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, PromoCode, SaleCampaign, FooterPage, ErrorLog, PaymentIntent, SupportThread, SupportMessage, Contributor, AdOrder, cart_table, course_cart_table, course_favorites_table, favorites_table
 from footer_pages import (
     ensure_default_footer_pages,
     footer_page_public_detail,
@@ -1000,6 +1000,8 @@ DEFAULT_ADS_PRICES = {
     "28": 30000,
 }
 
+DEFAULT_ADS_PRICE_PER_DAY = 1000.0
+
 
 class SiteSettingsUpdate(BaseModel):
     """Схема обновления настроек сайта"""
@@ -1009,6 +1011,7 @@ class SiteSettingsUpdate(BaseModel):
     captcha_enabled: Optional[bool] = None
     promo_banners_fullscreen: Optional[bool] = None
     ads_prices: Optional[dict] = None
+    ads_price_per_day: Optional[float] = None
 
 class HomeHeroUpdate(BaseModel):
     """Схема обновления hero главной"""
@@ -1049,6 +1052,31 @@ class PromoBannerUpdate(BaseModel):
     enabled: Optional[bool] = None
     starts_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
+
+
+class AdOrderCreate(BaseModel):
+    image_url: str
+    link_url: str
+    days: int
+    caption: Optional[str] = None
+    contact_info: Optional[str] = None
+
+
+class AdOrderAdminUpdate(BaseModel):
+    image_url: Optional[str] = None
+    link_url: Optional[str] = None
+    caption: Optional[str] = None
+    days: Optional[int] = None
+    price: Optional[float] = None
+    admin_note: Optional[str] = None
+
+
+class AdOrderApproveBody(BaseModel):
+    price: Optional[float] = None
+
+
+class AdOrderRejectBody(BaseModel):
+    reason: Optional[str] = None
 
 
 class SaleCampaignCreate(BaseModel):
@@ -1163,6 +1191,19 @@ def get_ads_prices(db: Session) -> dict:
         return normalize_ads_prices(data)
     except (json.JSONDecodeError, TypeError):
         return dict(DEFAULT_ADS_PRICES)
+
+def get_ads_price_per_day(db: Session) -> float:
+    from ad_orders import DEFAULT_ADS_PRICE_PER_DAY as DAY_DEFAULT, normalize_ads_price_per_day
+
+    raw = get_site_setting_value(db, "ads_price_per_day", "")
+    if raw:
+        return normalize_ads_price_per_day(raw)
+    # Fallback: derive from legacy 7-day package if present
+    packages = get_ads_prices(db)
+    seven = packages.get("7")
+    if seven:
+        return normalize_ads_price_per_day(float(seven) / 7.0)
+    return DAY_DEFAULT
 
 def get_active_ads_sale(db: Session) -> Optional[dict]:
     sales = [s for s in load_active_sales(db) if getattr(s, "scope", None) == "ads"]
@@ -2567,6 +2608,7 @@ class CreatePaymentRequest(BaseModel):
     item_id: Optional[int] = None
     purchase_type: Optional[str] = None
     order_id: Optional[int] = None
+    ad_order_id: Optional[int] = None
     beats_formats: Optional[Any] = None
     promo_code: Optional[str] = None
 
@@ -4477,6 +4519,7 @@ def get_public_site_settings(db: Session = Depends(get_db)):
         "ads_orders_enabled": get_ads_orders_enabled(db),
         "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
         "ads_prices": get_ads_prices(db),
+        "ads_price_per_day": get_ads_price_per_day(db),
         "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
     }
@@ -4490,6 +4533,7 @@ def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user
         "captcha_enabled": get_captcha_enabled(db),
         "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
         "ads_prices": get_ads_prices(db),
+        "ads_price_per_day": get_ads_price_per_day(db),
         "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
     }
@@ -4528,6 +4572,15 @@ def update_admin_site_settings(
         normalized = normalize_ads_prices(update_data.ads_prices)
         upsert_site_setting(db, "ads_prices", json.dumps(normalized, ensure_ascii=False))
 
+    if update_data.ads_price_per_day is not None:
+        from ad_orders import normalize_ads_price_per_day
+
+        upsert_site_setting(
+            db,
+            "ads_price_per_day",
+            str(normalize_ads_price_per_day(update_data.ads_price_per_day)),
+        )
+
     return {
         "message": "Site settings updated successfully",
         "settings": {
@@ -4537,6 +4590,7 @@ def update_admin_site_settings(
             "captcha_enabled": get_captcha_enabled(db),
             "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
             "ads_prices": get_ads_prices(db),
+            "ads_price_per_day": get_ads_price_per_day(db),
             "ads_sale": get_active_ads_sale(db),
             "home_hero": get_home_hero(db),
         }
@@ -4705,6 +4759,149 @@ async def upload_promo_banner_image(
 
     url = f"/static/site/{filename}"
     return {"url": url, "image_url": url}
+
+
+# --- Ad orders (платная реклама на витрине) ---
+
+@app.post("/ad-orders")
+def create_user_ad_order(
+    data: AdOrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ensure_ads_orders_access(db)
+    from ad_orders import ad_order_to_dict, create_ad_order
+
+    order = create_ad_order(
+        db,
+        current_user,
+        image_url=data.image_url,
+        link_url=data.link_url,
+        days=data.days,
+        price_per_day=get_ads_price_per_day(db),
+        caption=data.caption,
+        contact_info=data.contact_info,
+    )
+    return ad_order_to_dict(order)
+
+
+@app.get("/ad-orders")
+def list_my_ad_orders(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from ad_orders import ad_order_to_dict
+
+    rows = (
+        db.query(AdOrder)
+        .filter(AdOrder.user_id == current_user.id)
+        .order_by(AdOrder.id.desc())
+        .all()
+    )
+    return [ad_order_to_dict(row) for row in rows]
+
+
+@app.get("/ad-orders/{order_id}")
+def get_my_ad_order(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from ad_orders import ad_order_to_dict
+
+    order = db.query(AdOrder).filter(AdOrder.id == order_id, AdOrder.user_id == current_user.id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заявка не найдена")
+    return ad_order_to_dict(order)
+
+
+@app.get("/api/admin/ad-orders")
+def admin_list_ad_orders(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    from ad_orders import ad_order_to_dict
+
+    rows = db.query(AdOrder).order_by(AdOrder.id.desc()).all()
+    return [ad_order_to_dict(row) for row in rows]
+
+
+@app.put("/api/admin/ad-orders/{order_id}")
+def admin_update_ad_order(
+    order_id: int,
+    data: AdOrderAdminUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    from ad_orders import (
+        ad_order_to_dict,
+        ensure_editable,
+        normalize_link,
+        quote_ad_amount,
+        validate_days,
+    )
+
+    order = db.query(AdOrder).filter(AdOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заявка не найдена")
+    ensure_editable(order)
+    patch = data.dict(exclude_unset=True)
+    if "link_url" in patch and patch["link_url"] is not None:
+        order.link_url = normalize_link(patch["link_url"])
+    if "image_url" in patch and patch["image_url"]:
+        order.image_url = patch["image_url"].strip()
+    if "caption" in patch:
+        order.caption = (patch["caption"] or "").strip()[:80] or None
+    if "admin_note" in patch:
+        order.admin_note = patch["admin_note"]
+    if "days" in patch and patch["days"] is not None:
+        order.days = validate_days(patch["days"])
+        listed, pay = quote_ad_amount(order.days, order.price_per_day, db)
+        order.list_amount = listed
+        if "price" not in patch:
+            order.price = pay
+    if "price" in patch and patch["price"] is not None:
+        p = float(patch["price"])
+        if p <= 0:
+            raise HTTPException(status_code=400, detail="Цена должна быть больше 0")
+        order.price = round(p, 2)
+    order.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(order)
+    return ad_order_to_dict(order)
+
+
+@app.post("/api/admin/ad-orders/{order_id}/approve")
+def admin_approve_ad_order(
+    order_id: int,
+    data: AdOrderApproveBody,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    from ad_orders import ad_order_to_dict, approve_ad_order
+
+    order = db.query(AdOrder).filter(AdOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заявка не найдена")
+    approve_ad_order(db, order, price=data.price)
+    return ad_order_to_dict(order)
+
+
+@app.post("/api/admin/ad-orders/{order_id}/reject")
+def admin_reject_ad_order(
+    order_id: int,
+    data: AdOrderRejectBody,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    from ad_orders import ad_order_to_dict, reject_ad_order
+
+    order = db.query(AdOrder).filter(AdOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заявка не найдена")
+    reject_ad_order(db, order, reason=data.reason)
+    return ad_order_to_dict(order)
+
 
 # Storefront sales + personal promo codes
 @app.get("/api/admin/sales")

@@ -66,7 +66,7 @@ const OrderPage = ({ initialType = null }) => {
   const { showSuccess, showError } = useNotification();
   const {
     adsOrdersEnabled,
-    adsPrices,
+    adsPricePerDay,
     adsSale,
     loading: settingsLoading,
   } = useSiteSettings();
@@ -555,6 +555,12 @@ const OrderPage = ({ initialType = null }) => {
       return;
     }
 
+    if (!isAuthenticated) {
+      showError('Войдите, чтобы отправить заявку на рекламу');
+      navigate('/login', { state: { from: '/order/ads' } });
+      return;
+    }
+
     if (!formData.customer_name || !formData.customer_email) {
       showError('Укажите ваше имя и email');
       return;
@@ -597,36 +603,24 @@ const OrderPage = ({ initialType = null }) => {
       const caption = (formData.description || '').trim();
       const contact_info = formatContacts(contactRows) || null;
       const normalizedLink = /^https?:\/\//i.test(destination) ? destination : `https://${destination}`;
-      const priced = resolveAdsPrice(deadlineDays, adsPrices, adsSale);
-      const priceNote = priced.custom
-        ? 'свой срок — цену уточним'
-        : priced.pay != null && priced.pay !== priced.list
-          ? `ориентир ${formatAdsRub(priced.pay)} (было ${formatAdsRub(priced.list)})`
-          : priced.list != null
-            ? `ориентир ${formatAdsRub(priced.list)}`
-            : null;
-      const description = [caption || 'Реклама на витрине', priceNote].filter(Boolean).join(' · ');
+      const priced = quoteAdsPeriod(deadlineDays, adsPricePerDay, adsSale);
 
-      await api.post('/service-orders', {
-        order_type: 'ads',
-        customer_name: formData.customer_name,
-        customer_email: formData.customer_email,
-        description,
-        reference_links: normalizedLink,
-        materials_url: JSON.stringify([materialsResponse.data.url]),
-        deadline_days: deadlineDays,
-        service_categories: ['реклама на витрине'],
+      await api.post('/ad-orders', {
+        image_url: materialsResponse.data.url,
+        link_url: normalizedLink,
+        caption: caption || null,
+        days: deadlineDays,
         contact_info,
       });
 
       showSuccess(
-        priceNote
-          ? `Заявка отправлена (${priceNote}). Подтвердим слот в переписке.`
-          : 'Заявка на рекламу отправлена. Подтвердим стоимость и слот в переписке.'
+        priced.pay != null
+          ? `Заявка отправлена. Ориентир ${formatAdsRub(priced.pay)} — после модерации можно оплатить.`
+          : 'Заявка на рекламу отправлена. После модерации можно будет оплатить.'
       );
       resetSimpleForm();
       setAdsImage(null);
-      backToChoice();
+      navigate('/purchases');
     } catch (error) {
       console.error('Error creating ads order:', error);
       showError(error.response?.data?.detail || 'Ошибка при создании заявки');
@@ -759,7 +753,8 @@ const OrderPage = ({ initialType = null }) => {
           <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Ads</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Реклама на витрине</h1>
           <p className="mt-2 text-sm text-white/50">
-            Картинка 16:9, ссылка и срок. Цены на слотах — ориентир; слот подтвердим в переписке.
+            Картинка 16:9, ссылка и срок. Цена = дни × {formatAdsRub(adsPricePerDay)}/день
+            {adsSale ? ' с учётом акции' : ''}. После модерации — оплата и публикация.
             {adsSale ? (
               <span className="mt-1 block text-[#22c55e]">
                 Акция
@@ -771,6 +766,19 @@ const OrderPage = ({ initialType = null }) => {
               </span>
             ) : null}
           </p>
+          {!isAuthenticated ? (
+            <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              Нужен вход.{' '}
+              <button
+                type="button"
+                className="font-semibold text-[#22c55e] underline"
+                onClick={() => navigate('/login', { state: { from: '/order/ads' } })}
+              >
+                Войти
+              </button>
+              , затем отправить заявку.
+            </div>
+          ) : null}
         </div>
 
         <form onSubmit={handleAdsSubmit} className="space-y-5">
@@ -963,7 +971,7 @@ const OrderPage = ({ initialType = null }) => {
               {ADS_DURATION_PRESETS.map((option) => {
                 const selected =
                   !adsCustomMode && String(formData.deadline_days) === String(option.days);
-                const priced = resolveAdsPrice(option.days, adsPrices, adsSale);
+                const priced = quoteAdsPeriod(option.days, adsPricePerDay, adsSale);
                 const onSale = priced.pay != null && priced.list != null && priced.pay < priced.list;
                 return (
                   <button
@@ -983,7 +991,7 @@ const OrderPage = ({ initialType = null }) => {
                   >
                     <span className="text-sm font-semibold">{option.label}</span>
                     <span className="text-[11px] text-white/40">{option.hint}</span>
-                    {priced.list != null ? (
+                    {priced.pay != null ? (
                       <span className="mt-1 text-xs font-medium text-white/80">
                         {onSale ? (
                           <>
@@ -993,7 +1001,7 @@ const OrderPage = ({ initialType = null }) => {
                             <span className="text-[#22c55e]">{formatAdsRub(priced.pay)}</span>
                           </>
                         ) : (
-                          formatAdsRub(priced.list)
+                          formatAdsRub(priced.pay)
                         )}
                       </span>
                     ) : null}
@@ -1015,7 +1023,18 @@ const OrderPage = ({ initialType = null }) => {
               >
                 <span className="text-sm font-semibold">Свой срок</span>
                 <span className="text-[11px] text-white/40">до {ADS_CUSTOM_MAX_DAYS} дней</span>
-                <span className="mt-1 text-xs font-medium text-white/50">цену уточним</span>
+                {(() => {
+                  const d = parseCustomAdsDays(adsCustomDays);
+                  const priced = d ? quoteAdsPeriod(d, adsPricePerDay, adsSale) : null;
+                  if (!priced?.pay) {
+                    return <span className="mt-1 text-xs font-medium text-white/50">укажите дни</span>;
+                  }
+                  return (
+                    <span className="mt-1 text-xs font-medium text-white/80">
+                      ≈ {formatAdsRub(priced.pay)}
+                    </span>
+                  );
+                })()}
               </button>
             </div>
             {adsCustomMode ? (
@@ -1035,7 +1054,7 @@ const OrderPage = ({ initialType = null }) => {
                   required
                 />
                 <p className={hintClass}>
-                  От {ADS_CUSTOM_MIN_DAYS} до {ADS_CUSTOM_MAX_DAYS}. Стоимость согласуем отдельно.
+                  От {ADS_CUSTOM_MIN_DAYS} до {ADS_CUSTOM_MAX_DAYS}. Примерная сумма = дни × ставка за день.
                 </p>
               </div>
             ) : null}

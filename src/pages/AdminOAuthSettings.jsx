@@ -3,7 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
 import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Megaphone, Shield, KeyRound } from 'lucide-react';
-import { ADS_DURATION_PRESETS, DEFAULT_ADS_PRICES, normalizeAdsPrices } from '../utils/adsPricing';
+import { DEFAULT_ADS_PRICE_PER_DAY, normalizeAdsPricePerDay } from '../utils/adsPricing';
+import { Link } from 'react-router-dom';
 
 const COURSES_VISIBILITY_OPTIONS = [
   {
@@ -29,15 +30,15 @@ const AdminOAuthSettings = () => {
   const [settings, setSettings] = useState([]);
   const [coursesVisibility, setCoursesVisibility] = useState('all');
   const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
-  const [adsPrices, setAdsPrices] = useState(() => ({ ...DEFAULT_ADS_PRICES }));
-  const [adsPricesDraft, setAdsPricesDraft] = useState(() => ({ ...DEFAULT_ADS_PRICES }));
+  const [adsPricePerDay, setAdsPricePerDay] = useState(DEFAULT_ADS_PRICE_PER_DAY);
+  const [adsPriceDraft, setAdsPriceDraft] = useState(DEFAULT_ADS_PRICE_PER_DAY);
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
   const [savingCourses, setSavingCourses] = useState(false);
   const [savingAds, setSavingAds] = useState(false);
-  const [savingAdsPrices, setSavingAdsPrices] = useState(false);
+  const [savingAdsPrice, setSavingAdsPrice] = useState(false);
   const [savingTotp, setSavingTotp] = useState(false);
   const [savingCaptcha, setSavingCaptcha] = useState(false);
 
@@ -68,9 +69,9 @@ const AdminOAuthSettings = () => {
         setCoursesVisibility(value);
       }
       setAdsOrdersEnabled(response.data?.ads_orders_enabled !== false);
-      const prices = normalizeAdsPrices(response.data?.ads_prices);
-      setAdsPrices(prices);
-      setAdsPricesDraft(prices);
+      const rate = normalizeAdsPricePerDay(response.data?.ads_price_per_day);
+      setAdsPricePerDay(rate);
+      setAdsPriceDraft(rate);
       setTotpEnabled(!!response.data?.totp_enabled);
       setCaptchaEnabled(!!response.data?.captcha_enabled);
     } catch (error) {
@@ -112,24 +113,24 @@ const AdminOAuthSettings = () => {
     }
   };
 
-  const saveAdsPrices = async () => {
-    const previous = adsPrices;
-    const payload = normalizeAdsPrices(adsPricesDraft);
+  const saveAdsPrice = async () => {
+    const previous = adsPricePerDay;
+    const payload = normalizeAdsPricePerDay(adsPriceDraft);
     try {
-      setSavingAdsPrices(true);
-      setAdsPricesDraft(payload);
-      const { data } = await api.put('/api/admin/site-settings', { ads_prices: payload });
-      const saved = normalizeAdsPrices(data?.settings?.ads_prices || payload);
-      setAdsPrices(saved);
-      setAdsPricesDraft(saved);
+      setSavingAdsPrice(true);
+      setAdsPriceDraft(payload);
+      const { data } = await api.put('/api/admin/site-settings', { ads_price_per_day: payload });
+      const saved = normalizeAdsPricePerDay(data?.settings?.ads_price_per_day ?? payload);
+      setAdsPricePerDay(saved);
+      setAdsPriceDraft(saved);
       window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
-      showSuccess('Цены рекламы сохранены');
+      showSuccess('Цена за день рекламы сохранена');
     } catch (error) {
-      setAdsPrices(previous);
-      setAdsPricesDraft(previous);
-      showError(error.response?.data?.detail || error.message || 'Не удалось сохранить цены');
+      setAdsPricePerDay(previous);
+      setAdsPriceDraft(previous);
+      showError(error.response?.data?.detail || error.message || 'Не удалось сохранить цену');
     } finally {
-      setSavingAdsPrices(false);
+      setSavingAdsPrice(false);
     }
   };
 
@@ -357,41 +358,32 @@ const AdminOAuthSettings = () => {
         </div>
 
         <div className="mt-5 border-t border-white/10 pt-5">
-          <h3 className="text-sm font-medium text-white">Прайс слотов (ориентир на /order/ads)</h3>
+          <h3 className="text-sm font-medium text-white">Цена за день размещения</h3>
           <p className="mt-1 text-xs text-white/40">
-            Показаны на форме заявки. Скидку на рекламу ставьте в «Скидки» со scope «Реклама на витрине».
+            Форма считает дни × ставка. Заявки и апрув — во вкладке «Заявки» на странице{' '}
+            <Link to="/admin/banners" className="text-[#22c55e] hover:underline">Баннеры</Link>.
+            Скидку — в «Скидки» (scope «Реклама на витрине»).
           </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {ADS_DURATION_PRESETS.map((opt) => (
-              <label key={opt.days} className="block">
-                <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">
-                  {opt.label}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  step="100"
-                  value={adsPricesDraft[opt.days] ?? ''}
-                  onChange={(e) =>
-                    setAdsPricesDraft((prev) => ({
-                      ...prev,
-                      [opt.days]: e.target.value === '' ? '' : Number(e.target.value),
-                    }))
-                  }
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
-                  aria-label={`Цена за ${opt.label}`}
-                />
-              </label>
-            ))}
-          </div>
+          <label className="mt-3 block max-w-xs">
+            <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">₽ / день</span>
+            <input
+              type="number"
+              min="0"
+              step="100"
+              value={adsPriceDraft}
+              onChange={(e) => setAdsPriceDraft(e.target.value === '' ? '' : Number(e.target.value))}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
+              aria-label="Цена рекламы за день"
+            />
+          </label>
           <button
             type="button"
-            onClick={saveAdsPrices}
-            disabled={savingAdsPrices}
+            onClick={saveAdsPrice}
+            disabled={savingAdsPrice}
             className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#22c55e] px-5 text-sm font-semibold text-[#052e16] transition hover:bg-[#4ade80] disabled:opacity-60"
           >
-            {savingAdsPrices ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Сохранить цены
+            {savingAdsPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Сохранить ставку
           </button>
         </div>
         {savingAds && (

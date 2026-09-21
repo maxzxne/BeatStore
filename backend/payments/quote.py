@@ -100,6 +100,7 @@ def description_for(kind: str, extra: str = "") -> str:
         "cart": "Корзина XWinner",
         "course": "Курс XWinner",
         "order": "Заказ услуги XWinner",
+        "ads": "Реклама на витрине XWinner",
     }
     base = labels.get(kind, "Оплата XWinner")
     return f"{base} {extra}".strip()[:100]

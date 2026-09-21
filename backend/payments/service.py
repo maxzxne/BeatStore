@@ -5,7 +5,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from models import Beat, Course, PaymentIntent, ServiceOrder, User
+from models import AdOrder, Beat, Course, PaymentIntent, ServiceOrder, User
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
 from payments import config
 from payments.pricing import (
@@ -40,7 +40,7 @@ def public_config() -> dict:
 
 def create_checkout(db: Session, user: User | None, body: dict) -> dict:
     kind = (body.get("kind") or body.get("type") or "").strip()
-    if kind not in {"beat", "cart", "course", "order"}:
+    if kind not in {"beat", "cart", "course", "order", "ads"}:
         raise PaymentError("Неизвестный тип оплаты")
 
     try:
@@ -85,7 +85,7 @@ def create_checkout(db: Session, user: User | None, body: dict) -> dict:
 
 def preview_checkout(db: Session, user: User | None, body: dict) -> dict:
     kind = (body.get("kind") or body.get("type") or "").strip()
-    if kind not in {"beat", "cart", "course", "order"}:
+    if kind not in {"beat", "cart", "course", "order", "ads"}:
         raise PaymentError("Неизвестный тип оплаты")
     try:
         payload, amount, description, promo = _quote(db, user, kind, body)
@@ -197,5 +197,27 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
             **promo_fields,
         }
         return payload, amount, description_for("order", f"#{order_id}"), promo
+
+    if kind == "ads":
+        if not user:
+            raise PaymentError("Войдите, чтобы оплатить рекламу")
+        ad_order_id = int(body.get("ad_order_id") or body.get("order_id") or 0)
+        order = db.query(AdOrder).filter(AdOrder.id == ad_order_id).first()
+        if not order:
+            raise PaymentError("Заявка на рекламу не найдена")
+        if order.user_id != user.id and not user.is_admin:
+            raise PaymentError("Это не ваша заявка")
+        if order.status != "одобрена":
+            raise PaymentError("Оплатить можно только одобренную заявку")
+        listed = float(order.price or 0)
+        # Цена уже зафиксирована на апруве — на чекауте только промокод
+        amount, sale = checkout_pay(listed, "ads", [], promo)
+        payload = {
+            "ad_order_id": ad_order_id,
+            "list_amount": listed,
+            "sale": sale_snapshot(sale),
+            **promo_fields,
+        }
+        return payload, amount, description_for("ads", f"#{ad_order_id}"), promo
 
     raise PaymentError("Неизвестный тип оплаты")

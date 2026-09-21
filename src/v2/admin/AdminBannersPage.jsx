@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../../utils/api';
 import DatePicker from '../../components/DatePicker';
+import AdminAdOrdersPanel from './AdminAdOrdersPanel';
+import { DEFAULT_ADS_PRICE_PER_DAY, normalizeAdsPricePerDay, formatAdsRub } from '../../utils/adsPricing';
 
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
@@ -82,6 +84,10 @@ const AdminBannersPage = () => {
   const [now, setNow] = useState(() => new Date());
   const [fullscreen, setFullscreen] = useState(true);
   const [savingLayout, setSavingLayout] = useState(false);
+  const [tab, setTab] = useState('vitrina'); // vitrina | zayavki
+  const [dayRate, setDayRate] = useState(DEFAULT_ADS_PRICE_PER_DAY);
+  const [dayRateDraft, setDayRateDraft] = useState(DEFAULT_ADS_PRICE_PER_DAY);
+  const [savingRate, setSavingRate] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -104,8 +110,31 @@ const AdminBannersPage = () => {
     try {
       const { data } = await api.get('/api/admin/site-settings');
       setFullscreen(data?.promo_banners_fullscreen !== false);
+      const rate = normalizeAdsPricePerDay(data?.ads_price_per_day);
+      setDayRate(rate);
+      setDayRateDraft(rate);
     } catch (err) {
       console.error('Error fetching banner layout:', err);
+    }
+  };
+
+  const saveDayRate = async () => {
+    const previous = dayRate;
+    const payload = normalizeAdsPricePerDay(dayRateDraft);
+    try {
+      setSavingRate(true);
+      const { data } = await api.put('/api/admin/site-settings', { ads_price_per_day: payload });
+      const saved = normalizeAdsPricePerDay(data?.settings?.ads_price_per_day ?? payload);
+      setDayRate(saved);
+      setDayRateDraft(saved);
+      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+      showSuccess(`Ставка ${formatAdsRub(saved)}/день`);
+    } catch (err) {
+      setDayRate(previous);
+      setDayRateDraft(previous);
+      showError(err.response?.data?.detail || 'Не удалось сохранить ставку');
+    } finally {
+      setSavingRate(false);
     }
   };
 
@@ -259,21 +288,72 @@ const AdminBannersPage = () => {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-[Syne] text-2xl font-bold text-white sm:text-3xl">Баннеры</h1>
-          <p className="mt-1 text-sm text-white/45">Промо-слайдер: картинка, тексты, окно дат, порядок</p>
-          <p className="mt-1 text-xs text-white/30">
-            Картинка: 1920×1080 (16:9), JPEG / PNG / WebP — кадр на сайте такой же, без обрезки
+          <p className="mt-1 text-sm text-white/45">
+            Витрина и платные заявки на рекламу. Ставка сейчас: {formatAdsRub(dayRate)}/день
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
-        >
-          <Plus className="h-4 w-4" />
-          Добавить
-        </button>
+        {tab === 'vitrina' ? (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#22c55e] px-4 py-2.5 text-sm font-semibold text-[#052e16] transition hover:brightness-110"
+          >
+            <Plus className="h-4 w-4" />
+            Добавить
+          </button>
+        ) : null}
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {[
+          { id: 'vitrina', label: 'Витрина' },
+          { id: 'zayavki', label: 'Заявки' },
+        ].map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setTab(item.id)}
+            className={`min-h-11 rounded-full px-4 text-sm font-medium transition ${
+              tab === item.id
+                ? 'bg-[#22c55e] text-[#052e16]'
+                : 'border border-white/10 bg-white/5 text-white/60 hover:border-white/25'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'zayavki' ? (
+        <>
+          <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 bg-black/30 p-4">
+            <label className="block min-w-[10rem] flex-1">
+              <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">
+                Цена за день, ₽
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={dayRateDraft}
+                onChange={(e) => setDayRateDraft(e.target.value === '' ? '' : Number(e.target.value))}
+                className={fieldClass}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={saveDayRate}
+              disabled={savingRate}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#22c55e] px-5 text-sm font-semibold text-[#052e16] disabled:opacity-60"
+            >
+              {savingRate ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Сохранить ставку
+            </button>
+          </div>
+          <AdminAdOrdersPanel showSuccess={showSuccess} showError={showError} />
+        </>
+      ) : (
+        <>
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           {typeof error === 'string' ? error : JSON.stringify(error)}
@@ -543,6 +623,8 @@ const AdminBannersPage = () => {
             </div>
           </form>
         </div>
+      )}
+        </>
       )}
     </div>
   );

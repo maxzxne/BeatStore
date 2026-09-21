@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../utils/api';
 import { useAuth } from './AuthContext';
+import { DEFAULT_ADS_PRICE_PER_DAY, normalizeAdsPricePerDay } from '../utils/adsPricing';
 import {
   DEFAULT_SEARCH_PLACEHOLDER,
   normalizeSearchPlaceholder,
 } from '../utils/searchPlaceholder';
-import { DEFAULT_ADS_PRICES, normalizeAdsPrices } from '../utils/adsPricing';
 
 const SiteSettingsContext = createContext();
 
@@ -71,7 +71,7 @@ export const SiteSettingsProvider = ({ children }) => {
   const [coursesVisibility, setCoursesVisibility] = useState('all');
   const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
   const [promoBannersFullscreen, setPromoBannersFullscreen] = useState(true);
-  const [adsPrices, setAdsPrices] = useState(() => ({ ...DEFAULT_ADS_PRICES }));
+  const [adsPricePerDay, setAdsPricePerDay] = useState(DEFAULT_ADS_PRICE_PER_DAY);
   const [adsSale, setAdsSale] = useState(null);
   const [homeHero, setHomeHero] = useState(() => ({ ...DEFAULT_HOME_HERO }));
   const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ export const SiteSettingsProvider = ({ children }) => {
       }
       setAdsOrdersEnabled(response.data?.ads_orders_enabled !== false);
       setPromoBannersFullscreen(response.data?.promo_banners_fullscreen !== false);
-      setAdsPrices(normalizeAdsPrices(response.data?.ads_prices));
+      setAdsPricePerDay(normalizeAdsPricePerDay(response.data?.ads_price_per_day));
       setAdsSale(response.data?.ads_sale || null);
       setHomeHero(normalizeHomeHero(response.data?.home_hero));
     } catch (error) {
@@ -95,7 +95,7 @@ export const SiteSettingsProvider = ({ children }) => {
       setCoursesVisibility('all');
       setAdsOrdersEnabled(true);
       setPromoBannersFullscreen(true);
-      setAdsPrices({ ...DEFAULT_ADS_PRICES });
+      setAdsPricePerDay(DEFAULT_ADS_PRICE_PER_DAY);
       setAdsSale(null);
       setHomeHero({ ...DEFAULT_HOME_HERO });
     } finally {
@@ -125,7 +125,7 @@ export const SiteSettingsProvider = ({ children }) => {
     canSeeCourses,
     adsOrdersEnabled,
     promoBannersFullscreen,
-    adsPrices,
+    adsPricePerDay,
     adsSale,
     homeHero,
     loading,
