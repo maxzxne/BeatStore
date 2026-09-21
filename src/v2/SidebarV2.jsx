@@ -14,6 +14,8 @@ import {
   LayoutTemplate,
   Image,
   MessageCircle,
+  Users,
+  Inbox,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,6 +37,8 @@ const navGroups = [
       { path: '/admin/beats', label: 'Биты', icon: Music },
       { path: '/admin/courses', label: 'Курсы', icon: GraduationCap },
       { path: '/admin/upload', label: 'Загрузка', icon: Upload },
+      { path: '/admin/contributors', label: 'Люди', icon: Users },
+      { path: '/admin/submissions', label: 'На проверке', icon: Inbox },
     ],
   },
   {

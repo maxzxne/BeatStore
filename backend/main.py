@@ -37,13 +37,14 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, SupportThread, SupportMessage, cart_table, course_cart_table, course_favorites_table, favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, SupportThread, SupportMessage, Contributor, cart_table, course_cart_table, course_favorites_table, favorites_table
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
 from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
 from payments.robokassa import format_out_sum, verify_result
 from payments.service import PaymentError, create_checkout, intent_view, public_config as payment_public_config
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
+from submit_rules import STORE_BENEFICIARY_NAME
 from contacts import parse_contacts, serialize_contacts
 print("Импорт database и models завершен")
 
@@ -114,7 +115,8 @@ def update_database_schema():
                 'allow_multiple_purchases': 'BOOLEAN DEFAULT 0',
                 'price_mp3': 'FLOAT',
                 'price_wav': 'FLOAT',
-                'price_exclusive': 'FLOAT'
+                'price_exclusive': 'FLOAT',
+                'beneficiary_id': 'INTEGER',
             }
             
             for col_name, col_type in new_columns.items():
@@ -655,12 +657,21 @@ class UserResponse(BaseModel):
     consent_personal_data_at: Optional[datetime] = None
     consent_personal_data_version: Optional[str] = None
     has_password: bool = False
+    is_contributor: bool = False
+    contributor_id: Optional[int] = None
 
     class Config:
         from_attributes = True
 
 
-def user_to_response(user: User) -> UserResponse:
+def user_to_response(user: User, db: Optional[Session] = None) -> UserResponse:
+    contributor = None
+    if db is not None:
+        contributor = (
+            db.query(Contributor)
+            .filter(Contributor.user_id == user.id, Contributor.is_active == True)
+            .first()
+        )
     return UserResponse(
         id=user.id,
         email=user.email,
@@ -674,6 +685,8 @@ def user_to_response(user: User) -> UserResponse:
         consent_personal_data_at=user.consent_personal_data_at,
         consent_personal_data_version=user.consent_personal_data_version,
         has_password=bool(user.password_hash),
+        is_contributor=bool(contributor),
+        contributor_id=contributor.id if contributor else None,
     )
 
 
@@ -1216,7 +1229,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_user)
         print(f"User registered successfully: {db_user.username}")
-        return user_to_response(db_user)
+        return user_to_response(db_user, db)
     except HTTPException:
         raise
     except Exception as e:
@@ -1289,8 +1302,8 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         )
 
 @app.get("/me", response_model=UserResponse)
-def read_users_me(current_user: User = Depends(get_current_user)):
-    return user_to_response(current_user)
+def read_users_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return user_to_response(current_user, db)
 
 @app.put("/me", response_model=UserResponse)
 def update_user_profile(
@@ -1331,7 +1344,7 @@ def update_user_profile(
     
     db.commit()
     db.refresh(current_user)
-    return user_to_response(current_user)
+    return user_to_response(current_user, db)
 
 
 @app.delete("/me")
@@ -2874,13 +2887,14 @@ def get_analytics(current_admin: User = Depends(get_current_admin_user), db: Ses
 def get_revenue_stats(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    contributor_id: Optional[int] = None,
     current_admin: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Получение статистики доходов с фильтрацией по датам"""
+    """Получение статистики доходов с фильтрацией по датам и бенефициару."""
     from datetime import datetime
+    from collections import defaultdict
     
-    # Парсим даты, если указаны
     start_dt = None
     end_dt = None
     if start_date:
@@ -2891,13 +2905,11 @@ def get_revenue_stats(
     if end_date:
         try:
             end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            # Добавляем 23:59:59 к конечной дате
             end_dt = end_dt.replace(hour=23, minute=59, second=59)
         except:
             end_dt = datetime.strptime(end_date, '%Y-%m-%d')
             end_dt = end_dt.replace(hour=23, minute=59, second=59)
     
-    # Запросы с фильтрацией по датам
     purchases_query = db.query(Purchase)
     course_purchases_query = db.query(CoursePurchase)
     orders_query = db.query(ServiceOrder).filter(ServiceOrder.status.in_(['paid', 'completed']))
@@ -2911,26 +2923,28 @@ def get_revenue_stats(
         purchases_query = purchases_query.filter(Purchase.purchase_date <= end_dt)
         course_purchases_query = course_purchases_query.filter(CoursePurchase.purchase_date <= end_dt)
         orders_query = orders_query.filter(ServiceOrder.created_at <= end_dt)
-    
+
+    if contributor_id is not None:
+        purchases_query = purchases_query.join(Beat).filter(Beat.beneficiary_id == contributor_id)
+        course_purchases = []
+        orders = []
+    else:
+        course_purchases = course_purchases_query.all()
+        orders = orders_query.all()
+
     purchases = purchases_query.all()
-    course_purchases = course_purchases_query.all()
-    orders = orders_query.all()
     
-    # Доходы по битам
     beat_revenue = sum(p.price_paid for p in purchases)
     beat_count = len(purchases)
     
-    # Доходы по курсам
     course_revenue = sum(cp.price_paid for cp in course_purchases)
     course_count = len(course_purchases)
     
-    # Доходы по заказам услуг
     order_revenue = sum(o.price for o in orders if o.price)
     order_count = len(orders)
     
     total_revenue = beat_revenue + course_revenue + order_revenue
     
-    # Данные для графика (по дням)
     revenue_by_day = {}
     
     for purchase in purchases:
@@ -2945,6 +2959,21 @@ def get_revenue_stats(
         if order.price:
             day = order.created_at.date().isoformat()
             revenue_by_day[day] = revenue_by_day.get(day, 0) + order.price
+
+    names = {row.id: row.name for row in db.query(Contributor).all()}
+    grouped = defaultdict(lambda: {"id": None, "name": STORE_BENEFICIARY_NAME, "beat_revenue": 0, "beat_count": 0})
+    for purchase in purchases:
+        beat = purchase.beat
+        bid = beat.beneficiary_id if beat else None
+        key = bid if bid is not None else 0
+        grouped[key]["id"] = bid
+        grouped[key]["name"] = names.get(bid, STORE_BENEFICIARY_NAME) if bid is not None else STORE_BENEFICIARY_NAME
+        grouped[key]["beat_revenue"] += purchase.price_paid
+        grouped[key]["beat_count"] += 1
+    revenue_by_contributor = sorted(
+        grouped.values(),
+        key=lambda row: (0 if row["id"] is None else 1, -row["beat_revenue"], row["name"]),
+    )
     
     return {
         "total_revenue": total_revenue,
@@ -2955,6 +2984,7 @@ def get_revenue_stats(
         "order_revenue": order_revenue,
         "order_count": order_count,
         "revenue_by_day": revenue_by_day,
+        "revenue_by_contributor": revenue_by_contributor,
         "start_date": start_date,
         "end_date": end_date
     }
@@ -3199,6 +3229,7 @@ async def upload_beat_admin(
     exclusive_file: UploadFile = File(...),
     cover_file: UploadFile = File(None),
     allow_multiple_purchases: str = Form("false"),
+    beneficiary_id: Optional[int] = Form(None),
     current_admin: User = Depends(get_current_admin_user),
     db: Session = Depends(get_db)
 ):
@@ -3215,7 +3246,8 @@ async def upload_beat_admin(
         price_wav=price_wav,
         price_exclusive=price_exclusive,
         description=description,
-        allow_multiple_purchases=allow_multiple
+        allow_multiple_purchases=allow_multiple,
+        beneficiary_id=beneficiary_id,
     )
     
     db.add(beat)
@@ -4193,6 +4225,9 @@ def oauth_callback(provider: str, code: Optional[str] = None, error: Optional[st
     # 4. Возврат JWT токена
     
     return {"message": f"OAuth callback for {provider}. Implement token exchange."}
+
+from submit_routes import register_submit_routes
+register_submit_routes(app)
 
 # Эндпоинт для всех остальных маршрутов фронтенда (SPA routing)
 # Должен быть в самом конце, чтобы не перехватывать API маршруты

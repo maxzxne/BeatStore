@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Heart, ShoppingCart, User, Music, Settings } from 'lucide-react';
+import { Heart, ShoppingCart, User, Music, Settings, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { api } from '../utils/api';
@@ -154,6 +154,11 @@ const HeaderV2 = ({ admin = false }) => {
                 <Link to="/profile" className={iconBtn} aria-label="Профиль">
                   <User className="h-4 w-4" />
                 </Link>
+                {user?.is_contributor && (
+                  <Link to="/submit" className={iconBtn} aria-label="Загрузка битов">
+                    <Upload className="h-4 w-4" />
+                  </Link>
+                )}
                 {(user?.is_admin || isAdminAuthenticated) && (
                   <Link to="/admin" className={iconBtn} aria-label="Админка">
                     <Settings className="h-4 w-4" />

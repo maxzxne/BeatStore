@@ -7,15 +7,17 @@ import DatePicker from '../components/DatePicker';
 const AdminRevenue = () => {
   const { isAdminAuthenticated } = useAuth();
   const [stats, setStats] = useState(null);
+  const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [contributorId, setContributorId] = useState('');
 
   useEffect(() => {
     if (isAdminAuthenticated) {
       fetchRevenueStats();
     }
-  }, [isAdminAuthenticated, startDate, endDate]);
+  }, [isAdminAuthenticated, startDate, endDate, contributorId]);
 
   const fetchRevenueStats = async () => {
     try {
@@ -23,9 +25,16 @@ const AdminRevenue = () => {
       const params = new URLSearchParams();
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
+      if (contributorId) params.append('contributor_id', contributorId);
       
       const response = await api.get(`/api/admin/revenue?${params.toString()}`);
       setStats(response.data);
+      try {
+        const peopleRes = await api.get('/api/admin/contributors');
+        setPeople(peopleRes.data || []);
+      } catch {
+        setPeople([]);
+      }
     } catch (error) {
       console.error('Error fetching revenue stats:', error);
     } finally {
@@ -310,11 +319,27 @@ const AdminRevenue = () => {
                 className="w-auto min-w-[140px]"
               />
             </div>
-            {(startDate || endDate) && (
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-white/45">Человек</label>
+              <select
+                value={contributorId}
+                onChange={(event) => setContributorId(event.target.value)}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
+              >
+                <option value="">Все</option>
+                {people.map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {person.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {(startDate || endDate || contributorId) && (
               <button
                 onClick={() => {
                   setStartDate('');
                   setEndDate('');
+                  setContributorId('');
                 }}
                 className="btn btn-outline btn-sm"
               >
@@ -400,6 +425,33 @@ const AdminRevenue = () => {
           </div>
         </div>
       </div>
+
+      {stats?.revenue_by_contributor?.length > 0 && (
+        <div className="admin-panel overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead>
+              <tr>
+                <th>Кто</th>
+                <th>Продаж</th>
+                <th>Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.revenue_by_contributor.map((row) => (
+                <tr
+                  key={row.id ?? 'store'}
+                  className="cursor-pointer hover:bg-white/5"
+                  onClick={() => setContributorId(row.id ? String(row.id) : '')}
+                >
+                  <td>{row.name}</td>
+                  <td>{row.beat_count}</td>
+                  <td>{formatCurrency(row.beat_revenue)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* График доходов */}
       <div className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden">

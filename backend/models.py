@@ -127,11 +127,13 @@ class Beat(Base):
     is_available = Column(Boolean, default=True)  # Доступен ли для покупки
     allow_multiple_purchases = Column(Boolean, default=False)  # Разрешить множественные покупки (False = эксклюзивный, только один покупатель)
     created_at = Column(DateTime, default=datetime.utcnow)  # Дата добавления
-    
+    beneficiary_id = Column(Integer, ForeignKey("contributors.id"), nullable=True, index=True)
+
     # Связи с пользователями
     favorited_by = relationship("User", secondary=favorites_table, back_populates="favorites")
     in_carts = relationship("User", secondary=cart_table, back_populates="cart_items")
     purchases = relationship("Purchase", back_populates="beat")
+    beneficiary = relationship("Contributor", foreign_keys=[beneficiary_id])
 
 class Purchase(Base):
     """
@@ -380,3 +382,66 @@ class ErrorLog(Base):
     
     # Связь с пользователем (опционально)
     user = relationship("User", foreign_keys=[user_id])
+
+
+class Contributor(Base):
+    """Человек, на которого считают продажи. Не роль админки."""
+    __tablename__ = "contributors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    notes = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])
+    invites = relationship("ContributorInvite", back_populates="contributor", cascade="all, delete-orphan")
+    submissions = relationship("BeatSubmission", back_populates="contributor")
+
+
+class ContributorInvite(Base):
+    """Одноразовая ссылка в кабинет загрузки."""
+    __tablename__ = "contributor_invites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contributor_id = Column(Integer, ForeignKey("contributors.id"), nullable=False, index=True)
+    token_hash = Column(String, unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    contributor = relationship("Contributor", back_populates="invites")
+
+
+class BeatSubmission(Base):
+    """Черновик бита от контрибьютора. В каталог не попадает, пока админ не апрувнет."""
+    __tablename__ = "beat_submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contributor_id = Column(Integer, ForeignKey("contributors.id"), nullable=False, index=True)
+    status = Column(String, default="draft", nullable=False, index=True)
+    title = Column(String, nullable=False)
+    artist = Column(String, default="Producer")
+    genre = Column(String, nullable=False)
+    key = Column(String, nullable=True)
+    bpm = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
+    price_mp3 = Column(Float, nullable=True)
+    price_wav = Column(Float, nullable=True)
+    price_exclusive = Column(Float, nullable=True)
+    description = Column(Text, nullable=True)
+    allow_multiple_purchases = Column(Boolean, default=False)
+    demo_url = Column(String, nullable=True)
+    wav_url = Column(String, nullable=True)
+    mp3_url = Column(String, nullable=True)
+    exclusive_url = Column(String, nullable=True)
+    cover_url = Column(String, nullable=True)
+    storage_bytes = Column(Integer, default=0, nullable=False)
+    reject_reason = Column(Text, nullable=True)
+    approved_beat_id = Column(Integer, ForeignKey("beats.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    contributor = relationship("Contributor", back_populates="submissions")
+    approved_beat = relationship("Beat", foreign_keys=[approved_beat_id])

@@ -45,10 +45,12 @@ const AdminBeats = () => {
   const [editForm, setEditForm] = useState({});
   const [editFiles, setEditFiles] = useState(EMPTY_FILES);
   const [saving, setSaving] = useState(false);
+  const [people, setPeople] = useState([]);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
       fetchBeats();
+      api.get('/api/admin/contributors').then((res) => setPeople(res.data || [])).catch(() => setPeople([]));
     }
   }, [isAdminAuthenticated]);
 
@@ -81,6 +83,7 @@ const AdminBeats = () => {
       key: beat.key || '',
       description: beat.description || '',
       is_available: beat.is_available,
+      beneficiary_id: beat.beneficiary_id ?? '',
     });
   };
 
@@ -272,6 +275,19 @@ const AdminBeats = () => {
                   onChange={(e) => setEditForm({ ...editForm, artist: e.target.value })}
                   className={fieldClass}
                 />
+              </div>
+              <div>
+                <label className={labelClass}>Считать продажи на</label>
+                <select
+                  value={editForm.beneficiary_id ?? ''}
+                  onChange={(e) => setEditForm({ ...editForm, beneficiary_id: e.target.value ? Number(e.target.value) : null })}
+                  className={fieldClass}
+                >
+                  <option value="">Магазин</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>{person.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Жанр</label>

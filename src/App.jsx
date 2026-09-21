@@ -43,6 +43,10 @@ import SupportPageV2 from './v2/SupportPageV2';
 import PaymentPayPage from './v2/PaymentPayPage';
 import PaymentSuccessPage from './v2/PaymentSuccessPage';
 import PaymentFailurePage from './v2/PaymentFailurePage';
+import SubmitJoinPage from './v2/submit/SubmitJoinPage';
+import SubmitCabinetPage from './v2/submit/SubmitCabinetPage';
+import AdminContributorsPage from './v2/admin/AdminContributorsPage';
+import AdminSubmissionsPage from './v2/admin/AdminSubmissionsPage';
 import ErrorPage from './pages/ErrorPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfUsePage from './pages/TermsOfUsePage';
@@ -79,6 +83,8 @@ function App() {
                     <Route path="terms" element={<TermsOfUsePage />} />
                     <Route path="consent-personal-data" element={<PersonalDataConsentPage />} />
                     <Route path="cookies" element={<CookiesPolicyPage />} />
+                    <Route path="submit" element={<SubmitCabinetPage />} />
+                    <Route path="submit/join" element={<SubmitJoinPage />} />
                   </Route>
 
                   {/* Full-page auth; html.ui-v2 forced in main.jsx */}
@@ -92,6 +98,8 @@ function App() {
                     <Route path="beats" element={<AdminBeats />} />
                     <Route path="courses" element={<AdminCourses />} />
                     <Route path="upload" element={<AdminUpload />} />
+                    <Route path="contributors" element={<AdminContributorsPage />} />
+                    <Route path="submissions" element={<AdminSubmissionsPage />} />
                     <Route path="purchases" element={<AdminPurchases />} />
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="support" element={<AdminSupportPage />} />

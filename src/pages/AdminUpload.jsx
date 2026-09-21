@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { Upload, Music, Image, FileAudio, Video, GraduationCap, X, CheckCircle } from 'lucide-react';
@@ -7,6 +7,11 @@ import CustomSelect from '../components/CustomSelect';
 const AdminUpload = () => {
   const [activeTab, setActiveTab] = useState('beat'); // 'beat' или 'course'
   const { isAdminAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAdminAuthenticated) return;
+    api.get('/api/admin/contributors').then((res) => setPeople(res.data || [])).catch(() => setPeople([]));
+  }, [isAdminAuthenticated]);
   const [loading, setLoading] = useState(false);
   const [beatFormData, setBeatFormData] = useState({
     title: '',
@@ -35,6 +40,8 @@ const AdminUpload = () => {
     cover_file: null
   });
   const [allowMultiplePurchases, setAllowMultiplePurchases] = useState(false);
+  const [people, setPeople] = useState([]);
+  const [beneficiaryId, setBeneficiaryId] = useState('');
   const [courseFiles, setCourseFiles] = useState({
     preview_video_file: null,
     full_video_file: null
@@ -142,6 +149,9 @@ const AdminUpload = () => {
           submitData.append(key, file);
         }
       });
+      if (beneficiaryId) {
+        submitData.append('beneficiary_id', beneficiaryId);
+      }
 
       await api.post('/api/admin/upload-beat', submitData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -166,6 +176,7 @@ const AdminUpload = () => {
         full_file: null,
         cover_file: null
       });
+      setBeneficiaryId('');
       
     } catch (error) {
       console.error('Error uploading beat:', error);
@@ -306,6 +317,25 @@ const AdminUpload = () => {
                   />
                 </div>
               </div>
+
+              {people.length > 0 && (
+                <div>
+                  <label htmlFor="beat_beneficiary" className="admin-field-label">
+                    Считать продажи на
+                  </label>
+                  <select
+                    id="beat_beneficiary"
+                    value={beneficiaryId}
+                    onChange={(event) => setBeneficiaryId(event.target.value)}
+                    className="input w-full"
+                  >
+                    <option value="">Магазин</option>
+                    {people.map((person) => (
+                      <option key={person.id} value={person.id}>{person.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
