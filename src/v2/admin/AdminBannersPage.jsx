@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ImagePlus, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../../utils/api';
 import DatePicker from '../../components/DatePicker';
 
@@ -68,6 +69,7 @@ function formatRange(banner) {
 
 const AdminBannersPage = () => {
   const { isAdminAuthenticated } = useAuth();
+  const { showSuccess, showError } = useNotification();
   const fileRef = useRef(null);
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,9 +80,14 @@ const AdminBannersPage = () => {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [now, setNow] = useState(() => new Date());
+  const [fullscreen, setFullscreen] = useState(true);
+  const [savingLayout, setSavingLayout] = useState(false);
 
   useEffect(() => {
-    if (isAdminAuthenticated) fetchBanners();
+    if (isAdminAuthenticated) {
+      fetchBanners();
+      fetchLayout();
+    }
   }, [isAdminAuthenticated]);
 
   useEffect(() => {
@@ -92,6 +99,31 @@ const AdminBannersPage = () => {
     () => [...banners].sort((a, b) => (a.sort_order - b.sort_order) || (a.id - b.id)),
     [banners]
   );
+
+  const fetchLayout = async () => {
+    try {
+      const { data } = await api.get('/api/admin/site-settings');
+      setFullscreen(data?.promo_banners_fullscreen !== false);
+    } catch (err) {
+      console.error('Error fetching banner layout:', err);
+    }
+  };
+
+  const updateFullscreen = async (enabled) => {
+    const previous = fullscreen;
+    try {
+      setSavingLayout(true);
+      setFullscreen(enabled);
+      await api.put('/api/admin/site-settings', { promo_banners_fullscreen: enabled });
+      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+      showSuccess(enabled ? 'Баннеры: полный экран' : 'Баннеры: компакт + peek');
+    } catch (err) {
+      setFullscreen(previous);
+      showError(err.response?.data?.detail || 'Не удалось сохранить раскладку');
+    } finally {
+      setSavingLayout(false);
+    }
+  };
 
   const fetchBanners = async () => {
     try {
@@ -247,6 +279,26 @@ const AdminBannersPage = () => {
           {typeof error === 'string' ? error : JSON.stringify(error)}
         </div>
       )}
+
+      <div className="flex min-h-[44px] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
+        <div>
+          <div className="text-sm font-medium text-white">На полный экран</div>
+          <div className="mt-0.5 text-xs text-white/40">
+            Выкл — ниже и уже, второй слайд всегда выглядывает справа
+          </div>
+        </div>
+        <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
+          <input
+            type="checkbox"
+            checked={fullscreen}
+            onChange={(e) => updateFullscreen(e.target.checked)}
+            disabled={savingLayout}
+            className="peer sr-only"
+            aria-label="Баннеры на полный экран"
+          />
+          <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
+        </label>
+      </div>
 
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
         {sorted.length === 0 ? (
