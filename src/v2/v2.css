@@ -366,8 +366,28 @@ html.ui-v2 .min-h-screen.bg-white {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.v2-promo-frame {
+.v2-promo-viewport {
   position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.v2-promo-track {
+  display: flex;
+  width: 100%;
+  will-change: transform;
+  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.v2-promo-track.is-instant {
+  transition: none;
+}
+
+.v2-promo-slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
 }
 
 .v2-promo-link {
@@ -473,6 +493,10 @@ html.ui-v2 .min-h-screen.bg-white {
 
 @media (prefers-reduced-motion: reduce) {
   .v2-promo-nav {
+    transition: none;
+  }
+
+  .v2-promo-track {
     transition: none;
   }
 }
