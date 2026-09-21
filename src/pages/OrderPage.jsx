@@ -17,7 +17,7 @@ import {
   ADS_DURATION_PRESETS,
   formatAdsRub,
   parseCustomAdsDays,
-  resolveAdsPrice,
+  quoteAdsPeriod,
 } from '../utils/adsPricing';
 import {
   Upload,
@@ -83,7 +83,7 @@ const OrderPage = ({ initialType = null }) => {
     reference_links: '',
     reference_files: [], // Массив файлов референсов
     description: '',
-    deadline_days: '',
+    deadline_days: '21',
     prepayment_percent: 50 // 50 или 100
   });
   const [showCategorySelector, setShowCategorySelector] = useState(false);
@@ -150,7 +150,7 @@ const OrderPage = ({ initialType = null }) => {
   const DEADLINE_OPTIONS = [
     { days: 21, label: '2–3 недели', hint: '14–21 день' },
     { days: 10, label: '1–2 недели', hint: '8–13 дней' },
-    { days: 7, label: '7 дней', hint: 'неделя' },
+    { days: 7, label: 'Неделя', hint: '7 дней' },
     { days: 3, label: '2–3 дня', hint: 'быстрее' },
     { days: 1, label: '24 часа', hint: 'срочно' },
   ];
@@ -275,7 +275,7 @@ const OrderPage = ({ initialType = null }) => {
       reference_links: '',
       reference_files: [],
       description: '',
-      deadline_days: '',
+      deadline_days: '21',
       prepayment_percent: 50
     });
     setContactRows(isAuthenticated && user ? rowsFromUser(user) : []);
@@ -328,6 +328,10 @@ const OrderPage = ({ initialType = null }) => {
         showError('Укажите срок выполнения заказа');
         return;
       }
+      if (!(formData.description || '').trim()) {
+        showError('Заполните техническое задание');
+        return;
+      }
       setWizardStep(3);
     }
   };
@@ -352,6 +356,10 @@ const OrderPage = ({ initialType = null }) => {
         }
         if (!formData.deadline_days) {
           showError('Укажите срок выполнения заказа');
+          return;
+        }
+        if (!(formData.description || '').trim()) {
+          showError('Заполните техническое задание');
           return;
         }
       }
@@ -429,6 +437,11 @@ const OrderPage = ({ initialType = null }) => {
 
     if (!formData.deadline_days) {
       showError('Укажите срок выполнения заказа');
+      return;
+    }
+
+    if (!(formData.description || '').trim()) {
+      showError('Заполните техническое задание');
       return;
     }
 
@@ -510,7 +523,7 @@ const OrderPage = ({ initialType = null }) => {
           reference_links: '',
           reference_files: [],
           description: '',
-          deadline_days: '',
+          deadline_days: '21',
           prepayment_percent: 50
         });
         setOrderType(null);
@@ -1582,7 +1595,7 @@ const OrderPage = ({ initialType = null }) => {
         <div>
           <label htmlFor="description" className={labelClass}>
             <FileText className="h-4 w-4 inline mr-2" />
-            Описание (Техническое задание)
+            Техническое задание *
           </label>
           <textarea
             id="description"
@@ -1591,6 +1604,7 @@ const OrderPage = ({ initialType = null }) => {
             onChange={handleInputChange}
             placeholder="Опишите ваши требования..."
             rows={6}
+            required
             className={fieldClass}
           />
         </div>
