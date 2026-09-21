@@ -380,7 +380,7 @@ export const guideSections = [
     blocks: [
       {
         type: 'p',
-        text: 'Операционка service-заказов с витрины /order (и /order/ads, если реклама включена). Категории и прайс-матрица услуг на витрине сейчас в коде, не в CMS. В подробной форме ТЗ обязательно; срок по умолчанию — 2–3 недели (21 день).',
+        text: 'Операционка service-заказов с витрины /order (и /order/ads, если реклама включена). Прайс и тексты плашки редактируются в «Настройки сайта» → «Прайс услуг»: таблица сроков/цен + тексты с кнопками-переменными (подставляют суммы вроде 25 000 ₽). ТЗ в подробной форме обязательно; срок по умолчанию — 2–3 недели (21 день), если такой слот есть в прайсе.',
       },
       {
         type: 'h3',
@@ -643,7 +643,7 @@ export const guideSections = [
     group: 'Сайт',
     adminPath: '/admin/oauth-settings',
     publicPaths: ['/login', '/register', '/courses', '/order/ads'],
-    keywords: ['oauth', 'totp', 'captcha', 'visibility'],
+    keywords: ['oauth', 'totp', 'captcha', 'visibility', 'прайс', 'услуг'],
     blocks: [
       {
         type: 'p',
@@ -655,10 +655,15 @@ export const guideSections = [
           'courses_visibility — all / admins_only / hidden',
           'ads_orders_enabled — витрина /order/ads',
           'ads_price_per_day — ставка ₽/день для расчёта заявки',
+          'Прайс услуг — таблица сроков/цен и тексты плашки на /order; переменные вставляются кнопками ({{trap}}, {{from}}, {{p50_21}}…)',
           'totp_enabled — требовать 2FA у пользователей (где включено)',
           'captcha_enabled — SmartCaptcha на логине/регистрации',
           'OAuth: тумблеры «Показывать кнопку» и «Разрешить вход» (зелёный = доступен). Скрытие/disable пишутся в is_hidden / is_disabled.',
         ],
+      },
+      {
+        type: 'tip',
+        text: 'В текстах прайса не пиши суммы руками — нажми чип «50% · Неделя» и т.п.: на витрине подставится число из таблицы. Превью плашки сразу под формой.',
       },
       {
         type: 'tip',

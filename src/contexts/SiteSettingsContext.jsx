@@ -6,6 +6,10 @@ import {
   DEFAULT_SEARCH_PLACEHOLDER,
   normalizeSearchPlaceholder,
 } from '../utils/searchPlaceholder';
+import {
+  DEFAULT_SERVICE_ORDER_PRICING,
+  normalizeServiceOrderPricing,
+} from '../utils/serviceOrderPricing';
 
 const SiteSettingsContext = createContext();
 
@@ -74,6 +78,9 @@ export const SiteSettingsProvider = ({ children }) => {
   const [adsPricePerDay, setAdsPricePerDay] = useState(DEFAULT_ADS_PRICE_PER_DAY);
   const [adsSale, setAdsSale] = useState(null);
   const [homeHero, setHomeHero] = useState(() => ({ ...DEFAULT_HOME_HERO }));
+  const [serviceOrderPricing, setServiceOrderPricing] = useState(() => ({
+    ...DEFAULT_SERVICE_ORDER_PRICING,
+  }));
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
@@ -90,6 +97,7 @@ export const SiteSettingsProvider = ({ children }) => {
       setAdsPricePerDay(normalizeAdsPricePerDay(response.data?.ads_price_per_day));
       setAdsSale(response.data?.ads_sale || null);
       setHomeHero(normalizeHomeHero(response.data?.home_hero));
+      setServiceOrderPricing(normalizeServiceOrderPricing(response.data?.service_order_pricing));
     } catch (error) {
       console.error('Error fetching site settings:', error);
       setCoursesVisibility('all');
@@ -98,6 +106,7 @@ export const SiteSettingsProvider = ({ children }) => {
       setAdsPricePerDay(DEFAULT_ADS_PRICE_PER_DAY);
       setAdsSale(null);
       setHomeHero({ ...DEFAULT_HOME_HERO });
+      setServiceOrderPricing(normalizeServiceOrderPricing(null));
     } finally {
       setLoading(false);
     }
@@ -128,6 +137,7 @@ export const SiteSettingsProvider = ({ children }) => {
     adsPricePerDay,
     adsSale,
     homeHero,
+    serviceOrderPricing,
     loading,
     refreshSiteSettings: fetchSettings,
   };

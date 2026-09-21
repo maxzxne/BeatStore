@@ -4,6 +4,11 @@ import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
 import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Megaphone, Shield, KeyRound } from 'lucide-react';
 import { DEFAULT_ADS_PRICE_PER_DAY, normalizeAdsPricePerDay } from '../utils/adsPricing';
+import {
+  DEFAULT_SERVICE_ORDER_PRICING,
+  normalizeServiceOrderPricing,
+} from '../utils/serviceOrderPricing';
+import AdminServicePricingPanel from '../components/AdminServicePricingPanel';
 import { Link } from 'react-router-dom';
 
 const COURSES_VISIBILITY_OPTIONS = [
@@ -32,6 +37,10 @@ const AdminOAuthSettings = () => {
   const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
   const [adsPricePerDay, setAdsPricePerDay] = useState(DEFAULT_ADS_PRICE_PER_DAY);
   const [adsPriceDraft, setAdsPriceDraft] = useState(DEFAULT_ADS_PRICE_PER_DAY);
+  const [serviceOrderPricing, setServiceOrderPricing] = useState(() =>
+    normalizeServiceOrderPricing(DEFAULT_SERVICE_ORDER_PRICING)
+  );
+  const [servicePricingReady, setServicePricingReady] = useState(false);
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -72,6 +81,8 @@ const AdminOAuthSettings = () => {
       const rate = normalizeAdsPricePerDay(response.data?.ads_price_per_day);
       setAdsPricePerDay(rate);
       setAdsPriceDraft(rate);
+      setServiceOrderPricing(normalizeServiceOrderPricing(response.data?.service_order_pricing));
+      setServicePricingReady(true);
       setTotpEnabled(!!response.data?.totp_enabled);
       setCaptchaEnabled(!!response.data?.captcha_enabled);
     } catch (error) {
@@ -393,6 +404,13 @@ const AdminOAuthSettings = () => {
           </p>
         )}
       </div>
+
+      {servicePricingReady && (
+        <AdminServicePricingPanel
+          initialPricing={serviceOrderPricing}
+          onSaved={(saved) => setServiceOrderPricing(saved)}
+        />
+      )}
 
       <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
         <div className="mb-5 flex items-center gap-3">

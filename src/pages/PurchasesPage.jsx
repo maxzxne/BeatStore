@@ -9,11 +9,19 @@ import { checkoutErrorMessage, startCheckout, withPromo } from '../utils/checkou
 import { loginPath } from '../utils/authRedirect';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { ruCount } from '../utils/ruPlural';
-import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio, HelpCircle } from 'lucide-react';
+import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio } from 'lucide-react';
 import { PromoCodeField } from '../v2/DiscountUi';
+import OrderPriceGuide from '../components/OrderPriceGuide';
+import { useSiteSettings } from '../contexts/SiteSettingsContext';
+import {
+  DEFAULT_SERVICE_ORDER_PRICING,
+  normalizeServiceOrderPricing,
+} from '../utils/serviceOrderPricing';
 
 const PurchasesPage = () => {
   const { isAuthenticated } = useAuth();
+  const { serviceOrderPricing } = useSiteSettings();
+  const servicePricing = normalizeServiceOrderPricing(serviceOrderPricing || DEFAULT_SERVICE_ORDER_PRICING);
   const { playTrack, isCurrentTrackPlaying, pauseTrack, resumeTrack, isCurrentTrack } = useAudioPlayer();
   const { showError } = useNotification();
   const navigate = useNavigate();
@@ -535,44 +543,7 @@ const PurchasesPage = () => {
                   
                   {/* Информация о стоимости для заказов типа "знаю" */}
                   {order.order_type === 'know' && (
-                    <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4 text-sm text-white/50">
-                      <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
-                      <div className="relative group">
-                        <HelpCircle className="h-4 w-4 flex-shrink-0 cursor-help text-white/40" />
-                        <div className="invisible absolute bottom-full right-0 z-10 mb-2 w-80 rounded-2xl border border-white/10 bg-[#0a0a0a] p-4 text-xs text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
-                          <div className="space-y-3">
-                            <div>
-                              <div className="mb-2 font-semibold text-[#22c55e]">При 50% предоплате:</div>
-                              <ul className="space-y-1 text-white/60">
-                                <li>• 2-3 недели: 25K</li>
-                                <li>• 1-2 недели: 30K</li>
-                                <li>• 1 неделя: 35K</li>
-                                <li>• 2-3 дня: 40K</li>
-                                <li>• 24 часа: 50K</li>
-                              </ul>
-                            </div>
-                            <div>
-                              <div className="mb-2 font-semibold text-[#22c55e]">При 100% предоплате:</div>
-                              <ul className="space-y-1 text-white/60">
-                                <li>• 2-3 недели: 20K</li>
-                                <li>• 1-2 недели: 25K</li>
-                                <li>• 1 неделя: 30K</li>
-                                <li>• 2-3 дня: 35K</li>
-                                <li>• 24 часа: 45K</li>
-                              </ul>
-                            </div>
-                            <div className="border-t border-white/10 pt-2">
-                              <div className="mb-1 font-semibold">«Песня под ключ»:</div>
-                              <div className="text-white/60">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
-                            </div>
-                            <div className="border-t border-white/10 pt-2">
-                              <div className="mb-1 font-semibold">Бит в стиле трэп:</div>
-                              <div className="text-white/60">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 10-15K</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <OrderPriceGuide pricing={servicePricing} variant="inline" className="mt-4" />
                   )}
                   
                   {order.status === 'confirmed' && order.price && (

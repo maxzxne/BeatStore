@@ -1120,6 +1120,50 @@ class ApiTestCase(unittest.TestCase):
         public2 = self.client.get("/site-settings")
         self.assertEqual(public2.json()["ads_prices"]["7"], 2222)
 
+    def test_service_order_pricing_defaults_and_admin_update(self):
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.status_code, 200)
+        pricing = public.json().get("service_order_pricing")
+        self.assertIsInstance(pricing, dict)
+        self.assertEqual(pricing["trap_price"], 15000)
+        self.assertGreaterEqual(len(pricing["deadlines"]), 1)
+        self.assertIn("guide_subtitle", pricing["copy"])
+
+        payload = {
+            "trap_price": 16000,
+            "deadlines": [
+                {
+                    "days": 21,
+                    "label": "2–3 недели",
+                    "hint": "14–21",
+                    "price_50": 26000,
+                    "price_100": 21000,
+                }
+            ],
+            "copy": {
+                "guide_title": "Прайс",
+                "guide_subtitle": "от {{from}}",
+                "song_title": "Песня",
+                "song_body": "Текст",
+                "trap_title": "Трэп",
+                "trap_body": "{{trap}}",
+                "col_50_title": "50%",
+                "col_100_title": "100%",
+            },
+        }
+        updated = self.client.put(
+            "/api/admin/site-settings",
+            headers=auth(self.admin_token),
+            json={"service_order_pricing": payload},
+        )
+        self.assertEqual(updated.status_code, 200, updated.text)
+        saved = updated.json()["settings"]["service_order_pricing"]
+        self.assertEqual(saved["trap_price"], 16000)
+        self.assertEqual(saved["deadlines"][0]["price_50"], 26000)
+
+        public2 = self.client.get("/site-settings")
+        self.assertEqual(public2.json()["service_order_pricing"]["trap_price"], 16000)
+
     def test_ads_sale_scope_exposed_on_site_settings(self):
         created = self.client.post(
             "/api/admin/sales",

@@ -19,6 +19,11 @@ import {
   parseCustomAdsDays,
   quoteAdsPeriod,
 } from '../utils/adsPricing';
+import OrderPriceGuide from '../components/OrderPriceGuide';
+import {
+  getServicePrice,
+  normalizeServiceOrderPricing,
+} from '../utils/serviceOrderPricing';
 import {
   Upload,
   Link as LinkIcon,
@@ -30,7 +35,6 @@ import {
   X,
   Trash2,
   MessageCircle,
-  HelpCircle,
   ChevronDown,
   ChevronUp,
   ArrowRight,
@@ -68,6 +72,7 @@ const OrderPage = ({ initialType = null }) => {
     adsOrdersEnabled,
     adsPricePerDay,
     adsSale,
+    serviceOrderPricing,
     loading: settingsLoading,
   } = useSiteSettings();
   const wantsAds = initialType === 'ads' || searchParams.get('type') === 'ads';
@@ -141,54 +146,25 @@ const OrderPage = ({ initialType = null }) => {
     { label: 'Бит', value: 'бит' },
   ];
 
+  const servicePricing = normalizeServiceOrderPricing(serviceOrderPricing);
+
   const WIZARD_STEPS = [
     { n: 1, label: 'Контакты' },
     { n: 2, label: 'Услуги' },
     { n: 3, label: 'Итог' },
   ];
 
-  const DEADLINE_OPTIONS = [
-    { days: 21, label: '2–3 недели', hint: '14–21 день' },
-    { days: 10, label: '1–2 недели', hint: '8–13 дней' },
-    { days: 7, label: 'Неделя', hint: '7 дней' },
-    { days: 3, label: '2–3 дня', hint: 'быстрее' },
-    { days: 1, label: '24 часа', hint: 'срочно' },
-  ];
+  const DEADLINE_OPTIONS = servicePricing.deadlines.map((row) => ({
+    days: row.days,
+    label: row.label,
+    hint: row.hint,
+  }));
 
   const rub = (n) => `${Number(n).toLocaleString('ru-RU')} ₽`;
 
-  // Цены согласно сообщению
   const getPrice = (deadlineDays, prepaymentPercent) => {
     if (!deadlineDays) return null;
-    
-    const days = parseInt(deadlineDays);
-    const prices = {
-      50: { // 50% предоплата
-        '14-21': 25000, // 2-3 недели
-        '7-14': 30000,  // 1-2 недели
-        '7': 35000,      // 1 неделя
-        '2-3': 40000,    // 2-3 дня
-        '1': 50000       // 24 часа
-      },
-      100: { // 100% предоплата
-        '14-21': 20000,
-        '7-14': 25000,
-        '7': 30000,
-        '2-3': 35000,
-        '1': 45000
-      }
-    };
-    
-    const priceMap = prices[prepaymentPercent];
-    
-    if (days >= 14 && days <= 21) return priceMap['14-21'];
-    if (days === 7) return priceMap['7'];
-    if (days > 7 && days < 14) return priceMap['7-14'];
-    if (days >= 2 && days <= 3) return priceMap['2-3'];
-    if (days === 1) return priceMap['1'];
-    
-    // Если не попадает в диапазоны, возвращаем базовую цену
-    return priceMap['14-21'];
+    return getServicePrice(servicePricing, deadlineDays, prepaymentPercent);
   };
 
   const quoteTotal = (deadlineDays = formData.deadline_days, prepaymentPercent = formData.prepayment_percent) => {
@@ -196,7 +172,7 @@ const OrderPage = ({ initialType = null }) => {
     let total = 0;
     formData.service_categories.forEach((category) => {
       if (category === 'бит в стиле трэп') {
-        total += 15000;
+        total += servicePricing.trap_price;
         return;
       }
       if (!deadlineDays) return;
@@ -655,6 +631,8 @@ const OrderPage = ({ initialType = null }) => {
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Заказать услугу</h1>
           <p className="mt-2 text-sm text-white/50">Подробный расчёт, короткая заявка или реклама на витрине</p>
         </div>
+
+        <OrderPriceGuide pricing={servicePricing} variant="panel" className="mb-6" />
 
         <div className="space-y-4">
           <button
@@ -1883,7 +1861,7 @@ const OrderPage = ({ initialType = null }) => {
               <>
                 {Object.entries(serviceCounts).map(([category, count]) => {
                   const isTrap = category === 'бит в стиле трэп';
-                  const servicePrice = isTrap ? 15000 : getPrice(formData.deadline_days, formData.prepayment_percent);
+                  const servicePrice = isTrap ? servicePricing.trap_price : getPrice(formData.deadline_days, formData.prepayment_percent);
                   const totalForService = servicePrice ? servicePrice * count : 0;
                   
                   if (!servicePrice && !isTrap) {
@@ -1921,45 +1899,7 @@ const OrderPage = ({ initialType = null }) => {
           </div>
           
           {/* Информация о стоимости */}
-          <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-sm text-white/50">
-            <span>*Стоимость услуг исходит от вида и количества услуг, срочности заказа и полноты оплаты</span>
-            <div className="relative group">
-              <HelpCircle className="h-4 w-4 text-white/40 cursor-help flex-shrink-0" />
-              <div className="invisible absolute bottom-full right-0 z-10 mb-2 w-80 rounded-xl border border-white/10 bg-[#0a0a0a] p-4 text-xs text-white opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:opacity-100">
-                <div className="space-y-3">
-                  <div>
-                    <div className="font-semibold mb-2">🟢 При 50% предоплате:</div>
-                    <ul className="space-y-1 text-white/70">
-                      <li>• 2-3 недели: 25K</li>
-                      <li>• 1-2 недели: 30K</li>
-                      <li>• 1 неделя: 35K</li>
-                      <li>• 2-3 дня: 40K</li>
-                      <li>• 24 часа: 50K</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="font-semibold mb-2">🔴 При 100% предоплате:</div>
-                    <ul className="space-y-1 text-white/70">
-                      <li>• 2-3 недели: 20K</li>
-                      <li>• 1-2 недели: 25K</li>
-                      <li>• 1 неделя: 30K</li>
-                      <li>• 2-3 дня: 35K</li>
-                      <li>• 24 часа: 45K</li>
-                    </ul>
-                  </div>
-                  <div className="pt-2 border-t border-white/10">
-                    <div className="font-semibold mb-1">✨ «Песня под ключ»:</div>
-                    <div className="text-white/70">Полное написание песни с мелодиями и текстом (можно без текста). Права переходят к заказчику, никаких указаний авторства!</div>
-                  </div>
-                  <div className="pt-2 border-t border-white/10">
-                    <div className="font-semibold mb-1">🎶 Бит в стиле трэп:</div>
-                    <div className="text-white/70">Простая трэпчага в стиле Travis Scott, Yeat, Lil Baby, Pop Smoke и др. — 15K</div>
-                  </div>
-                </div>
-                <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[#0a0a0a]"></div>
-              </div>
-            </div>
-          </div>
+          <OrderPriceGuide pricing={servicePricing} variant="inline" className="mt-4" />
         </div>
 
         {/* Чекбокс — перед кнопкой оформления */}

@@ -1012,6 +1012,7 @@ class SiteSettingsUpdate(BaseModel):
     promo_banners_fullscreen: Optional[bool] = None
     ads_prices: Optional[dict] = None
     ads_price_per_day: Optional[float] = None
+    service_order_pricing: Optional[dict] = None
 
 class HomeHeroUpdate(BaseModel):
     """Схема обновления hero главной"""
@@ -1204,6 +1205,14 @@ def get_ads_price_per_day(db: Session) -> float:
     if seven:
         return normalize_ads_price_per_day(float(seven) / 7.0)
     return DAY_DEFAULT
+
+
+def get_service_order_pricing(db: Session) -> dict:
+    from service_order_pricing import parse_service_order_pricing_json
+
+    raw = get_site_setting_value(db, "service_order_pricing", "")
+    return parse_service_order_pricing_json(raw)
+
 
 def get_active_ads_sale(db: Session) -> Optional[dict]:
     sales = [s for s in load_active_sales(db) if getattr(s, "scope", None) == "ads"]
@@ -4522,6 +4531,7 @@ def get_public_site_settings(db: Session = Depends(get_db)):
         "ads_price_per_day": get_ads_price_per_day(db),
         "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
+        "service_order_pricing": get_service_order_pricing(db),
     }
 
 @app.get("/api/admin/site-settings")
@@ -4536,6 +4546,7 @@ def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user
         "ads_price_per_day": get_ads_price_per_day(db),
         "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
+        "service_order_pricing": get_service_order_pricing(db),
     }
 
 @app.put("/api/admin/site-settings")
@@ -4581,6 +4592,16 @@ def update_admin_site_settings(
             str(normalize_ads_price_per_day(update_data.ads_price_per_day)),
         )
 
+    if update_data.service_order_pricing is not None:
+        from service_order_pricing import normalize_service_order_pricing
+
+        normalized = normalize_service_order_pricing(update_data.service_order_pricing)
+        upsert_site_setting(
+            db,
+            "service_order_pricing",
+            json.dumps(normalized, ensure_ascii=False),
+        )
+
     return {
         "message": "Site settings updated successfully",
         "settings": {
@@ -4593,6 +4614,7 @@ def update_admin_site_settings(
             "ads_price_per_day": get_ads_price_per_day(db),
             "ads_sale": get_active_ads_sale(db),
             "home_hero": get_home_hero(db),
+            "service_order_pricing": get_service_order_pricing(db),
         }
     }
 
