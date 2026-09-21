@@ -232,6 +232,8 @@ def update_database_schema():
                     "image_position": "left",
                     "cta_label": None,
                     "cta_href": None,
+                    "show_search": True,
+                    "show_filters": True,
                 }
                 db.add(SiteSetting(key="home_hero", value=json.dumps(default_hero, ensure_ascii=False)))
                 db.commit()
@@ -862,6 +864,8 @@ DEFAULT_HOME_HERO = {
     "image_position": "left",
     "cta_label": None,
     "cta_href": None,
+    "show_search": True,
+    "show_filters": True,
 }
 
 
@@ -884,6 +888,8 @@ class HomeHeroUpdate(BaseModel):
     image_position: Optional[str] = None
     cta_label: Optional[str] = None
     cta_href: Optional[str] = None
+    show_search: Optional[bool] = None
+    show_filters: Optional[bool] = None
 
 class PromoBannerCreate(BaseModel):
     """Схема создания промо-баннера"""
@@ -926,6 +932,9 @@ def get_home_hero(db: Session) -> dict:
         merged = dict(DEFAULT_HOME_HERO)
         merged.update({k: data.get(k, merged[k]) for k in DEFAULT_HOME_HERO.keys()})
         merged["image_position"] = normalize_hero_image_position(merged.get("image_position"))
+        merged["enabled"] = merged.get("enabled") is not False
+        merged["show_search"] = merged.get("show_search") is not False
+        merged["show_filters"] = merged.get("show_filters") is not False
         return merged
     except (json.JSONDecodeError, TypeError):
         return dict(DEFAULT_HOME_HERO)
@@ -934,6 +943,9 @@ def save_home_hero(db: Session, hero: dict) -> dict:
     normalized = dict(DEFAULT_HOME_HERO)
     normalized.update({k: hero.get(k, normalized[k]) for k in DEFAULT_HOME_HERO.keys()})
     normalized["image_position"] = normalize_hero_image_position(normalized.get("image_position"))
+    normalized["enabled"] = normalized.get("enabled") is not False
+    normalized["show_search"] = normalized.get("show_search") is not False
+    normalized["show_filters"] = normalized.get("show_filters") is not False
     setting = db.query(SiteSetting).filter(SiteSetting.key == "home_hero").first()
     payload = json.dumps(normalized, ensure_ascii=False)
     if not setting:

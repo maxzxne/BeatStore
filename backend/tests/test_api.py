@@ -458,6 +458,29 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.json()["home_hero"]["image_position"], "left")
 
+    def test_admin_hero_catalog_toggles_default_on_and_can_hide(self):
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.status_code, 200)
+        hero = public.json()["home_hero"]
+        self.assertTrue(hero["show_search"])
+        self.assertTrue(hero["show_filters"])
+
+        response = self.client.put(
+            "/api/admin/site-settings/hero",
+            headers=auth(self.admin_token),
+            json={"show_search": False, "show_filters": False},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        saved = response.json()["home_hero"]
+        self.assertFalse(saved["show_search"])
+        self.assertFalse(saved["show_filters"])
+
+        public_again = self.client.get("/site-settings")
+        self.assertEqual(public_again.status_code, 200)
+        hero_again = public_again.json()["home_hero"]
+        self.assertFalse(hero_again["show_search"])
+        self.assertFalse(hero_again["show_filters"])
+
     def test_download_after_pay_without_file_is_not_granted_to_stranger(self):
         beat = add_beat(self.db)
         created = self.client.post(

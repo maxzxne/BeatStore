@@ -15,6 +15,8 @@ export const DEFAULT_HOME_HERO = {
   image_position: 'left',
   cta_label: null,
   cta_href: null,
+  show_search: true,
+  show_filters: true,
 };
 
 export function normalizeHeroImagePosition(value) {
@@ -36,6 +38,8 @@ function normalizeHomeHero(raw) {
     image_position: normalizeHeroImagePosition(raw.image_position),
     cta_label: raw.cta_label || null,
     cta_href: raw.cta_href || null,
+    show_search: raw.show_search !== false,
+    show_filters: raw.show_filters !== false,
   };
 }
 

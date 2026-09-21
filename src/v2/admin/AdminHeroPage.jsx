@@ -20,6 +20,8 @@ const emptyHero = {
   image_position: 'left',
   cta_label: '',
   cta_href: '',
+  show_search: true,
+  show_filters: true,
 };
 
 function formFromHero(data) {
@@ -32,6 +34,8 @@ function formFromHero(data) {
     image_position: normalizeHeroImagePosition(data?.image_position),
     cta_label: data?.cta_label ?? '',
     cta_href: data?.cta_href ?? '',
+    show_search: data?.show_search !== false,
+    show_filters: data?.show_filters !== false,
   };
 }
 
@@ -133,6 +137,8 @@ const AdminHeroPage = () => {
         image_position: normalizeHeroImagePosition(form.image_position),
         cta_label: form.cta_label || null,
         cta_href: form.cta_href || null,
+        show_search: Boolean(form.show_search),
+        show_filters: Boolean(form.show_filters),
       };
       const { data } = await api.put('/api/admin/site-settings/hero', payload);
       const saved = data?.home_hero || payload;
@@ -173,7 +179,7 @@ const AdminHeroPage = () => {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-[Syne] text-2xl font-bold text-white sm:text-3xl">Главный экран</h1>
-          <p className="mt-1 text-sm text-white/45">Hero на главной: тексты, картинка, расположение, вкл/выкл</p>
+          <p className="mt-1 text-sm text-white/45">Hero на главной: тексты, картинка, поиск/фильтры, вкл/выкл</p>
         </div>
         <button
           type="button"
@@ -254,6 +260,32 @@ const AdminHeroPage = () => {
               type="checkbox"
               checked={Boolean(form.enabled)}
               onChange={(e) => setField('enabled', e.target.checked)}
+              className="h-5 w-5 accent-[#22c55e]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <div>
+              <div className="text-sm font-medium text-white">Показывать поиск</div>
+              <div className="text-xs text-white/40">Строка поиска над каталогом битов</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={Boolean(form.show_search)}
+              onChange={(e) => setField('show_search', e.target.checked)}
+              className="h-5 w-5 accent-[#22c55e]"
+            />
+          </label>
+
+          <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <div>
+              <div className="text-sm font-medium text-white">Показывать фильтры</div>
+              <div className="text-xs text-white/40">Кнопка и панель фильтров каталога</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={Boolean(form.show_filters)}
+              onChange={(e) => setField('show_filters', e.target.checked)}
               className="h-5 w-5 accent-[#22c55e]"
             />
           </label>

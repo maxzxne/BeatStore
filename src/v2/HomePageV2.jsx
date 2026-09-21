@@ -64,22 +64,44 @@ const HomePageV2 = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [query, setQuery] = useState(searchParams.get('search') || '');
 
+  const showSearch = homeHero?.show_search !== false;
+  const showFilters = homeHero?.show_filters !== false;
+  const showToolbar = showSearch || showFilters;
+
   useEffect(() => {
     fetchBeats();
     fetchGenres();
     if (isAuthenticated) fetchPurchasedBeats();
-  }, [filters, searchParams, isAuthenticated]);
+  }, [filters, searchParams, isAuthenticated, showSearch, showFilters]);
+
+  useEffect(() => {
+    if (!showFilters) {
+      setFiltersOpen(false);
+      setFilters({});
+    }
+  }, [showFilters]);
+
+  useEffect(() => {
+    if (!showSearch && searchParams.get('search')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('search');
+      setSearchParams(next, { replace: true });
+      setQuery('');
+    }
+  }, [showSearch, searchParams, setSearchParams]);
 
   const fetchBeats = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value);
-      });
+      if (showFilters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value) params.append(key, value);
+        });
+      }
       const response = await api.get(`/beats?${params.toString()}`);
       let filteredBeats = Array.isArray(response.data) ? response.data : [];
-      const search = searchParams.get('search');
+      const search = showSearch ? searchParams.get('search') : null;
       if (search) {
         filteredBeats = filteredBeats.filter((beat) =>
           beat.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -87,10 +109,10 @@ const HomePageV2 = () => {
           beat.genre.toLowerCase().includes(search.toLowerCase())
         );
       }
-      if (filters.purchased === 'purchased') {
+      if (showFilters && filters.purchased === 'purchased') {
         const ids = purchasedBeats.map((b) => b.id);
         filteredBeats = filteredBeats.filter((b) => ids.includes(b.id));
-      } else if (filters.purchased === 'not_purchased') {
+      } else if (showFilters && filters.purchased === 'not_purchased') {
         const ids = purchasedBeats.map((b) => b.id);
         filteredBeats = filteredBeats.filter((b) => !ids.includes(b.id));
       }
@@ -124,13 +146,14 @@ const HomePageV2 = () => {
 
   const submitSearch = (e) => {
     e.preventDefault();
+    if (!showSearch) return;
     const next = new URLSearchParams(searchParams);
     if (query.trim()) next.set('search', query.trim());
     else next.delete('search');
     setSearchParams(next);
   };
 
-  const filtersActive = Object.values(filters).some((value) => value);
+  const filtersActive = showFilters && Object.values(filters).some((value) => value);
   const heroEnabled = homeHero?.enabled !== false;
   const heroImage = homeHero?.image_url ? buildMediaUrl(homeHero.image_url) : null;
   const heroPosition = normalizeHeroImagePosition(homeHero?.image_position);
@@ -180,42 +203,52 @@ const HomePageV2 = () => {
       <div className="v2-catalog mx-auto max-w-6xl px-4 pb-12">
         <PromoSliderV2 />
 
-        <div className="v2-toolbar v2-reveal mb-4">
-          <form onSubmit={submitSearch} className="v2-search" role="search">
-            <Search className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск по названию, артисту, жанру"
-              className="v2-search-input"
-              aria-label="Поиск по названию, артисту, жанру"
+        {showToolbar ? (
+          <div className="v2-toolbar v2-reveal mb-4">
+            {showSearch ? (
+              <form onSubmit={submitSearch} className="v2-search" role="search">
+                <Search className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Поиск по названию, артисту, жанру"
+                  className="v2-search-input"
+                  aria-label="Поиск по названию, артисту, жанру"
+                />
+              </form>
+            ) : null}
+            {showFilters ? (
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((prev) => !prev)}
+                className={`v2-filter-btn ${filtersOpen || filtersActive ? 'is-on' : ''}`}
+                aria-expanded={filtersOpen}
+                aria-controls="v2-beat-filters"
+              >
+                <Filter className="h-4 w-4" />
+                Фильтры
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        <p className={`text-sm text-white/50 ${showToolbar ? 'mb-4' : 'mb-6'}`}>
+          {loading ? 'Загрузка...' : ruCount(beats.length, 'трек', 'трека', 'треков')}
+        </p>
+
+        {showFilters ? (
+          <div id="v2-beat-filters" className="v2-filters">
+            <Filters
+              onFilterChange={setFilters}
+              genres={genres}
+              currentFilters={filters}
+              isOpen={filtersOpen}
+              onToggle={setFiltersOpen}
+              hideTrigger
             />
-          </form>
-          <button
-            type="button"
-            onClick={() => setFiltersOpen((prev) => !prev)}
-            className={`v2-filter-btn ${filtersOpen || filtersActive ? 'is-on' : ''}`}
-            aria-expanded={filtersOpen}
-            aria-controls="v2-beat-filters"
-          >
-            <Filter className="h-4 w-4" />
-            Фильтры
-          </button>
-        </div>
-
-        <p className="mb-4 text-sm text-white/50">{loading ? 'Загрузка...' : ruCount(beats.length, 'трек', 'трека', 'треков')}</p>
-
-        <div id="v2-beat-filters" className="v2-filters">
-          <Filters
-            onFilterChange={setFilters}
-            genres={genres}
-            currentFilters={filters}
-            isOpen={filtersOpen}
-            onToggle={setFiltersOpen}
-            hideTrigger
-          />
-        </div>
+          </div>
+        ) : null}
 
         {loading ? (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
