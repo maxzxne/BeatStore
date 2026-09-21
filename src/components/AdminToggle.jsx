@@ -24,7 +24,7 @@ export default function AdminToggle({
 
   return (
     <label
-      className={`inline-flex shrink-0 cursor-pointer items-center self-center p-2 -m-2 ${
+      className={`relative inline-flex shrink-0 cursor-pointer items-center self-center overflow-hidden p-2 -m-2 ${
         disabled ? 'cursor-not-allowed opacity-50' : ''
       } ${className}`.trim()}
     >

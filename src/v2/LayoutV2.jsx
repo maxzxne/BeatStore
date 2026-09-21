@@ -56,14 +56,18 @@ const LayoutV2 = ({ admin = false }) => {
   const year = new Date().getFullYear();
 
   return (
-    <div className="min-h-screen w-full flex flex-col text-white">
+    <div
+      className={`flex w-full flex-col text-white ${
+        isAdminRoute ? 'h-dvh max-h-dvh overflow-hidden' : 'min-h-screen'
+      }`}
+    >
       {isAdminRoute ? (
-        <div className="v2-admin flex h-screen overflow-hidden">
+        <div className="v2-admin flex h-dvh max-h-dvh min-h-0 w-full overflow-hidden">
           <SidebarV2 />
-          <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <HeaderV2 admin />
-            <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
-              <div className="container mx-auto px-4 sm:px-6 py-6">
+            <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+              <div className="container mx-auto px-4 py-6 sm:px-6">
                 <Outlet />
               </div>
             </main>
