@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   DEFAULT_SERVICE_ORDER_PRICING,
   getServicePrice,
+  groupPriceVariableChips,
   listPriceVariableChips,
   normalizeServiceOrderPricing,
   substitutePriceVars,
@@ -29,6 +30,13 @@ describe('serviceOrderPricing', () => {
     const chips = listPriceVariableChips(DEFAULT_SERVICE_ORDER_PRICING);
     assert.ok(chips.some((c) => c.token === '{{trap}}'));
     assert.ok(chips.some((c) => c.token === '{{p50_21}}'));
+  });
+
+  it('groups chips by category', () => {
+    const grouped = groupPriceVariableChips(listPriceVariableChips(DEFAULT_SERVICE_ORDER_PRICING));
+    assert.equal(grouped[0].group, 'base');
+    assert.ok(grouped.some((g) => g.group === 'p50'));
+    assert.ok(grouped.some((g) => g.group === 'p100'));
   });
 
   it('resolves price by deadline', () => {

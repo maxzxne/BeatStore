@@ -4,7 +4,7 @@
  * Personal notes live in SQLite (API), not here.
  */
 
-export const ADMIN_GUIDE_VERSION = '2026-09-21';
+export const ADMIN_GUIDE_VERSION = '2026-09-21b';
 
 /** @typedef {{ type: 'p'|'h3'|'ul'|'ol'|'steps'|'tip'|'warn'|'link', text?: string, items?: string[], href?: string, label?: string }} GuideBlock */
 /** @typedef {{ id: string, title: string, group: string, adminPath?: string|null, publicPaths?: string[], keywords?: string[], blocks: GuideBlock[] }} GuideSection */
@@ -656,7 +656,7 @@ export const guideSections = [
           'courses_visibility — all / admins_only / hidden',
           'ads_orders_enabled — витрина /order/ads',
           'ads_price_per_day — ставка ₽/день для расчёта заявки',
-          'Прайс услуг — таблица сроков/цен и тексты плашки на /order; переменные вставляются кнопками ({{trap}}, {{from}}, {{p50_21}}…)',
+          'Прайс услуг — таблица сроков/цен и тексты плашки на /order: слева группы полей, справа переменные + превью; клик по полю → кнопка суммы вставляет {{trap}} / {{from}} / {{p50_21}}…',
           'Системный доступ (скрыто, 5 кликов по «···» внизу): maintenance 503 + HTTP Basic Auth',
           'totp_enabled — требовать 2FA у пользователей (где включено)',
           'captcha_enabled — SmartCaptcha на логине/регистрации',
@@ -665,7 +665,7 @@ export const guideSections = [
       },
       {
         type: 'tip',
-        text: 'В текстах прайса не пиши суммы руками — нажми чип «50% · Неделя» и т.п.: на витрине подставится число из таблицы. Превью плашки сразу под формой.',
+        text: 'В текстах прайса не пиши суммы руками — кликни поле, справа выбери чип («Неделя» в группе 50%/100%): на витрине подставится число из таблицы. Превью плашки рядом со списком переменных.',
       },
       {
         type: 'tip',

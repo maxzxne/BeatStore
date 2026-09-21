@@ -75,24 +75,44 @@ export function normalizeServiceOrderPricing(raw) {
   return base;
 }
 
-/** Chips for non-dev admins: label → token */
+/** Chips for non-dev admins: label → token, grouped for CMS UI */
 export function listPriceVariableChips(pricing) {
   const data = normalizeServiceOrderPricing(pricing);
   const chips = [
-    { token: '{{trap}}', label: 'Цена трэп-бита' },
-    { token: '{{from}}', label: 'Минимальная цена (от …)' },
+    { token: '{{trap}}', label: 'Трэп-бит', group: 'base', groupLabel: 'Базовые' },
+    { token: '{{from}}', label: 'Минимум (от …)', group: 'base', groupLabel: 'Базовые' },
   ];
   data.deadlines.forEach((row) => {
     chips.push({
       token: `{{p50_${row.days}}}`,
-      label: `50% · ${row.label}`,
+      label: row.label,
+      group: 'p50',
+      groupLabel: 'Предоплата 50%',
     });
     chips.push({
       token: `{{p100_${row.days}}}`,
-      label: `100% · ${row.label}`,
+      label: row.label,
+      group: 'p100',
+      groupLabel: 'Оплата 100%',
     });
   });
   return chips;
+}
+
+/** Group chips preserving order of first appearance. */
+export function groupPriceVariableChips(chips) {
+  const list = Array.isArray(chips) ? chips : [];
+  const order = [];
+  const map = new Map();
+  for (const chip of list) {
+    const key = chip.group || 'other';
+    if (!map.has(key)) {
+      map.set(key, { group: key, groupLabel: chip.groupLabel || key, chips: [] });
+      order.push(key);
+    }
+    map.get(key).chips.push(chip);
+  }
+  return order.map((key) => map.get(key));
 }
 
 export function buildPriceVars(pricing) {

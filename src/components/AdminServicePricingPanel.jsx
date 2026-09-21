@@ -5,21 +5,54 @@ import { useNotification } from '../contexts/NotificationContext';
 import OrderPriceGuide from './OrderPriceGuide';
 import {
   DEFAULT_SERVICE_ORDER_PRICING,
+  groupPriceVariableChips,
   listPriceVariableChips,
   normalizeServiceOrderPricing,
   substitutePriceVars,
 } from '../utils/serviceOrderPricing';
 
-const COPY_FIELDS = [
-  { key: 'guide_title', label: 'Заголовок плашки', rows: 1 },
-  { key: 'guide_subtitle', label: 'Подзаголовок (свёрнутая плашка)', rows: 2 },
-  { key: 'col_50_title', label: 'Колонка 50%', rows: 1 },
-  { key: 'col_100_title', label: 'Колонка 100%', rows: 1 },
-  { key: 'song_title', label: 'Заголовок «Песня под ключ»', rows: 1 },
-  { key: 'song_body', label: 'Текст «Песня под ключ»', rows: 3 },
-  { key: 'trap_title', label: 'Заголовок трэп-бита', rows: 1 },
-  { key: 'trap_body', label: 'Текст трэп-бита', rows: 3 },
+const FIELD_GROUPS = [
+  {
+    id: 'guide',
+    title: 'Плашка',
+    hint: 'Заголовок и строка в свёрнутом виде на /order',
+    fields: [
+      { key: 'guide_title', label: 'Заголовок', rows: 1 },
+      { key: 'guide_subtitle', label: 'Подзаголовок (свёрнутая)', rows: 2 },
+    ],
+  },
+  {
+    id: 'cols',
+    title: 'Колонки оплаты',
+    hint: 'Подписи столбцов 50% / 100% в таблице прайса',
+    fields: [
+      { key: 'col_50_title', label: 'Колонка 50%', rows: 1 },
+      { key: 'col_100_title', label: 'Колонка 100%', rows: 1 },
+    ],
+  },
+  {
+    id: 'song',
+    title: 'Песня под ключ',
+    hint: 'Блок услуги в развёрнутой плашке',
+    fields: [
+      { key: 'song_title', label: 'Заголовок', rows: 1 },
+      { key: 'song_body', label: 'Описание', rows: 3 },
+    ],
+  },
+  {
+    id: 'trap',
+    title: 'Трэп-бит',
+    hint: 'Фикс-цена и тексты блока',
+    fields: [
+      { key: 'trap_title', label: 'Заголовок', rows: 1 },
+      { key: 'trap_body', label: 'Описание', rows: 3 },
+    ],
+  },
 ];
+
+const FIELD_LABELS = Object.fromEntries(
+  FIELD_GROUPS.flatMap((g) => g.fields.map((f) => [f.key, f.label])),
+);
 
 function insertAtCursor(el, token) {
   if (!el) return token;
@@ -33,19 +66,68 @@ function insertAtCursor(el, token) {
   return next;
 }
 
+function CopyField({ field, value, active, preview, onFocus, onChange, fieldRef }) {
+  const inputClass = [
+    'w-full rounded-xl border bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30',
+    'focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40',
+    active ? 'border-[#22c55e]/45' : 'border-white/10',
+  ].join(' ');
+
+  return (
+    <label className="block">
+      <span className="mb-1.5 flex items-center justify-between gap-2 text-xs font-medium text-white/55">
+        <span>{field.label}</span>
+        {active ? (
+          <span className="rounded-md bg-[#22c55e]/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#86efac]">
+            вставка сюда
+          </span>
+        ) : null}
+      </span>
+      {field.rows > 1 ? (
+        <textarea
+          ref={fieldRef}
+          rows={field.rows}
+          value={value}
+          onFocus={onFocus}
+          onChange={onChange}
+          className={inputClass}
+        />
+      ) : (
+        <input
+          ref={fieldRef}
+          type="text"
+          value={value}
+          onFocus={onFocus}
+          onChange={onChange}
+          className={inputClass}
+        />
+      )}
+      {preview ? (
+        <p className="mt-1.5 rounded-lg border border-white/5 bg-black/30 px-2.5 py-1.5 text-xs leading-relaxed text-white/40">
+          Клиент увидит:{' '}
+          <span className="text-white/75">{preview}</span>
+        </p>
+      ) : null}
+    </label>
+  );
+}
+
 /**
  * Admin CMS for /order service pricing + copy with insertable price chips.
  */
 export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
   const { showSuccess, showError } = useNotification();
   const [draft, setDraft] = useState(() =>
-    normalizeServiceOrderPricing(initialPricing || DEFAULT_SERVICE_ORDER_PRICING)
+    normalizeServiceOrderPricing(initialPricing || DEFAULT_SERVICE_ORDER_PRICING),
   );
   const [saving, setSaving] = useState(false);
   const [activeField, setActiveField] = useState('guide_subtitle');
   const fieldRefs = useRef({});
 
-  const chips = useMemo(() => listPriceVariableChips(draft), [draft]);
+  const chipGroups = useMemo(
+    () => groupPriceVariableChips(listPriceVariableChips(draft)),
+    [draft],
+  );
 
   const updateDeadline = (index, patch) => {
     setDraft((prev) => {
@@ -115,6 +197,8 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
     setDraft(normalizeServiceOrderPricing(DEFAULT_SERVICE_ORDER_PRICING));
   };
 
+  const activeLabel = FIELD_LABELS[activeField] || activeField;
+
   return (
     <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
       <div className="mb-5 flex flex-wrap items-start gap-3">
@@ -123,17 +207,18 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="font-[Syne] text-lg font-semibold text-white">Прайс услуг (/order)</h2>
-          <p className="mt-1 text-xs leading-relaxed text-white/40">
-            Цифры в таблице — источник правды. В текстах можно вставлять переменные кнопками ниже —
-            на сайте подставятся актуальные суммы (например 25 000 ₽). Не нужно писать код.
+          <p className="mt-1 text-xs leading-relaxed text-white/45">
+            Сначала таблица цен — источник правды. Потом тексты плашки: кликни поле слева и вставь
+            сумму кнопкой справа.
           </p>
         </div>
       </div>
 
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-white">Сроки и цены за одну услугу</h3>
+      {/* Deadlines table */}
+      <section className="mb-8">
+        <h3 className="text-sm font-semibold text-white">Сроки и цены</h3>
         <p className="mt-1 text-xs text-white/40">
-          Дни используют расчёт на витрине. Подпись — то, что видит клиент на кнопках срока.
+          Дни — расчёт на витрине. Подпись — то, что видит клиент на кнопках срока.
         </p>
         <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
           <table className="min-w-full text-left text-sm">
@@ -184,7 +269,9 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
                       min="0"
                       step="500"
                       value={row.price_50}
-                      onChange={(e) => updateDeadline(index, { price_50: Number(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        updateDeadline(index, { price_50: Number(e.target.value) || 0 })
+                      }
                       className="w-24 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 tabular-nums text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
                       aria-label={`Цена 50% ${row.label}`}
                     />
@@ -195,7 +282,9 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
                       min="0"
                       step="500"
                       value={row.price_100}
-                      onChange={(e) => updateDeadline(index, { price_100: Number(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        updateDeadline(index, { price_100: Number(e.target.value) || 0 })
+                      }
                       className="w-24 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 tabular-nums text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
                       aria-label={`Цена 100% ${row.label}`}
                     />
@@ -224,88 +313,124 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
           <Plus className="h-4 w-4" />
           Добавить срок
         </button>
-      </div>
+      </section>
 
-      <label className="mb-6 block max-w-xs">
-        <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">Трэп-бит, ₽</span>
-        <input
-          type="number"
-          min="0"
-          step="500"
-          value={draft.trap_price}
-          onChange={(e) => setDraft((prev) => ({ ...prev, trap_price: Number(e.target.value) || 0 }))}
-          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 tabular-nums text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
-          aria-label="Цена трэп-бита"
-        />
-      </label>
-
-      <div className="mb-4">
-        <h3 className="text-sm font-medium text-white">Тексты плашки</h3>
-        <p className="mt-1 text-xs text-white/40">
-          Кликни поле, затем кнопку переменной — вставится метка. На сайте она станет суммой из таблицы.
-        </p>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {chips.map((chip) => (
-            <button
-              key={chip.token}
-              type="button"
-              onClick={() => insertChip(chip.token)}
-              title={`Вставит ${chip.token} → ${substitutePriceVars(chip.token, draft)}`}
-              className="inline-flex min-h-9 cursor-pointer items-center rounded-full border border-[#22c55e]/30 bg-[#22c55e]/10 px-3 text-xs font-medium text-[#86efac] transition hover:bg-[#22c55e]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/45"
-            >
-              {chip.label}
-              <span className="ml-1.5 tabular-nums text-[#22c55e]/80">
-                {substitutePriceVars(chip.token, draft)}
-              </span>
-            </button>
-          ))}
+      {/* Copy editor + variables + preview */}
+      <section>
+        <div className="mb-3">
+          <h3 className="text-sm font-semibold text-white">Тексты плашки</h3>
+          <p className="mt-1 text-xs text-white/40">
+            Поле слева → переменная справа. На сайте метка станет суммой из таблицы.
+          </p>
         </div>
 
-        <div className="mt-4 space-y-4">
-          {COPY_FIELDS.map((field) => (
-            <label key={field.key} className="block">
-              <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">{field.label}</span>
-              {field.rows > 1 ? (
-                <textarea
-                  ref={(el) => {
-                    fieldRefs.current[field.key] = el;
-                  }}
-                  rows={field.rows}
-                  value={draft.copy[field.key] || ''}
-                  onFocus={() => setActiveField(field.key)}
-                  onChange={(e) => setCopy(field.key, e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
-                />
-              ) : (
-                <input
-                  ref={(el) => {
-                    fieldRefs.current[field.key] = el;
-                  }}
-                  type="text"
-                  value={draft.copy[field.key] || ''}
-                  onFocus={() => setActiveField(field.key)}
-                  onChange={(e) => setCopy(field.key, e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
-                />
-              )}
-              {(draft.copy[field.key] || '').includes('{{') && (
-                <p className="mt-1 text-xs text-white/35">
-                  Как увидит клиент:{' '}
-                  <span className="text-white/60">{substitutePriceVars(draft.copy[field.key], draft)}</span>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)] xl:items-start">
+          <div className="space-y-3">
+            {FIELD_GROUPS.map((group) => (
+              <div
+                key={group.id}
+                className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
+              >
+                <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                  <h4 className="font-[Syne] text-sm font-semibold text-white">{group.title}</h4>
+                  <p className="text-[11px] text-white/35">{group.hint}</p>
+                </div>
+
+                {group.id === 'trap' ? (
+                  <label className="mb-3 block max-w-[12rem]">
+                    <span className="mb-1.5 block text-xs font-medium text-white/55">Цена, ₽</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="500"
+                      value={draft.trap_price}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          trap_price: Number(e.target.value) || 0,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 tabular-nums text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
+                      aria-label="Цена трэп-бита"
+                    />
+                  </label>
+                ) : null}
+
+                <div className="space-y-3">
+                  {group.fields.map((field) => {
+                    const value = draft.copy[field.key] || '';
+                    const hasToken = value.includes('{{');
+                    return (
+                      <CopyField
+                        key={field.key}
+                        field={field}
+                        value={value}
+                        active={activeField === field.key}
+                        preview={hasToken ? substitutePriceVars(value, draft) : ''}
+                        onFocus={() => setActiveField(field.key)}
+                        onChange={(e) => setCopy(field.key, e.target.value)}
+                        fieldRef={(el) => {
+                          fieldRefs.current[field.key] = el;
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <aside className="space-y-3 xl:sticky xl:top-4">
+            <div className="rounded-xl border border-white/10 bg-black/40 p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+                  Переменные
                 </p>
-              )}
-            </label>
-          ))}
+                <p className="truncate text-[11px] text-[#86efac]" title={activeLabel}>
+                  → {activeLabel}
+                </p>
+              </div>
+              <div className="max-h-[22rem] space-y-3 overflow-y-auto pr-0.5">
+                {chipGroups.map((bucket) => (
+                  <div key={bucket.group}>
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/30">
+                      {bucket.groupLabel}
+                    </p>
+                    <div className="flex flex-col gap-1">
+                      {bucket.chips.map((chip) => {
+                        const amount = substitutePriceVars(chip.token, draft);
+                        return (
+                          <button
+                            key={chip.token}
+                            type="button"
+                            onClick={() => insertChip(chip.token)}
+                            title={`Вставит ${chip.token}`}
+                            className="flex min-h-10 w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-left text-xs transition hover:border-[#22c55e]/35 hover:bg-[#22c55e]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/45"
+                          >
+                            <span className="min-w-0 truncate font-medium text-white/80">
+                              {chip.label}
+                            </span>
+                            <span className="shrink-0 tabular-nums text-[#22c55e]">{amount}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-white/15 bg-black/20 p-3">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/35">
+                Превью
+              </p>
+              <OrderPriceGuide pricing={draft} variant="panel" defaultOpen />
+            </div>
+          </aside>
         </div>
-      </div>
+      </section>
 
-      <div className="mb-5 rounded-xl border border-dashed border-white/15 bg-black/20 p-3">
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/35">Превью на витрине</p>
-        <OrderPriceGuide pricing={draft} variant="panel" defaultOpen />
-      </div>
-
-      <div className="flex flex-wrap gap-3">
+      <div className="mt-6 flex flex-wrap gap-3 border-t border-white/10 pt-5">
         <button
           type="button"
           onClick={save}
