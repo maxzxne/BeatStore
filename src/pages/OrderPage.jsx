@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
-import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { checkoutErrorMessage, startCheckout, withPromo } from '../utils/checkout';
 import {
   CONTACT_TYPES,
   contactsFromUser,
@@ -28,6 +28,7 @@ import {
   ClipboardList,
   MessageSquare,
 } from 'lucide-react';
+import { PromoCodeField } from '../v2/DiscountUi';
 
 const orderContactFromUser = (user) => {
   if (!user) return '';
@@ -64,6 +65,7 @@ const OrderPage = () => {
   });
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
   // Wizard steps for detailed form only: 1=contact, 2=services+deadline, 3=refs+review+submit
   const [wizardStep, setWizardStep] = useState(1);
   // Сворачиваемые блоки: пользователь свернут, если авторизован и поля предзаполнены
@@ -438,10 +440,10 @@ const OrderPage = () => {
       // Если есть цена, переходим на тестовую страницу оплаты
       if (calculatedTotalPrice > 0) {
         try {
-          await startCheckout({
+          await startCheckout(withPromo({
             kind: 'order',
             order_id: orderId,
-          });
+          }, promoCode));
         } catch (error) {
           showError(checkoutErrorMessage(error));
         }
@@ -1447,6 +1449,10 @@ const OrderPage = () => {
             </span>
           </label>
         </div>
+
+        {totalPrice > 0 && (
+          <PromoCodeField value={promoCode} onChange={setPromoCode} className="mt-6" />
+        )}
 
         <button
           type="submit"

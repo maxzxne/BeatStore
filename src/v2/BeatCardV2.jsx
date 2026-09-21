@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Play, Pause, Heart, ShoppingCart } from 'lucide-react';
+import { PriceLabel } from './DiscountUi';
 import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { api, buildMediaUrl } from '../utils/api';
@@ -72,7 +73,6 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
   };
 
   const playing = isCurrentTrackPlaying(beat.id);
-  const price = beat.price === 0 ? 'Free' : `${beat.price?.toFixed?.(0) ?? beat.price} ₽`;
 
   return (
     <Link
@@ -125,7 +125,7 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
             {beat.key && <><span>·</span><span>{beat.key}</span></>}
           </div>
           <div className="flex items-center justify-between gap-2 pt-1">
-            <span className="text-sm font-semibold text-[#22c55e]">{price}</span>
+            <PriceLabel amount={beat.price} was={beat.price_was} className="text-sm font-semibold text-[#22c55e]" />
             {(isAuthenticated || !isPurchased) && (
               <div className="flex shrink-0 gap-1">
                 <button type="button" onClick={(e) => toggle(e, 'fav')} className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10" aria-label="Избранное">

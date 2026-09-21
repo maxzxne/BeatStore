@@ -4,11 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
-import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { checkoutErrorMessage, startCheckout, withPromo } from '../utils/checkout';
 import { loginPath } from '../utils/authRedirect';
 import { addGuestCourse, isInGuestCart, removeGuestCourse } from '../utils/guestCart';
 import { ArrowLeft, Heart, ShoppingCart, Download, Play, Pause, CheckCircle, Maximize2, Minimize2 } from 'lucide-react';
 import { isElementFullscreen, isVideoNativeFullscreen, togglePlayerFullscreen } from '../utils/videoFullscreen';
+import { PriceLabel, PromoCodeField } from '../v2/DiscountUi';
 
 const CourseDetailPage = () => {
   const { id } = useParams();
@@ -22,6 +23,7 @@ const CourseDetailPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
   const [isPurchased, setIsPurchased] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -167,10 +169,10 @@ const CourseDetailPage = () => {
     } else {
       // Для платных курсов переходим на тестовую страницу оплаты
       try {
-        await startCheckout({
+        await startCheckout(withPromo({
           kind: 'course',
           item_id: Number(id),
-        });
+        }, promoCode));
       } catch (error) {
         showError(checkoutErrorMessage(error));
       }
@@ -447,13 +449,18 @@ const CourseDetailPage = () => {
                 Скачать курс
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={handlePurchase}
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110"
-              >
-                {course.price === 0 ? 'Получить бесплатно' : `Купить за ${course.price.toFixed(0)} ₽`}
-              </button>
+              <div className="space-y-3">
+                {course.price > 0 && (
+                  <PromoCodeField value={promoCode} onChange={setPromoCode} />
+                )}
+                <button
+                  type="button"
+                  onClick={handlePurchase}
+                  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110"
+                >
+                  {course.price === 0 ? 'Получить бесплатно' : `Купить за ${course.price.toFixed(0)} ₽`}
+                </button>
+              </div>
             )}
 
             {isAuthenticated && (
@@ -497,7 +504,7 @@ const CourseDetailPage = () => {
           )}
 
           <div className="font-[Syne] text-3xl font-extrabold text-white">
-            {course.price === 0 ? 'Бесплатно' : `${course.price.toFixed(0)} ₽`}
+            <PriceLabel amount={course.price} was={course.price_was} freeLabel="Бесплатно" />
           </div>
 
           {course.description && (

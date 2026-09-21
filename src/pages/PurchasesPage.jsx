@@ -5,11 +5,12 @@ import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import BeatCardV2 from '../v2/BeatCardV2';
 import { api, buildMediaUrl } from '../utils/api';
-import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { checkoutErrorMessage, startCheckout, withPromo } from '../utils/checkout';
 import { loginPath } from '../utils/authRedirect';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { ruCount } from '../utils/ruPlural';
 import { Play, Pause, Download, CheckCircle, Video, Clock, DollarSign, FileText, Music, FileAudio, HelpCircle } from 'lucide-react';
+import { PromoCodeField } from '../v2/DiscountUi';
 
 const PurchasesPage = () => {
   const { isAuthenticated } = useAuth();
@@ -21,6 +22,7 @@ const PurchasesPage = () => {
   const [coursePurchases, setCoursePurchases] = useState([]);
   const [serviceOrders, setServiceOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [promoCode, setPromoCode] = useState('');
   const tabFromUrl = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === 'orders' || tabFromUrl === 'courses' || tabFromUrl === 'beats' ? tabFromUrl : 'beats'
@@ -525,10 +527,11 @@ const PurchasesPage = () => {
                       <p className="text-sm text-amber-200/80">
                         Заказ готов к оплате. Предоплата {order.prepayment_percent || 50}%: {(order.price * (order.prepayment_percent || 50) / 100).toLocaleString('ru-RU')} ₽
                       </p>
+                      <PromoCodeField value={promoCode} onChange={setPromoCode} className="mt-3" />
                       <button 
                         onClick={async () => {
                           try {
-                            await startCheckout({ kind: 'order', order_id: order.id });
+                            await startCheckout(withPromo({ kind: 'order', order_id: order.id }, promoCode));
                           } catch (error) {
                             showError(checkoutErrorMessage(error));
                           }

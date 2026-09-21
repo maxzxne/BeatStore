@@ -10,6 +10,7 @@ import CustomSelect from '../components/CustomSelect';
 // Получаем API URL для построения полных URL файлов
 import { buildMediaUrl } from '../utils/api';
 import { ruCount } from '../utils/ruPlural';
+import { PriceLabel } from './DiscountUi';
 
 const CoursesPageV2 = () => {
   const { isAuthenticated } = useAuth();
@@ -256,7 +257,7 @@ const CoursesPageV2 = () => {
                     <span className="truncate text-white/40">{course.tags.split(',')[0]}</span>
                   )}
                   <span className="font-semibold text-[#22c55e]">
-                    {course.price === 0 ? 'Free' : `${course.price.toFixed(0)} ₽`}
+                    <PriceLabel amount={course.price} was={course.price_was} />
                   </span>
                 </div>
                 {isAuthenticated && (

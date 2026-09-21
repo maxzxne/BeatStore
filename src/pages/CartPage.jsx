@@ -4,11 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
-import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { checkoutErrorMessage, quoteCheckout, startCheckout, withPromo } from '../utils/checkout';
 import { loginPath } from '../utils/authRedirect';
 import { guestCartCount, readGuestCart, removeGuestBeat, removeGuestCourse } from '../utils/guestCart';
 import { ruCount } from '../utils/ruPlural';
 import { ShoppingCart, Trash2, Play, Pause } from 'lucide-react';
+import { licensePriceText, PriceLabel, PromoCodeField } from '../v2/DiscountUi';
 
 const ITEM_FORMS = ['товар', 'товара', 'товаров'];
 const FREE_ITEM_FORMS = ['бесплатный товар', 'бесплатных товара', 'бесплатных товаров'];
@@ -25,6 +26,8 @@ const CartPage = () => {
   const [purchasing, setPurchasing] = useState(false);
   // Состояние выбранных форматов для каждого бита: { beatId: 'mp3' | 'wav' | 'exclusive' }
   const [selectedFormats, setSelectedFormats] = useState({});
+  const [promoCode, setPromoCode] = useState('');
+  const [quotedAmount, setQuotedAmount] = useState(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -239,6 +242,30 @@ const CartPage = () => {
     return sum + item.price;
   }, 0);
   const freeItemsCount = cartItems.filter(item => item.price === 0).length;
+  const payTotal = quotedAmount != null ? quotedAmount : totalPrice;
+
+  useEffect(() => {
+    if (!isAuthenticated || totalPrice <= 0) {
+      setQuotedAmount(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const data = await quoteCheckout(withPromo({
+          kind: 'cart',
+          beats_formats: selectedFormats,
+        }, promoCode));
+        if (!cancelled) setQuotedAmount(data.amount);
+      } catch {
+        if (!cancelled) setQuotedAmount(null);
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isAuthenticated, promoCode, selectedFormats, cartItems, totalPrice]);
 
   if (!isAuthenticated) {
     if (loading) {
@@ -443,7 +470,7 @@ const CartPage = () => {
                                   <span className="text-white">MP3</span>
                                 </div>
                                 <span className="font-semibold text-white">
-                                  {item.price_mp3 === 0 ? '0₽' : `${item.price_mp3.toFixed(0)}₽`}
+                                  {licensePriceText(item.price_mp3, item.price_mp3_was, '0₽')}
                                 </span>
                               </label>
                             )}
@@ -461,7 +488,7 @@ const CartPage = () => {
                                   <span className="text-white">WAV</span>
                                 </div>
                                 <span className="font-semibold text-white">
-                                  {item.price_wav === 0 ? '0₽' : `${item.price_wav.toFixed(0)}₽`}
+                                  {licensePriceText(item.price_wav, item.price_wav_was, '0₽')}
                                 </span>
                               </label>
                             )}
@@ -479,7 +506,7 @@ const CartPage = () => {
                                   <span className="text-white">Exclusive</span>
                                 </div>
                                 <span className="font-semibold text-white">
-                                  {item.price_exclusive === 0 ? '0₽' : `${item.price_exclusive.toFixed(0)}₽`}
+                                  {licensePriceText(item.price_exclusive, item.price_exclusive_was, '0₽')}
                                 </span>
                               </label>
                             )}
@@ -488,10 +515,18 @@ const CartPage = () => {
                             {(() => {
                               const format = selectedFormats[item.id] || 'mp3';
                               let price = 0;
-                              if (format === 'mp3' && item.price_mp3 !== null) price = item.price_mp3;
-                              else if (format === 'wav' && item.price_wav !== null) price = item.price_wav;
-                              else if (format === 'exclusive' && item.price_exclusive !== null) price = item.price_exclusive;
-                              return price === 0 ? 'Бесплатно' : `${price.toFixed(0)} ₽`;
+                              let was = null;
+                              if (format === 'mp3' && item.price_mp3 !== null) {
+                                price = item.price_mp3;
+                                was = item.price_mp3_was;
+                              } else if (format === 'wav' && item.price_wav !== null) {
+                                price = item.price_wav;
+                                was = item.price_wav_was;
+                              } else if (format === 'exclusive' && item.price_exclusive !== null) {
+                                price = item.price_exclusive;
+                                was = item.price_exclusive_was;
+                              }
+                              return <PriceLabel amount={price} was={was} freeLabel="Бесплатно" />;
                             })()}
                           </div>
                           <button
@@ -506,7 +541,7 @@ const CartPage = () => {
                       ) : (
                         <>
                           <div className="text-lg font-bold text-[#22c55e]">
-                            {item.price === 0 ? 'Бесплатно' : `${item.price.toFixed(0)} ₽`}
+                            <PriceLabel amount={item.price} was={item.price_was} freeLabel="Бесплатно" />
                           </div>
                           <button
                             type="button"
@@ -545,9 +580,13 @@ const CartPage = () => {
                 
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-white">Итого:</span>
-                  <span className="text-[#22c55e]">{totalPrice === 0 ? '0 ₽' : `${totalPrice.toFixed(0)} ₽`}</span>
+                  <span className="text-[#22c55e]">{payTotal === 0 ? '0 ₽' : `${payTotal.toFixed(0)} ₽`}</span>
                 </div>
               </div>
+
+              {isAuthenticated && totalPrice > 0 && (
+                <PromoCodeField value={promoCode} onChange={setPromoCode} className="mt-5" />
+              )}
               
               <div className="mt-6">
                 {freeItemsCount > 0 && totalPrice === 0 ? (
@@ -562,10 +601,10 @@ const CartPage = () => {
                   <button
                     onClick={async () => {
                       try {
-                        await startCheckout({
+                        await startCheckout(withPromo({
                           kind: 'cart',
                           beats_formats: selectedFormats,
-                        });
+                        }, promoCode));
                       } catch (error) {
                         showError(checkoutErrorMessage(error));
                       }
@@ -573,7 +612,7 @@ const CartPage = () => {
                     className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#22c55e] text-base font-semibold text-[#052e16] transition hover:brightness-110 disabled:opacity-60"
                     disabled={cartItems.length === 0}
                   >
-                    {totalPrice > 0 ? `Оформить заказ на ${totalPrice.toLocaleString('ru-RU')} ₽` : "Перейти к оплате"}
+                    {payTotal > 0 ? `Оформить заказ на ${payTotal.toLocaleString('ru-RU')} ₽` : "Перейти к оплате"}
                   </button>
                 )}
               </div>

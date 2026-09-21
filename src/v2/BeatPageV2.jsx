@@ -18,7 +18,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 import { useNotification } from '../contexts/NotificationContext';
 import api, { buildMediaUrl } from '../utils/api';
-import { checkoutErrorMessage, startCheckout } from '../utils/checkout';
+import { checkoutErrorMessage, startCheckout, withPromo } from '../utils/checkout';
+import { licensePriceText, PromoCodeField } from './DiscountUi';
 import { loginPath } from '../utils/authRedirect';
 import { addGuestBeat, isInGuestCart, removeGuestBeat } from '../utils/guestCart';
 import { Heart, ShoppingCart, Download, ArrowLeft, Check, Play, Pause } from 'lucide-react';
@@ -45,6 +46,7 @@ const BeatPageV2 = () => {
   const [isPurchased, setIsPurchased] = useState(false);
   const [selectedPurchaseType, setSelectedPurchaseType] = useState('mp3'); // 'wav', 'mp3', 'exclusive'
   const [purchasedTypes, setPurchasedTypes] = useState([]); // Массив купленных типов
+  const [promoCode, setPromoCode] = useState('');
 
   useEffect(() => {
     fetchBeat();
@@ -203,11 +205,11 @@ const BeatPageV2 = () => {
         await checkBeatStatus();
         return;
       }
-      await startCheckout({
+      await startCheckout(withPromo({
         kind: 'beat',
         item_id: Number(id),
         purchase_type: selectedPurchaseType,
-      });
+      }, promoCode));
     } catch (error) {
       showError(checkoutErrorMessage(error));
     }
@@ -328,17 +330,17 @@ const BeatPageV2 = () => {
               <div className="flex flex-wrap gap-2">
                 {beat.mp3_url && beat.price_mp3 != null && (
                   <button type="button" onClick={() => setSelectedPurchaseType('mp3')} className={licenseBtn(selectedPurchaseType === 'mp3')}>
-                    MP3 · {beat.price_mp3 === 0 ? 'Free' : `${beat.price_mp3.toFixed(0)} ₽`}
+                    MP3 · {licensePriceText(beat.price_mp3, beat.price_mp3_was)}
                   </button>
                 )}
                 {beat.wav_url && beat.price_wav != null && (
                   <button type="button" onClick={() => setSelectedPurchaseType('wav')} className={licenseBtn(selectedPurchaseType === 'wav')}>
-                    WAV · {beat.price_wav === 0 ? 'Free' : `${beat.price_wav.toFixed(0)} ₽`}
+                    WAV · {licensePriceText(beat.price_wav, beat.price_wav_was)}
                   </button>
                 )}
                 {beat.exclusive_url && beat.price_exclusive != null && (
                   <button type="button" onClick={() => setSelectedPurchaseType('exclusive')} className={licenseBtn(selectedPurchaseType === 'exclusive')}>
-                    Exclusive · {beat.price_exclusive === 0 ? 'Free' : `${beat.price_exclusive.toFixed(0)} ₽`}
+                    Exclusive · {licensePriceText(beat.price_exclusive, beat.price_exclusive_was)}
                   </button>
                 )}
               </div>
@@ -356,7 +358,9 @@ const BeatPageV2 = () => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="space-y-3">
+              <PromoCodeField value={promoCode} onChange={setPromoCode} className="max-w-xs" />
+              <div className="flex flex-wrap items-center gap-3">
               <button type="button" onClick={handlePurchase} className="h-12 rounded-full bg-[#22c55e] px-6 font-semibold text-[#052e16]">
                 Купить в один клик
               </button>
@@ -370,6 +374,7 @@ const BeatPageV2 = () => {
                   </button>
                 </>
               )}
+            </div>
             </div>
           )}
         </div>
