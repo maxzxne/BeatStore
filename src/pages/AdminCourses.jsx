@@ -1,12 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api, buildMediaUrl } from '../utils/api';
-import { Pencil, Trash2, GraduationCap, Loader2, X } from 'lucide-react';
+import { Pencil, Trash2, GraduationCap, Loader2, X, Upload } from 'lucide-react';
 
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
 
 const labelClass = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-white/45';
+
+const EMPTY_FILES = {
+  preview_video_file: null,
+  full_video_file: null,
+};
+
+const FILE_SLOTS = [
+  {
+    key: 'preview_video_file',
+    label: 'Превью-видео',
+    accept: 'video/mp4,video/mpeg,video/quicktime',
+    urlKey: 'preview_video_url',
+  },
+  {
+    key: 'full_video_file',
+    label: 'Полное видео (после покупки)',
+    accept: 'video/mp4,video/mpeg,video/quicktime',
+    urlKey: 'full_video_url',
+  },
+];
+
+function fileBasename(url) {
+  if (!url) return null;
+  const parts = url.split('/').filter(Boolean);
+  return parts[parts.length - 1] || url;
+}
+
+function formatFileSize(bytes) {
+  if (!bytes && bytes !== 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 const AdminCourses = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -14,6 +47,7 @@ const AdminCourses = () => {
   const [loading, setLoading] = useState(true);
   const [editingCourse, setEditingCourse] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [editFiles, setEditFiles] = useState(EMPTY_FILES);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -25,7 +59,7 @@ const AdminCourses = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/courses');
+      const response = await api.get('/api/admin/courses');
       setCourses(response.data);
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -34,8 +68,14 @@ const AdminCourses = () => {
     }
   };
 
+  const closeEdit = () => {
+    setEditingCourse(null);
+    setEditFiles(EMPTY_FILES);
+  };
+
   const handleEdit = (course) => {
     setEditingCourse(course);
+    setEditFiles(EMPTY_FILES);
     setEditForm({
       title: course.title,
       purpose: course.purpose || '',
@@ -45,15 +85,34 @@ const AdminCourses = () => {
     });
   };
 
+  const handleFilePick = (key, file) => {
+    setEditFiles((prev) => ({ ...prev, [key]: file || null }));
+  };
+
   const handleSaveEdit = async () => {
     try {
       setSaving(true);
       await api.put(`/api/admin/courses/${editingCourse.id}`, editForm);
-      setEditingCourse(null);
+
+      const formData = new FormData();
+      let hasFiles = false;
+      Object.entries(editFiles).forEach(([key, file]) => {
+        if (file) {
+          formData.append(key, file);
+          hasFiles = true;
+        }
+      });
+
+      if (hasFiles) {
+        await api.put(`/api/admin/courses/${editingCourse.id}/files`, formData);
+      }
+
+      closeEdit();
       fetchCourses();
     } catch (error) {
       console.error('Error updating course:', error);
-      alert('Ошибка обновления курса');
+      const detail = error.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : 'Ошибка обновления курса');
     } finally {
       setSaving(false);
     }
@@ -178,13 +237,13 @@ const AdminCourses = () => {
 
       {editingCourse && (
         <div className="admin-modal-backdrop">
-          <div className="absolute inset-0" onClick={() => setEditingCourse(null)} aria-hidden="true" />
-          <div className="admin-modal max-w-lg">
+          <div className="absolute inset-0" onClick={closeEdit} aria-hidden="true" />
+          <div className="admin-modal max-w-xl max-h-[90vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="font-[Syne] text-xl font-bold text-white">Редактировать курс</h2>
               <button
                 type="button"
-                onClick={() => setEditingCourse(null)}
+                onClick={closeEdit}
                 className="rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white"
                 aria-label="Закрыть"
               >
@@ -239,10 +298,74 @@ const AdminCourses = () => {
                   className={`${fieldClass} h-20 resize-y`}
                 />
               </div>
+
+              <div className="border-t border-white/10 pt-4">
+                <h3 className="mb-1 font-[Syne] text-sm font-semibold text-white">Видеофайлы</h3>
+                <p className="mb-3 text-xs text-white/40">
+                  Если файл уже есть — можно заменить. Не выбранные слоты не меняются.
+                </p>
+                <div className="space-y-3">
+                  {FILE_SLOTS.map((slot) => {
+                    const inputId = `edit-course-${slot.key}`;
+                    const picked = editFiles[slot.key];
+                    const currentUrl = editingCourse[slot.urlKey];
+                    const currentName = fileBasename(currentUrl);
+
+                    return (
+                      <div key={slot.key} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                        <div className="mb-2">
+                          <label htmlFor={inputId} className={labelClass}>
+                            {slot.label}
+                          </label>
+                          {!picked && currentName && (
+                            <p className="text-xs text-white/40 truncate max-w-[16rem]" title={currentName}>
+                              Сейчас: {currentName}
+                            </p>
+                          )}
+                          {!picked && !currentName && (
+                            <p className="text-xs text-white/30">Файла нет</p>
+                          )}
+                          {picked && (
+                            <p className="text-xs text-[#22c55e]">
+                              Новый: {picked.name}
+                              {picked.size ? ` · ${formatFileSize(picked.size)}` : ''}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <input
+                            id={inputId}
+                            type="file"
+                            accept={slot.accept}
+                            className="hidden"
+                            onChange={(e) => handleFilePick(slot.key, e.target.files?.[0] || null)}
+                          />
+                          <label
+                            htmlFor={inputId}
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10"
+                          >
+                            <Upload className="h-3.5 w-3.5" />
+                            {currentName || picked ? 'Заменить' : 'Загрузить'}
+                          </label>
+                          {picked && (
+                            <button
+                              type="button"
+                              onClick={() => handleFilePick(slot.key, null)}
+                              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:text-white"
+                            >
+                              Отменить выбор
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
-              <button type="button" onClick={() => setEditingCourse(null)} className="admin-ghost-btn">
+              <button type="button" onClick={closeEdit} className="admin-ghost-btn">
                 Отмена
               </button>
               <button

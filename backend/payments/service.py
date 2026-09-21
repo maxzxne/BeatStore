@@ -8,6 +8,14 @@ from sqlalchemy.orm import Session
 from models import Beat, Course, PaymentIntent, ServiceOrder, User
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
 from payments import config
+from payments.pricing import (
+    checkout_pay,
+    load_active_sales,
+    mixed_cart_pay,
+    reserve_promo,
+    resolve_promo,
+    sale_snapshot,
+)
 from payments.quote import (
     QuoteError,
     beat_unit_price,
@@ -35,7 +43,10 @@ def create_checkout(db: Session, user: User | None, body: dict) -> dict:
     if kind not in {"beat", "cart", "course", "order"}:
         raise PaymentError("Неизвестный тип оплаты")
 
-    payload, amount, description = _quote(db, user, kind, body)
+    try:
+        payload, amount, description, promo = _quote(db, user, kind, body)
+    except QuoteError as exc:
+        raise PaymentError(str(exc)) from exc
     if amount <= 0:
         raise PaymentError("Нечего оплачивать")
 
@@ -51,6 +62,7 @@ def create_checkout(db: Session, user: User | None, body: dict) -> dict:
     db.add(intent)
     db.commit()
     db.refresh(intent)
+    reserve_promo(db, promo, intent)
 
     if not config.use_hosted_robokassa():
         raise PaymentError("Эквайринг не настроен")
@@ -84,7 +96,15 @@ def intent_view(intent: PaymentIntent) -> dict:
     }
 
 
-def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict, float, str]:
+def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict, float, str, object]:
+    sales = load_active_sales(db)
+    promo = resolve_promo(db, user, body.get("promo_code"))
+    promo_fields = (
+        {"promo_id": promo.id, "promo_code": promo.code}
+        if promo is not None
+        else {}
+    )
+
     if kind == "beat":
         if not user:
             raise PaymentError("Войдите, чтобы купить бит")
@@ -95,9 +115,16 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
             raise PaymentError("Бит недоступен")
         if user_owns_beat(db, user.id, beat_id):
             raise PaymentError("Бит уже куплен")
-        amount = beat_unit_price(beat, purchase_type)
-        payload = {"item_id": beat_id, "purchase_type": purchase_type}
-        return payload, amount, description_for("beat", beat.title)
+        listed = beat_unit_price(beat, purchase_type)
+        amount, sale = checkout_pay(listed, "beats", sales, promo)
+        payload = {
+            "item_id": beat_id,
+            "purchase_type": purchase_type,
+            "list_amount": listed,
+            "sale": sale_snapshot(sale),
+            **promo_fields,
+        }
+        return payload, amount, description_for("beat", beat.title), promo
 
     if kind == "course":
         if not user:
@@ -108,8 +135,15 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
             raise PaymentError("Курс недоступен")
         if user_owns_course(db, user.id, course_id):
             raise PaymentError("Курс уже куплен")
-        payload = {"item_id": course_id}
-        return payload, float(course.price or 0), description_for("course", course.title)
+        listed = float(course.price or 0)
+        amount, sale = checkout_pay(listed, "courses", sales, promo)
+        payload = {
+            "item_id": course_id,
+            "list_amount": listed,
+            "sale": sale_snapshot(sale),
+            **promo_fields,
+        }
+        return payload, amount, description_for("course", course.title), promo
 
     if kind == "cart":
         if not user:
@@ -118,14 +152,18 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
         if isinstance(formats, list):
             formats = {str(item.get("id")): item.get("format") or "mp3" for item in formats}
         drop_owned_cart_items(db, user)
-        amount = 0.0
+        beat_lines = []
         for beat in user.cart_items:
             purchase_type = str(formats.get(str(beat.id)) or formats.get(beat.id) or "mp3")
-            amount += beat_unit_price(beat, purchase_type)
-        for course in user.course_cart_items:
-            amount += float(course.price or 0)
-        payload = {"beats_formats": {str(k): v for k, v in formats.items()}}
-        return payload, amount, description_for("cart")
+            beat_lines.append(beat_unit_price(beat, purchase_type))
+        course_lines = [float(course.price or 0) for course in user.course_cart_items]
+        amount = mixed_cart_pay(beat_lines, course_lines, sales, promo)
+        payload = {
+            "beats_formats": {str(k): v for k, v in formats.items()},
+            "list_amount": round(sum(beat_lines) + sum(course_lines), 2),
+            **promo_fields,
+        }
+        return payload, amount, description_for("cart"), promo
 
     if kind == "order":
         order_id = int(body.get("order_id") or 0)
@@ -134,8 +172,14 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
             raise PaymentError("Заказ не найден")
         if user and order.user_id and order.user_id != user.id and not user.is_admin:
             raise PaymentError("Это не ваш заказ")
-        amount = service_order_amount(order)
-        payload = {"order_id": order_id}
-        return payload, amount, description_for("order", f"#{order_id}")
+        listed = service_order_amount(order)
+        amount, sale = checkout_pay(listed, "services", sales, promo)
+        payload = {
+            "order_id": order_id,
+            "list_amount": listed,
+            "sale": sale_snapshot(sale),
+            **promo_fields,
+        }
+        return payload, amount, description_for("order", f"#{order_id}"), promo
 
     raise PaymentError("Неизвестный тип оплаты")

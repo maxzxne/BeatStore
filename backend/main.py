@@ -37,7 +37,7 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, FooterPage, ErrorLog, PaymentIntent, SupportThread, SupportMessage, Contributor, cart_table, course_cart_table, course_favorites_table, favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, PromoCode, SaleCampaign, FooterPage, ErrorLog, PaymentIntent, SupportThread, SupportMessage, Contributor, cart_table, course_cart_table, course_favorites_table, favorites_table
 from footer_pages import (
     ensure_default_footer_pages,
     footer_page_public_detail,
@@ -47,6 +47,8 @@ from footer_pages import (
 )
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
+from payments.discounts import DISCOUNT_KINDS, SALE_SCOPES
+from payments.pricing import load_active_sales, overlay_sale_on_mapping
 from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
 from payments.robokassa import format_out_sum, verify_result
 from payments.service import PaymentError, create_checkout, intent_view, public_config as payment_public_config
@@ -735,9 +737,13 @@ class BeatResponse(BaseModel):
     key: Optional[str]
     bpm: int
     price: float
+    price_was: Optional[float] = None
     price_mp3: Optional[float] = None
     price_wav: Optional[float] = None
     price_exclusive: Optional[float] = None
+    price_mp3_was: Optional[float] = None
+    price_wav_was: Optional[float] = None
+    price_exclusive_was: Optional[float] = None
     description: Optional[str]
     demo_url: Optional[str]
     cover_url: Optional[str]
@@ -764,6 +770,7 @@ class CourseResponse(BaseModel):
     description: Optional[str]
     tags: Optional[str]
     price: float
+    price_was: Optional[float] = None
     preview_video_url: Optional[str]
     is_available: bool
     created_at: datetime
@@ -1501,24 +1508,34 @@ def get_beats(
         query = query.filter(Beat.key == key)
     
     beats = query.all()
+    sales = load_active_sales(db)
     
     # Принудительно устанавливаем кодировку UTF-8 для ответа
     response_data = []
     for beat in beats:
-        beat_dict = {
-            "id": beat.id,
-            "title": beat.title,
-            "artist": beat.artist,
-            "genre": beat.genre,
-            "key": beat.key,
-            "bpm": beat.bpm,
-            "price": beat.price,
-            "description": beat.description,
-            "demo_url": beat.demo_url,
-            "cover_url": beat.cover_url,
-            "is_available": beat.is_available,
-            "created_at": beat.created_at.isoformat() if beat.created_at else None
-        }
+        beat_dict = overlay_sale_on_mapping(
+            {
+                "id": beat.id,
+                "title": beat.title,
+                "artist": beat.artist,
+                "genre": beat.genre,
+                "key": beat.key,
+                "bpm": beat.bpm,
+                "price": beat.price,
+                "price_mp3": beat.price_mp3,
+                "price_wav": beat.price_wav,
+                "price_exclusive": beat.price_exclusive,
+                "description": beat.description,
+                "demo_url": beat.demo_url,
+                "cover_url": beat.cover_url,
+                "is_available": beat.is_available,
+                "allow_multiple_purchases": beat.allow_multiple_purchases,
+                "created_at": beat.created_at.isoformat() if beat.created_at else None
+            },
+            ["price", "price_mp3", "price_wav", "price_exclusive"],
+            "beats",
+            sales,
+        )
         response_data.append(beat_dict)
     
     return response_data
@@ -1529,6 +1546,14 @@ def get_beat(beat_id: int, db: Session = Depends(get_db),
     beat = db.query(Beat).filter(Beat.id == beat_id).first()
     if not beat:
         raise HTTPException(status_code=404, detail="Beat not found")
+
+    sales = load_active_sales(db)
+    beat_dict = overlay_sale_on_mapping(
+        {k: v for k, v in beat.__dict__.items() if not k.startswith("_")},
+        ["price", "price_mp3", "price_wav", "price_exclusive"],
+        "beats",
+        sales,
+    )
     
     # Проверяем покупку пользователя
     if current_user:
@@ -1538,14 +1563,9 @@ def get_beat(beat_id: int, db: Session = Depends(get_db),
         ).first()
         
         if purchase:
-            # Пользователь купил бит, показываем полную информацию
-            beat_dict = beat.__dict__.copy()
-            beat_dict['full_audio_url'] = beat.full_audio_url
-            beat_dict['project_files_url'] = beat.project_files_url
             return BeatDetailResponse(**beat_dict)
     
-    # Пользователь не покупал или не авторизован - только демо
-    return BeatDetailResponse(**beat.__dict__)
+    return BeatDetailResponse(**beat_dict)
 
 # Избранное
 @app.post("/beats/{beat_id}/favorite")
@@ -1613,7 +1633,17 @@ def remove_from_cart(beat_id: int, db: Session = Depends(get_db),
 def get_cart(db: Session = Depends(get_db), 
             current_user: User = Depends(get_current_user)):
     drop_owned_cart_items(db, current_user)
-    return current_user.cart_items
+    sales = load_active_sales(db)
+    items = []
+    for beat in current_user.cart_items:
+        data = overlay_sale_on_mapping(
+            {k: v for k, v in beat.__dict__.items() if not k.startswith("_")},
+            ["price", "price_mp3", "price_wav", "price_exclusive"],
+            "beats",
+            sales,
+        )
+        items.append(BeatResponse(**data))
+    return items
 
 # Покупки
 @app.get("/purchases", response_model=List[BeatResponse])
@@ -1874,6 +1904,7 @@ def get_courses(
         query = query.filter(Course.price <= max_price)
     
     courses = query.all()
+    sales = load_active_sales(db)
     
     # Добавляем информацию о избранном и корзине для авторизованных пользователей
     if current_user:
@@ -1897,10 +1928,21 @@ def get_courses(
             course_dict['is_favorite'] = course.id in favorite_course_ids
             course_dict['is_in_cart'] = (not purchased) and course.id in cart_course_ids
             course_dict['is_purchased'] = purchased
+            overlay_sale_on_mapping(course_dict, ["price"], "courses", sales)
             result.append(CourseResponse(**course_dict))
         return result
     
-    return courses
+    return [
+        CourseResponse(
+            **overlay_sale_on_mapping(
+                {k: v for k, v in course.__dict__.items() if not k.startswith("_")},
+                ["price"],
+                "courses",
+                sales,
+            )
+        )
+        for course in courses
+    ]
 
 print("Определение эндпоинта get_course...")
 @app.get("/courses/{course_id}", response_model=CourseDetailResponse)
@@ -1928,7 +1970,8 @@ def get_course(course_id: int, db: Session = Depends(get_db),
         course_dict['is_favorite'] = False
         course_dict['is_in_cart'] = False
         course_dict['is_purchased'] = False
-    
+
+    overlay_sale_on_mapping(course_dict, ["price"], "courses", load_active_sales(db))
     return CourseDetailResponse(**course_dict)
 
 @app.post("/courses/{course_id}/favorite")
@@ -1997,7 +2040,17 @@ def remove_course_from_cart(course_id: int, db: Session = Depends(get_db),
 @app.get("/course-cart", response_model=List[CourseResponse])
 def get_course_cart(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     drop_owned_cart_items(db, current_user)
-    return current_user.course_cart_items
+    sales = load_active_sales(db)
+    items = []
+    for course in current_user.course_cart_items:
+        data = overlay_sale_on_mapping(
+            {k: v for k, v in course.__dict__.items() if not k.startswith("_")},
+            ["price"],
+            "courses",
+            sales,
+        )
+        items.append(CourseResponse(**data))
+    return items
 
 @app.get("/course-purchases", response_model=List[CourseResponse])
 def get_course_purchases(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -2092,6 +2145,7 @@ class CreatePaymentRequest(BaseModel):
     purchase_type: Optional[str] = None
     order_id: Optional[int] = None
     beats_formats: Optional[Any] = None
+    promo_code: Optional[str] = None
 
 
 class SimulatePaymentRequest(BaseModel):
@@ -3090,7 +3144,7 @@ async def replace_beat_files(
     
     try:
         # Заменяем демо файл
-        if demo_file:
+        if demo_file and demo_file.filename:
             # Удаляем старый файл
             if beat.demo_url:
                 old_path = beat.demo_url.lstrip("/")
@@ -3116,7 +3170,7 @@ async def replace_beat_files(
             beat.demo_url = f"/static/demos/{demo_filename}"
         
         # Заменяем WAV файл
-        if wav_file:
+        if wav_file and wav_file.filename:
             if beat.wav_url:
                 old_path = beat.wav_url.lstrip("/")
                 if os.path.exists(old_path):
@@ -3140,7 +3194,7 @@ async def replace_beat_files(
             beat.wav_url = f"/static/audio/{wav_filename}"
         
         # Заменяем MP3 файл
-        if mp3_file:
+        if mp3_file and mp3_file.filename:
             if beat.mp3_url:
                 old_path = beat.mp3_url.lstrip("/")
                 if os.path.exists(old_path):
@@ -3164,7 +3218,7 @@ async def replace_beat_files(
             beat.mp3_url = f"/static/audio/{mp3_filename}"
         
         # Заменяем эксклюзивный файл
-        if exclusive_file:
+        if exclusive_file and exclusive_file.filename:
             if beat.exclusive_url:
                 old_path = beat.exclusive_url.lstrip("/")
                 if os.path.exists(old_path):
@@ -3188,7 +3242,7 @@ async def replace_beat_files(
             beat.exclusive_url = f"/static/audio/{exclusive_filename}"
         
         # Заменяем обложку
-        if cover_file:
+        if cover_file and cover_file.filename:
             if beat.cover_url:
                 old_path = beat.cover_url.lstrip("/")
                 if os.path.exists(old_path):
@@ -4157,7 +4211,7 @@ async def replace_course_files(
     
     try:
         # Заменяем превью видео
-        if preview_video_file:
+        if preview_video_file and preview_video_file.filename:
             # Удаляем старый файл
             if course.preview_video_url:
                 old_path = course.preview_video_url.lstrip("/")
@@ -4183,7 +4237,7 @@ async def replace_course_files(
             course.preview_video_url = f"/static/course_previews/{preview_filename}"
         
         # Заменяем полное видео
-        if full_video_file:
+        if full_video_file and full_video_file.filename:
             if course.full_video_url:
                 old_path = course.full_video_url.lstrip("/")
                 if os.path.exists(old_path):

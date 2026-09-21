@@ -344,6 +344,41 @@ class PromoBanner(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class SaleCampaign(Base):
+    """Витринная скидка: all / beats / courses / services."""
+    __tablename__ = "sale_campaigns"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=True)
+    scope = Column(String, nullable=False, default="all")
+    kind = Column(String, nullable=False, default="percent")
+    value = Column(Float, nullable=False)
+    enabled = Column(Boolean, default=True, nullable=False)
+    starts_at = Column(DateTime, nullable=True)
+    ends_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PromoCode(Base):
+    """Одноразовый промокод, привязанный к пользователю."""
+    __tablename__ = "promo_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String, unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    kind = Column(String, nullable=False, default="percent")
+    value = Column(Float, nullable=False)
+    note = Column(String, nullable=True)
+    used_at = Column(DateTime, nullable=True)
+    used_intent_id = Column(Integer, ForeignKey("payment_intents.id"), nullable=True)
+    reserved_intent_id = Column(Integer, ForeignKey("payment_intents.id"), nullable=True)
+    reserved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", foreign_keys=[user_id])
+
+
 class FooterPage(Base):
     """Ссылки/страницы футера: CMS + особый пункт Поддержка (чат)."""
     __tablename__ = "footer_pages"

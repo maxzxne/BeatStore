@@ -106,9 +106,7 @@ const AdminBeats = () => {
       });
 
       if (hasFiles) {
-        await api.put(`/api/admin/beats/${editingBeat.id}/files`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        await api.put(`/api/admin/beats/${editingBeat.id}/files`, formData);
       }
 
       closeEdit();

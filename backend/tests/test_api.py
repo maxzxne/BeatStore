@@ -20,7 +20,7 @@ from helpers import (  # noqa: E402
     reset_schema,
     token_for,
 )
-from models import CoursePurchase, FooterPage, PaymentIntent, PromoBanner, Purchase, SiteSetting  # noqa: E402
+from models import CoursePurchase, FooterPage, PaymentIntent, PromoBanner, PromoCode, Purchase, SaleCampaign, SiteSetting  # noqa: E402
 from payments.robokassa import format_out_sum, sign_result  # noqa: E402
 
 
@@ -535,6 +535,36 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(beat.cover_url, body["cover_url"])
         self.assertEqual(beat.demo_url, "/static/demos/old-demo.mp3")
 
+    def test_admin_replace_course_files_updates_urls(self):
+        course = add_course(self.db)
+        course.preview_video_url = "/static/course_previews/old-preview.mp4"
+        course.full_video_url = "/static/course_videos/old-full.mp4"
+        self.db.commit()
+        old_full = course.full_video_url
+
+        denied = self.client.put(
+            f"/api/admin/courses/{course.id}/files",
+            headers=auth(self.token),
+            files={"full_video_file": ("n.mp4", b"\x00\x00\x00\x18ftypmp42", "video/mp4")},
+        )
+        self.assertIn(denied.status_code, (401, 403))
+
+        response = self.client.put(
+            f"/api/admin/courses/{course.id}/files",
+            headers=auth(self.admin_token),
+            files={
+                "full_video_file": ("fresh.mp4", b"\x00\x00\x00\x18ftypmp42", "video/mp4"),
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertNotEqual(body["full_video_url"], old_full)
+        self.assertTrue(body["full_video_url"].startswith("/static/course_videos/"))
+        self.assertTrue(os.path.exists(body["full_video_url"].lstrip("/")), body["full_video_url"])
+        self.db.refresh(course)
+        self.assertEqual(course.full_video_url, body["full_video_url"])
+        self.assertEqual(course.preview_video_url, "/static/course_previews/old-preview.mp4")
+
     def test_me_returns_parsed_contacts_and_put_saves_json(self):
         self.user.additional_contact = "@legacy_nick"
         self.db.commit()
@@ -763,6 +793,79 @@ class ApiTestCase(unittest.TestCase):
             json={"slug": "admin", "label": "Hack", "body": "x"},
         )
         self.assertEqual(reserved.status_code, 400, reserved.text)
+
+    def test_checkout_applies_storefront_beat_sale(self):
+        beat = add_beat(self.db, price_mp3=1000)
+        self.db.add(
+            SaleCampaign(title="beats 20", scope="beats", kind="percent", value=20, enabled=True)
+        )
+        self.db.commit()
+        response = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={"kind": "beat", "item_id": beat.id, "purchase_type": "mp3"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["amount"], 800)
+
+    def test_promo_wrong_user_does_not_change_amount(self):
+        beat = add_beat(self.db, price_mp3=1000)
+        self.db.add(
+            PromoCode(code="ONLYME", user_id=self.admin.id, kind="percent", value=50)
+        )
+        self.db.commit()
+        response = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={
+                "kind": "beat",
+                "item_id": beat.id,
+                "purchase_type": "mp3",
+                "promo_code": "ONLYME",
+            },
+        )
+        self.assertEqual(response.status_code, 400, response.text)
+        self.assertEqual(self.db.query(PaymentIntent).count(), 0)
+
+    def test_promo_fulfill_consumes_code_once(self):
+        beat = add_beat(self.db, price_mp3=1000, allow_multiple=True)
+        self.db.add(
+            PromoCode(code="ONCE10", user_id=self.user.id, kind="amount", value=100)
+        )
+        self.db.commit()
+        created = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={
+                "kind": "beat",
+                "item_id": beat.id,
+                "purchase_type": "mp3",
+                "promo_code": "once10",
+            },
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        self.assertEqual(created.json()["amount"], 900)
+        inv_id = created.json()["inv_id"]
+        paid = self.client.post(
+            "/payments/simulate",
+            headers=auth(self.token),
+            json={"inv_id": inv_id, "success": True},
+        )
+        self.assertEqual(paid.status_code, 200, paid.text)
+        code = self.db.query(PromoCode).filter(PromoCode.code == "ONCE10").one()
+        self.db.refresh(code)
+        self.assertIsNotNone(code.used_at)
+        again = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={
+                "kind": "beat",
+                "item_id": beat.id,
+                "purchase_type": "wav",
+                "promo_code": "ONCE10",
+            },
+        )
+        self.assertEqual(again.status_code, 400, again.text)
 
 
 if __name__ == "__main__":

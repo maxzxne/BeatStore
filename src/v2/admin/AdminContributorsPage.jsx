@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Copy, UserPlus } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../utils/api';
@@ -6,13 +6,32 @@ import { api } from '../../utils/api';
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
 
+const copyText = async (value, input) => {
+  if (input) {
+    input.focus();
+    input.select();
+  }
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    }
+  }
+};
+
 const AdminContributorsPage = () => {
   const { isAdminAuthenticated } = useAuth();
   const [people, setPeople] = useState([]);
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
   const [inviteUrl, setInviteUrl] = useState('');
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const inviteInputRef = useRef(null);
 
   const load = async () => {
     const response = await api.get('/api/admin/contributors');
@@ -40,11 +59,24 @@ const AdminContributorsPage = () => {
 
   const handleInvite = async (id) => {
     const response = await api.post(`/api/admin/contributors/${id}/invite`);
-    setInviteUrl(response.data.invite_url);
-    try {
-      await navigator.clipboard.writeText(response.data.invite_url);
-    } catch {
-      /* ignore */
+    const url = response.data.invite_url;
+    setInviteUrl(url);
+    setCopied(false);
+    requestAnimationFrame(async () => {
+      const ok = await copyText(url, inviteInputRef.current);
+      if (ok) {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+      }
+    });
+  };
+
+  const handleCopyInvite = async () => {
+    if (!inviteUrl) return;
+    const ok = await copyText(inviteUrl, inviteInputRef.current);
+    if (ok) {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -84,8 +116,23 @@ const AdminContributorsPage = () => {
       </form>
 
       {inviteUrl && (
-        <div className="rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 px-4 py-3 text-sm break-all">
-          Приглашение (одноразовое, 7 дней): {inviteUrl}
+        <div className="rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 p-4">
+          <p className="mb-2 text-sm text-[#86efac]">Приглашение (одноразовое, 7 дней)</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              ref={inviteInputRef}
+              readOnly
+              value={inviteUrl}
+              onFocus={(event) => event.target.select()}
+              onClick={(event) => event.target.select()}
+              className={`${fieldClass} font-mono text-xs sm:text-sm`}
+              aria-label="Ссылка приглашения"
+            />
+            <button type="button" className="admin-primary-btn shrink-0" onClick={handleCopyInvite}>
+              <Copy className="mr-1 inline h-3.5 w-3.5" />
+              {copied ? 'Скопировано' : 'Копировать'}
+            </button>
+          </div>
         </div>
       )}
 

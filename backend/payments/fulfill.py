@@ -17,6 +17,7 @@ from models import (
     course_cart_table,
 )
 from cart_rules import drop_owned_cart_items
+from payments.pricing import consume_promo_for_intent, release_promo_for_intent
 from payments.quote import beat_unit_price, payload_dict
 
 
@@ -38,6 +39,7 @@ def fulfill_intent(db: Session, intent: PaymentIntent) -> PaymentIntent:
 
     intent.status = "paid"
     intent.paid_at = datetime.utcnow()
+    consume_promo_for_intent(db, intent)
     db.commit()
     db.refresh(intent)
     return intent
@@ -48,6 +50,7 @@ def mark_failed(db: Session, intent: PaymentIntent, message: str) -> PaymentInte
         return intent
     intent.status = "failed"
     intent.error_message = message[:1000]
+    release_promo_for_intent(db, intent)
     db.commit()
     db.refresh(intent)
     return intent
