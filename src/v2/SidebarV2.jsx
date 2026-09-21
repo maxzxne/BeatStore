@@ -21,6 +21,7 @@ import {
   Link2,
   Percent,
   Ticket,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -75,6 +76,7 @@ const navGroups = [
     label: 'Система',
     items: [
       { path: '/admin/errors', label: 'Ошибки', icon: AlertTriangle },
+      { path: '/admin/guide', label: 'Инструкция', icon: BookOpen },
     ],
   },
 ];

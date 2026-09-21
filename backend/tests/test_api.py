@@ -488,6 +488,30 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(admin.status_code, 200)
         self.assertEqual(len(admin.json()), 3)
 
+    def test_admin_guide_notes_persist_and_reject_stranger(self):
+        empty = self.client.get("/api/admin/guide-notes", headers=auth(self.admin_token))
+        self.assertEqual(empty.status_code, 200, empty.text)
+        self.assertEqual(empty.json()["notes"], "")
+
+        denied = self.client.get("/api/admin/guide-notes", headers=auth(self.token))
+        self.assertIn(denied.status_code, (401, 403))
+
+        saved = self.client.put(
+            "/api/admin/guide-notes",
+            headers=auth(self.admin_token),
+            json={"notes": "Не забыть обновить баннер к пятнице"},
+        )
+        self.assertEqual(saved.status_code, 200, saved.text)
+        self.assertEqual(saved.json()["notes"], "Не забыть обновить баннер к пятнице")
+
+        again = self.client.get("/api/admin/guide-notes", headers=auth(self.admin_token))
+        self.assertEqual(again.status_code, 200)
+        self.assertEqual(again.json()["notes"], "Не забыть обновить баннер к пятнице")
+
+        row = self.db.query(SiteSetting).filter(SiteSetting.key == "admin_guide_notes").first()
+        self.assertIsNotNone(row)
+        self.assertEqual(row.value, "Не забыть обновить баннер к пятнице")
+
     def test_admin_hero_saves_image_position(self):
         response = self.client.put(
             "/api/admin/site-settings/hero",

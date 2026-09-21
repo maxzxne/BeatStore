@@ -53,6 +53,7 @@ import SubmitJoinPage from './v2/submit/SubmitJoinPage';
 import SubmitCabinetPage from './v2/submit/SubmitCabinetPage';
 import AdminContributorsPage from './v2/admin/AdminContributorsPage';
 import AdminSubmissionsPage from './v2/admin/AdminSubmissionsPage';
+import AdminGuidePage from './v2/admin/AdminGuidePage';
 import ErrorPage from './pages/ErrorPage';
 import { RequireAdsOrders, RequireCourses } from './v2/SectionClosed';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
@@ -122,6 +123,7 @@ function App() {
                     <Route path="sales" element={<AdminSalesPage />} />
                     <Route path="promo-codes" element={<AdminPromoCodesPage />} />
                     <Route path="footer" element={<AdminFooterPagesPage />} />
+                    <Route path="guide" element={<AdminGuidePage />} />
                   </Route>
 
                   <Route path="*" element={<ErrorPage />} />

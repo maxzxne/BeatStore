@@ -1,0 +1,12 @@
+---
+description: Keep /admin/guide operator docs in the same commit as product behavior changes
+alwaysApply: true
+---
+
+# Admin guide sync
+
+Операторская инструкция: `/admin/guide` → контент в `src/v2/admin/guide/adminGuideContent.js`.
+
+При любом изменении поведения админки или витрины обновляй гайд **в том же коммите/пуше**, чтобы откат кода откатывал и инструкцию. Skill: `.cursor/skills/beatstore-admin-guide/SKILL.md`.
+
+Личные заметки (`/api/admin/guide-notes`) живут в SQLite — не сидить, не чистить, не переносить в код.

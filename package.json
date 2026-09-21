@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "backend/.venv/bin/python -m unittest discover -s backend/tests -v && node --test src/utils/adminNavCollapse.test.js src/utils/cartBadge.test.js src/utils/ruPlural.test.js src/utils/stickyPlayerOffset.test.js src/utils/videoFullscreen.test.js",
+    "test": "backend/.venv/bin/python -m unittest discover -s backend/tests -v && node --test src/utils/adminNavCollapse.test.js src/utils/cartBadge.test.js src/utils/ruPlural.test.js src/utils/stickyPlayerOffset.test.js src/utils/videoFullscreen.test.js src/v2/admin/guide/adminGuideContent.test.js",
     "qa:browser": "playwright-cli",
     "design": "superdesign"
   },

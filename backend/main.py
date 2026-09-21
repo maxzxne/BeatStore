@@ -1004,6 +1004,10 @@ class HomeHeroUpdate(BaseModel):
     show_search: Optional[bool] = None
     show_filters: Optional[bool] = None
 
+class AdminGuideNotesUpdate(BaseModel):
+    """Личные заметки админа к инструкции (персист в site_settings)."""
+    notes: str = ""
+
 class PromoBannerCreate(BaseModel):
     """Схема создания промо-баннера"""
     title: Optional[str] = None
@@ -4397,6 +4401,32 @@ def update_admin_site_settings(
             "home_hero": get_home_hero(db),
         }
     }
+
+ADMIN_GUIDE_NOTES_KEY = "admin_guide_notes"
+ADMIN_GUIDE_NOTES_MAX_LEN = 50000
+
+@app.get("/api/admin/guide-notes")
+def get_admin_guide_notes(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Личные заметки к инструкции. Не зависят от деплоя фронта — живут в SQLite."""
+    return {"notes": get_site_setting_value(db, ADMIN_GUIDE_NOTES_KEY, "")}
+
+@app.put("/api/admin/guide-notes")
+def update_admin_guide_notes(
+    update_data: AdminGuideNotesUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    notes = update_data.notes if update_data.notes is not None else ""
+    if len(notes) > ADMIN_GUIDE_NOTES_MAX_LEN:
+        raise HTTPException(
+            status_code=400,
+            detail=f"notes too long (max {ADMIN_GUIDE_NOTES_MAX_LEN} characters)",
+        )
+    upsert_site_setting(db, ADMIN_GUIDE_NOTES_KEY, notes)
+    return {"message": "Guide notes saved", "notes": notes}
 
 @app.get("/api/admin/site-settings/hero")
 def get_admin_home_hero(
