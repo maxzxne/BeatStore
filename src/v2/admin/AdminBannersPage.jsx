@@ -367,7 +367,7 @@ const AdminBannersPage = () => {
             Выкл — ниже и уже, второй слайд всегда выглядывает справа
           </div>
         </div>
-        <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
+        <label className="inline-flex shrink-0 cursor-pointer items-center self-center p-2 -m-2">
           <input
             type="checkbox"
             checked={fullscreen}
@@ -376,7 +376,10 @@ const AdminBannersPage = () => {
             className="peer sr-only"
             aria-label="Баннеры на полный экран"
           />
-          <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
+          <span
+            aria-hidden
+            className="relative h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus-visible:ring-2 peer-focus-visible:ring-[#22c55e]/40"
+          />
         </label>
       </div>
 
