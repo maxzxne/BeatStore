@@ -172,6 +172,7 @@ def handle_start_command(
             username=username,
             first_name=first_name,
             last_name=last_name,
+            mini_app_url=MINI_APP_URL,
         )
         send_message(chat_id, text, markup)
         return

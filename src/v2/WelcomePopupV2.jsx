@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useSiteSettings } from '../contexts/SiteSettingsContext';
+import { isTelegramWebApp } from '../utils/telegram';
 
 /**
- * Soft welcome: delayed, once per browser (localStorage), skip if already browsing deep link.
+ * Soft welcome: delayed, once per browser (localStorage), skip deep link + Mini App.
  */
 const WelcomePopupV2 = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -12,6 +13,7 @@ const WelcomePopupV2 = () => {
   const { canSeeCourses } = useSiteSettings();
 
   useEffect(() => {
+    if (isTelegramWebApp()) return;
     if (localStorage.getItem('welcomePopupClosed')) return;
     if (window.location.pathname !== '/') return;
 

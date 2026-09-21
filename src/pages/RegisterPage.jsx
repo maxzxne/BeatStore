@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { User, Lock, Mail, ArrowLeft } from 'lucide-react';
 import { api } from '../utils/api';
-import { mergeGuestCartToServer } from '../utils/guestCart';
 import { loginPath, readNextParam } from '../utils/authRedirect';
 import YandexSmartCaptcha from '../components/YandexSmartCaptcha';
 
@@ -82,59 +81,7 @@ const RegisterPage = () => {
     };
   }, []);
   
-  // Автоматическая авторизация при возврате из Telegram
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const telegramAuth = urlParams.get('telegram_auth');
-    const chatId = urlParams.get('chat_id');
-    const username = urlParams.get('username');
-    
-    if (telegramAuth === '1' && chatId) {
-      // Автоматически авторизуем пользователя через Telegram
-      const authorizeUser = async () => {
-        try {
-          setLoading(true);
-          setError('');
-          
-          // Получаем данные пользователя из Telegram через API
-          const formData = new FormData();
-          formData.append('chat_id', chatId);
-          if (username) formData.append('username', username);
-          const first_name = urlParams.get('first_name');
-          const last_name = urlParams.get('last_name');
-          if (first_name) formData.append('first_name', first_name);
-          if (last_name) formData.append('last_name', last_name);
-          
-          const response = await api.post('/oauth/telegram-auth', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          });
-          
-          if (response.data.access_token) {
-            localStorage.setItem('token', response.data.access_token);
-            try {
-              await mergeGuestCartToServer();
-            } catch (e) {
-              console.warn('Guest cart merge failed', e);
-            }
-            navigate(readNextParam(window.location.search));
-          } else {
-            setError('Не удалось авторизоваться через Telegram');
-          }
-        } catch (err) {
-          console.error('Telegram auth error:', err);
-          setError('Ошибка авторизации через Telegram');
-          // Убираем параметры из URL
-          window.history.replaceState({}, '', '/register');
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      authorizeUser();
-    }
-  }, [navigate]);
+  // chat_id telegram_auth removed — spoofable. Use Login Widget / Mini App initData.
 
   const handleChange = (e) => {
     setFormData({
@@ -413,13 +360,8 @@ const RegisterPage = () => {
               <button
                 onClick={() => {
                   const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'XWinnerbeatpleasebot';
-                  const telegramUrl = `https://t.me/${botUsername}?start=auth_${Date.now()}`;
-                  const tgAppUrl = `tg://resolve?domain=${botUsername}&start=auth_${Date.now()}`;
-                  window.location.href = tgAppUrl;
-                  setTimeout(() => {
-                    window.open(telegramUrl, '_blank');
-                  }, 500);
-                  setError('Откройте бота в Telegram для авторизации. После авторизации вернитесь на сайт.');
+                  window.open(`https://t.me/${botUsername}?startapp`, '_blank');
+                  setError('Открой магазин в Telegram — регистрация/вход пройдут автоматически.');
                 }}
                 disabled={loading || oauthSettings.telegram?.is_disabled}
                 className="flex h-12 w-full items-center justify-center rounded-full border border-[#0088cc] bg-[#0088cc] px-4 text-base text-white transition hover:bg-[#0077b5] disabled:cursor-not-allowed disabled:opacity-70"

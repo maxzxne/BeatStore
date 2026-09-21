@@ -611,3 +611,8 @@ html.ui-v2 .min-h-screen.bg-white {
 .v2-course-player:-webkit-full-screen video {
   object-fit: contain;
 }
+
+/* Telegram Mini App: slightly denser chrome */
+html.tg-mini-app footer {
+  font-size: 10px;
+}

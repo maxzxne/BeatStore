@@ -823,6 +823,8 @@ class BeatResponse(BaseModel):
     is_available: bool
     allow_multiple_purchases: bool = False
     created_at: datetime
+    is_favorite: Optional[bool] = False
+    is_in_cart: Optional[bool] = False
 
     class Config:
         from_attributes = True
@@ -1887,6 +1889,7 @@ def get_beats(
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
     key: Optional[str] = None,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     # Сначала проверяем и скрываем одноразовые биты, которые уже куплены
@@ -1921,6 +1924,12 @@ def get_beats(
     
     beats = query.all()
     sales = load_active_sales(db)
+
+    favorite_ids = set()
+    cart_ids = set()
+    if current_user:
+        favorite_ids = {b.id for b in current_user.favorites}
+        cart_ids = {b.id for b in current_user.cart_items}
     
     # Принудительно устанавливаем кодировку UTF-8 для ответа
     response_data = []
@@ -1942,7 +1951,9 @@ def get_beats(
                 "cover_url": beat.cover_url,
                 "is_available": beat.is_available,
                 "allow_multiple_purchases": beat.allow_multiple_purchases,
-                "created_at": beat.created_at.isoformat() if beat.created_at else None
+                "created_at": beat.created_at.isoformat() if beat.created_at else None,
+                "is_favorite": beat.id in favorite_ids,
+                "is_in_cart": beat.id in cart_ids,
             },
             ["price", "price_mp3", "price_wav", "price_exclusive"],
             "beats",
@@ -5207,13 +5218,54 @@ class OAuthLogin(BaseModel):
     first_name: Optional[str] = None  # Для Telegram
     last_name: Optional[str] = None  # Для Telegram
     photo_url: Optional[str] = None  # URL аватара
+    auth_date: Optional[str] = None  # Telegram Login Widget
+    init_data: Optional[str] = None  # Telegram Mini App initData
+
+
+def _require_verified_telegram(oauth_data: "OAuthLogin") -> None:
+    """Reject spoofed Telegram identities; only Login Widget hash or WebApp initData."""
+    from telegram_auth import verify_login_widget, verify_webapp_init_data
+
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN") or ""
+    if not bot_token:
+        raise HTTPException(status_code=503, detail="Telegram auth is not configured")
+
+    verified = None
+    if oauth_data.init_data:
+        ok, verified = verify_webapp_init_data(oauth_data.init_data, bot_token)
+        if not ok:
+            raise HTTPException(status_code=401, detail="Invalid Telegram initData")
+    else:
+        payload = {
+            "id": oauth_data.provider_user_id,
+            "first_name": oauth_data.first_name,
+            "last_name": oauth_data.last_name,
+            "username": oauth_data.username,
+            "photo_url": oauth_data.photo_url,
+            "auth_date": oauth_data.auth_date,
+            "hash": oauth_data.access_token,
+        }
+        ok, verified = verify_login_widget(payload, bot_token)
+        if not ok:
+            raise HTTPException(status_code=401, detail="Invalid Telegram login hash")
+
+    if str(verified["id"]) != str(oauth_data.provider_user_id):
+        oauth_data.provider_user_id = str(verified["id"])
+    oauth_data.username = verified.get("username") or oauth_data.username
+    oauth_data.first_name = verified.get("first_name") or oauth_data.first_name
+    oauth_data.last_name = verified.get("last_name") or oauth_data.last_name
+    oauth_data.photo_url = verified.get("photo_url") or oauth_data.photo_url
+
 
 @app.post("/oauth/login", response_model=Token)
 def oauth_login(oauth_data: OAuthLogin, db: Session = Depends(get_db)):
     """
-    Авторизация через OAuth провайдеров (Google, VK, Yandex)
-    Создает пользователя, если его нет, или возвращает токен существующему
+    Авторизация через OAuth провайдеров (Google, VK, Yandex, Telegram).
+    Telegram: только подписанный Login Widget hash или Mini App initData.
     """
+    if oauth_data.provider == "telegram":
+        _require_verified_telegram(oauth_data)
+
     # Ищем пользователя по провайдеру и provider_id
     user = db.query(User).filter(
         User.oauth_provider == oauth_data.provider,
@@ -5280,66 +5332,11 @@ def telegram_auth_from_bot(
     last_name: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Авторизация через Telegram бота по chat_id
-    Используется когда пользователь возвращается на сайт из бота
-    """
-    try:
-        # Используем переданные данные пользователя
-        # getChat не работает для пользователей, только для групп/каналов
-        tg_username = username or f"tg_user_{chat_id}"
-        tg_first_name = first_name or ""
-        tg_last_name = last_name or ""
-        
-        # Ищем или создаем пользователя
-        provider_user_id = str(chat_id)
-        user = db.query(User).filter(
-            User.oauth_provider == "telegram",
-            User.oauth_provider_id == provider_user_id
-        ).first()
-        
-        if not user:
-            # Создаем нового пользователя
-            base_username = tg_username or f"{tg_first_name}_{tg_last_name}".lower().replace(' ', '_') or f"tg_user_{chat_id}"
-            # Проверяем уникальность username
-            final_username = base_username
-            counter = 1
-            while db.query(User).filter(User.username == final_username).first():
-                final_username = f"{base_username}_{counter}"
-                counter += 1
-            
-            user = User(
-                email=None,
-                username=final_username,
-                password_hash=None,
-                oauth_provider="telegram",
-                oauth_provider_id=provider_user_id
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-        else:
-            # Обновляем username, если изменился
-            if tg_username and user.username != tg_username:
-                # Проверяем уникальность нового username
-                if not db.query(User).filter(User.username == tg_username).first():
-                    user.username = tg_username
-                    db.commit()
-                    db.refresh(user)
-        
-        # Создаем JWT токен
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user.username}, expires_delta=access_token_expires
-        )
-        
-        return {"access_token": access_token, "token_type": "bearer"}
-        
-    except Exception as e:
-        print(f"Ошибка авторизации через Telegram: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Ошибка авторизации: {str(e)}")
+    """Deprecated: chat_id auth is spoofable. Use Login Widget or Mini App initData."""
+    raise HTTPException(
+        status_code=403,
+        detail="Telegram chat_id auth disabled. Use Login Widget or open the Mini App.",
+    )
 
 @app.get("/oauth/{provider}/callback")
 def oauth_callback(provider: str, code: Optional[str] = None, error: Optional[str] = None):

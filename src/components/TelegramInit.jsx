@@ -1,141 +1,64 @@
 /**
- * Компонент для инициализации Telegram Web App
- * Автоматически определяет, открыто ли приложение в Telegram, и инициализирует его
+ * Telegram Mini App bootstrap: theme + secure auto-login via initData HMAC.
  */
 
 import { useEffect } from 'react';
-import { initTelegramWebApp, getTelegramUser, getTelegramAuthData } from '../utils/telegram';
+import { initTelegramWebApp, getTelegramWebApp } from '../utils/telegram';
 import { useAuth } from '../contexts/AuthContext';
 
 const TelegramInit = () => {
   const { loginWithTelegram } = useAuth();
 
   useEffect(() => {
-    console.log('========================================');
-    console.log('🚀 TelegramInit: НАЧАЛО ИНИЦИАЛИЗАЦИИ');
-    console.log('========================================');
-    
-    // Инициализируем Telegram Web App
     const tg = initTelegramWebApp();
-    
-    if (!tg) {
-      console.log('❌ TelegramInit: не в Telegram Web App, пропускаем');
-      return;
-    }
+    if (!tg) return;
 
-    
-    // Расширяем приложение на весь экран
-    tg.expand();
-    
-    // Важно: вызываем ready() перед получением данных
-    tg.ready();
-    
-    // Включаем скролл для Telegram Web App
     try {
-      // Отключаем блокировку скролла, если она есть
-      if (tg.enableClosingConfirmation) {
-        tg.enableClosingConfirmation(false);
-      }
-      // Включаем вертикальную прокрутку
-      if (tg.isExpanded !== undefined) {
-        // Приложение уже расширено
-      }
-    } catch (e) {
-      // Игнорируем ошибки
+      tg.ready();
+      tg.expand();
+      if (typeof tg.setHeaderColor === 'function') tg.setHeaderColor('#050505');
+      if (typeof tg.setBackgroundColor === 'function') tg.setBackgroundColor('#050505');
+      document.documentElement.classList.add('tg-mini-app');
+      document.documentElement.setAttribute('data-theme', tg.colorScheme || 'dark');
+    } catch {
+      /* older clients */
     }
-    
-    
-    // Настраиваем полноэкранный режим для десктопа
-    if (tg.platform === 'tdesktop' || tg.platform === 'web' || tg.platform === 'unknown') {
-      // Для десктопа запрашиваем расширение окна
-      try {
-        tg.expand();
-        console.log('TelegramInit: приложение расширено для десктопа');
-      } catch (e) {
-        console.log('TelegramInit: не удалось расширить приложение:', e);
-      }
-    }
-    
 
-    // Функция для попытки авторизации
     const attemptAutoLogin = () => {
-      const currentToken = localStorage.getItem('token');
-      if (currentToken) {
-        return true;
-      }
+      if (localStorage.getItem('token')) return true;
+      const webapp = getTelegramWebApp();
+      if (!webapp?.initData) return false;
 
-      // Прямой доступ к данным пользователя
-      const user = tg.initDataUnsafe?.user;
-      
-      if (!user || !user.id) {
-        return false;
-      }
+      const user = webapp.initDataUnsafe?.user;
+      if (!user?.id) return false;
 
-      // Формируем данные для авторизации
-      const authData = {
+      loginWithTelegram({
         id: String(user.id),
         first_name: user.first_name || null,
         last_name: user.last_name || null,
         username: user.username || null,
         photo_url: user.photo_url || null,
-        auth_date: tg.initDataUnsafe?.auth_date || null,
-        hash: tg.initDataUnsafe?.hash || null
-      };
-      
-      // Авторизуем пользователя
-      loginWithTelegram(authData).then(result => {
-        if (result.success) {
-          window.location.reload();
-        }
-      }).catch(error => {
-        // Игнорируем ошибки
-      });
-      
+        auth_date: webapp.initDataUnsafe?.auth_date || null,
+        hash: webapp.initDataUnsafe?.hash || null,
+        init_data: webapp.initData,
+      }).catch(() => {});
       return true;
     };
 
-    // Проверяем, не авторизован ли уже пользователь
-    const token = localStorage.getItem('token');
-    
-    // Пробуем авторизоваться сразу и через задержки
-    if (!token) {
-      // Попытки с разными задержками для мобильных устройств
-      [0, 50, 100, 200, 500, 1000].forEach((delay) => {
+    if (!localStorage.getItem('token')) {
+      [0, 200, 800].forEach((delay) => {
         setTimeout(() => {
-          if (!localStorage.getItem('token')) {
-            attemptAutoLogin();
-          }
+          if (!localStorage.getItem('token')) attemptAutoLogin();
         }, delay);
       });
     }
-    
 
-    // Настройка темы Telegram (убрано для версии 6.0+)
-    // tg.setHeaderColor('#ffffff');
-    // tg.setBackgroundColor('#ffffff');
-    
-    // Обработка изменения темы
-    tg.onEvent('themeChanged', () => {
-      const theme = tg.colorScheme;
-      document.documentElement.setAttribute('data-theme', theme);
+    tg.onEvent?.('themeChanged', () => {
+      document.documentElement.setAttribute('data-theme', tg.colorScheme || 'dark');
     });
-
-    // Устанавливаем начальную тему
-    const theme = tg.colorScheme;
-    document.documentElement.setAttribute('data-theme', theme);
-    
-    // Обработчики событий для получения данных пользователя
-    tg.onEvent('viewportChanged', () => {
-      if (!localStorage.getItem('token')) {
-        attemptAutoLogin();
-      }
-    });
-
   }, [loginWithTelegram]);
 
-  return null; // Компонент не рендерит ничего
+  return null;
 };
 
 export default TelegramInit;
-
-

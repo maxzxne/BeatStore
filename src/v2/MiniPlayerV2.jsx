@@ -41,7 +41,7 @@ const MiniPlayerV2 = () => {
           <div className="h-full bg-[#22c55e] transition-[width] duration-150" style={{ width: `${progress}%` }} />
         </div>
         <div className="flex items-center gap-3 px-3 py-2.5 md:px-4">
-          <div className={`relative h-12 w-12 overflow-hidden rounded-xl bg-white/10 ${isPlaying ? 'v2-spin' : ''}`}>
+          <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-white/10">
             {currentTrackCover ? (
               <img src={currentTrackCover} alt="" className="h-full w-full object-cover" />
             ) : (

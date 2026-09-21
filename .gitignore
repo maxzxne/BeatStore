@@ -139,3 +139,6 @@ dist/
 
 # Playwright CLI sessions / screenshots
 .playwright-cli/
+
+# Git worktrees
+.worktrees/

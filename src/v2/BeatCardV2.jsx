@@ -12,8 +12,8 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
   const { isAuthenticated } = useAuth();
   const { playTrack, isCurrentTrackPlaying } = useAudioPlayer();
   const navigate = useNavigate();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isInCart, setIsInCart] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(Boolean(beat.is_favorite));
+  const [isInCart, setIsInCart] = useState(Boolean(beat.is_in_cart));
 
   useEffect(() => {
     if (!beat.id) return;
@@ -22,13 +22,9 @@ const BeatCardV2 = ({ beat, isPurchased = false, delay = 0 }) => {
       setIsFavorite(false);
       return;
     }
-    Promise.all([api.get('/favorites'), api.get('/cart')])
-      .then(([fav, cart]) => {
-        setIsFavorite(fav.data?.some((f) => f.id === beat.id));
-        setIsInCart(cart.data?.some((c) => c.id === beat.id));
-      })
-      .catch(() => {});
-  }, [isAuthenticated, beat.id]);
+    setIsFavorite(Boolean(beat.is_favorite));
+    setIsInCart(Boolean(beat.is_in_cart));
+  }, [isAuthenticated, beat.id, beat.is_favorite, beat.is_in_cart]);
 
   const handlePlay = (e) => {
     e.preventDefault();

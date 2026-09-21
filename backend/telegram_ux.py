@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import re
 from typing import Any, Optional
-from urllib.parse import quote
 
 THREAD_MARKER_RE = re.compile(r"тред\s*#(\d+)", re.IGNORECASE)
 
@@ -71,23 +70,23 @@ def build_auth_return_markup(
     username: Optional[str],
     first_name: str,
     last_name: str,
+    mini_app_url: str = "",
 ) -> tuple[str, dict[str, Any]]:
-    base = site_url(frontend_url) or "https://XWinner.beats.please"
+    """Secure auth: open Mini App (initData HMAC), never spoofable chat_id query."""
+    _ = (chat_id, first_name, last_name)  # kept for call-site compat
+    base = site_url(frontend_url) or site_url(mini_app_url) or "https://XWinner.beats.please"
+    store = site_url(mini_app_url) or base
     name = f"@{username}" if username else "друг"
-    auth_url = (
-        f"{base}/login?telegram_auth=1&chat_id={chat_id}"
-        f"&username={quote(username or '')}"
-        f"&first_name={quote(first_name)}"
-        f"&last_name={quote(last_name)}"
-    )
     text = (
         f"Авторизация через Telegram\n\n"
         f"Привет, {name}.\n"
-        f"Нажми кнопку, чтобы вернуться на сайт — вход завершится автоматически."
+        f"Открой магазин в Telegram — вход подтвердится подписью Mini App."
     )
-    markup = {
-        "inline_keyboard": [[{"text": "Вернуться на сайт", "url": auth_url}]]
-    }
+    if mini_app_url:
+        btn: dict[str, Any] = {"text": "Открыть магазин", "web_app": {"url": store}}
+    else:
+        btn = {"text": "Открыть магазин", "url": f"{base}/"}
+    markup = {"inline_keyboard": [[btn]]}
     return text, markup
 
 
