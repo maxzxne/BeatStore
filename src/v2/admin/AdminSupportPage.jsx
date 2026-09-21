@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MessageCircle } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../utils/api';
 import {
@@ -12,8 +13,10 @@ import {
 
 const AdminSupportPage = () => {
   const { isAdminAuthenticated } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const threadFromUrl = Number(searchParams.get('threadId')) || null;
   const [threads, setThreads] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
+  const [selectedId, setSelectedId] = useState(threadFromUrl);
   const [messages, setMessages] = useState([]);
   const [selectedMeta, setSelectedMeta] = useState(null);
   const [loadingList, setLoadingList] = useState(true);
@@ -22,6 +25,7 @@ const AdminSupportPage = () => {
   const [error, setError] = useState('');
   const lastIdRef = useRef(null);
   const selectedIdRef = useRef(null);
+  const clearedThreadParamRef = useRef(false);
 
   selectedIdRef.current = selectedId;
 
@@ -32,12 +36,20 @@ const AdminSupportPage = () => {
   };
 
   useEffect(() => {
+    if (!threadFromUrl) return;
+    setSelectedId(threadFromUrl);
+  }, [threadFromUrl]);
+
+  useEffect(() => {
     if (!isAdminAuthenticated) return undefined;
     let cancelled = false;
     const boot = async () => {
       try {
         const rows = await loadList();
-        if (!cancelled && rows.length && !selectedIdRef.current) {
+        if (cancelled) return;
+        if (threadFromUrl) {
+          setSelectedId(threadFromUrl);
+        } else if (rows.length && !selectedIdRef.current) {
           setSelectedId(rows[0].id);
         }
       } catch {
@@ -59,7 +71,7 @@ const AdminSupportPage = () => {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [isAdminAuthenticated]);
+  }, [isAdminAuthenticated, threadFromUrl]);
 
   useEffect(() => {
     if (!isAdminAuthenticated || !selectedId) {
@@ -78,9 +90,32 @@ const AdminSupportPage = () => {
         setMessages(data.messages || []);
         lastIdRef.current = data.messages?.at(-1)?.id ?? null;
         setError('');
-        setThreads((prev) =>
-          prev.map((row) => (row.id === selectedId ? { ...row, unread_for_admin: 0 } : row))
-        );
+        setThreads((prev) => {
+          const exists = prev.some((row) => row.id === selectedId);
+          if (exists) {
+            return prev.map((row) =>
+              row.id === selectedId ? { ...row, unread_for_admin: 0 } : row
+            );
+          }
+          return [
+            {
+              id: data.id,
+              user_id: data.user_id,
+              username: data.username,
+              email: data.email,
+              last_message_at: null,
+              last_message_preview: 'Новый диалог',
+              unread_for_admin: 0,
+            },
+            ...prev,
+          ];
+        });
+        if (threadFromUrl && threadFromUrl === selectedId && !clearedThreadParamRef.current) {
+          clearedThreadParamRef.current = true;
+          const next = new URLSearchParams(searchParams);
+          next.delete('threadId');
+          setSearchParams(next, { replace: true });
+        }
       } catch {
         if (!cancelled) setError('Не удалось открыть тред');
       } finally {

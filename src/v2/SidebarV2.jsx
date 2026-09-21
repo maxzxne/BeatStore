@@ -15,6 +15,7 @@ import {
   Image,
   MessageCircle,
   Users,
+  UserCircle,
   Inbox,
   Link2,
   Percent,
@@ -48,6 +49,7 @@ const navGroups = [
     label: 'Продажи',
     items: [
       { path: '/admin/purchases', label: 'Покупки', icon: ShoppingBag },
+      { path: '/admin/users', label: 'Пользователи', icon: UserCircle },
       { path: '/admin/orders', label: 'Заявки', icon: FileText },
       { path: '/admin/support', label: 'Поддержка', icon: MessageCircle },
     ],

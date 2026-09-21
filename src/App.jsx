@@ -33,6 +33,8 @@ import AdminErrors from './pages/AdminErrors';
 import AdminCourses from './pages/AdminCourses';
 import AdminUpload from './pages/AdminUpload';
 import AdminPurchases from './pages/AdminPurchases';
+import AdminUsersPage from './v2/admin/AdminUsersPage';
+import AdminUserDetailPage from './v2/admin/AdminUserDetailPage';
 import AdminOrders from './pages/AdminOrders';
 import AdminOAuthSettings from './pages/AdminOAuthSettings';
 import AdminRevenue from './pages/AdminRevenue';
@@ -108,6 +110,8 @@ function App() {
                     <Route path="contributors" element={<AdminContributorsPage />} />
                     <Route path="submissions" element={<AdminSubmissionsPage />} />
                     <Route path="purchases" element={<AdminPurchases />} />
+                    <Route path="users" element={<AdminUsersPage />} />
+                    <Route path="users/:userId" element={<AdminUserDetailPage />} />
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="support" element={<AdminSupportPage />} />
                     <Route path="revenue" element={<AdminRevenue />} />

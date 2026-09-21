@@ -26,7 +26,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 import shutil
 import os
 import sys
@@ -3216,6 +3216,247 @@ def get_revenue_stats(
         "start_date": start_date,
         "end_date": end_date
     }
+
+_SERVICE_LTV_STATUSES = ("paid", "completed")
+
+
+def _admin_user_spend_index(db: Session):
+    """Per-user LTV / counts / last purchase for admin CRM list+detail."""
+    index = {}
+
+    def row(user_id: int):
+        if user_id not in index:
+            index[user_id] = {
+                "ltv": 0.0,
+                "purchase_count": 0,
+                "beats": 0,
+                "courses": 0,
+                "services": 0,
+                "last_purchase_at": None,
+            }
+        return index[user_id]
+
+    def bump_last(entry, when):
+        if when is None:
+            return
+        current = entry["last_purchase_at"]
+        if current is None or when > current:
+            entry["last_purchase_at"] = when
+
+    for user_id, total, count, last_at in (
+        db.query(
+            Purchase.user_id,
+            func.coalesce(func.sum(Purchase.price_paid), 0.0),
+            func.count(Purchase.id),
+            func.max(Purchase.purchase_date),
+        )
+        .group_by(Purchase.user_id)
+        .all()
+    ):
+        entry = row(user_id)
+        entry["ltv"] += float(total or 0)
+        entry["purchase_count"] += int(count or 0)
+        entry["beats"] = int(count or 0)
+        bump_last(entry, last_at)
+
+    for user_id, total, count, last_at in (
+        db.query(
+            CoursePurchase.user_id,
+            func.coalesce(func.sum(CoursePurchase.price_paid), 0.0),
+            func.count(CoursePurchase.id),
+            func.max(CoursePurchase.purchase_date),
+        )
+        .group_by(CoursePurchase.user_id)
+        .all()
+    ):
+        entry = row(user_id)
+        entry["ltv"] += float(total or 0)
+        entry["purchase_count"] += int(count or 0)
+        entry["courses"] = int(count or 0)
+        bump_last(entry, last_at)
+
+    for user_id, total, count, last_at in (
+        db.query(
+            ServiceOrder.user_id,
+            func.coalesce(func.sum(ServiceOrder.price), 0.0),
+            func.count(ServiceOrder.id),
+            func.max(ServiceOrder.created_at),
+        )
+        .filter(
+            ServiceOrder.user_id.isnot(None),
+            ServiceOrder.status.in_(_SERVICE_LTV_STATUSES),
+            ServiceOrder.price.isnot(None),
+        )
+        .group_by(ServiceOrder.user_id)
+        .all()
+    ):
+        entry = row(user_id)
+        entry["ltv"] += float(total or 0)
+        entry["purchase_count"] += int(count or 0)
+        entry["services"] = int(count or 0)
+        bump_last(entry, last_at)
+
+    return index
+
+
+@app.get("/api/admin/users")
+def admin_list_users(
+    q: Optional[str] = None,
+    sort: str = "ltv",
+    page: int = 1,
+    page_size: int = 50,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    page = max(1, page)
+    page_size = min(100, max(1, page_size))
+    query = db.query(User)
+    needle = (q or "").strip()
+    if needle:
+        like = f"%{needle}%"
+        query = query.filter(
+            or_(
+                User.username.ilike(like),
+                User.email.ilike(like),
+                User.additional_contact.ilike(like),
+            )
+        )
+    users = query.all()
+    spend = _admin_user_spend_index(db)
+
+    rows = []
+    for user in users:
+        stats = spend.get(user.id) or {
+            "ltv": 0.0,
+            "purchase_count": 0,
+            "last_purchase_at": None,
+        }
+        rows.append({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "is_admin": bool(user.is_admin),
+            "created_at": user.created_at,
+            "purchase_count": stats["purchase_count"],
+            "ltv": float(stats["ltv"]),
+            "last_purchase_at": stats["last_purchase_at"],
+        })
+
+    sort_key = (sort or "ltv").strip().lower()
+    if sort_key == "created_at":
+        rows.sort(key=lambda r: r["created_at"] or datetime.min, reverse=True)
+    elif sort_key == "last_purchase":
+        rows.sort(
+            key=lambda r: r["last_purchase_at"] or datetime.min,
+            reverse=True,
+        )
+    else:
+        rows.sort(key=lambda r: (-r["ltv"], r["username"] or ""))
+
+    total = len(rows)
+    start = (page - 1) * page_size
+    items = rows[start : start + page_size]
+    return {"total": total, "page": page, "page_size": page_size, "items": items}
+
+
+@app.get("/api/admin/users/{user_id}")
+def admin_get_user(
+    user_id: int,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    spend = _admin_user_spend_index(db).get(user.id) or {
+        "ltv": 0.0,
+        "beats": 0,
+        "courses": 0,
+        "services": 0,
+    }
+
+    history = []
+    for purchase in (
+        db.query(Purchase)
+        .filter(Purchase.user_id == user_id)
+        .order_by(Purchase.purchase_date.desc())
+        .all()
+    ):
+        beat = purchase.beat
+        history.append({
+            "type": "beat",
+            "id": purchase.id,
+            "title": beat.title if beat else None,
+            "amount": float(purchase.price_paid or 0),
+            "date": purchase.purchase_date,
+            "meta": {"purchase_type": purchase.purchase_type},
+        })
+    for cp in (
+        db.query(CoursePurchase)
+        .filter(CoursePurchase.user_id == user_id)
+        .order_by(CoursePurchase.purchase_date.desc())
+        .all()
+    ):
+        course = cp.course
+        history.append({
+            "type": "course",
+            "id": cp.id,
+            "title": course.title if course else None,
+            "amount": float(cp.price_paid or 0),
+            "date": cp.purchase_date,
+            "meta": {},
+        })
+    for order in (
+        db.query(ServiceOrder)
+        .filter(ServiceOrder.user_id == user_id)
+        .order_by(ServiceOrder.created_at.desc())
+        .all()
+    ):
+        history.append({
+            "type": "service",
+            "id": order.id,
+            "title": order.description or "Заявка",
+            "amount": float(order.price or 0),
+            "date": order.created_at,
+            "meta": {"status": order.status},
+        })
+
+    history.sort(key=lambda row: row["date"] or datetime.min, reverse=True)
+
+    thread = _user_support_thread(db, user_id)
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_admin": bool(user.is_admin),
+        "is_active": bool(user.is_active),
+        "oauth_provider": user.oauth_provider,
+        "created_at": user.created_at,
+        "contacts": parse_contacts(user.additional_contact),
+        "totals": {
+            "ltv": float(spend["ltv"]),
+            "beats": int(spend.get("beats") or 0),
+            "courses": int(spend.get("courses") or 0),
+            "services": int(spend.get("services") or 0),
+        },
+        "history": history,
+        "support_thread_id": thread.id if thread else None,
+    }
+
+
+@app.post("/api/admin/users/{user_id}/support-thread")
+def admin_ensure_user_support_thread(
+    user_id: int,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    thread = _get_or_create_support_thread(db, user_id)
+    return {"thread_id": thread.id}
+
 
 @app.get("/api/admin/purchases")
 def get_purchases_admin(current_admin: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
