@@ -192,8 +192,8 @@ const AdminPromoCodesPage = () => {
               </button>
             </div>
             <div>
-              <label className={labelClass}>Username покупателя</label>
-              <input required className={fieldClass} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="buyer" />
+              <label className={labelClass}>Логин покупателя</label>
+              <input required className={fieldClass} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="ник пользователя" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -233,11 +233,11 @@ const AdminPromoCodesPage = () => {
             </div>
             <div>
               <label className={labelClass}>Код (пусто = сгенерировать)</label>
-              <input className={`${fieldClass} font-mono uppercase`} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="необязательно" />
+              <input className={`${fieldClass} font-mono uppercase`} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="xw10off" />
             </div>
             <div>
               <label className={labelClass}>Заметка</label>
-              <input className={fieldClass} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="для себя" />
+              <input className={fieldClass} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="видно только тебе" />
             </div>
             <button
               type="submit"

@@ -58,7 +58,7 @@ const CustomSelect = ({
         >
           {options.map((opt) => (
             <li
-              key={opt.value}
+              key={opt.value === '' ? '__empty' : String(opt.value)}
               role="option"
               aria-selected={opt.value === value}
               onClick={() => handleSelect(opt)}

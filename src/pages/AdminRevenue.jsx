@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../utils/api';
 import { Music, GraduationCap, FileText, TrendingUp, Calendar } from 'lucide-react';
 import DatePicker from '../components/DatePicker';
+import CustomSelect from '../components/CustomSelect';
 
 const AdminRevenue = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -321,18 +322,18 @@ const AdminRevenue = () => {
             </div>
             <div className="flex items-center gap-2">
               <label className="text-sm text-white/45">Человек</label>
-              <select
+              <CustomSelect
+                className="min-w-[160px]"
                 value={contributorId}
-                onChange={(event) => setContributorId(event.target.value)}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
-              >
-                <option value="">Все</option>
-                {people.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setContributorId}
+                options={[
+                  { value: '', label: 'Все' },
+                  ...people.map((person) => ({
+                    value: String(person.id),
+                    label: person.name,
+                  })),
+                ]}
+              />
             </div>
             {(startDate || endDate || contributorId) && (
               <button

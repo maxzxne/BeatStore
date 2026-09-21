@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Loader2, Pencil, Plus, Percent, Trash2, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../utils/api';
+import CustomSelect from '../../components/CustomSelect';
+import DatePicker from '../../components/DatePicker';
 
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
@@ -231,16 +233,16 @@ const AdminSalesPage = () => {
             </div>
             <div>
               <label className={labelClass}>Название</label>
-              <input className={fieldClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Summer sale" />
+              <input className={fieldClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Летняя акция" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Где действует</label>
-                <select className={fieldClass} value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })}>
-                  {SCOPES.map((s) => (
-                    <option key={s.id} value={s.id}>{s.label}</option>
-                  ))}
-                </select>
+                <CustomSelect
+                  options={SCOPES.map((s) => ({ value: s.id, label: s.label }))}
+                  value={form.scope}
+                  onChange={(scope) => setForm({ ...form, scope })}
+                />
               </div>
               <div>
                 <label className={labelClass}>Тип</label>
@@ -276,7 +278,11 @@ const AdminSalesPage = () => {
             <div>
               <label className={labelClass}>{form.kind === 'amount' ? 'Скидка, ₽' : 'Скидка, %'}</label>
               <div className="relative">
-                <Percent className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                {form.kind === 'amount' ? (
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-white/30">₽</span>
+                ) : (
+                  <Percent className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                )}
                 <input
                   className={fieldClass}
                   type="number"
@@ -291,11 +297,20 @@ const AdminSalesPage = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>С</label>
-                <input className={fieldClass} type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} />
+                <DatePicker
+                  showTime
+                  value={form.starts_at}
+                  onChange={(starts_at) => setForm({ ...form, starts_at })}
+                />
               </div>
               <div>
                 <label className={labelClass}>До</label>
-                <input className={fieldClass} type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} />
+                <DatePicker
+                  showTime
+                  align="right"
+                  value={form.ends_at}
+                  onChange={(ends_at) => setForm({ ...form, ends_at })}
+                />
               </div>
             </div>
             <label className="flex items-center gap-2 text-sm text-white/70">
