@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff, Loader2, Lock, ShieldAlert } from 'lucide-react';
 import { api } from '../utils/api';
 import { useNotification } from '../contexts/NotificationContext';
+import AdminToggle from './AdminToggle';
 
 /**
  * Hidden admin controls: maintenance wall + HTTP Basic Auth.
@@ -136,16 +137,12 @@ export default function AdminSiteGatePanel() {
               <span className="text-sm text-white/80">
                 {maintenanceMode ? 'Сайт закрыт для публики' : 'Сайт открыт'}
               </span>
-              <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={maintenanceMode}
-                  onChange={(e) => setMaintenanceMode(e.target.checked)}
-                  aria-label="Режим обслуживания"
-                />
-                <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-amber-500 peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-400/40" />
-              </label>
+              <AdminToggle
+                checked={maintenanceMode}
+                onChange={setMaintenanceMode}
+                accent="amber"
+                aria-label="Режим обслуживания"
+              />
             </div>
             <label className="mt-3 block">
               <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">Заголовок</span>
@@ -189,16 +186,11 @@ export default function AdminSiteGatePanel() {
                 {httpBasicEnabled ? 'Basic включён' : 'Basic выключен'}
                 {passwordSet ? '' : ' · пароль не задан'}
               </span>
-              <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={httpBasicEnabled}
-                  onChange={(e) => setHttpBasicEnabled(e.target.checked)}
-                  aria-label="HTTP Basic Auth"
-                />
-                <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/40" />
-              </label>
+              <AdminToggle
+                checked={httpBasicEnabled}
+                onChange={setHttpBasicEnabled}
+                aria-label="HTTP Basic Auth"
+              />
             </div>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <label className="block">

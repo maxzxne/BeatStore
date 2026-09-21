@@ -10,6 +10,7 @@ import {
 } from '../utils/serviceOrderPricing';
 import AdminServicePricingPanel from '../components/AdminServicePricingPanel';
 import AdminSiteGatePanel from '../components/AdminSiteGatePanel';
+import AdminToggle from '../components/AdminToggle';
 import { Link } from 'react-router-dom';
 
 const COURSES_VISIBILITY_OPTIONS = [
@@ -356,17 +357,12 @@ const AdminOAuthSettings = () => {
               {adsOrdersEnabled ? 'Посетители могут отправить заявку на баннер' : 'Форма и URL закрыты для всех'}
             </div>
           </div>
-          <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
-            <input
-              type="checkbox"
-              checked={adsOrdersEnabled}
-              onChange={(e) => updateAdsOrdersEnabled(e.target.checked)}
-              disabled={savingAds}
-              className="peer sr-only"
-              aria-label="Включить заказ рекламы"
-            />
-            <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
-          </label>
+          <AdminToggle
+            checked={adsOrdersEnabled}
+            onChange={updateAdsOrdersEnabled}
+            disabled={savingAds}
+            aria-label="Включить заказ рекламы"
+          />
         </div>
 
         <div className="mt-5 border-t border-white/10 pt-5">
@@ -434,17 +430,12 @@ const AdminOAuthSettings = () => {
               Приложение-аутентификатор (Google Authenticator, Authy, 1Password)
             </div>
           </div>
-          <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
-            <input
-              type="checkbox"
-              checked={totpEnabled}
-              onChange={(e) => updateTotpEnabled(e.target.checked)}
-              disabled={savingTotp}
-              className="peer sr-only"
-              aria-label="Включить 2FA"
-            />
-            <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
-          </label>
+          <AdminToggle
+            checked={totpEnabled}
+            onChange={updateTotpEnabled}
+            disabled={savingTotp}
+            aria-label="Включить 2FA"
+          />
         </div>
       </div>
 
@@ -469,17 +460,12 @@ const AdminOAuthSettings = () => {
               Login / register / admin login. Без ключей тумблер не даст эффект.
             </div>
           </div>
-          <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
-            <input
-              type="checkbox"
-              checked={captchaEnabled}
-              onChange={(e) => updateCaptchaEnabled(e.target.checked)}
-              disabled={savingCaptcha}
-              className="peer sr-only"
-              aria-label="Включить капчу"
-            />
-            <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
-          </label>
+          <AdminToggle
+            checked={captchaEnabled}
+            onChange={updateCaptchaEnabled}
+            disabled={savingCaptcha}
+            aria-label="Включить капчу"
+          />
         </div>
       </div>
 
@@ -517,17 +503,12 @@ const AdminOAuthSettings = () => {
                     <div className="text-xs text-white/40">На формах входа</div>
                   </div>
                 </div>
-                <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    checked={!setting.is_hidden}
-                    onChange={(e) => updateSetting(setting.provider, 'is_hidden', !e.target.checked)}
-                    disabled={saving[setting.provider]}
-                    className="peer sr-only"
-                    aria-label={`Показывать ${getProviderName(setting.provider)}`}
-                  />
-                  <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
-                </label>
+                <AdminToggle
+                  checked={!setting.is_hidden}
+                  onChange={(on) => updateSetting(setting.provider, 'is_hidden', !on)}
+                  disabled={saving[setting.provider]}
+                  aria-label={`Показывать ${getProviderName(setting.provider)}`}
+                />
               </div>
 
               <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
@@ -542,17 +523,12 @@ const AdminOAuthSettings = () => {
                     <div className="text-xs text-white/40">Кнопка активна</div>
                   </div>
                 </div>
-                <label className="relative inline-flex min-h-11 min-w-11 cursor-pointer items-center">
-                  <input
-                    type="checkbox"
-                    checked={!setting.is_disabled}
-                    onChange={(e) => updateSetting(setting.provider, 'is_disabled', !e.target.checked)}
-                    disabled={saving[setting.provider]}
-                    className="peer sr-only"
-                    aria-label={`Разрешить вход через ${getProviderName(setting.provider)}`}
-                  />
-                  <div className="h-6 w-11 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#22c55e] peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#22c55e]/30" />
-                </label>
+                <AdminToggle
+                  checked={!setting.is_disabled}
+                  onChange={(on) => updateSetting(setting.provider, 'is_disabled', !on)}
+                  disabled={saving[setting.provider]}
+                  aria-label={`Разрешить вход через ${getProviderName(setting.provider)}`}
+                />
               </div>
             </div>
 
