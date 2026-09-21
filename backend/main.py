@@ -990,6 +990,7 @@ class SiteSettingsUpdate(BaseModel):
     ads_orders_enabled: Optional[bool] = None
     totp_enabled: Optional[bool] = None
     captcha_enabled: Optional[bool] = None
+    promo_banners_fullscreen: Optional[bool] = None
 
 class HomeHeroUpdate(BaseModel):
     """Схема обновления hero главной"""
@@ -1113,6 +1114,10 @@ def get_totp_enabled(db: Session) -> bool:
 
 def get_captcha_enabled(db: Session) -> bool:
     return parse_bool_setting(get_site_setting_value(db, "captcha_enabled", "false"), False)
+
+def get_promo_banners_fullscreen(db: Session) -> bool:
+    """Full-bleed promo slider (default). False = compact peek of next slide."""
+    return parse_bool_setting(get_site_setting_value(db, "promo_banners_fullscreen", "true"), True)
 
 def get_home_hero(db: Session) -> dict:
     raw = get_site_setting_value(db, "home_hero", "")
@@ -2755,44 +2760,32 @@ def create_service_order(order: ServiceOrderCreate,
                         except:
                             reference_files_list = [order.reference_files_url] if order.reference_files_url else []
                     
-                    # Дополнительная информация
+                    materials_info = f"Загружено файлов: {len(materials_list)}" if materials_list else "Не загружены"
+                    ref_files_info = f"Загружено файлов: {len(reference_files_list)}" if reference_files_list else "Не загружены"
                     contact_info_text = order.contact_info if order.contact_info else "Не указана"
-                    
-                    # Описание
                     description_text = order.description if order.description else "Нет описания"
                     if len(description_text) > 500:
                         description_text = description_text[:500] + "..."
-                    
-                    # Формируем сообщение с информацией
-                    materials_info = f"Загружено файлов: {len(materials_list)}" if materials_list else "Не загружены"
-                    ref_files_info = f"Загружено файлов: {len(reference_files_list)}" if reference_files_list else "Не загружены"
-                    
-                    message = f"""🔔 <b>Новая заявка на заказ услуги</b>
 
-📋 <b>Заявка #{service_order.id}</b>
+                    from telegram_ux import build_admin_order_notify
 
-{customer_info}
-📂 <b>Категории:</b> {categories_text}
-📅 <b>Дедлайн:</b> {order.deadline_days or 'не указан'} дней
-💰 <b>Предоплата:</b> {order.prepayment_percent or 'не указано'}%
+                    frontend = os.getenv("FRONTEND_URL", "") or os.getenv("MINI_APP_URL", "")
+                    message, order_markup = build_admin_order_notify(
+                        order_id=service_order.id,
+                        customer_line=customer_info,
+                        categories=categories_text,
+                        deadline=str(order.deadline_days or "не указан"),
+                        prepayment=str(order.prepayment_percent or "не указано"),
+                        description=description_text,
+                        materials_info=materials_info,
+                        reference_links_text=reference_links_text,
+                        ref_files_info=ref_files_info,
+                        contact_info=contact_info_text,
+                        frontend_url=frontend,
+                    )
 
-📝 <b>Описание:</b>
-{description_text}
-
-📎 <b>Материалы:</b> {materials_info}
-
-🔗 <b>Референсы (ссылки):</b>
-{reference_links_text}
-
-📁 <b>Референсы (файлы):</b> {ref_files_info}
-
-📞 <b>Доп. контакты:</b> {contact_info_text}
-
-🔗 Проверьте заявку в админ-панели"""
-                    
-                    # Отправляем текстовое сообщение
                     try:
-                        send_message(int(admin_chat_id), message)
+                        send_message(int(admin_chat_id), message, order_markup)
                         print(f"Telegram notification sent to admin (chat_id={admin_chat_id})")
                     except Exception as msg_error:
                         print(f"Error sending Telegram message: {msg_error}")
@@ -3168,21 +3161,24 @@ def _thread_messages(db: Session, thread_id: int, after_id: Optional[int] = None
     return query.order_by(SupportMessage.id.asc()).all()
 
 
-def _notify_admin_support_message(username: str, body: str) -> None:
+def _notify_admin_support_message(username: str, body: str, thread_id: int) -> None:
     if not TELEGRAM_BOT_AVAILABLE:
         return
     chat_id = os.getenv("ADMIN_TELEGRAM_CHAT_ID")
     if not chat_id:
         return
     preview = _support_preview(body, 200)
-    text = (
-        f"💬 <b>Поддержка</b>\n\n"
-        f"👤 {username}\n"
-        f"{preview}\n\n"
-        f"Ответить в админке → Поддержка"
-    )
     try:
-        send_message(int(chat_id), text)
+        from telegram_ux import build_admin_support_notify
+
+        frontend = os.getenv("FRONTEND_URL", "") or os.getenv("MINI_APP_URL", "")
+        text, markup = build_admin_support_notify(
+            username=username,
+            body=preview,
+            thread_id=thread_id,
+            frontend_url=frontend,
+        )
+        send_message(int(chat_id), text, markup)
     except Exception:
         pass
 
@@ -3223,7 +3219,7 @@ def post_support_message(
     body = _normalize_support_body(payload.body)
     thread = _get_or_create_support_thread(db, current_user.id)
     message = _append_support_message(db, thread, author=current_user, role="user", body=body)
-    _notify_admin_support_message(current_user.username, body)
+    _notify_admin_support_message(current_user.username, body, thread.id)
     return _support_message_out(message)
 
 
@@ -3290,7 +3286,56 @@ def admin_post_support_message(
         raise HTTPException(status_code=404, detail="Тред не найден")
     body = _normalize_support_body(payload.body)
     message = _append_support_message(db, thread, author=current_admin, role="admin", body=body)
+    _notify_user_support_reply(thread, body)
     return _support_message_out(message)
+
+
+def _telegram_chat_id_for_user(user: Optional[User]) -> Optional[int]:
+    if not user or user.oauth_provider != "telegram" or not user.oauth_provider_id:
+        return None
+    try:
+        return int(user.oauth_provider_id)
+    except (TypeError, ValueError):
+        return None
+
+
+def _notify_user_support_reply(thread: SupportThread, body: str) -> None:
+    if not TELEGRAM_BOT_AVAILABLE:
+        return
+    user = thread.user
+    chat_id = _telegram_chat_id_for_user(user)
+    if chat_id is None:
+        return
+    try:
+        from telegram_ux import build_user_menu_markup, build_user_support_reply_text
+
+        preview = _support_preview(body, 200)
+        frontend = os.getenv("FRONTEND_URL", "") or os.getenv("MINI_APP_URL", "")
+        send_message(
+            chat_id,
+            build_user_support_reply_text(preview),
+            build_user_menu_markup(
+                mini_app_url=os.getenv("MINI_APP_URL", ""),
+                frontend_url=frontend,
+            ),
+        )
+    except Exception:
+        pass
+
+
+def _notify_user_order_status(order: ServiceOrder, status: str) -> None:
+    if not TELEGRAM_BOT_AVAILABLE:
+        return
+    user = order.user
+    chat_id = _telegram_chat_id_for_user(user)
+    if chat_id is None:
+        return
+    try:
+        from telegram_ux import build_user_order_status_text
+
+        send_message(chat_id, build_user_order_status_text(order.id, status))
+    except Exception:
+        pass
 
 
 @app.get("/api/admin/analytics")
@@ -4240,6 +4285,9 @@ def update_service_order_status(
     db.commit()
     db.refresh(order)
 
+    if status:
+        _notify_user_order_status(order, status)
+
     return {"message": "Order updated successfully", "order": serialize_admin_service_order(order, db)}
 
 @app.post("/api/admin/service-orders/{order_id}/upload-result")
@@ -4355,6 +4403,7 @@ def get_public_site_settings(db: Session = Depends(get_db)):
     return {
         "courses_visibility": get_courses_visibility(db),
         "ads_orders_enabled": get_ads_orders_enabled(db),
+        "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
         "home_hero": get_home_hero(db),
     }
 
@@ -4365,6 +4414,7 @@ def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user
         "ads_orders_enabled": get_ads_orders_enabled(db),
         "totp_enabled": get_totp_enabled(db),
         "captcha_enabled": get_captcha_enabled(db),
+        "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
         "home_hero": get_home_hero(db),
     }
 
@@ -4391,6 +4441,13 @@ def update_admin_site_settings(
     if update_data.captcha_enabled is not None:
         upsert_site_setting(db, "captcha_enabled", "true" if update_data.captcha_enabled else "false")
 
+    if update_data.promo_banners_fullscreen is not None:
+        upsert_site_setting(
+            db,
+            "promo_banners_fullscreen",
+            "true" if update_data.promo_banners_fullscreen else "false",
+        )
+
     return {
         "message": "Site settings updated successfully",
         "settings": {
@@ -4398,6 +4455,7 @@ def update_admin_site_settings(
             "ads_orders_enabled": get_ads_orders_enabled(db),
             "totp_enabled": get_totp_enabled(db),
             "captcha_enabled": get_captcha_enabled(db),
+            "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
             "home_hero": get_home_hero(db),
         }
     }

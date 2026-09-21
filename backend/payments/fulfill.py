@@ -42,7 +42,45 @@ def fulfill_intent(db: Session, intent: PaymentIntent) -> PaymentIntent:
     consume_promo_for_intent(db, intent)
     db.commit()
     db.refresh(intent)
+    _notify_telegram_purchase(db, intent, payload)
     return intent
+
+
+def _notify_telegram_purchase(db: Session, intent: PaymentIntent, payload: dict) -> None:
+    if not intent.user_id:
+        return
+    user = db.query(User).filter(User.id == intent.user_id).first()
+    if not user or user.oauth_provider != "telegram" or not user.oauth_provider_id:
+        return
+    try:
+        chat_id = int(user.oauth_provider_id)
+    except (TypeError, ValueError):
+        return
+
+    title = "покупка"
+    kind = intent.kind or "item"
+    if intent.kind == "beat":
+        beat = db.query(Beat).filter(Beat.id == int(payload.get("item_id") or 0)).first()
+        title = beat.title if beat else "бит"
+        kind = payload.get("purchase_type") or "mp3"
+    elif intent.kind == "course":
+        course = db.query(Course).filter(Course.id == int(payload.get("item_id") or 0)).first()
+        title = course.title if course else "курс"
+        kind = "курс"
+    elif intent.kind == "cart":
+        title = "корзина"
+        kind = "cart"
+    elif intent.kind == "order":
+        title = f"заявка #{payload.get('order_id')}"
+        kind = "услуга"
+
+    try:
+        from telegram_bot import send_message
+        from telegram_ux import build_user_purchase_text
+
+        send_message(chat_id, build_user_purchase_text(title, kind))
+    except Exception:
+        pass
 
 
 def mark_failed(db: Session, intent: PaymentIntent, message: str) -> PaymentIntent:

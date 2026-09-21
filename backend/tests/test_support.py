@@ -157,7 +157,13 @@ class SupportApiTestCase(unittest.TestCase):
         self.assertEqual(bodies, ["Второе"])
 
     def test_user_message_notifies_admin_telegram(self):
-        with patch.dict(os.environ, {"ADMIN_TELEGRAM_CHAT_ID": "12345"}):
+        with patch.dict(
+            os.environ,
+            {
+                "ADMIN_TELEGRAM_CHAT_ID": "12345",
+                "FRONTEND_URL": "https://store.example",
+            },
+        ):
             with patch("main.send_message") as notify:
                 posted = self.client.post(
                     "/api/support/thread/messages",
@@ -170,6 +176,10 @@ class SupportApiTestCase(unittest.TestCase):
         self.assertEqual(args[0], 12345)
         self.assertIn("buyer", args[1])
         self.assertIn("Помогите", args[1])
+        self.assertIn("тред #", args[1])
+        markup = args[2] if len(args) > 2 else kwargs.get("reply_markup")
+        self.assertIsNotNone(markup)
+        self.assertIn("threadId=", markup["inline_keyboard"][0][0]["url"])
 
 
 if __name__ == "__main__":
