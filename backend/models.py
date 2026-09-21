@@ -343,6 +343,24 @@ class PromoBanner(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
+class FooterPage(Base):
+    """Ссылки/страницы футера: CMS + особый пункт Поддержка (чат)."""
+    __tablename__ = "footer_pages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    label = Column(String, nullable=False)
+    title = Column(String, nullable=True)
+    body = Column(Text, nullable=True)
+    kind = Column(String, default="page", nullable=False)  # page | support
+    sort_order = Column(Integer, default=0, nullable=False)
+    enabled = Column(Boolean, default=True, nullable=False)
+    is_builtin = Column(Boolean, default=False, nullable=False)
+    show_icon = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 class PaymentIntent(Base):
     """Pending or completed checkout. InvId for Robokassa is this row's id."""
     __tablename__ = "payment_intents"

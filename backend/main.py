@@ -37,7 +37,14 @@ from pathlib import Path
 
 print("Импорт database и models...")
 from database import SessionLocal, engine
-from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, ErrorLog, PaymentIntent, SupportThread, SupportMessage, Contributor, cart_table, course_cart_table, course_favorites_table, favorites_table
+from models import Base, User, Beat, Purchase, Course, CoursePurchase, ServiceOrder, OAuthSettings, SiteSetting, PromoBanner, FooterPage, ErrorLog, PaymentIntent, SupportThread, SupportMessage, Contributor, cart_table, course_cart_table, course_favorites_table, favorites_table
+from footer_pages import (
+    ensure_default_footer_pages,
+    footer_page_public_detail,
+    footer_page_to_dict,
+    normalize_slug,
+    validate_slug,
+)
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
 from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
@@ -246,9 +253,11 @@ def update_database_schema():
         finally:
             db.close()
 
-        # Промо-баннеры (таблица создаётся через create_all ниже)
+        # Промо-баннеры / footer CMS (таблицы через create_all ниже)
         if 'promo_banners' not in inspector.get_table_names():
             print("Создание таблицы promo_banners...")
+        if 'footer_pages' not in inspector.get_table_names():
+            print("Создание таблицы footer_pages...")
         
         # Создаем все таблицы (если их еще нет)
         Base.metadata.create_all(bind=engine)
@@ -261,6 +270,15 @@ def update_database_schema():
 Base.metadata.create_all(bind=engine)
 
 update_database_schema()
+
+try:
+    _footer_db = SessionLocal()
+    try:
+        ensure_default_footer_pages(_footer_db)
+    finally:
+        _footer_db.close()
+except Exception as e:
+    print(f"Ошибка сида footer_pages: {e}")
 
 # Создание администратора при первом запуске приложения
 def create_admin_user():
@@ -925,6 +943,28 @@ class PromoBannerUpdate(BaseModel):
     enabled: Optional[bool] = None
     starts_at: Optional[datetime] = None
     ends_at: Optional[datetime] = None
+
+
+class FooterPageCreate(BaseModel):
+    slug: str
+    label: str
+    title: Optional[str] = None
+    body: Optional[str] = ""
+    enabled: bool = True
+    sort_order: Optional[int] = None
+
+
+class FooterPageUpdate(BaseModel):
+    label: Optional[str] = None
+    title: Optional[str] = None
+    body: Optional[str] = None
+    enabled: Optional[bool] = None
+    show_icon: Optional[bool] = None
+
+
+class FooterPageReorder(BaseModel):
+    ids: List[int]
+
 
 def get_site_setting_value(db: Session, key: str, default: str = "") -> str:
     setting = db.query(SiteSetting).filter(SiteSetting.key == key).first()
@@ -3836,6 +3876,144 @@ async def upload_promo_banner_image(
 
     url = f"/static/site/{filename}"
     return {"url": url, "image_url": url}
+
+# Footer pages CMS
+@app.get("/footer-pages")
+def get_public_footer_pages(db: Session = Depends(get_db)):
+    ensure_default_footer_pages(db)
+    pages = (
+        db.query(FooterPage)
+        .filter(FooterPage.enabled == True)
+        .order_by(FooterPage.sort_order.asc(), FooterPage.id.asc())
+        .all()
+    )
+    return [footer_page_to_dict(p, public=True) for p in pages]
+
+
+@app.get("/footer-pages/{slug}")
+def get_public_footer_page(slug: str, db: Session = Depends(get_db)):
+    ensure_default_footer_pages(db)
+    page = db.query(FooterPage).filter(FooterPage.slug == normalize_slug(slug)).first()
+    if not page or not page.enabled or page.kind == "support":
+        raise HTTPException(status_code=404, detail="Footer page not found")
+    return footer_page_public_detail(page)
+
+
+@app.get("/api/admin/footer-pages")
+def get_admin_footer_pages(
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    ensure_default_footer_pages(db)
+    pages = (
+        db.query(FooterPage)
+        .order_by(FooterPage.sort_order.asc(), FooterPage.id.asc())
+        .all()
+    )
+    return [footer_page_to_dict(p) for p in pages]
+
+
+@app.post("/api/admin/footer-pages")
+def create_admin_footer_page(
+    data: FooterPageCreate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    ensure_default_footer_pages(db)
+    slug = normalize_slug(data.slug)
+    err = validate_slug(slug)
+    if err:
+        raise HTTPException(status_code=400, detail=err)
+    if db.query(FooterPage).filter(FooterPage.slug == slug).first():
+        raise HTTPException(status_code=400, detail="Страница с таким slug уже есть")
+    label = (data.label or "").strip()
+    if not label:
+        raise HTTPException(status_code=400, detail="Укажите название в футере")
+    max_order = db.query(FooterPage).count()
+    page = FooterPage(
+        slug=slug,
+        label=label,
+        title=(data.title or label).strip() or label,
+        body=data.body if data.body is not None else "",
+        kind="page",
+        sort_order=data.sort_order if data.sort_order is not None else max_order,
+        enabled=bool(data.enabled),
+        is_builtin=False,
+        show_icon=False,
+    )
+    db.add(page)
+    db.commit()
+    db.refresh(page)
+    return footer_page_to_dict(page)
+
+
+@app.put("/api/admin/footer-pages/reorder")
+def reorder_admin_footer_pages(
+    data: FooterPageReorder,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    ensure_default_footer_pages(db)
+    pages = db.query(FooterPage).all()
+    by_id = {p.id: p for p in pages}
+    if not data.ids or set(data.ids) != set(by_id.keys()):
+        raise HTTPException(status_code=400, detail="Передайте полный список id для сортировки")
+    for index, page_id in enumerate(data.ids):
+        by_id[page_id].sort_order = index
+        by_id[page_id].updated_at = datetime.utcnow()
+    db.commit()
+    ordered = (
+        db.query(FooterPage)
+        .order_by(FooterPage.sort_order.asc(), FooterPage.id.asc())
+        .all()
+    )
+    return [footer_page_to_dict(p) for p in ordered]
+
+
+@app.put("/api/admin/footer-pages/{page_id}")
+def update_admin_footer_page(
+    page_id: int,
+    data: FooterPageUpdate,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    page = db.query(FooterPage).filter(FooterPage.id == page_id).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Footer page not found")
+    patch = data.dict(exclude_unset=True)
+    if page.kind == "support":
+        patch.pop("body", None)
+        patch.pop("title", None)
+    if "label" in patch:
+        label = (patch["label"] or "").strip()
+        if not label:
+            raise HTTPException(status_code=400, detail="Укажите название в футере")
+        patch["label"] = label
+    if "title" in patch and patch["title"] is not None:
+        patch["title"] = (patch["title"] or "").strip() or page.label
+    for key, value in patch.items():
+        setattr(page, key, value)
+    page.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(page)
+    return footer_page_to_dict(page)
+
+
+@app.delete("/api/admin/footer-pages/{page_id}")
+def delete_admin_footer_page(
+    page_id: int,
+    current_admin: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db),
+):
+    page = db.query(FooterPage).filter(FooterPage.id == page_id).first()
+    if not page:
+        raise HTTPException(status_code=404, detail="Footer page not found")
+    if page.is_builtin:
+        raise HTTPException(status_code=400, detail="Вшитую запись нельзя удалить — снимите галочку «Показывать»")
+    db.delete(page)
+    db.commit()
+    return {"message": "Footer page deleted successfully", "id": page_id}
+
 
 # Error Logs Management
 @app.get("/api/admin/errors")

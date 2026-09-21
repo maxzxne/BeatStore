@@ -20,7 +20,7 @@ from helpers import (  # noqa: E402
     reset_schema,
     token_for,
 )
-from models import CoursePurchase, PaymentIntent, PromoBanner, Purchase, SiteSetting  # noqa: E402
+from models import CoursePurchase, FooterPage, PaymentIntent, PromoBanner, Purchase, SiteSetting  # noqa: E402
 from payments.robokassa import format_out_sum, sign_result  # noqa: E402
 
 
@@ -621,6 +621,148 @@ class ApiTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400, response.text)
         self.assertIn("админ", response.json()["detail"].lower())
+
+    def test_footer_pages_public_hides_disabled_and_respects_order(self):
+        self.db.add_all(
+            [
+                FooterPage(
+                    slug="support",
+                    label="Поддержка",
+                    kind="support",
+                    sort_order=2,
+                    enabled=True,
+                    is_builtin=True,
+                    show_icon=True,
+                ),
+                FooterPage(
+                    slug="terms",
+                    label="Соглашение",
+                    kind="page",
+                    title="Оферта",
+                    body="<p>terms body</p>",
+                    sort_order=1,
+                    enabled=True,
+                    is_builtin=True,
+                ),
+                FooterPage(
+                    slug="privacy",
+                    label="Приватность",
+                    kind="page",
+                    title="Privacy",
+                    body="<p>hidden</p>",
+                    sort_order=0,
+                    enabled=False,
+                    is_builtin=True,
+                ),
+            ]
+        )
+        self.db.commit()
+
+        public = self.client.get("/footer-pages")
+        self.assertEqual(public.status_code, 200, public.text)
+        items = public.json()
+        labels = [item["label"] for item in items]
+        self.assertIn("Соглашение", labels)
+        self.assertIn("Поддержка", labels)
+        self.assertNotIn("Приватность", labels)
+        self.assertLess(labels.index("Соглашение"), labels.index("Поддержка"))
+        terms = next(item for item in items if item["slug"] == "terms")
+        support = next(item for item in items if item["slug"] == "support")
+        self.assertEqual(terms["path"], "/terms")
+        self.assertEqual(support["path"], "/support")
+        self.assertTrue(support["show_icon"])
+
+        page = self.client.get("/footer-pages/terms")
+        self.assertEqual(page.status_code, 200, page.text)
+        self.assertEqual(page.json()["body"], "<p>terms body</p>")
+        self.assertEqual(page.json()["title"], "Оферта")
+
+        support_page = self.client.get("/footer-pages/support")
+        self.assertEqual(support_page.status_code, 404)
+
+        hidden = self.client.get("/footer-pages/privacy")
+        self.assertEqual(hidden.status_code, 404)
+
+    def test_admin_footer_pages_crud_reorder_and_builtin_guards(self):
+        seed = self.client.get("/api/admin/footer-pages", headers=auth(self.admin_token))
+        self.assertEqual(seed.status_code, 200, seed.text)
+        rows = seed.json()
+        self.assertGreaterEqual(len(rows), 5)
+        by_slug = {row["slug"]: row for row in rows}
+        self.assertIn("support", by_slug)
+        self.assertEqual(by_slug["support"]["kind"], "support")
+        self.assertTrue(by_slug["support"]["is_builtin"])
+
+        created = self.client.post(
+            "/api/admin/footer-pages",
+            headers=auth(self.admin_token),
+            json={
+                "slug": "refund",
+                "label": "Возврат",
+                "title": "Возврат средств",
+                "body": "<p>refund rules</p>",
+                "enabled": True,
+            },
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        new_id = created.json()["id"]
+        self.assertEqual(created.json()["path"], "/pages/refund")
+        self.assertFalse(created.json()["is_builtin"])
+
+        updated = self.client.put(
+            f"/api/admin/footer-pages/{new_id}",
+            headers=auth(self.admin_token),
+            json={"label": "Возвраты", "body": "<p>v2</p>", "enabled": False},
+        )
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertEqual(updated.json()["label"], "Возвраты")
+        self.assertFalse(updated.json()["enabled"])
+
+        public_after_hide = self.client.get("/footer-pages")
+        public_slugs = [item["slug"] for item in public_after_hide.json()]
+        self.assertNotIn("refund", public_slugs)
+
+        support_id = by_slug["support"]["id"]
+        support_body = self.client.put(
+            f"/api/admin/footer-pages/{support_id}",
+            headers=auth(self.admin_token),
+            json={"body": "<p>nope</p>", "label": "Чат"},
+        )
+        self.assertEqual(support_body.status_code, 200, support_body.text)
+        self.assertEqual(support_body.json()["label"], "Чат")
+        self.assertIsNone(support_body.json().get("body"))
+
+        deny_delete = self.client.delete(
+            f"/api/admin/footer-pages/{support_id}",
+            headers=auth(self.admin_token),
+        )
+        self.assertEqual(deny_delete.status_code, 400, deny_delete.text)
+
+        ids = [row["id"] for row in self.client.get(
+            "/api/admin/footer-pages", headers=auth(self.admin_token)
+        ).json()]
+        reordered = list(reversed(ids))
+        reorder = self.client.put(
+            "/api/admin/footer-pages/reorder",
+            headers=auth(self.admin_token),
+            json={"ids": reordered},
+        )
+        self.assertEqual(reorder.status_code, 200, reorder.text)
+        after = self.client.get("/api/admin/footer-pages", headers=auth(self.admin_token))
+        self.assertEqual([row["id"] for row in after.json()], reordered)
+
+        deleted = self.client.delete(
+            f"/api/admin/footer-pages/{new_id}",
+            headers=auth(self.admin_token),
+        )
+        self.assertEqual(deleted.status_code, 200, deleted.text)
+
+        reserved = self.client.post(
+            "/api/admin/footer-pages",
+            headers=auth(self.admin_token),
+            json={"slug": "admin", "label": "Hack", "body": "x"},
+        )
+        self.assertEqual(reserved.status_code, 400, reserved.text)
 
 
 if __name__ == "__main__":

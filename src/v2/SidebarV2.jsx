@@ -16,6 +16,7 @@ import {
   MessageCircle,
   Users,
   Inbox,
+  Link2,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -54,6 +55,7 @@ const navGroups = [
     items: [
       { path: '/admin/hero', label: 'Главный экран', icon: LayoutTemplate },
       { path: '/admin/banners', label: 'Баннеры', icon: Image },
+      { path: '/admin/footer', label: 'Футер', icon: Link2 },
       { path: '/admin/oauth-settings', label: 'Настройки сайта', icon: Settings },
     ],
   },

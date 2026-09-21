@@ -38,8 +38,10 @@ import AdminOAuthSettings from './pages/AdminOAuthSettings';
 import AdminRevenue from './pages/AdminRevenue';
 import AdminHeroPage from './v2/admin/AdminHeroPage';
 import AdminBannersPage from './v2/admin/AdminBannersPage';
+import AdminFooterPagesPage from './v2/admin/AdminFooterPagesPage';
 import AdminSupportPage from './v2/admin/AdminSupportPage';
 import SupportPageV2 from './v2/SupportPageV2';
+import FooterLegalPageV2 from './v2/FooterLegalPageV2';
 import PaymentPayPage from './v2/PaymentPayPage';
 import PaymentSuccessPage from './v2/PaymentSuccessPage';
 import PaymentFailurePage from './v2/PaymentFailurePage';
@@ -79,10 +81,11 @@ function App() {
                     <Route path="payment/pay" element={<PaymentPayPage />} />
                     <Route path="payment/success" element={<PaymentSuccessPage />} />
                     <Route path="payment/failure" element={<PaymentFailurePage />} />
-                    <Route path="privacy" element={<PrivacyPolicyPage />} />
-                    <Route path="terms" element={<TermsOfUsePage />} />
-                    <Route path="consent-personal-data" element={<PersonalDataConsentPage />} />
-                    <Route path="cookies" element={<CookiesPolicyPage />} />
+                    <Route path="privacy" element={<FooterLegalPageV2 slug="privacy" legacy={<PrivacyPolicyPage />} />} />
+                    <Route path="terms" element={<FooterLegalPageV2 slug="terms" legacy={<TermsOfUsePage />} />} />
+                    <Route path="consent-personal-data" element={<FooterLegalPageV2 slug="consent-personal-data" legacy={<PersonalDataConsentPage />} />} />
+                    <Route path="cookies" element={<FooterLegalPageV2 slug="cookies" legacy={<CookiesPolicyPage />} />} />
+                    <Route path="pages/:slug" element={<FooterLegalPageV2 />} />
                     <Route path="submit" element={<SubmitCabinetPage />} />
                     <Route path="submit/join" element={<SubmitJoinPage />} />
                   </Route>
@@ -108,6 +111,7 @@ function App() {
                     <Route path="oauth-settings" element={<AdminOAuthSettings />} />
                     <Route path="hero" element={<AdminHeroPage />} />
                     <Route path="banners" element={<AdminBannersPage />} />
+                    <Route path="footer" element={<AdminFooterPagesPage />} />
                   </Route>
 
                   <Route path="*" element={<ErrorPage />} />
