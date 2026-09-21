@@ -362,6 +362,11 @@ const AdminHeroPage = () => {
                 Нет изображения
               </div>
             )}
+            <p className="mt-2 text-xs leading-relaxed text-white/35">
+              Рекомендуемый размер: <span className="text-white/55">1400×1400 или 2000×2000 (1:1)</span>
+              {' · '}JPEG / PNG / WebP, до ~400 КБ (макс. 10 МБ).
+              Лицо / логотип — ближе к левой трети кадра.
+            </p>
           </div>
 
           <fieldset>
@@ -402,7 +407,7 @@ const AdminHeroPage = () => {
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={handleUpload}
           />

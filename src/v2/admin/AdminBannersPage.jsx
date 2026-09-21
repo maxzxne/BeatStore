@@ -227,6 +227,9 @@ const AdminBannersPage = () => {
         <div>
           <h1 className="font-[Syne] text-2xl font-bold text-white sm:text-3xl">Баннеры</h1>
           <p className="mt-1 text-sm text-white/45">Промо-слайдер: картинка, тексты, окно дат, порядок</p>
+          <p className="mt-1 text-xs text-white/30">
+            Картинка: 2100×900 (21:9), JPEG / PNG / WebP · важное в центре (на мобилке 16:9)
+          </p>
         </div>
         <button
           type="button"
@@ -348,13 +351,23 @@ const AdminBannersPage = () => {
               <div>
                 <p className={labelClass}>Изображение</p>
                 {previewUrl ? (
-                  <img src={previewUrl} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
+                  <img
+                    src={previewUrl}
+                    alt=""
+                    className="mb-3 aspect-[21/9] w-full rounded-xl object-cover"
+                  />
                 ) : (
-                  <div className="mb-3 flex h-36 items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-white/35">
+                  <div className="mb-3 flex aspect-[21/9] items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-white/35">
                     Нет изображения
                   </div>
                 )}
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleUpload}
+                />
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -375,6 +388,11 @@ const AdminBannersPage = () => {
                     </button>
                   )}
                 </div>
+                <p className="mt-2 text-xs leading-relaxed text-white/35">
+                  Рекомендуемый размер: <span className="text-white/55">2100×900 (21:9)</span>
+                  {' · '}JPEG / PNG / WebP, до ~500 КБ (макс. 10 МБ).
+                  На мобилке кадр 16:9 — важное держи ближе к центру.
+                </p>
               </div>
 
               <div>
