@@ -83,6 +83,22 @@ def create_checkout(db: Session, user: User | None, body: dict) -> dict:
     }
 
 
+def preview_checkout(db: Session, user: User | None, body: dict) -> dict:
+    kind = (body.get("kind") or body.get("type") or "").strip()
+    if kind not in {"beat", "cart", "course", "order"}:
+        raise PaymentError("Неизвестный тип оплаты")
+    try:
+        payload, amount, description, promo = _quote(db, user, kind, body)
+    except QuoteError as exc:
+        raise PaymentError(str(exc)) from exc
+    return {
+        "amount": amount,
+        "list_amount": payload.get("list_amount"),
+        "promo_code": None if promo is None else promo.code,
+        "description": description,
+    }
+
+
 def intent_view(intent: PaymentIntent) -> dict:
     return {
         "inv_id": intent.id,

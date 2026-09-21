@@ -7,6 +7,16 @@ export function checkoutErrorMessage(err) {
   return err?.message || 'Не удалось начать оплату';
 }
 
+export function withPromo(payload, code) {
+  const promo_code = String(code || '').trim().toUpperCase();
+  return promo_code ? { ...payload, promo_code } : payload;
+}
+
+export async function quoteCheckout(payload) {
+  const { data } = await api.post('/payments/quote', payload);
+  return data;
+}
+
 export async function startCheckout(payload) {
   const { data } = await api.post('/payments/create', payload);
   if (!data?.checkout_url) {
