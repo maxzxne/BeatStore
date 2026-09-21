@@ -64,6 +64,11 @@ class SaleWindowTests(unittest.TestCase):
         self.assertTrue(sale_applies(sale(scope="all"), "beats"))
         self.assertFalse(sale_applies(sale(scope="courses"), "beats"))
 
+    def test_ads_scope_does_not_use_all_catalog_sale(self):
+        self.assertTrue(sale_applies(sale(scope="ads"), "ads"))
+        self.assertFalse(sale_applies(sale(scope="all"), "ads"))
+        self.assertFalse(sale_applies(sale(scope="services"), "ads"))
+
 
 class StackingTests(unittest.TestCase):
     def test_best_sale_wins_not_stacked_campaigns(self):

@@ -5,6 +5,7 @@ import {
   DEFAULT_SEARCH_PLACEHOLDER,
   normalizeSearchPlaceholder,
 } from '../utils/searchPlaceholder';
+import { DEFAULT_ADS_PRICES, normalizeAdsPrices } from '../utils/adsPricing';
 
 const SiteSettingsContext = createContext();
 
@@ -70,6 +71,8 @@ export const SiteSettingsProvider = ({ children }) => {
   const [coursesVisibility, setCoursesVisibility] = useState('all');
   const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
   const [promoBannersFullscreen, setPromoBannersFullscreen] = useState(true);
+  const [adsPrices, setAdsPrices] = useState(() => ({ ...DEFAULT_ADS_PRICES }));
+  const [adsSale, setAdsSale] = useState(null);
   const [homeHero, setHomeHero] = useState(() => ({ ...DEFAULT_HOME_HERO }));
   const [loading, setLoading] = useState(true);
 
@@ -84,12 +87,16 @@ export const SiteSettingsProvider = ({ children }) => {
       }
       setAdsOrdersEnabled(response.data?.ads_orders_enabled !== false);
       setPromoBannersFullscreen(response.data?.promo_banners_fullscreen !== false);
+      setAdsPrices(normalizeAdsPrices(response.data?.ads_prices));
+      setAdsSale(response.data?.ads_sale || null);
       setHomeHero(normalizeHomeHero(response.data?.home_hero));
     } catch (error) {
       console.error('Error fetching site settings:', error);
       setCoursesVisibility('all');
       setAdsOrdersEnabled(true);
       setPromoBannersFullscreen(true);
+      setAdsPrices({ ...DEFAULT_ADS_PRICES });
+      setAdsSale(null);
       setHomeHero({ ...DEFAULT_HOME_HERO });
     } finally {
       setLoading(false);
@@ -118,6 +125,8 @@ export const SiteSettingsProvider = ({ children }) => {
     canSeeCourses,
     adsOrdersEnabled,
     promoBannersFullscreen,
+    adsPrices,
+    adsSale,
     homeHero,
     loading,
     refreshSiteSettings: fetchSettings,

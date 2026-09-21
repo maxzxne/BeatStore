@@ -14,6 +14,7 @@ const SCOPES = [
   { id: 'beats', label: 'Только биты' },
   { id: 'courses', label: 'Только курсы' },
   { id: 'services', label: 'Только услуги' },
+  { id: 'ads', label: 'Реклама на витрине' },
 ];
 
 const emptyForm = {
@@ -157,7 +158,8 @@ const AdminSalesPage = () => {
           <p className="text-xs uppercase tracking-[0.25em] text-[#22c55e]">Маркетинг</p>
           <h1 className="mt-1 font-[Syne] text-3xl font-extrabold">Скидки на витрине</h1>
           <p className="mt-2 max-w-xl text-sm text-white/50">
-            Одна лучшая акция на позицию. Промокод сверху не стакается с другой акцией — он режет уже сниженную сумму.
+            Одна лучшая акция на позицию. Scope «Реклама» — только /order/ads, без «Все товары».
+            Промокод сверху не стакается с другой акцией — он режет уже сниженную сумму.
           </p>
         </div>
         <button

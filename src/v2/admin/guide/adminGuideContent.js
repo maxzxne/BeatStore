@@ -416,7 +416,7 @@ export const guideSections = [
       },
       {
         type: 'p',
-        text: 'Рекламные заявки (/order/ads) гейтятся флагом ads_orders_enabled в настройках сайта.',
+        text: 'Рекламные заявки (/order/ads) гейтятся флагом ads_orders_enabled. Пресеты 3/7/14/28 дней с ценами из ads_prices; «Свой срок» (1–90) — без прайса, цену уточняете в переписке. Акция scope ads показывается strikethrough на слотах.',
       },
     ],
   },
@@ -467,7 +467,7 @@ export const guideSections = [
         type: 'ul',
         items: [
           '/start и /help — меню: Магазин, Заказать услугу, Поддержка, Мои покупки',
-          'Авторизация через deep-link auth_* (кнопка «Вернуться на сайт»)',
+          'Вход только через Mini App initData / Login Widget (HMAC). Spoofable chat_id auth выключен.',
           'Пуши: ответ поддержки, смена статуса заявки, успешная покупка (если oauth_provider=telegram)',
         ],
       },
@@ -485,7 +485,7 @@ export const guideSections = [
       },
       {
         type: 'warn',
-        text: 'Кнопки статуса из бота не ставят confirmed и не выставляют цену — для этого админка. Не держите второй polling-инстанс бота локально на том же токене (409 Conflict).',
+        text: 'Кнопки статуса из бота не ставят confirmed и не выставляют цену — для этого админка. Не держите второй polling-инстанс бота локально на том же токене (409 Conflict). Каталог битов отдаёт is_favorite/is_in_cart в GET /beats — карточки не должны N+1 долбить /favorites+/cart.',
       },
     ],
   },
@@ -554,11 +554,15 @@ export const guideSections = [
     blocks: [
       {
         type: 'p',
-        text: 'Витринные кампании скидок: scope all / beats / courses / services; kind percent или fixed; даты; enabled.',
+        text: 'Витринные кампании скидок: scope all / beats / courses / services / ads; kind percent или amount; даты; enabled.',
       },
       {
         type: 'p',
         text: 'На карточках появляется цена «было» (strikethrough). Скидки работают вместе с промокодами по правилам quote на сервере — не обещайте клиенту сумму «на глаз».',
+      },
+      {
+        type: 'p',
+        text: 'Scope «Реклама на витрине» (ads) режет ориентир-цены на /order/ads. «Все товары» на рекламу не действует — нужна отдельная кампания ads.',
       },
       {
         type: 'warn',
@@ -642,6 +646,7 @@ export const guideSections = [
         items: [
           'courses_visibility — all / admins_only / hidden',
           'ads_orders_enabled — витрина /order/ads',
+          'ads_prices — прайс слотов 3 / 7 / 14 / 28 дней (ориентир на форме заявки)',
           'totp_enabled — требовать 2FA у пользователей (где включено)',
           'captcha_enabled — SmartCaptcha на логине/регистрации',
           'OAuth: тумблеры «Показывать кнопку» и «Разрешить вход» (зелёный = доступен). Скрытие/disable пишутся в is_hidden / is_disabled.',
@@ -649,7 +654,7 @@ export const guideSections = [
       },
       {
         type: 'tip',
-        text: 'Сохранение настроек подтверждается toast’ом в углу, не системным alert.',
+        text: 'Цены рекламы и тумблер заявок — в блоке «Заказ рекламы» на этой странице. Скидку на слоты — в «Скидки» со scope «Реклама на витрине».',
       },
       {
         type: 'warn',

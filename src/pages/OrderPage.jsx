@@ -12,6 +12,14 @@ import {
   formatContacts,
 } from '../utils/contacts';
 import {
+  ADS_CUSTOM_MAX_DAYS,
+  ADS_CUSTOM_MIN_DAYS,
+  ADS_DURATION_PRESETS,
+  formatAdsRub,
+  parseCustomAdsDays,
+  resolveAdsPrice,
+} from '../utils/adsPricing';
+import {
   Upload,
   Link as LinkIcon,
   FileText,
@@ -49,12 +57,6 @@ const rowsFromUser = (user) => {
   }));
 };
 
-const ADS_DURATION_OPTIONS = [
-  { days: 3, label: '3 дня', hint: 'короткий слот' },
-  { days: 7, label: '7 дней', hint: 'неделя' },
-  { days: 14, label: '14 дней', hint: 'две недели' },
-];
-
 const ADS_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 const OrderPage = ({ initialType = null }) => {
@@ -62,9 +64,16 @@ const OrderPage = ({ initialType = null }) => {
   const [searchParams] = useSearchParams();
   const { isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useNotification();
-  const { adsOrdersEnabled, loading: settingsLoading } = useSiteSettings();
+  const {
+    adsOrdersEnabled,
+    adsPrices,
+    adsSale,
+    loading: settingsLoading,
+  } = useSiteSettings();
   const wantsAds = initialType === 'ads' || searchParams.get('type') === 'ads';
   const [orderType, setOrderType] = useState(wantsAds ? 'ads' : null); // null, "know", "dont_know", "ads"
+  const [adsCustomMode, setAdsCustomMode] = useState(false);
+  const [adsCustomDays, setAdsCustomDays] = useState('');
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_email: '',
@@ -271,6 +280,8 @@ const OrderPage = ({ initialType = null }) => {
     });
     setContactRows(isAuthenticated && user ? rowsFromUser(user) : []);
     setContactsSeeded(true);
+    setAdsCustomMode(false);
+    setAdsCustomDays('');
   };
 
   // Keep accordion open state synced with wizard step
@@ -547,9 +558,19 @@ const OrderPage = ({ initialType = null }) => {
       return;
     }
 
-    if (!formData.deadline_days) {
-      showError('Выберите срок размещения');
-      return;
+    let deadlineDays = null;
+    if (adsCustomMode) {
+      deadlineDays = parseCustomAdsDays(adsCustomDays);
+      if (!deadlineDays) {
+        showError(`Укажите срок от ${ADS_CUSTOM_MIN_DAYS} до ${ADS_CUSTOM_MAX_DAYS} дней`);
+        return;
+      }
+    } else {
+      deadlineDays = parseInt(formData.deadline_days, 10);
+      if (!Number.isFinite(deadlineDays) || deadlineDays <= 0) {
+        showError('Выберите срок размещения');
+        return;
+      }
     }
 
     try {
@@ -563,20 +584,33 @@ const OrderPage = ({ initialType = null }) => {
       const caption = (formData.description || '').trim();
       const contact_info = formatContacts(contactRows) || null;
       const normalizedLink = /^https?:\/\//i.test(destination) ? destination : `https://${destination}`;
+      const priced = resolveAdsPrice(deadlineDays, adsPrices, adsSale);
+      const priceNote = priced.custom
+        ? 'свой срок — цену уточним'
+        : priced.pay != null && priced.pay !== priced.list
+          ? `ориентир ${formatAdsRub(priced.pay)} (было ${formatAdsRub(priced.list)})`
+          : priced.list != null
+            ? `ориентир ${formatAdsRub(priced.list)}`
+            : null;
+      const description = [caption || 'Реклама на витрине', priceNote].filter(Boolean).join(' · ');
 
       await api.post('/service-orders', {
         order_type: 'ads',
         customer_name: formData.customer_name,
         customer_email: formData.customer_email,
-        description: caption || 'Реклама на витрине',
+        description,
         reference_links: normalizedLink,
         materials_url: JSON.stringify([materialsResponse.data.url]),
-        deadline_days: parseInt(formData.deadline_days, 10),
+        deadline_days: deadlineDays,
         service_categories: ['реклама на витрине'],
         contact_info,
       });
 
-      showSuccess('Заявка на рекламу отправлена. Пришлём стоимость и слоты.');
+      showSuccess(
+        priceNote
+          ? `Заявка отправлена (${priceNote}). Подтвердим слот в переписке.`
+          : 'Заявка на рекламу отправлена. Подтвердим стоимость и слот в переписке.'
+      );
       resetSimpleForm();
       setAdsImage(null);
       backToChoice();
@@ -712,7 +746,17 @@ const OrderPage = ({ initialType = null }) => {
           <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Ads</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Реклама на витрине</h1>
           <p className="mt-2 text-sm text-white/50">
-            Картинка 16:9, ссылка и срок. Это заявка — цену и слот подтвердим в переписке.
+            Картинка 16:9, ссылка и срок. Цены на слотах — ориентир; слот подтвердим в переписке.
+            {adsSale ? (
+              <span className="mt-1 block text-[#22c55e]">
+                Акция
+                {adsSale.title ? `: ${adsSale.title}` : ''}
+                {' — '}
+                {adsSale.kind === 'amount'
+                  ? `−${Number(adsSale.value).toLocaleString('ru-RU')} ₽`
+                  : `−${adsSale.value}%`}
+              </span>
+            ) : null}
           </p>
         </div>
 
@@ -903,13 +947,20 @@ const OrderPage = ({ initialType = null }) => {
               <h2 className="font-[Syne] text-lg font-bold text-white">Срок размещения</h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              {ADS_DURATION_OPTIONS.map((option) => {
-                const selected = String(formData.deadline_days) === String(option.days);
+              {ADS_DURATION_PRESETS.map((option) => {
+                const selected =
+                  !adsCustomMode && String(formData.deadline_days) === String(option.days);
+                const priced = resolveAdsPrice(option.days, adsPrices, adsSale);
+                const onSale = priced.pay != null && priced.list != null && priced.pay < priced.list;
                 return (
                   <button
                     key={option.days}
                     type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, deadline_days: String(option.days) }))}
+                    onClick={() => {
+                      setAdsCustomMode(false);
+                      setAdsCustomDays('');
+                      setFormData((prev) => ({ ...prev, deadline_days: String(option.days) }));
+                    }}
                     className={`inline-flex min-h-11 min-w-[7.5rem] flex-col items-start justify-center rounded-2xl border px-4 py-2 text-left transition ${
                       selected
                         ? 'border-[#22c55e]/50 bg-[#22c55e]/10 text-white'
@@ -919,10 +970,62 @@ const OrderPage = ({ initialType = null }) => {
                   >
                     <span className="text-sm font-semibold">{option.label}</span>
                     <span className="text-[11px] text-white/40">{option.hint}</span>
+                    {priced.list != null ? (
+                      <span className="mt-1 text-xs font-medium text-white/80">
+                        {onSale ? (
+                          <>
+                            <span className="mr-1.5 text-white/35 line-through">
+                              {formatAdsRub(priced.list)}
+                            </span>
+                            <span className="text-[#22c55e]">{formatAdsRub(priced.pay)}</span>
+                          </>
+                        ) : (
+                          formatAdsRub(priced.list)
+                        )}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => {
+                  setAdsCustomMode(true);
+                  setFormData((prev) => ({ ...prev, deadline_days: '' }));
+                }}
+                className={`inline-flex min-h-11 min-w-[7.5rem] flex-col items-start justify-center rounded-2xl border px-4 py-2 text-left transition ${
+                  adsCustomMode
+                    ? 'border-[#22c55e]/50 bg-[#22c55e]/10 text-white'
+                    : 'border-white/10 bg-white/5 text-white/70 hover:border-white/25'
+                }`}
+                aria-pressed={adsCustomMode}
+              >
+                <span className="text-sm font-semibold">Свой срок</span>
+                <span className="text-[11px] text-white/40">до {ADS_CUSTOM_MAX_DAYS} дней</span>
+                <span className="mt-1 text-xs font-medium text-white/50">цену уточним</span>
+              </button>
             </div>
+            {adsCustomMode ? (
+              <div className="mt-4 max-w-xs">
+                <label htmlFor="ads_custom_days" className={labelClass}>
+                  Сколько дней *
+                </label>
+                <input
+                  id="ads_custom_days"
+                  type="number"
+                  min={ADS_CUSTOM_MIN_DAYS}
+                  max={ADS_CUSTOM_MAX_DAYS}
+                  value={adsCustomDays}
+                  onChange={(e) => setAdsCustomDays(e.target.value)}
+                  className={fieldClass}
+                  placeholder="например 60"
+                  required
+                />
+                <p className={hintClass}>
+                  От {ADS_CUSTOM_MIN_DAYS} до {ADS_CUSTOM_MAX_DAYS}. Стоимость согласуем отдельно.
+                </p>
+              </div>
+            ) : null}
           </section>
 
           <div className="pt-1">

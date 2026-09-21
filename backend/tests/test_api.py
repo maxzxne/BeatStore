@@ -1058,6 +1058,52 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(promo.json()["username"], "buyer")
         self.assertTrue(promo.json()["code"])
 
+    def test_ads_prices_defaults_and_admin_update(self):
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.status_code, 200)
+        prices = public.json().get("ads_prices")
+        self.assertIsInstance(prices, dict)
+        for key in ("3", "7", "14", "28"):
+            self.assertIn(key, prices)
+            self.assertGreaterEqual(prices[key], 0)
+        self.assertIsNone(public.json().get("ads_sale"))
+
+        updated = self.client.put(
+            "/api/admin/site-settings",
+            headers=auth(self.admin_token),
+            json={"ads_prices": {"3": 1111, "7": 2222, "14": 3333, "28": 4444}},
+        )
+        self.assertEqual(updated.status_code, 200, updated.text)
+        saved = updated.json()["settings"]["ads_prices"]
+        self.assertEqual(saved["3"], 1111)
+        self.assertEqual(saved["28"], 4444)
+
+        public2 = self.client.get("/site-settings")
+        self.assertEqual(public2.json()["ads_prices"]["7"], 2222)
+
+    def test_ads_sale_scope_exposed_on_site_settings(self):
+        created = self.client.post(
+            "/api/admin/sales",
+            headers=auth(self.admin_token),
+            json={
+                "title": "Реклама −20%",
+                "scope": "ads",
+                "kind": "percent",
+                "value": 20,
+                "enabled": True,
+            },
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        self.assertEqual(created.json()["scope"], "ads")
+
+        public = self.client.get("/site-settings")
+        self.assertEqual(public.status_code, 200)
+        sale = public.json().get("ads_sale")
+        self.assertIsNotNone(sale)
+        self.assertEqual(sale["scope"], "ads")
+        self.assertEqual(sale["kind"], "percent")
+        self.assertEqual(sale["value"], 20)
+
 
 if __name__ == "__main__":
     unittest.main()

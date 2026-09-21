@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Iterable, Optional
 
-SALE_SCOPES = frozenset({"all", "beats", "courses", "services"})
+SALE_SCOPES = frozenset({"all", "beats", "courses", "services", "ads"})
 DISCOUNT_KINDS = frozenset({"percent", "amount"})
 PAY_FLOOR = 1.0
 
@@ -44,6 +44,9 @@ def is_sale_active(sale: Any, now: Optional[datetime] = None) -> bool:
 
 def sale_applies(sale: Any, catalog_scope: str) -> bool:
     scope = getattr(sale, "scope", None)
+    # Реклама на витрине — отдельный прайс; «все товары» на неё не распространяется.
+    if catalog_scope == "ads":
+        return scope == "ads"
     if scope == "all":
         return True
     return scope == catalog_scope

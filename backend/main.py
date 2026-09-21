@@ -48,7 +48,7 @@ from footer_pages import (
 from footer_templates_loader import default_body_for_slug
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
-from payments.discounts import DISCOUNT_KINDS, SALE_SCOPES
+from payments.discounts import DISCOUNT_KINDS, SALE_SCOPES, pick_best_sale
 from payments.pricing import generate_promo_code, load_active_sales, overlay_sale_on_mapping
 from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
 from payments.robokassa import format_out_sum, verify_result
@@ -991,6 +991,14 @@ def normalize_search_placeholder(value) -> str:
     text = str(value or "").strip()
     return text or DEFAULT_HOME_HERO["search_placeholder"]
 
+DEFAULT_ADS_PRICES = {
+    "3": 5000,
+    "7": 10000,
+    "14": 18000,
+    "28": 30000,
+}
+
+
 class SiteSettingsUpdate(BaseModel):
     """Схема обновления настроек сайта"""
     courses_visibility: Optional[str] = None
@@ -998,6 +1006,7 @@ class SiteSettingsUpdate(BaseModel):
     totp_enabled: Optional[bool] = None
     captcha_enabled: Optional[bool] = None
     promo_banners_fullscreen: Optional[bool] = None
+    ads_prices: Optional[dict] = None
 
 class HomeHeroUpdate(BaseModel):
     """Схема обновления hero главной"""
@@ -1127,6 +1136,48 @@ def get_promo_banners_fullscreen(db: Session) -> bool:
     """Full-bleed promo slider (default). False = compact peek of next slide."""
     return parse_bool_setting(get_site_setting_value(db, "promo_banners_fullscreen", "true"), True)
 
+def normalize_ads_prices(raw) -> dict:
+    out = dict(DEFAULT_ADS_PRICES)
+    if not isinstance(raw, dict):
+        return out
+    for key in DEFAULT_ADS_PRICES.keys():
+        value = raw.get(key)
+        if value is None and key.isdigit():
+            value = raw.get(int(key))
+        try:
+            n = float(value)
+        except (TypeError, ValueError):
+            continue
+        if n >= 0:
+            out[key] = int(round(n))
+    return out
+
+def get_ads_prices(db: Session) -> dict:
+    raw = get_site_setting_value(db, "ads_prices", "")
+    if not raw:
+        return dict(DEFAULT_ADS_PRICES)
+    try:
+        data = json.loads(raw)
+        return normalize_ads_prices(data)
+    except (json.JSONDecodeError, TypeError):
+        return dict(DEFAULT_ADS_PRICES)
+
+def get_active_ads_sale(db: Session) -> Optional[dict]:
+    sales = [s for s in load_active_sales(db) if getattr(s, "scope", None) == "ads"]
+    if not sales:
+        return None
+    sample = float(DEFAULT_ADS_PRICES["7"])
+    best, _pay = pick_best_sale(sample, sales, "ads")
+    if best is None:
+        return None
+    return {
+        "id": best.id,
+        "title": best.title,
+        "scope": best.scope,
+        "kind": best.kind,
+        "value": best.value,
+    }
+
 def get_home_hero(db: Session) -> dict:
     raw = get_site_setting_value(db, "home_hero", "")
     if not raw:
@@ -1213,7 +1264,7 @@ def promo_code_to_dict(promo: PromoCode) -> dict:
 
 def validate_discount_fields(scope: Optional[str], kind: Optional[str], value: Optional[float], *, require_value: bool = True):
     if scope is not None and scope not in SALE_SCOPES:
-        raise HTTPException(status_code=400, detail="scope: all, beats, courses или services")
+        raise HTTPException(status_code=400, detail="scope: all, beats, courses, services или ads")
     if kind is not None and kind not in DISCOUNT_KINDS:
         raise HTTPException(status_code=400, detail="kind: percent или amount")
     if require_value and (value is None or float(value) <= 0):
@@ -4414,6 +4465,8 @@ def get_public_site_settings(db: Session = Depends(get_db)):
         "courses_visibility": get_courses_visibility(db),
         "ads_orders_enabled": get_ads_orders_enabled(db),
         "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
+        "ads_prices": get_ads_prices(db),
+        "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
     }
 
@@ -4425,6 +4478,8 @@ def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user
         "totp_enabled": get_totp_enabled(db),
         "captcha_enabled": get_captcha_enabled(db),
         "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
+        "ads_prices": get_ads_prices(db),
+        "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
     }
 
@@ -4458,6 +4513,10 @@ def update_admin_site_settings(
             "true" if update_data.promo_banners_fullscreen else "false",
         )
 
+    if update_data.ads_prices is not None:
+        normalized = normalize_ads_prices(update_data.ads_prices)
+        upsert_site_setting(db, "ads_prices", json.dumps(normalized, ensure_ascii=False))
+
     return {
         "message": "Site settings updated successfully",
         "settings": {
@@ -4466,6 +4525,8 @@ def update_admin_site_settings(
             "totp_enabled": get_totp_enabled(db),
             "captcha_enabled": get_captcha_enabled(db),
             "promo_banners_fullscreen": get_promo_banners_fullscreen(db),
+            "ads_prices": get_ads_prices(db),
+            "ads_sale": get_active_ads_sale(db),
             "home_hero": get_home_hero(db),
         }
     }
