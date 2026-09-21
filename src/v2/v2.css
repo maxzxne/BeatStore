@@ -407,8 +407,9 @@ html.ui-v2 .min-h-screen.bg-white {
 .v2-promo-img {
   display: block;
   width: 100%;
-  aspect-ratio: 21 / 9;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
+  object-position: center;
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -487,10 +488,6 @@ html.ui-v2 .min-h-screen.bg-white {
 }
 
 @media (max-width: 640px) {
-  .v2-promo-img {
-    aspect-ratio: 16 / 9;
-  }
-
   .v2-promo-nav {
     opacity: 1;
     width: 34px;

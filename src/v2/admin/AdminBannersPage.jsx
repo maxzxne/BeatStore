@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ImagePlus, Loader2, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api, buildMediaUrl } from '../../utils/api';
+import DatePicker from '../../components/DatePicker';
 
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
@@ -228,7 +229,7 @@ const AdminBannersPage = () => {
           <h1 className="font-[Syne] text-2xl font-bold text-white sm:text-3xl">Баннеры</h1>
           <p className="mt-1 text-sm text-white/45">Промо-слайдер: картинка, тексты, окно дат, порядок</p>
           <p className="mt-1 text-xs text-white/30">
-            Картинка: 2100×900 (21:9), JPEG / PNG / WebP · важное в центре (на мобилке 16:9)
+            Картинка: 1920×1080 (16:9), JPEG / PNG / WebP — кадр на сайте такой же, без обрезки
           </p>
         </div>
         <button
@@ -354,10 +355,10 @@ const AdminBannersPage = () => {
                   <img
                     src={previewUrl}
                     alt=""
-                    className="mb-3 aspect-[21/9] w-full rounded-xl object-cover"
+                    className="mb-3 aspect-[16/9] w-full rounded-xl object-cover"
                   />
                 ) : (
-                  <div className="mb-3 flex aspect-[21/9] items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-white/35">
+                  <div className="mb-3 flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-white/35">
                     Нет изображения
                   </div>
                 )}
@@ -389,9 +390,8 @@ const AdminBannersPage = () => {
                   )}
                 </div>
                 <p className="mt-2 text-xs leading-relaxed text-white/35">
-                  Рекомендуемый размер: <span className="text-white/55">2100×900 (21:9)</span>
+                  Рекомендуемый размер: <span className="text-white/55">1920×1080 (16:9)</span>
                   {' · '}JPEG / PNG / WebP, до ~500 КБ (макс. 10 МБ).
-                  На мобилке кадр 16:9 — важное держи ближе к центру.
                 </p>
               </div>
 
@@ -452,22 +452,20 @@ const AdminBannersPage = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className={labelClass} htmlFor="banner-starts">Начало</label>
-                  <input
+                  <DatePicker
                     id="banner-starts"
-                    type="datetime-local"
-                    className={fieldClass}
+                    showTime
                     value={form.starts_at}
-                    onChange={(e) => setField('starts_at', e.target.value)}
+                    onChange={(starts_at) => setField('starts_at', starts_at)}
                   />
                 </div>
                 <div>
                   <label className={labelClass} htmlFor="banner-ends">Конец</label>
-                  <input
+                  <DatePicker
                     id="banner-ends"
-                    type="datetime-local"
-                    className={fieldClass}
+                    showTime
                     value={form.ends_at}
-                    onChange={(e) => setField('ends_at', e.target.value)}
+                    onChange={(ends_at) => setField('ends_at', ends_at)}
                   />
                 </div>
               </div>
