@@ -657,6 +657,7 @@ export const guideSections = [
           'ads_orders_enabled — витрина /order/ads',
           'ads_price_per_day — ставка ₽/день для расчёта заявки',
           'Прайс услуг — таблица сроков/цен и тексты плашки на /order; переменные вставляются кнопками ({{trap}}, {{from}}, {{p50_21}}…)',
+          'Системный доступ (скрыто, 5 кликов по «···» внизу): maintenance 503 + HTTP Basic Auth',
           'totp_enabled — требовать 2FA у пользователей (где включено)',
           'captcha_enabled — SmartCaptcha на логине/регистрации',
           'OAuth: тумблеры «Показывать кнопку» и «Разрешить вход» (зелёный = доступен). Скрытие/disable пишутся в is_hidden / is_disabled.',
@@ -669,6 +670,10 @@ export const guideSections = [
       {
         type: 'tip',
         text: 'Ставку и очередь заявок удобнее править в Баннеры → Заявки. Скидку на рекламу — в «Скидки» (scope ads).',
+      },
+      {
+        type: 'warn',
+        text: 'Системный доступ: внизу страницы настроек кликни «···» пять раз. HTTP Basic прячет весь сайт паролем браузера (для пререлиза). Maintenance отдаёт OLED-страницу 503 публике, /admin остаётся. Аварийно: SITE_GATE_DISABLE=1 или HTTP_BASIC_USER/PASSWORD в env. Превью UI: /status?kind=maintenance|error|offline|not_found.',
       },
       {
         type: 'warn',

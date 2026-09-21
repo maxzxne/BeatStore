@@ -9,6 +9,7 @@ import {
   normalizeServiceOrderPricing,
 } from '../utils/serviceOrderPricing';
 import AdminServicePricingPanel from '../components/AdminServicePricingPanel';
+import AdminSiteGatePanel from '../components/AdminSiteGatePanel';
 import { Link } from 'react-router-dom';
 
 const COURSES_VISIBILITY_OPTIONS = [
@@ -564,6 +565,8 @@ const AdminOAuthSettings = () => {
           </div>
         ))}
       </div>
+
+      <AdminSiteGatePanel />
     </div>
   );
 };

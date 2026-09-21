@@ -404,6 +404,17 @@ def wants_browser_document(request: Request) -> bool:
     return json_pos == -1 or html_pos < json_pos
 
 
+def _gate_db_get(key: str, default: str = "") -> str:
+    try:
+        db = SessionLocal()
+        try:
+            return get_site_setting_value(db, key, default)
+        finally:
+            db.close()
+    except Exception:
+        return default
+
+
 @app.middleware("http")
 async def spa_over_colliding_api(request: Request, call_next):
     if request.method in ("GET", "HEAD"):
@@ -502,6 +513,62 @@ async def log_errors_middleware(request: Request, call_next):
             pass
         
         raise
+
+# Outermost gate: Basic Auth + maintenance (must run before SPA / logging shortcuts)
+@app.middleware("http")
+async def site_gate_middleware(request: Request, call_next):
+    """HTTP Basic Auth + maintenance wall (pre-launch / outage)."""
+    import hmac as hmac_mod
+
+    from fastapi.responses import HTMLResponse, JSONResponse, Response
+    from site_gate import (
+        GATE_ALLOW_PREFIXES,
+        MAINTENANCE_ALLOW_PREFIXES,
+        parse_basic_auth_header,
+        path_allowed,
+        resolve_gate_config,
+        status_page_html,
+        verify_gate_password,
+    )
+
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
+    path = request.url.path or "/"
+    cfg = resolve_gate_config(_gate_db_get)
+
+    if cfg["http_basic_enabled"] and not path_allowed(path, GATE_ALLOW_PREFIXES):
+        user, password = parse_basic_auth_header(request.headers.get("authorization"))
+        ok = False
+        if user is not None:
+            ok = hmac_mod.compare_digest(user, cfg["http_basic_user"]) and verify_gate_password(
+                password or "", cfg
+            )
+        if not ok:
+            return Response(
+                content="Authentication required",
+                status_code=401,
+                headers={"WWW-Authenticate": 'Basic realm="XWinner", charset="UTF-8"'},
+                media_type="text/plain",
+            )
+
+    if cfg["maintenance_mode"] and not path_allowed(path, MAINTENANCE_ALLOW_PREFIXES):
+        accept = (request.headers.get("accept") or "").lower()
+        wants_json = "application/json" in accept and "text/html" not in accept
+        if wants_json or request.method not in ("GET", "HEAD"):
+            return JSONResponse(
+                status_code=503,
+                content={"detail": "Сайт временно недоступен", "code": "maintenance"},
+                headers={"Retry-After": "3600"},
+            )
+        html = status_page_html(
+            kind="maintenance",
+            title=cfg.get("maintenance_title") or None,
+            message=cfg.get("maintenance_message") or None,
+        )
+        return HTMLResponse(content=html, status_code=503, headers={"Retry-After": "3600"})
+
+    return await call_next(request)
 
 print("FastAPI приложение создано, CORS настроен")
 
@@ -1013,6 +1080,12 @@ class SiteSettingsUpdate(BaseModel):
     ads_prices: Optional[dict] = None
     ads_price_per_day: Optional[float] = None
     service_order_pricing: Optional[dict] = None
+    maintenance_mode: Optional[bool] = None
+    maintenance_title: Optional[str] = None
+    maintenance_message: Optional[str] = None
+    http_basic_enabled: Optional[bool] = None
+    http_basic_user: Optional[str] = None
+    http_basic_password: Optional[str] = None  # plaintext once; stored as hash
 
 class HomeHeroUpdate(BaseModel):
     """Схема обновления hero главной"""
@@ -1212,6 +1285,51 @@ def get_service_order_pricing(db: Session) -> dict:
 
     raw = get_site_setting_value(db, "service_order_pricing", "")
     return parse_service_order_pricing_json(raw)
+
+
+def get_site_gate_public(db: Session) -> dict:
+    maint = parse_bool_setting(get_site_setting_value(db, "maintenance_mode", "false"), False)
+    if os.getenv("SITE_MAINTENANCE", "").strip() != "":
+        from site_gate import env_bool
+
+        maint = env_bool("SITE_MAINTENANCE", False)
+    if os.getenv("SITE_GATE_DISABLE", "").strip():
+        from site_gate import env_bool
+
+        if env_bool("SITE_GATE_DISABLE", False):
+            maint = False
+    return {
+        "maintenance_mode": maint,
+        "maintenance_title": get_site_setting_value(db, "maintenance_title", "") or "",
+        "maintenance_message": get_site_setting_value(db, "maintenance_message", "") or "",
+        "http_basic_enabled": parse_bool_setting(
+            get_site_setting_value(db, "http_basic_enabled", "false"), False
+        )
+        or bool(
+            (os.getenv("HTTP_BASIC_USER") or "").strip()
+            and os.getenv("HTTP_BASIC_PASSWORD") is not None
+            and str(os.getenv("HTTP_BASIC_PASSWORD")) != ""
+        ),
+    }
+
+
+def get_site_gate_admin(db: Session) -> dict:
+    from site_gate import DEFAULT_BASIC_USER
+
+    public = get_site_gate_public(db)
+    password_hash = get_site_setting_value(db, "http_basic_password_hash", "") or ""
+    env_boot = bool(
+        (os.getenv("HTTP_BASIC_USER") or "").strip()
+        and os.getenv("HTTP_BASIC_PASSWORD") is not None
+        and str(os.getenv("HTTP_BASIC_PASSWORD")) != ""
+    )
+    return {
+        **public,
+        "http_basic_user": get_site_setting_value(db, "http_basic_user", DEFAULT_BASIC_USER)
+        or DEFAULT_BASIC_USER,
+        "http_basic_password_set": bool(password_hash) or env_boot,
+        "http_basic_from_env": env_boot,
+    }
 
 
 def get_active_ads_sale(db: Session) -> Optional[dict]:
@@ -4532,6 +4650,7 @@ def get_public_site_settings(db: Session = Depends(get_db)):
         "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
         "service_order_pricing": get_service_order_pricing(db),
+        **get_site_gate_public(db),
     }
 
 @app.get("/api/admin/site-settings")
@@ -4547,6 +4666,7 @@ def get_admin_site_settings(current_admin: User = Depends(get_current_admin_user
         "ads_sale": get_active_ads_sale(db),
         "home_hero": get_home_hero(db),
         "service_order_pricing": get_service_order_pricing(db),
+        **get_site_gate_admin(db),
     }
 
 @app.put("/api/admin/site-settings")
@@ -4602,6 +4722,50 @@ def update_admin_site_settings(
             json.dumps(normalized, ensure_ascii=False),
         )
 
+    if update_data.maintenance_mode is not None:
+        upsert_site_setting(
+            db,
+            "maintenance_mode",
+            "true" if update_data.maintenance_mode else "false",
+        )
+    if update_data.maintenance_title is not None:
+        upsert_site_setting(db, "maintenance_title", (update_data.maintenance_title or "")[:200])
+    if update_data.maintenance_message is not None:
+        upsert_site_setting(db, "maintenance_message", (update_data.maintenance_message or "")[:2000])
+
+    if update_data.http_basic_enabled is not None:
+        if update_data.http_basic_enabled:
+            existing_hash = get_site_setting_value(db, "http_basic_password_hash", "") or ""
+            new_pass = update_data.http_basic_password
+            env_boot = bool(
+                (os.getenv("HTTP_BASIC_USER") or "").strip()
+                and os.getenv("HTTP_BASIC_PASSWORD") is not None
+                and str(os.getenv("HTTP_BASIC_PASSWORD")) != ""
+            )
+            if not existing_hash and not (new_pass and str(new_pass).strip()) and not env_boot:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Задайте пароль HTTP Basic перед включением",
+                )
+        upsert_site_setting(
+            db,
+            "http_basic_enabled",
+            "true" if update_data.http_basic_enabled else "false",
+        )
+    if update_data.http_basic_user is not None:
+        from site_gate import DEFAULT_BASIC_USER
+
+        user = (update_data.http_basic_user or "").strip() or DEFAULT_BASIC_USER
+        upsert_site_setting(db, "http_basic_user", user[:64])
+    if update_data.http_basic_password is not None:
+        from site_gate import hash_basic_password
+
+        plain = update_data.http_basic_password
+        if plain == "":
+            upsert_site_setting(db, "http_basic_password_hash", "")
+        else:
+            upsert_site_setting(db, "http_basic_password_hash", hash_basic_password(plain))
+
     return {
         "message": "Site settings updated successfully",
         "settings": {
@@ -4615,6 +4779,7 @@ def update_admin_site_settings(
             "ads_sale": get_active_ads_sale(db),
             "home_hero": get_home_hero(db),
             "service_order_pricing": get_service_order_pricing(db),
+            **get_site_gate_admin(db),
         }
     }
 

@@ -55,6 +55,7 @@ import AdminContributorsPage from './v2/admin/AdminContributorsPage';
 import AdminSubmissionsPage from './v2/admin/AdminSubmissionsPage';
 import AdminGuidePage from './v2/admin/AdminGuidePage';
 import ErrorPage from './pages/ErrorPage';
+import AppErrorBoundary from './components/AppErrorBoundary';
 import { RequireAdsOrders, RequireCourses } from './v2/SectionClosed';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfUsePage from './pages/TermsOfUsePage';
@@ -69,6 +70,7 @@ function App() {
           <AudioPlayerProvider>
             <NotificationProvider>
               <TelegramInit />
+              <AppErrorBoundary>
               <Router>
                 <Routes>
                   <Route path="/" element={<LayoutV2 />}>
@@ -126,9 +128,11 @@ function App() {
                     <Route path="guide" element={<AdminGuidePage />} />
                   </Route>
 
-                  <Route path="*" element={<ErrorPage />} />
+                  <Route path="/status" element={<ErrorPage />} />
+                  <Route path="*" element={<ErrorPage variant="not_found" />} />
                 </Routes>
               </Router>
+              </AppErrorBoundary>
             </NotificationProvider>
           </AudioPlayerProvider>
         </SiteSettingsProvider>
