@@ -6,6 +6,7 @@ const DocLink = ({ href, children, className = '' }) => (
   </a>
 );
 
+/** Legacy fallback. Canonical: backend/footer_templates/cookies.html */
 const CookiesPolicyPage = () => {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
@@ -15,82 +16,34 @@ const CookiesPolicyPage = () => {
       </h1>
 
       <p className="text-sm text-white/50 mb-6">
-        Этот документ является примерочной (обезличенной) политикой использования файлов cookie. Перед
-        применением в реальном проекте его следует адаптировать под ваши технические настройки и согласовать
-        с юристом.
+        Редакция от 21.09.2026. ИП Власов Игорь Сергеевич. Набор cookie зависит от включённых функций.
+        Полный текст: <DocLink href="/cookies">/cookies</DocLink>.
       </p>
 
       <div className="space-y-6 text-sm leading-relaxed text-white/70">
         <section>
-          <h2 className="text-lg font-semibold text-white mb-2">
-            1. Что такое файлы cookie
-          </h2>
-          <p>
-            Cookie — это небольшие текстовые файлы, которые сохраняются на вашем устройстве (компьютер,
-            смартфон и т.п.) при посещении сайта. Они позволяют распознавать ваш браузер, запоминать
-            настройки и улучшать работу сервиса.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-white mb-2">
-            2. Какие cookie используются на XWinner.beats.please
-          </h2>
+          <h2 className="text-lg font-semibold text-white mb-2">1. Какие cookie используются</h2>
           <ul className="list-disc pl-5 mt-2 space-y-1">
+            <li>Строго необходимые — сессия, корзина, безопасность, оформление заказа.</li>
+            <li>Функциональные — предпочтения интерфейса (если есть).</li>
             <li>
-              <span className="font-semibold">Технические (обязательные) cookie</span> — необходимы для
-              корректной работы сайта, авторизации, сохранения сессии и настроек интерфейса.
+              Аналитические — если подключены:{' '}
+              <span className="font-semibold">[провайдеры аналитики или «не используется»]</span>.
             </li>
             <li>
-              <span className="font-semibold">Функциональные cookie</span> — помогают запоминать ваши
-              предпочтения (например, выбранную тему оформления).
+              Маркетинговые — если подключены:{' '}
+              <span className="font-semibold">[или «не используется»]</span>.
             </li>
-            <li>
-              <span className="font-semibold">Аналитические cookie</span> — используются для сбора
-              обезличенной статистики о том, как пользователи используют сайт (посещаемые страницы, время
-              на сайте и т.п.), чтобы улучшать сервис.
-            </li>
+            <li>Капча / OAuth — только при включённых соответствующих интеграциях.</li>
           </ul>
-          <p className="mt-2">
-            Конкретный список и провайдеры (например, Яндекс.Метрика, Google Analytics и др.) следует
-            указать здесь, если вы их используете.
-          </p>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white mb-2">
-            3. Как управлять cookie
-          </h2>
+          <h2 className="text-lg font-semibold text-white mb-2">2. Управление</h2>
           <p>
-            Большинство браузеров позволяют просматривать, удалять и блокировать файлы cookie. Вы можете
-            изменить настройки браузера так, чтобы он блокировал все cookie или уведомлял вас об их
-            отправке. Однако в этом случае некоторые функции сайта XWinner.beats.please могут работать некорректно.
-          </p>
-          <p className="mt-2">
-            Инструкции по управлению cookie обычно доступны в разделе «Помощь» вашего браузера.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-white mb-2">
-            4. Согласие на использование cookie
-          </h2>
-          <p>
-            Продолжая использовать сайт XWinner.beats.please, вы соглашаетесь с использованием файлов cookie в
-            соответствии с настоящей Политикой. Если вы не согласны с использованием cookie, пожалуйста,
-            измените настройки браузера или прекратите использование сайта.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold text-white mb-2">
-            5. Изменения в Политике cookie
-          </h2>
-          <p>
-            Оператор оставляет за собой право вносить изменения в настоящую Политику cookie. Актуальная
-            версия Политики всегда доступна на сайте ({' '}
-            <DocLink href="/cookies">Политика cookie</DocLink>
-            ).
+            Настройки браузера позволяют удалять и блокировать cookie; блокировка необходимых может сломать
+            вход и оплату. ПДн: <DocLink href="/privacy">Политика конфиденциальности</DocLink>. Контакт:{' '}
+            <span className="font-semibold">[email для обращений субъектов ПДн]</span>.
           </p>
         </section>
       </div>

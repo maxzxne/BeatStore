@@ -5,8 +5,12 @@ import re
 from datetime import datetime
 from typing import Optional
 
-from footer_templates_loader import default_body_for_slug
-from models import FooterPage
+from footer_templates_loader import default_body_for_slug, load_footer_template
+from models import FooterPage, SiteSetting
+
+# Bump to force-refresh builtin legal HTML into CMS on next ensure_default_footer_pages().
+LEGAL_TEMPLATES_VERSION = "2026-09-21"
+LEGAL_TEMPLATES_VERSION_KEY = "legal_templates_version"
 
 SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -146,8 +150,25 @@ def footer_page_public_detail(page: FooterPage) -> dict:
     }
 
 
+def _get_legal_templates_version(db) -> str:
+    row = db.query(SiteSetting).filter(SiteSetting.key == LEGAL_TEMPLATES_VERSION_KEY).first()
+    return (row.value or "").strip() if row else ""
+
+
+def _set_legal_templates_version(db, version: str) -> None:
+    row = db.query(SiteSetting).filter(SiteSetting.key == LEGAL_TEMPLATES_VERSION_KEY).first()
+    if row is None:
+        db.add(SiteSetting(key=LEGAL_TEMPLATES_VERSION_KEY, value=version))
+    else:
+        row.value = version
+        row.updated_at = datetime.utcnow()
+
+
 def ensure_default_footer_pages(db) -> None:
-    """Create missing builtins and one-time backfill empty legal bodies into CMS."""
+    """Create missing builtins, backfill empty bodies, refresh builtins when template version bumps."""
+    # Drop cached HTML so a running process picks up file edits after version bump.
+    load_footer_template.cache_clear()
+
     rows = {row.slug: row for row in db.query(FooterPage).all()}
     changed = False
     for item in DEFAULT_FOOTER_PAGES:
@@ -164,5 +185,28 @@ def ensure_default_footer_pages(db) -> None:
                 row.body = template
                 row.updated_at = datetime.utcnow()
                 changed = True
+
+    # Re-query after possible inserts
+    rows = {row.slug: row for row in db.query(FooterPage).all()}
+    if _get_legal_templates_version(db) != LEGAL_TEMPLATES_VERSION:
+        for slug in BUILTIN_PAGE_SLUGS:
+            row = rows.get(slug)
+            if row is None or row.kind == "support":
+                continue
+            template = default_body_for_slug(slug)
+            if not template:
+                continue
+            if (row.body or "").strip() != template:
+                row.body = template
+                row.updated_at = datetime.utcnow()
+                changed = True
+            # Keep titles aligned with seed defaults on legal refresh
+            for item in DEFAULT_FOOTER_PAGES:
+                if item["slug"] == slug and item.get("title"):
+                    row.title = item["title"]
+                    break
+        _set_legal_templates_version(db, LEGAL_TEMPLATES_VERSION)
+        changed = True
+
     if changed:
         db.commit()

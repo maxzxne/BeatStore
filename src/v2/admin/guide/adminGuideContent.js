@@ -609,11 +609,11 @@ export const guideSections = [
     group: 'Сайт',
     adminPath: '/admin/footer',
     publicPaths: ['/privacy', '/terms', '/pages/:slug'],
-    keywords: ['legal', 'html', 'slug', 'dnd'],
+    keywords: ['legal', 'html', 'slug', 'dnd', 'пдн', 'оферта', 'cookie', 'инн', '152'],
     blocks: [
       {
         type: 'p',
-        text: 'CMS пунктов футера: slug, label, title, HTML body, enable, порядок (drag-and-drop). Есть шаблон default-body и превью.',
+        text: 'CMS пунктов футера: slug, label, title, HTML body, enable, порядок (drag-and-drop). Есть шаблон default-body и превью. Builtin-страницы: /terms (оферта), /privacy (ПДн), /consent-personal-data, /cookies.',
       },
       {
         type: 'ul',
@@ -621,11 +621,20 @@ export const guideSections = [
           'Обычные страницы → /pages/:slug или зашитые маршруты вроде /privacy, /terms',
           'Kind support — чат поддержки, не HTML',
           'Builtin-пункты нельзя ломать без понимания; можно выключить',
+          'Шаблоны в репозитории: backend/footer_templates/*.html — при деплое с новой LEGAL_TEMPLATES_VERSION тела builtin перезапишутся из файлов',
         ],
       },
       {
         type: 'tip',
-        text: 'Пишите юридический текст аккуратно: HTML редактируется CodeMirror. Сохраняйте черновик у себя, если правите большие документы.',
+        text: 'После деплоя юрдоков открой /admin/footer и замени все [ИНН], [ОГРНИП], [адрес регистрации], email, хостинг, чек, уведомление РКН. Пока в тексте есть квадратные скобки — на прод лучше не пускать трафик без заполнения.',
+      },
+      {
+        type: 'warn',
+        text: 'Тексты написаны с оговоркой «если раздел доступен»: курсы, реклама, OAuth, капча, contributors могут быть выключены в настройках — в оферте это учтено. Если правишь HTML вручную, а потом в коде поднимут LEGAL_TEMPLATES_VERSION — правки затрутся шаблоном; после синка снова заполни реквизиты.',
+      },
+      {
+        type: 'tip',
+        text: 'Пишите юридический текст аккуратно: HTML редактируется CodeMirror. Сохраняйте черновик у себя, если правите большие документы. Кнопка «Подставить шаблон» подтягивает актуальный файл из репозитория.',
       },
     ],
   },

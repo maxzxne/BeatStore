@@ -783,6 +783,10 @@ class ApiTestCase(unittest.TestCase):
         self.assertIn("админ", response.json()["detail"].lower())
 
     def test_footer_pages_public_hides_disabled_and_respects_order(self):
+        from footer_pages import LEGAL_TEMPLATES_VERSION, LEGAL_TEMPLATES_VERSION_KEY
+
+        # Pin template version so ensure_default_footer_pages does not overwrite custom bodies.
+        self.db.add(SiteSetting(key=LEGAL_TEMPLATES_VERSION_KEY, value=LEGAL_TEMPLATES_VERSION))
         self.db.add_all(
             [
                 FooterPage(
@@ -842,6 +846,41 @@ class ApiTestCase(unittest.TestCase):
 
         hidden = self.client.get("/footer-pages/privacy")
         self.assertEqual(hidden.status_code, 404)
+
+    def test_legal_templates_version_refresh_overwrites_builtin_bodies(self):
+        from footer_pages import LEGAL_TEMPLATES_VERSION, LEGAL_TEMPLATES_VERSION_KEY
+
+        self.db.add(
+            SiteSetting(key=LEGAL_TEMPLATES_VERSION_KEY, value="outdated-test-version")
+        )
+        self.db.add(
+            FooterPage(
+                slug="privacy",
+                label="Приватность",
+                kind="page",
+                title="Old",
+                body="<p>stale privacy</p>",
+                sort_order=0,
+                enabled=True,
+                is_builtin=True,
+            )
+        )
+        self.db.commit()
+
+        page = self.client.get("/footer-pages/privacy")
+        self.assertEqual(page.status_code, 200, page.text)
+        body = page.json()["body"]
+        self.assertNotEqual(body, "<p>stale privacy</p>")
+        self.assertIn("152", body)
+        self.assertIn("Власов", body)
+
+        version = (
+            self.db.query(SiteSetting)
+            .filter(SiteSetting.key == LEGAL_TEMPLATES_VERSION_KEY)
+            .first()
+        )
+        self.assertIsNotNone(version)
+        self.assertEqual(version.value, LEGAL_TEMPLATES_VERSION)
 
     def test_admin_footer_pages_crud_reorder_and_builtin_guards(self):
         seed = self.client.get("/api/admin/footer-pages", headers=auth(self.admin_token))
