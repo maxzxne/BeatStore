@@ -206,10 +206,10 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
           <ClipboardList className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-[Syne] text-lg font-semibold text-white">Прайс услуг (/order)</h2>
+          <h2 className="font-[Syne] text-lg font-semibold text-white">Прайс услуг</h2>
           <p className="mt-1 text-xs leading-relaxed text-white/45">
-            Сначала таблица цен — источник правды. Потом тексты плашки: кликни поле слева и вставь
-            сумму кнопкой справа.
+            Таблица сроков/цен — источник правды для расчёта в форме /order. Плашка-аккордеон на
+            витрине скрыта; превью ниже — только для проверки текстов в админке.
           </p>
         </div>
       </div>

@@ -19,7 +19,6 @@ import {
   parseCustomAdsDays,
   quoteAdsPeriod,
 } from '../utils/adsPricing';
-import OrderPriceGuide from '../components/OrderPriceGuide';
 import {
   getServicePrice,
   normalizeServiceOrderPricing,
@@ -631,8 +630,6 @@ const OrderPage = ({ initialType = null }) => {
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Заказать услугу</h1>
           <p className="mt-2 text-sm text-white/50">Подробный расчёт, короткая заявка или реклама на витрине</p>
         </div>
-
-        <OrderPriceGuide pricing={servicePricing} variant="panel" className="mb-6" />
 
         <div className="space-y-4">
           <button
@@ -1897,9 +1894,6 @@ const OrderPage = ({ initialType = null }) => {
               </>
             )}
           </div>
-          
-          {/* Информация о стоимости */}
-          <OrderPriceGuide pricing={servicePricing} variant="inline" className="mt-4" />
         </div>
 
         {/* Чекбокс — перед кнопкой оформления */}
