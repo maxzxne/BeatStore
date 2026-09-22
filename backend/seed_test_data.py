@@ -105,8 +105,8 @@ def collect_media() -> dict:
     covers = [c for c in covers if not c.lower().endswith(".svg")]
     previews = _list_media("static/course_previews", (".mp4", ".mov", ".avi", ".webm"))
     videos = _list_media("static/course_videos", (".mp4", ".mov", ".avi", ".webm"))
-    wavs = _list_media("static/test_files", (".wav",))
-    zips = _list_media("static/test_files", (".zip",))
+    wavs = _list_media("static/audio", (".wav",)) or _list_media("static/test_files", (".wav",))
+    zips = _list_media("static/audio", (".zip",)) or _list_media("static/test_files", (".zip",))
     # seed-*.wav в demos тоже можно как demo
     print(
         f"📁 Медиа: {len(demos)} demo, {len(audio)} audio, {len(covers)} covers, "
@@ -236,8 +236,8 @@ def create_beats(db: Session, media: dict, *, start_index: int, count: int) -> i
             price_exclusive=price_exclusive,
             demo_url=f"/static/demos/{demo_file}" if demo_file else None,
             mp3_url=mp3_url,
-            wav_url=f"/static/test_files/{wavs[0]}" if wavs else None,
-            exclusive_url=f"/static/test_files/{zips[0]}" if zips else None,
+            wav_url=f"/static/audio/{wavs[0]}" if wavs else None,
+            exclusive_url=f"/static/audio/{zips[0]}" if zips else None,
             cover_url=f"/static/covers/{cover_file}" if cover_file else None,
             is_available=True,
             allow_multiple_purchases=not is_one_shot,

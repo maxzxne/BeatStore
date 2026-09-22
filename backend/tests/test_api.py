@@ -1273,6 +1273,85 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.text)
         self.assertEqual(response.content, payload)
 
+    def test_stranger_cannot_get_paid_test_files(self):
+        """Legacy /static/test_files deliverables must not be public via StaticFiles."""
+        filename = "legacy-secret.wav"
+        payload = b"RIFF-secret"
+        web = _write_bytes(f"static/test_files/{filename}", payload)
+        beat = add_beat(self.db)
+        beat.wav_url = web
+        beat.mp3_url = None
+        self.db.commit()
+
+        anonymous = self.client.get(f"/static/test_files/{filename}")
+        self.assertIn(anonymous.status_code, (401, 403), anonymous.text)
+
+        stranger = add_user(self.db, "nosnoop")
+        forbidden = self.client.get(
+            f"/static/test_files/{filename}", headers=auth(token_for("nosnoop"))
+        )
+        self.assertIn(forbidden.status_code, (401, 403), forbidden.text)
+
+    def test_owner_can_stream_legacy_test_files_via_media_access(self):
+        filename = "legacy-owned.wav"
+        payload = b"RIFF" + (b"\x01" * 32)
+        web = _write_bytes(f"static/test_files/{filename}", payload)
+        beat = add_beat(self.db)
+        beat.wav_url = web
+        self.db.commit()
+
+        created = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={"kind": "beat", "item_id": beat.id, "purchase_type": "wav"},
+        ).json()
+        paid = self.client.post(
+            "/payments/simulate",
+            headers=auth(self.token),
+            json={"inv_id": created["inv_id"], "success": True},
+        )
+        self.assertEqual(paid.status_code, 200, paid.text)
+
+        access = self.client.get(
+            f"/beats/{beat.id}/media-access",
+            headers=auth(self.token),
+            params={"purchase_type": "wav"},
+        )
+        self.assertEqual(access.status_code, 200, access.text)
+        signed = access.json()["url"]
+        self.assertIn("access=", signed)
+        self.assertIn(filename, signed)
+
+        streamed = self.client.get(signed)
+        self.assertEqual(streamed.status_code, 200, streamed.text)
+        self.assertEqual(streamed.content, payload)
+
+    def test_migrate_relocates_test_files_urls_to_audio(self):
+        import media_access
+        import shutil
+
+        filename = "move-me.wav"
+        payload = b"move-bytes"
+        _write_bytes(f"static/test_files/{filename}", payload)
+        beat = add_beat(self.db)
+        beat.wav_url = f"/static/test_files/{filename}"
+        beat.exclusive_url = f"/static/test_files/{filename}.zip"
+        _write_bytes(f"static/test_files/{filename}.zip", b"PK\x03\x04")
+        self.db.commit()
+
+        changed = media_access.migrate_test_files_to_audio(self.db)
+        self.assertGreaterEqual(changed, 1)
+        self.db.refresh(beat)
+        self.assertEqual(beat.wav_url, f"/static/audio/{filename}")
+        self.assertEqual(beat.exclusive_url, f"/static/audio/{filename}.zip")
+        self.assertTrue(os.path.isfile(f"static/audio/{filename}"))
+        self.assertFalse(os.path.isfile(f"static/test_files/{filename}"))
+        # cleanup audio copies so other tests stay isolated
+        for path in (f"static/audio/{filename}", f"static/audio/{filename}.zip"):
+            if os.path.isfile(path):
+                os.remove(path)
+        shutil.rmtree("static/test_files", ignore_errors=True)
+
     def test_course_legacy_purchase_payment_success_rejected(self):
         course = add_course(self.db, price=5000)
         blocked = self.client.post(

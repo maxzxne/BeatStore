@@ -4,7 +4,7 @@
  * Personal notes live in SQLite (API), not here.
  */
 
-export const ADMIN_GUIDE_VERSION = '2026-09-22e';
+export const ADMIN_GUIDE_VERSION = '2026-09-22f';
 
 /** @typedef {{ type: 'p'|'h3'|'ul'|'ol'|'steps'|'tip'|'warn'|'link', text?: string, items?: string[], href?: string, label?: string }} GuideBlock */
 /** @typedef {{ id: string, title: string, group: string, adminPath?: string|null, publicPaths?: string[], keywords?: string[], blocks: GuideBlock[] }} GuideSection */
@@ -248,7 +248,7 @@ export const guideSections = [
           'MP3 / WAV — выдаются после покупки соответствующей лицензии',
           'Exclusive — обычно ZIP со стемами/полным пакетом',
           'Цены по типам лицензий + бенефициар',
-          'Платные файлы (/static/audio, /static/course_videos) не публичны: стрим только у покупателя/админа через ?access= (~1ч) или Bearer',
+          'Платные файлы (/static/audio, legacy /static/test_files, /static/course_videos) не публичны: стрим у покупателя/админа через ?access= (~1ч) или Bearer; при старте test_files переезжают в audio',
         ],
       },
       {
@@ -873,7 +873,7 @@ export const guideSections = [
           'Не писать «Marketplace» в публичном UI',
           'Не смешивать стили старых UI; публичная витрина = V2',
           'Не выкладывать exclusive без файла и цены',
-          'Не отдавать /static/audio и /static/course_videos без покупки — demos/previews остаются публичными',
+          'Не отдавать /static/audio, /static/test_files и /static/course_videos без покупки — demos/previews остаются публичными',
           'Не отключать всех OAuth + требовать captcha без запасного входа',
           'Не править личные заметки этого гайда через деплой — они в БД',
         ],

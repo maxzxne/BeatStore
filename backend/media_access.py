@@ -1,7 +1,8 @@
-"""Signed short-TTL access for paid audio/video under /static/audio and /static/course_videos."""
+"""Signed short-TTL access for paid audio/video under gated /static paths."""
 from __future__ import annotations
 
 import os
+import shutil
 from datetime import datetime, timedelta
 from typing import Optional
 from urllib.parse import quote
@@ -16,6 +17,15 @@ MEDIA_ACCESS_PURPOSE = "media"
 MEDIA_ACCESS_TTL = timedelta(hours=1)
 PAID_AUDIO_PREFIX = "/static/audio/"
 PAID_VIDEO_PREFIX = "/static/course_videos/"
+# Legacy seed/staging put WAV/exclusive under test_files — treat as paid too.
+PAID_BEAT_PREFIXES = (PAID_AUDIO_PREFIX, "/static/test_files/")
+BEAT_FILE_URL_ATTRS = ("mp3_url", "wav_url", "exclusive_url", "full_audio_url")
+
+
+def is_paid_beat_path(path: Optional[str]) -> bool:
+    if not path:
+        return False
+    return any(path.startswith(prefix) for prefix in PAID_BEAT_PREFIXES)
 
 
 def _secret() -> str:
@@ -85,6 +95,16 @@ def beat_file_url(beat: Beat, purchase_type: str) -> Optional[str]:
 def find_beat_by_audio_filename(db: Session, filename: str) -> Optional[Beat]:
     filename = safe_filename(filename)
     suffix = f"%/{filename}"
+    exacts = []
+    for prefix in PAID_BEAT_PREFIXES:
+        exacts.extend(
+            [
+                Beat.mp3_url == f"{prefix}{filename}",
+                Beat.wav_url == f"{prefix}{filename}",
+                Beat.exclusive_url == f"{prefix}{filename}",
+                Beat.full_audio_url == f"{prefix}{filename}",
+            ]
+        )
     return (
         db.query(Beat)
         .filter(
@@ -93,14 +113,53 @@ def find_beat_by_audio_filename(db: Session, filename: str) -> Optional[Beat]:
                 Beat.wav_url.like(suffix),
                 Beat.exclusive_url.like(suffix),
                 Beat.full_audio_url.like(suffix),
-                Beat.mp3_url == f"/static/audio/{filename}",
-                Beat.wav_url == f"/static/audio/{filename}",
-                Beat.exclusive_url == f"/static/audio/{filename}",
-                Beat.full_audio_url == f"/static/audio/{filename}",
+                *exacts,
             )
         )
         .first()
     )
+
+
+def relocate_test_files_url(url: Optional[str]) -> Optional[str]:
+    """Move legacy /static/test_files/* onto /static/audio/* when present; rewrite URL."""
+    if not url or not url.startswith("/static/test_files/"):
+        return url
+    try:
+        name = safe_filename(url.rsplit("/", 1)[-1])
+    except ValueError:
+        return url
+    src = os.path.join("static", "test_files", name)
+    dst_dir = os.path.join("static", "audio")
+    dst = os.path.join(dst_dir, name)
+    os.makedirs(dst_dir, exist_ok=True)
+    if os.path.isfile(src):
+        if not os.path.isfile(dst):
+            shutil.move(src, dst)
+        else:
+            try:
+                os.remove(src)
+            except OSError:
+                pass
+    return f"{PAID_AUDIO_PREFIX}{name}"
+
+
+def migrate_test_files_to_audio(db: Session) -> int:
+    """Rewrite beat paid URLs from test_files → audio; move files when on disk."""
+    changed = 0
+    beats = db.query(Beat).all()
+    for beat in beats:
+        dirty = False
+        for attr in BEAT_FILE_URL_ATTRS:
+            old = getattr(beat, attr, None)
+            new = relocate_test_files_url(old)
+            if new != old:
+                setattr(beat, attr, new)
+                dirty = True
+        if dirty:
+            changed += 1
+    if changed:
+        db.commit()
+    return changed
 
 
 def find_course_by_video_filename(db: Session, filename: str) -> Optional[Course]:

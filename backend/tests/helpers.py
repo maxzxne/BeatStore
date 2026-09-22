@@ -70,9 +70,9 @@ def add_beat(
         price_mp3=price_mp3,
         price_wav=price_wav,
         price_exclusive=price_exclusive,
-        mp3_url="/static/test_files/a.mp3",
-        wav_url="/static/test_files/a.wav",
-        exclusive_url="/static/test_files/a.zip",
+        mp3_url="/static/audio/a.mp3",
+        wav_url="/static/audio/a.wav",
+        exclusive_url="/static/audio/a.zip",
         is_available=available,
         allow_multiple_purchases=allow_multiple,
     )

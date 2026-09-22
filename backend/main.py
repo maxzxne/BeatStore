@@ -674,14 +674,18 @@ def _authorize_paid_static(
     filename: str,
     kind: str,
     access: Optional[str] = None,
+    url_prefix: Optional[str] = None,
 ):
-    """Gate paid /static/audio and /static/course_videos. Returns (db, safe_name) or raises."""
+    """Gate paid static deliverables. Returns (db, safe_name) or raises."""
     try:
         safe = media_access.safe_filename(filename)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    prefix = "/static/audio" if kind == "audio" else "/static/course_videos"
+    if url_prefix:
+        prefix = url_prefix.rstrip("/")
+    else:
+        prefix = "/static/audio" if kind == "audio" else "/static/course_videos"
     expected_path = f"{prefix}/{safe}"
 
     db = SessionLocal()
@@ -740,11 +744,36 @@ async def serve_demo_audio(filename: str, request: Request):
 async def serve_full_audio(filename: str, request: Request, access: Optional[str] = None):
     """Полные аудио файлы — только покупатель / админ (Bearer или ?access=)."""
     db, safe = _authorize_paid_static(
-        request, filename=filename, kind="audio", access=access
+        request, filename=filename, kind="audio", access=access, url_prefix="/static/audio"
     )
     try:
         file_path = f"static/audio/{safe}"
         return serve_audio_with_range(file_path, request, media_type="audio/mpeg")
+    finally:
+        db.close()
+
+
+@app.get("/static/test_files/{filename}")
+async def serve_legacy_test_files(filename: str, request: Request, access: Optional[str] = None):
+    """Legacy paid deliverables (wav/exclusive from old seeds) — same ACL as /static/audio."""
+    db, safe = _authorize_paid_static(
+        request,
+        filename=filename,
+        kind="audio",
+        access=access,
+        url_prefix="/static/test_files",
+    )
+    try:
+        file_path = f"static/test_files/{safe}"
+        # zip/wav/mp3 — sniff by extension for content-type
+        lower = safe.lower()
+        if lower.endswith(".wav"):
+            media_type = "audio/wav"
+        elif lower.endswith(".zip"):
+            media_type = "application/zip"
+        else:
+            media_type = "audio/mpeg"
+        return serve_audio_with_range(file_path, request, media_type=media_type)
     finally:
         db.close()
 
@@ -2329,8 +2358,8 @@ def beat_media_access(
     file_url = media_access.beat_file_url(beat, purchase_type)
     if not file_url:
         raise HTTPException(status_code=404, detail="Файл не найден")
-    if not file_url.startswith("/static/audio/"):
-        # Already a remote URL — return as-is
+    if not media_access.is_paid_beat_path(file_url):
+        # Remote / ungated URL — return as-is
         return {"url": file_url, "expires_in": int(media_access.MEDIA_ACCESS_TTL.total_seconds())}
 
     signed = media_access.signed_media_url(file_url, current_user.id)
@@ -6005,6 +6034,20 @@ else:
         print(f"⚠️  Ошибка при заполнении тестовыми данными: {e}")
         import traceback
         traceback.print_exc()
+
+    # Legacy WAV/exclusive lived under /static/test_files — move into gated /static/audio
+    try:
+        from database import SessionLocal as _SessionLocalForMigrate
+
+        _mig_db = _SessionLocalForMigrate()
+        try:
+            moved = media_access.migrate_test_files_to_audio(_mig_db)
+            if moved:
+                print(f"✅ migrate_test_files_to_audio: обновлено битов: {moved}")
+        finally:
+            _mig_db.close()
+    except Exception as e:
+        print(f"⚠️  migrate_test_files_to_audio: {e}")
 
 # Запуск Telegram бота в фоновом потоке
 # Telegram bot будет запущен в startup event для более быстрого старта сервера
