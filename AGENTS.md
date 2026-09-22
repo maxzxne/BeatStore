@@ -20,7 +20,7 @@ Target UI: V2 (shipped)
 - Payments: webhook fulfills (`backend/payments`), V2 pages in `src/v2/Payment*.jsx`. Skill `.cursor/skills/beatstore-payments/SKILL.md`.
 - QA: agent runs `backend/.venv/bin/python -m unittest discover -s backend/tests -v` (or `npm test`). Isolated SQLite, no live Robokassa cabinet / OAuth. User does final acceptance only. Skill `.cursor/skills/beatstore-qa/SKILL.md`.
 - **Admin guide sync:** любое изменение поведения админки/витрины → сразу обновить `/admin/guide` (`src/v2/admin/guide/adminGuideContent.js`) в том же коммите/пуше. Skill `.cursor/skills/beatstore-admin-guide/SKILL.md`. Личные заметки админа — в БД, не в коде.
-- **Finish mission (V2-only + admin CMS + hero/banners + Render):** `.cursor/skills/beatstore-v2-finish/SKILL.md` — lead agent must orchestrate subagents, not solo-rewrite everything.
+- **Finish mission (V2-only + admin CMS + hero/banners + Render):** largely shipped in code; remaining = staging Manual Deploy + smoke. Checklist: `.cursor/skills/beatstore-v2-finish/references/acceptance.md`. Orchestrator: `.cursor/skills/beatstore-v2-finish/SKILL.md`.
 
 ## Visual QA
 

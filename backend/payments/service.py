@@ -5,7 +5,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from models import AdOrder, Beat, Course, PaymentIntent, ServiceOrder, User
+from models import AdOrder, Beat, Course, PaymentIntent, Purchase, ServiceOrder, User
 from cart_rules import drop_owned_cart_items, user_owns_beat, user_owns_course
 from payments import config
 from payments.pricing import (
@@ -131,6 +131,7 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
             raise PaymentError("Бит недоступен")
         if user_owns_beat(db, user.id, beat_id):
             raise PaymentError("Бит уже куплен")
+        _reject_exclusive_taken(db, beat, purchase_type)
         listed = beat_unit_price(beat, purchase_type)
         amount, sale = checkout_pay(listed, "beats", sales, promo)
         payload = {
@@ -171,6 +172,7 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
         beat_lines = []
         for beat in user.cart_items:
             purchase_type = str(formats.get(str(beat.id)) or formats.get(beat.id) or "mp3")
+            _reject_exclusive_taken(db, beat, purchase_type)
             beat_lines.append(beat_unit_price(beat, purchase_type))
         course_lines = [float(course.price or 0) for course in user.course_cart_items]
         amount = mixed_cart_pay(beat_lines, course_lines, sales, promo)
@@ -221,3 +223,18 @@ def _quote(db: Session, user: User | None, kind: str, body: dict) -> tuple[dict,
         return payload, amount, description_for("ads", f"#{ad_order_id}"), promo
 
     raise PaymentError("Неизвестный тип оплаты")
+
+
+def _reject_exclusive_taken(db: Session, beat: Beat, purchase_type: str) -> None:
+    """Exclusive cannot be sold twice; also blocked when beat is off the shelf."""
+    if (purchase_type or "").strip().lower() != "exclusive":
+        return
+    if not beat.is_available:
+        raise PaymentError("Бит недоступен")
+    taken = (
+        db.query(Purchase)
+        .filter(Purchase.beat_id == beat.id, Purchase.purchase_type == "exclusive")
+        .first()
+    )
+    if taken:
+        raise PaymentError("Эксклюзивная лицензия уже продана")

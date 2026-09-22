@@ -1,5 +1,5 @@
 ---
-description: Autonomous visual QA cycle required before any V3 page is done
+description: Autonomous visual QA cycle required before any shipped (V2) page is done
 globs: src/**/*.{js,jsx,css}
 alwaysApply: false
 ---
@@ -23,4 +23,4 @@ IMPLEMENT → RUN → OPEN → INTERACT → SCREENSHOT → REVIEW → FIX → RE
 
 Нашёл spacing/overflow/hover/contrast/console error — исправь сам, не спрашивай.
 
-Сверяй скрин с `DESIGN.md`: это один продукт V3, не набор разных дизайнеров.
+Сверяй скрин с shipped **V2** + `DESIGN.md`: один продукт (OLED + acid green), не набор разных дизайнеров. Пути `src/v3` — historical.

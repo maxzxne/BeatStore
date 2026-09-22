@@ -24,6 +24,15 @@ from models import CoursePurchase, FooterPage, PaymentIntent, PromoBanner, Promo
 from payments.robokassa import format_out_sum, sign_result  # noqa: E402
 
 
+def _write_bytes(rel_path: str, payload: bytes = b"ID3fake-audio") -> str:
+    """Create a tiny media file under backend cwd; return web path /static/..."""
+    full = rel_path.lstrip("/")
+    os.makedirs(os.path.dirname(full), exist_ok=True)
+    with open(full, "wb") as fh:
+        fh.write(payload)
+    return "/" + full
+
+
 class ApiTestCase(unittest.TestCase):
     def setUp(self):
         self.db = reset_schema()
@@ -1186,6 +1195,147 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(sale["scope"], "ads")
         self.assertEqual(sale["kind"], "percent")
         self.assertEqual(sale["value"], 20)
+
+    def test_stranger_cannot_get_paid_audio(self):
+        filename = "paid-secret.mp3"
+        web = _write_bytes(f"static/audio/{filename}")
+        beat = add_beat(self.db)
+        beat.mp3_url = web
+        beat.full_audio_url = web
+        self.db.commit()
+
+        anonymous = self.client.get(f"/static/audio/{filename}")
+        self.assertIn(anonymous.status_code, (401, 403), anonymous.text)
+
+        stranger = add_user(self.db, "stranger")
+        stranger_tok = token_for("stranger")
+        forbidden = self.client.get(
+            f"/static/audio/{filename}", headers=auth(stranger_tok)
+        )
+        self.assertIn(forbidden.status_code, (401, 403), forbidden.text)
+
+    def test_owner_can_stream_paid_audio_and_media_access(self):
+        filename = "owned-track.mp3"
+        payload = b"ID3" + (b"\x00" * 64)
+        web = _write_bytes(f"static/audio/{filename}", payload)
+        beat = add_beat(self.db)
+        beat.mp3_url = web
+        beat.full_audio_url = web
+        self.db.commit()
+
+        created = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={"kind": "beat", "item_id": beat.id, "purchase_type": "mp3"},
+        ).json()
+        paid = self.client.post(
+            "/payments/simulate",
+            headers=auth(self.token),
+            json={"inv_id": created["inv_id"], "success": True},
+        )
+        self.assertEqual(paid.status_code, 200, paid.text)
+
+        access = self.client.get(
+            f"/beats/{beat.id}/media-access",
+            headers=auth(self.token),
+            params={"purchase_type": "mp3"},
+        )
+        self.assertEqual(access.status_code, 200, access.text)
+        signed = access.json()["url"]
+        self.assertIn("access=", signed)
+        self.assertIn(filename, signed)
+
+        streamed = self.client.get(signed)
+        self.assertEqual(streamed.status_code, 200, streamed.text)
+        self.assertEqual(streamed.content, payload)
+
+        via_header = self.client.get(
+            f"/static/audio/{filename}", headers=auth(self.token)
+        )
+        self.assertEqual(via_header.status_code, 200, via_header.text)
+
+        ranged = self.client.get(
+            signed, headers={"Range": "bytes=0-3"}
+        )
+        self.assertEqual(ranged.status_code, 206)
+        self.assertEqual(ranged.content, payload[:4])
+
+        admin_ok = self.client.get(
+            f"/static/audio/{filename}", headers=auth(self.admin_token)
+        )
+        self.assertEqual(admin_ok.status_code, 200, admin_ok.text)
+
+    def test_demos_remain_public(self):
+        filename = "public-demo.mp3"
+        payload = b"demo-bytes"
+        _write_bytes(f"static/demos/{filename}", payload)
+        response = self.client.get(f"/static/demos/{filename}")
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.content, payload)
+
+    def test_course_legacy_purchase_payment_success_rejected(self):
+        course = add_course(self.db, price=5000)
+        blocked = self.client.post(
+            f"/courses/{course.id}/purchase",
+            headers=auth(self.token),
+            data={"payment_success": "true"},
+        )
+        self.assertEqual(blocked.status_code, 400, blocked.text)
+        self.assertEqual(self.db.query(CoursePurchase).count(), 0)
+
+    def test_exclusive_second_checkout_blocked(self):
+        beat = add_beat(self.db, allow_multiple=True)
+        first = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={"kind": "beat", "item_id": beat.id, "purchase_type": "exclusive"},
+        )
+        self.assertEqual(first.status_code, 200, first.text)
+        self.client.post(
+            "/payments/simulate",
+            headers=auth(self.token),
+            json={"inv_id": first.json()["inv_id"], "success": True},
+        )
+        self.assertEqual(
+            self.db.query(Purchase)
+            .filter(Purchase.purchase_type == "exclusive", Purchase.beat_id == beat.id)
+            .count(),
+            1,
+        )
+
+        add_user(self.db, "latebuyer")
+        late = token_for("latebuyer")
+        second = self.client.post(
+            "/payments/create",
+            headers=auth(late),
+            json={"kind": "beat", "item_id": beat.id, "purchase_type": "exclusive"},
+        )
+        self.assertEqual(second.status_code, 400, second.text)
+
+    def test_robokassa_result_replay_is_idempotent(self):
+        beat = add_beat(self.db)
+        created = self.client.post(
+            "/payments/create",
+            headers=auth(self.token),
+            json={"kind": "beat", "item_id": beat.id, "purchase_type": "mp3"},
+        ).json()
+        inv_id = created["inv_id"]
+        out_sum = format_out_sum(created["amount"])
+        signature = sign_result(out_sum, inv_id, "test_password_2")
+        payload = {
+            "OutSum": out_sum,
+            "InvId": str(inv_id),
+            "SignatureValue": signature,
+        }
+        first = self.client.post("/payments/robokassa/result", data=payload)
+        self.assertEqual(first.status_code, 200, first.text)
+        self.assertEqual(first.text, f"OK{inv_id}")
+        self.assertEqual(self.db.query(Purchase).count(), 1)
+
+        replay = self.client.post("/payments/robokassa/result", data=payload)
+        self.assertEqual(replay.status_code, 200, replay.text)
+        self.assertEqual(replay.text, f"OK{inv_id}")
+        self.assertEqual(self.db.query(Purchase).count(), 1)
 
 
 if __name__ == "__main__":

@@ -1,26 +1,26 @@
 ---
-description: BeatStore V3 positioning, versioning, and non-negotiable product rules
+description: BeatStore product positioning, versioning, and non-negotiable product rules
 alwaysApply: true
 ---
 
-# BeatStore V3
+# BeatStore product (V2 shipped)
 
 ```text
-V1 — первоначальная версия
-V2 — текущая версия (indigo + acid green, частично поверх V1)
-V3 — 2026 music-tech product UI
+V1 — первоначальная версия (legacy, не обслуживается)
+V2 — shipped product UI (dark OLED + acid green, Syne/Poppins, src/v2)
+V3 — historical design docs / unused src/v3 (не продукт)
 Current UI: V2
-Target UI: V3
+Target UI: V2 (shipped)
 ```
 
 Это **Official Beat Store** бренда XWinner, не marketplace и не BeatStars.
 
 - Публичный UI: единая официальная площадка. Чужие продюсеры/royalty не превращают витрину в маркетплейс.
-- Источник визуальных решений: корневой `DESIGN.md`. Не `design-system/beatstore-v2`.
-- Не смешивать стили V1/V2/V3. Не тащить в V3 `#22C55E`, indigo glow, Syne/Poppins, Cormorant, tungsten gold, pill-кнопки, spin-artwork.
-- V3: dark, sharp, dense, Space Grotesk, monochrome white interaction. Не luxury editorial, не лейбл 2015.
-- Reuse functionality, not UI: API, SQLite, JWT, FastAPI, бизнес-логика остаются.
+- Источник визуальных решений для shipped UI: корневой `DESIGN.md` (секции V3 — historical) + токены V2 в `src/v2`.
+- Публичный и admin chrome — только `src/v2`. Не смешивать V1 chrome и не «оживлять» `src/v3` как продукт.
+- V2 tokens (current product): `#22C55E` acid green, Syne/Poppins, dark OLED. Сохранять continuity.
+- `src/v3/` — historical unused; не класть туда новый product UI. Новые UI-компоненты — в `src/v2/`.
+- Reuse functionality, not UI experiments: API, SQLite, JWT, FastAPI, бизнес-логика остаются.
 - Backend не менять без необходимости. Если нужно — объяснить, минимальный diff, проверить покупки/auth.
-- Новые UI-компоненты живут в `src/v3/`. Не патчить V1/V2 «под V3».
-- Запрещены: purple SaaS, gradient landing, glassmorphism, Inter-only, emoji-иконки, слово Marketplace в public UI, serif-hero, beige/gold luxury.
-- Signature V3 — sticky waveform player + oversized artwork, не native `<audio controls>`.
+- Запрещены: purple SaaS, glassmorphism ради стекла, Inter-only, emoji-иконки, слово Marketplace в public UI, serif-hero.
+- Signature player: sticky waveform + artwork в V2-стиле, не native `<audio controls>`.

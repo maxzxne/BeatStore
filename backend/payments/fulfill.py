@@ -177,6 +177,14 @@ def _add_beat_purchase(db: Session, user_id: int | None, beat: Beat, purchase_ty
         raise ValueError("Нужна авторизация")
     if purchase_type not in {"mp3", "wav", "exclusive"}:
         purchase_type = "mp3"
+    if purchase_type == "exclusive":
+        exclusive_taken = (
+            db.query(Purchase)
+            .filter(Purchase.beat_id == beat.id, Purchase.purchase_type == "exclusive")
+            .first()
+        )
+        if exclusive_taken:
+            raise ValueError("Эксклюзивная лицензия уже продана")
     existing = (
         db.query(Purchase)
         .filter(
@@ -203,7 +211,7 @@ def _add_beat_purchase(db: Session, user_id: int | None, beat: Beat, purchase_ty
             purchase_type=purchase_type,
         )
     )
-    if not allow_multiple:
+    if not allow_multiple or purchase_type == "exclusive":
         beat.is_available = False
 
 

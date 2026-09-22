@@ -22,7 +22,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from typing import Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -48,6 +48,7 @@ from footer_pages import (
 from footer_templates_loader import default_body_for_slug
 from payments import config as payment_config
 from payments.fulfill import fulfill_intent, mark_failed
+import media_access
 from payments.discounts import DISCOUNT_KINDS, SALE_SCOPES, pick_best_sale
 from payments.pricing import generate_promo_code, load_active_sales, overlay_sale_on_mapping
 from payments.quote import payload_dict, service_order_amount, service_order_full_price, service_order_queue
@@ -603,22 +604,20 @@ def parse_range_header(range_header: str, file_size: int):
     
     return start, end
 
-def serve_audio_with_range(file_path: str, request: Request):
-    """Обслуживает аудио файл с поддержкой Range запросов"""
+def serve_audio_with_range(file_path: str, request: Request, media_type: str = "audio/mpeg"):
+    """Обслуживает медиафайл с поддержкой Range запросов"""
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="Файл не найден")
     
     file_size = os.path.getsize(file_path)
     range_header = request.headers.get('range')
     
     if not range_header:
-        # Обычный запрос без Range
-        return FileResponse(file_path, media_type="audio/mpeg")
+        return FileResponse(file_path, media_type=media_type)
     
     start, end = parse_range_header(range_header, file_size)
     if start is None or end is None:
-        # Некорректный Range заголовок
-        return FileResponse(file_path, media_type="audio/mpeg")
+        return FileResponse(file_path, media_type=media_type)
     
     content_length = end - start + 1
     
@@ -638,7 +637,7 @@ def serve_audio_with_range(file_path: str, request: Request):
         'Content-Range': f'bytes {start}-{end}/{file_size}',
         'Accept-Ranges': 'bytes',
         'Content-Length': str(content_length),
-        'Content-Type': 'audio/mpeg'
+        'Content-Type': media_type,
     }
     
     return StreamingResponse(
@@ -647,36 +646,137 @@ def serve_audio_with_range(file_path: str, request: Request):
         headers=headers
     )
 
+
+def _bearer_user_from_request(request: Request, db: Session) -> Optional[User]:
+    """Parse Authorization Bearer without Depends (routes registered before get_db)."""
+    header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not header or not header.lower().startswith("bearer "):
+        return None
+    token = header.split(" ", 1)[1].strip()
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if not username or payload.get("type") == "2fa_pending":
+            return None
+        user = db.query(User).filter(User.username == username).first()
+        if user is None or not user.is_active:
+            return None
+        return user
+    except JWTError:
+        return None
+
+
+def _authorize_paid_static(
+    request: Request,
+    *,
+    filename: str,
+    kind: str,
+    access: Optional[str] = None,
+):
+    """Gate paid /static/audio and /static/course_videos. Returns (db, safe_name) or raises."""
+    try:
+        safe = media_access.safe_filename(filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    prefix = "/static/audio" if kind == "audio" else "/static/course_videos"
+    expected_path = f"{prefix}/{safe}"
+
+    db = SessionLocal()
+    try:
+        bearer = _bearer_user_from_request(request, db)
+        try:
+            user = media_access.resolve_user_from_access(
+                db,
+                access_token=access,
+                bearer_user=bearer,
+                expected_path=expected_path,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+        if user is None:
+            raise HTTPException(status_code=401, detail="Требуется авторизация")
+
+        if kind == "audio":
+            beat = media_access.find_beat_by_audio_filename(db, safe)
+            if beat is None:
+                if not getattr(user, "is_admin", False):
+                    raise HTTPException(status_code=403, detail="Нет доступа к файлу")
+            elif not media_access.user_may_access_beat_file(db, user, beat, safe):
+                raise HTTPException(status_code=403, detail="Нет доступа к файлу")
+        else:
+            course = media_access.find_course_by_video_filename(db, safe)
+            if course is None:
+                if not getattr(user, "is_admin", False):
+                    raise HTTPException(status_code=403, detail="Нет доступа к файлу")
+            elif not media_access.user_may_access_course_file(db, user, course, safe):
+                raise HTTPException(status_code=403, detail="Нет доступа к файлу")
+
+        return db, safe
+    except HTTPException:
+        db.close()
+        raise
+    except Exception:
+        db.close()
+        raise
+
+
 # Эндпоинт для аудио файлов с поддержкой Range
 @app.get("/static/demos/{filename}")
 async def serve_demo_audio(filename: str, request: Request):
     """Обслуживает демо аудио файлы с поддержкой Range запросов"""
-    file_path = f"static/demos/{filename}"
+    try:
+        safe = media_access.safe_filename(filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    file_path = f"static/demos/{safe}"
     return serve_audio_with_range(file_path, request)
 
+
 @app.get("/static/audio/{filename}")
-async def serve_full_audio(filename: str, request: Request):
-    """Обслуживает полные аудио файлы с поддержкой Range запросов"""
-    file_path = f"static/audio/{filename}"
-    return serve_audio_with_range(file_path, request)
+async def serve_full_audio(filename: str, request: Request, access: Optional[str] = None):
+    """Полные аудио файлы — только покупатель / админ (Bearer или ?access=)."""
+    db, safe = _authorize_paid_static(
+        request, filename=filename, kind="audio", access=access
+    )
+    try:
+        file_path = f"static/audio/{safe}"
+        return serve_audio_with_range(file_path, request, media_type="audio/mpeg")
+    finally:
+        db.close()
+
 
 @app.get("/static/course_previews/{filename}")
 async def serve_course_preview(filename: str, request: Request):
     """Обслуживает превью видео курсов"""
-    file_path = f"static/course_previews/{filename}"
+    try:
+        safe = media_access.safe_filename(filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    file_path = f"static/course_previews/{safe}"
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path, media_type="video/mp4")
+        raise HTTPException(status_code=404, detail="Файл не найден")
+    return serve_audio_with_range(file_path, request, media_type="video/mp4")
+
 
 @app.get("/static/course_videos/{filename}")
-async def serve_course_video(filename: str, request: Request):
-    """Обслуживает полные видео курсов (только для купленных)"""
-    file_path = f"static/course_videos/{filename}"
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path, media_type="video/mp4")
+async def serve_course_video(filename: str, request: Request, access: Optional[str] = None):
+    """Полные видео курсов — только покупатель / админ (Bearer или ?access=)."""
+    db, safe = _authorize_paid_static(
+        request, filename=filename, kind="video", access=access
+    )
+    try:
+        file_path = f"static/course_videos/{safe}"
+        return serve_audio_with_range(file_path, request, media_type="video/mp4")
+    finally:
+        db.close()
 
-# Статические файлы для остальных типов (обложки и т.д.)
+
+# Статические файлы для остальных типов (обложки и т.д.).
+# Paid dirs are intercepted by explicit routes above — mount must not bypass them.
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Подключаем статические файлы фронтенда (только если директория существует)
@@ -1443,14 +1543,29 @@ def validate_discount_fields(scope: Optional[str], kind: Optional[str], value: O
         raise HTTPException(status_code=400, detail="Процент не больше 100")
 
 def is_promo_banner_active(banner: PromoBanner, now: Optional[datetime] = None) -> bool:
+    """Promo window check.
+
+    Admin UI sends ISO timestamps via Date.toISOString() (UTC with Z).
+    Aware datetimes are normalized to UTC-naive for compare with datetime.utcnow().
+    """
     if not banner.enabled:
         return False
-    now = now or datetime.utcnow()
-    if banner.starts_at is not None and banner.starts_at > now:
+    now = _as_utc_naive(now or datetime.utcnow())
+    starts = _as_utc_naive(banner.starts_at)
+    ends = _as_utc_naive(banner.ends_at)
+    if starts is not None and starts > now:
         return False
-    if banner.ends_at is not None and banner.ends_at < now:
+    if ends is not None and ends < now:
         return False
     return True
+
+
+def _as_utc_naive(value: Optional[datetime]) -> Optional[datetime]:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 def user_can_access_courses_catalog(visibility: str, user: Optional[User]) -> bool:
     """Доступ к публичному API каталога курсов. При admins_only/hidden — только админы."""
@@ -2145,18 +2260,84 @@ def get_beat(beat_id: int, db: Session = Depends(get_db),
         "beats",
         sales,
     )
-    
-    # Проверяем покупку пользователя
-    if current_user:
-        purchase = db.query(Purchase).filter(
-            Purchase.user_id == current_user.id,
-            Purchase.beat_id == beat_id
-        ).first()
-        
-        if purchase:
-            return BeatDetailResponse(**beat_dict)
-    
+
+    owns = bool(
+        current_user
+        and (
+            current_user.is_admin
+            or db.query(Purchase)
+            .filter(Purchase.user_id == current_user.id, Purchase.beat_id == beat_id)
+            .first()
+        )
+    )
+    if not owns:
+        for key in ("full_audio_url", "project_files_url", "wav_url", "mp3_url", "exclusive_url"):
+            beat_dict[key] = None
+
     return BeatDetailResponse(**beat_dict)
+
+
+@app.get("/beats/{beat_id}/media-access")
+def beat_media_access(
+    beat_id: int,
+    purchase_type: str = "mp3",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Signed URL for <audio src> — buyer or admin."""
+    beat = db.query(Beat).filter(Beat.id == beat_id).first()
+    if not beat:
+        raise HTTPException(status_code=404, detail="Бит не найден")
+
+    purchase_type = (purchase_type or "mp3").strip().lower()
+    if purchase_type not in {"mp3", "wav", "exclusive"}:
+        raise HTTPException(status_code=400, detail="Некорректный тип покупки")
+
+    if not current_user.is_admin:
+        purchase = (
+            db.query(Purchase)
+            .filter(
+                Purchase.user_id == current_user.id,
+                Purchase.beat_id == beat_id,
+                Purchase.purchase_type == purchase_type,
+            )
+            .first()
+        )
+        # exclusive purchase unlocks any format file; any purchase unlocks legacy full_audio
+        if not purchase:
+            exclusive = (
+                db.query(Purchase)
+                .filter(
+                    Purchase.user_id == current_user.id,
+                    Purchase.beat_id == beat_id,
+                    Purchase.purchase_type == "exclusive",
+                )
+                .first()
+            )
+            any_purchase = (
+                db.query(Purchase)
+                .filter(Purchase.user_id == current_user.id, Purchase.beat_id == beat_id)
+                .first()
+            )
+            if exclusive:
+                pass
+            elif any_purchase and purchase_type == "mp3" and beat.full_audio_url:
+                pass
+            else:
+                raise HTTPException(status_code=403, detail="Бит не куплен")
+
+    file_url = media_access.beat_file_url(beat, purchase_type)
+    if not file_url:
+        raise HTTPException(status_code=404, detail="Файл не найден")
+    if not file_url.startswith("/static/audio/"):
+        # Already a remote URL — return as-is
+        return {"url": file_url, "expires_in": int(media_access.MEDIA_ACCESS_TTL.total_seconds())}
+
+    signed = media_access.signed_media_url(file_url, current_user.id)
+    return {
+        "url": signed,
+        "expires_in": int(media_access.MEDIA_ACCESS_TTL.total_seconds()),
+    }
 
 # Избранное
 @app.post("/beats/{beat_id}/favorite")
@@ -2544,26 +2725,50 @@ def get_course(course_id: int, db: Session = Depends(get_db),
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
     
-    course_dict = course.__dict__.copy()
+    course_dict = {k: v for k, v in course.__dict__.items() if not k.startswith("_")}
     
     # Добавляем информацию о избранном и корзине для авторизованных пользователей
+    purchased = bool(current_user and user_owns_course(db, current_user.id, course_id))
     if current_user:
-        purchased = user_owns_course(db, current_user.id, course_id)
         course_dict['is_favorite'] = course in current_user.course_favorites
         course_dict['is_in_cart'] = (not purchased) and course in current_user.course_cart_items
         course_dict['is_purchased'] = purchased
-        
-        # Проверяем покупку пользователя
-        if purchased:
-            # Пользователь купил курс, показываем полную информацию
-            course_dict['full_video_url'] = course.full_video_url
     else:
         course_dict['is_favorite'] = False
         course_dict['is_in_cart'] = False
         course_dict['is_purchased'] = False
 
+    if not (purchased or (current_user and current_user.is_admin)):
+        course_dict['full_video_url'] = None
+
     overlay_sale_on_mapping(course_dict, ["price"], "courses", load_active_sales(db))
     return CourseDetailResponse(**course_dict)
+
+
+@app.get("/courses/{course_id}/media-access")
+def course_media_access(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Signed URL for <video>/<audio src> — buyer or admin."""
+    ensure_courses_catalog_access(db, current_user)
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Курс не найден")
+    if not current_user.is_admin and not user_owns_course(db, current_user.id, course_id):
+        raise HTTPException(status_code=403, detail="Курс не куплен")
+    if not course.full_video_url:
+        raise HTTPException(status_code=404, detail="Файл не найден")
+    if not course.full_video_url.startswith("/static/course_videos/"):
+        return {
+            "url": course.full_video_url,
+            "expires_in": int(media_access.MEDIA_ACCESS_TTL.total_seconds()),
+        }
+    return {
+        "url": media_access.signed_media_url(course.full_video_url, current_user.id),
+        "expires_in": int(media_access.MEDIA_ACCESS_TTL.total_seconds()),
+    }
 
 @app.post("/courses/{course_id}/favorite")
 def add_course_to_favorites(course_id: int, db: Session = Depends(get_db), 

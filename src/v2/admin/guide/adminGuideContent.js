@@ -4,7 +4,7 @@
  * Personal notes live in SQLite (API), not here.
  */
 
-export const ADMIN_GUIDE_VERSION = '2026-09-22c';
+export const ADMIN_GUIDE_VERSION = '2026-09-22e';
 
 /** @typedef {{ type: 'p'|'h3'|'ul'|'ol'|'steps'|'tip'|'warn'|'link', text?: string, items?: string[], href?: string, label?: string }} GuideBlock */
 /** @typedef {{ id: string, title: string, group: string, adminPath?: string|null, publicPaths?: string[], keywords?: string[], blocks: GuideBlock[] }} GuideSection */
@@ -149,7 +149,7 @@ export const guideSections = [
     group: 'Каталог',
     adminPath: '/admin/beats',
     publicPaths: ['/', '/beat/:id'],
-    keywords: ['каталог', 'цена', 'mp3', 'wav', 'exclusive', 'bpm'],
+    keywords: ['каталог', 'цена', 'mp3', 'wav', 'exclusive', 'bpm', 'множественные покупки'],
     blocks: [
       {
         type: 'p',
@@ -163,10 +163,15 @@ export const guideSections = [
         type: 'ul',
         items: [
           'Мета: название, артист, жанр, BPM, тональность, описание',
-          'Цены: MP3 / WAV / Exclusive',
+          'Цены лицензий: базовая + MP3 / WAV / Exclusive (как при загрузке); в таблице — primary price',
+          'Множественные покупки (allow_multiple_purchases) — иначе бит «одноразовый» exclusive',
           'Доступность и бенефициар (contributor)',
           'Файлы: обложка, демо, mp3, wav, exclusive ZIP — по отдельности',
         ],
+      },
+      {
+        type: 'tip',
+        text: 'Цены после создания правятся здесь же: откройте бит → укажите Цена MP3 / WAV / Exclusive и при необходимости базовую цену. Не нужно перезаливать бит только ради смены цен.',
       },
       {
         type: 'h3',
@@ -243,6 +248,7 @@ export const guideSections = [
           'MP3 / WAV — выдаются после покупки соответствующей лицензии',
           'Exclusive — обычно ZIP со стемами/полным пакетом',
           'Цены по типам лицензий + бенефициар',
+          'Платные файлы (/static/audio, /static/course_videos) не публичны: стрим только у покупателя/админа через ?access= (~1ч) или Bearer',
         ],
       },
       {
@@ -756,7 +762,7 @@ export const guideSections = [
         items: [
           '/login и /register — пароль, OAuth, captcha, 2FA',
           '/profile — контакты, пароль, 2FA setup, удаление аккаунта',
-          '/purchases — скачивание купленного, оплата confirmed-заказов',
+          '/purchases — скачивание купленного (download API) и стрим full через media-access, оплата confirmed-заказов',
           '/favorites — избранные биты',
           'Telegram WebApp может логинить автоматически, если настроено',
         ],
@@ -867,6 +873,7 @@ export const guideSections = [
           'Не писать «Marketplace» в публичном UI',
           'Не смешивать стили старых UI; публичная витрина = V2',
           'Не выкладывать exclusive без файла и цены',
+          'Не отдавать /static/audio и /static/course_videos без покупки — demos/previews остаются публичными',
           'Не отключать всех OAuth + требовать captcha без запасного входа',
           'Не править личные заметки этого гайда через деплой — они в БД',
         ],

@@ -46,6 +46,24 @@ class PromoBannerWindowTests(unittest.TestCase):
         )
         self.assertTrue(is_promo_banner_active(banner, now))
 
+    def test_aware_z_timestamps_normalized_at_boundary(self):
+        """Admin UI sends toISOString() (…Z); compare as UTC-naive."""
+        from datetime import timezone
+
+        starts = datetime(2026, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+        ends = datetime(2026, 6, 1, 14, 0, 0, tzinfo=timezone.utc)
+        banner = SimpleNamespace(enabled=True, starts_at=starts, ends_at=ends)
+
+        at_start = datetime(2026, 6, 1, 12, 0, 0)
+        before = datetime(2026, 6, 1, 11, 59, 59)
+        at_end = datetime(2026, 6, 1, 14, 0, 0)
+        after = datetime(2026, 6, 1, 14, 0, 1)
+
+        self.assertTrue(is_promo_banner_active(banner, at_start))
+        self.assertFalse(is_promo_banner_active(banner, before))
+        self.assertTrue(is_promo_banner_active(banner, at_end))
+        self.assertFalse(is_promo_banner_active(banner, after))
+
 
 class HeroImagePositionTests(unittest.TestCase):
     def test_known_positions_pass_through(self):

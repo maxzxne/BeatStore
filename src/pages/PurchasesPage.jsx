@@ -155,17 +155,20 @@ const PurchasesPage = () => {
     e.preventDefault();
     e.stopPropagation();
     try {
-      // Получаем URL полного файла
-      const fullUrl = buildMediaUrl(beat.full_audio_url);
-      
-      // Проверяем, играет ли уже этот трек
       const isPlaying = isCurrentTrackPlaying(beat.id);
       if (isPlaying) {
         pauseTrack();
-      } else {
-        const coverUrl = beat.cover_url ? buildMediaUrl(beat.cover_url) : null;
-        playTrack(beat.id, fullUrl, beat.title, coverUrl);
+        return;
       }
+      const access = await api.get(`/beats/${beat.id}/media-access`, {
+        params: { purchase_type: 'mp3' },
+      });
+      const signedPath = access.data?.url;
+      if (!signedPath) {
+        throw new Error('Нет URL для воспроизведения');
+      }
+      const coverUrl = beat.cover_url ? buildMediaUrl(beat.cover_url) : null;
+      playTrack(beat.id, buildMediaUrl(signedPath), beat.title, coverUrl);
     } catch (error) {
       console.error('Error playing beat:', error);
       alert('Ошибка воспроизведения');
@@ -176,15 +179,18 @@ const PurchasesPage = () => {
     e.preventDefault();
     e.stopPropagation();
     try {
-      // Для курсов используем полное видео для воспроизведения
-      const fullUrl = buildMediaUrl(course.full_video_url);
-      
-      const isPlaying = isCurrentTrackPlaying(`course_${course.id}`);
+      const trackId = `course_${course.id}`;
+      const isPlaying = isCurrentTrackPlaying(trackId);
       if (isPlaying) {
         pauseTrack();
-      } else {
-        playTrack(`course_${course.id}`, fullUrl, course.title);
+        return;
       }
+      const access = await api.get(`/courses/${course.id}/media-access`);
+      const signedPath = access.data?.url;
+      if (!signedPath) {
+        throw new Error('Нет URL для воспроизведения');
+      }
+      playTrack(trackId, buildMediaUrl(signedPath), course.title);
     } catch (error) {
       console.error('Error playing course:', error);
       alert('Ошибка воспроизведения');

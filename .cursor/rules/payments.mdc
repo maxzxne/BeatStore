@@ -1,6 +1,6 @@
 ---
 description: BeatStore acquiring — webhook fulfills, client never grants a purchase
-globs: backend/payments/**/*.py, backend/models.py, src/v2/Payment*.jsx, src/utils/checkout.js, src/pages/Payment*.jsx
+globs: backend/payments/**/*.py, backend/models.py, src/v2/Payment*.jsx, src/utils/checkout.js
 alwaysApply: false
 ---
 

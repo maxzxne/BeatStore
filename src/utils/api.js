@@ -111,14 +111,19 @@ api.interceptors.response.use(
 /**
  * Собирает полный URL для медиа-файлов (видео, аудио, обложки).
  * Кодирует имя файла для корректной работы с спецсимволами (Ґ, $, запятые, пробелы и т.д.)
+ * Query string (?access=…) не трогаем — нужен для signed media.
  */
 export function buildMediaUrl(path) {
   if (!path) return null;
-  const lastSlash = path.lastIndexOf('/');
-  if (lastSlash === -1) return API_URL + path;
-  const dirPart = path.substring(0, lastSlash + 1);
-  const filename = path.substring(lastSlash + 1);
-  return API_URL + dirPart + encodeURIComponent(filename);
+  if (/^https?:\/\//i.test(path)) return path;
+  const qIndex = path.indexOf('?');
+  const pathname = qIndex === -1 ? path : path.slice(0, qIndex);
+  const query = qIndex === -1 ? '' : path.slice(qIndex);
+  const lastSlash = pathname.lastIndexOf('/');
+  if (lastSlash === -1) return API_URL + pathname + query;
+  const dirPart = pathname.substring(0, lastSlash + 1);
+  const filename = pathname.substring(lastSlash + 1);
+  return API_URL + dirPart + encodeURIComponent(filename) + query;
 }
 
 export default api;

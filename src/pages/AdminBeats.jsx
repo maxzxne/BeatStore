@@ -80,10 +80,21 @@ const AdminBeats = () => {
       genre: beat.genre,
       bpm: beat.bpm,
       price: beat.price,
+      price_mp3: beat.price_mp3 ?? null,
+      price_wav: beat.price_wav ?? null,
+      price_exclusive: beat.price_exclusive ?? null,
+      allow_multiple_purchases: Boolean(beat.allow_multiple_purchases),
       key: beat.key || '',
       description: beat.description || '',
       is_available: beat.is_available,
       beneficiary_id: beat.beneficiary_id ?? '',
+    });
+  };
+
+  const setPriceField = (key, raw) => {
+    setEditForm({
+      ...editForm,
+      [key]: raw === '' ? null : parseFloat(raw),
     });
   };
 
@@ -94,7 +105,18 @@ const AdminBeats = () => {
   const handleSaveEdit = async () => {
     try {
       setSaving(true);
-      await api.put(`/api/admin/beats/${editingBeat.id}`, editForm);
+      const payload = {
+        ...editForm,
+        beneficiary_id: editForm.beneficiary_id === '' ? null : editForm.beneficiary_id,
+        price: editForm.price === '' || Number.isNaN(editForm.price) ? null : editForm.price,
+        price_mp3: editForm.price_mp3 === '' || Number.isNaN(editForm.price_mp3) ? null : editForm.price_mp3,
+        price_wav: editForm.price_wav === '' || Number.isNaN(editForm.price_wav) ? null : editForm.price_wav,
+        price_exclusive:
+          editForm.price_exclusive === '' || Number.isNaN(editForm.price_exclusive)
+            ? null
+            : editForm.price_exclusive,
+      };
+      await api.put(`/api/admin/beats/${editingBeat.id}`, payload);
 
       const formData = new FormData();
       let hasFiles = false;
@@ -310,10 +332,49 @@ const AdminBeats = () => {
                   <label className={labelClass}>Цена (₽)</label>
                   <input
                     type="number"
-                    step="0.01"
-                    value={editForm.price}
-                    onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) })}
+                    step="1"
+                    value={editForm.price ?? ''}
+                    onChange={(e) => setPriceField('price', e.target.value)}
                     className={fieldClass}
+                    placeholder="0"
+                  />
+                  <p className="mt-1 text-xs text-white/40">
+                    Используется, если не указаны отдельные цены
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                  <label className={labelClass}>Цена MP3 (₽)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={editForm.price_mp3 ?? ''}
+                    onChange={(e) => setPriceField('price_mp3', e.target.value)}
+                    className={fieldClass}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Цена WAV (₽)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={editForm.price_wav ?? ''}
+                    onChange={(e) => setPriceField('price_wav', e.target.value)}
+                    className={fieldClass}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Цена Exclusive (₽)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    value={editForm.price_exclusive ?? ''}
+                    onChange={(e) => setPriceField('price_exclusive', e.target.value)}
+                    className={fieldClass}
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -334,6 +395,25 @@ const AdminBeats = () => {
                   className={`${fieldClass} h-20 resize-y`}
                 />
               </div>
+              <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                <input
+                  type="checkbox"
+                  id="allow_multiple_purchases"
+                  checked={Boolean(editForm.allow_multiple_purchases)}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, allow_multiple_purchases: e.target.checked })
+                  }
+                  className="h-5 w-5 accent-[#22c55e]"
+                />
+                <div>
+                  <span className="text-sm text-white/80">Разрешить множественные покупки</span>
+                  <p className="mt-0.5 text-xs text-white/40">
+                    {editForm.allow_multiple_purchases
+                      ? 'Бит можно покупать много раз (как в аренду)'
+                      : 'Бит эксклюзивный — только один покупатель (по умолчанию)'}
+                  </p>
+                </div>
+              </label>
               <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                 <input
                   type="checkbox"

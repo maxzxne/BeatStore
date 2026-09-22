@@ -11,7 +11,7 @@ Public UI is V2. Money moves only after a **signed provider callback**, never af
 
 - Do not trust `payment_success` from the client.
 - Create a `PaymentIntent` first. Amount is quoted **on the server**.
-- Fulfill purchases only from ResultURL / webhook (or `/payments/simulate` when `PAYMENT_TEST=true` and no MerchantLogin).
+- Fulfill purchases only from ResultURL / webhook (or `/payments/simulate` when `PAYMENT_TEST=true`).
 - Success page **polls** intent status. It does not grant files.
 - Live vs test is env, not a code fork. Same URLs, same pages.
 
@@ -23,7 +23,7 @@ Public UI is V2. Money moves only after a **signed provider callback**, never af
 | `PAYMENT_TEST` | `true` | `false` |
 | Robokassa | `ROBOKASSA_*` + `IsTest=1` | same keys, test passwords → live passwords, `PAYMENT_TEST=false` |
 
-Empty MerchantLogin + `PAYMENT_TEST=true` → public demo shop `demo` on `auth.robokassa.ru`.
+Empty MerchantLogin + `PAYMENT_TEST=true` → public demo shop `demo`, checkout still goes to `auth.robokassa.ru`. Local `/payment/pay` is only a manual simulator.
 
 ## Flow
 
@@ -34,6 +34,13 @@ Provider ResultURL → POST /payments/robokassa/result → OK{InvId}
 Browser → /payment/success?InvId= → GET /payments/intents/{id} until paid|failed
 ```
 
-## Pages
+## Pages (V2 only)
 
-`src/v2/Payment*.jsx`. Copy: Russian, what happened + next action. Test badge if `test: true`.
+`src/v2/Payment*.jsx` — success, failure, pending, pay terminal. Copy: Russian, what happened + next action. Test badge if `test: true`.
+
+## Do not
+
+- Grant a Purchase because SuccessURL loaded.
+- Keep `/test-payment` as a real checkout.
+- Put secrets in the repo. `.env` only.
+- Mix V1 gray cards or V3 tokens into payment chrome.

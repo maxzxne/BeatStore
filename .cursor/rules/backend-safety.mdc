@@ -1,12 +1,12 @@
 ---
-description: Do not change BeatStore backend contracts unless V3 truly cannot ship without it
+description: Do not change BeatStore backend contracts unless the shipped UI truly cannot work without it
 globs: backend/**/*.py
 alwaysApply: false
 ---
 
 # Backend safety
 
-V3 — frontend/UX redesign. Backend трогать только если без этого нельзя собрать UI.
+Shipped product = **V2 frontend**. Backend трогать только если без этого нельзя собрать/починить UI или бизнес-флоу. V3 redesign не является причиной менять API.
 
 Осторожно: API contracts, schema, payments, JWT, purchase/download, file upload.
 
@@ -19,7 +19,7 @@ V3 — frontend/UX redesign. Backend трогать только если без
 
 Если изменение нужно:
 
-1. Зачем для V3
+1. Зачем для shipped V2 / текущего бага
 2. Что сломается
 3. Минимальный diff
 4. Проверить login, catalog, cart, purchase, download
