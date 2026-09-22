@@ -1,6 +1,6 @@
 /** Compact promo slider: active slide narrower so the next one peeks. */
-export const PROMO_PEEK_RATIO = 0.78;
-export const PROMO_PEEK_GAP_PX = 20;
+export const PROMO_PEEK_RATIO = 0.7;
+export const PROMO_PEEK_GAP_PX = 24;
 
 export function promoSlideWidthPx(viewportWidth, fullscreen = true) {
   const w = Math.max(0, Number(viewportWidth) || 0);

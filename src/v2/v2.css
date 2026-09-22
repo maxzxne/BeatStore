@@ -430,21 +430,10 @@ html.ui-v2 .min-h-screen.bg-white {
   overflow: hidden;
 }
 
+/* Compact mode: same 16:9 creatives as fullscreen — width shrinks via peek ratio,
+   height follows aspect (no max-height squash that crops titles). */
 .v2-promo.is-peek .v2-promo-img {
-  aspect-ratio: 21 / 9;
-  max-height: 220px;
-}
-
-@media (min-width: 768px) {
-  .v2-promo.is-peek .v2-promo-img {
-    max-height: 260px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .v2-promo.is-peek .v2-promo-img {
-    max-height: 280px;
-  }
+  aspect-ratio: 16 / 9;
 }
 
 .v2-promo-caption {

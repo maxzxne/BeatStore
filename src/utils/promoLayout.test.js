@@ -13,7 +13,7 @@ test('fullscreen uses full viewport width', () => {
 });
 
 test('peek mode shrinks slide and leaves gap for next', () => {
-  assert.equal(promoSlideWidthPx(1000, false), 780);
-  assert.equal(promoSlideStepPx(1000, false), 800);
-  assert.equal(promoTrackOffsetPx(1, 1000, false, 10), -790);
+  assert.equal(promoSlideWidthPx(1000, false), 700);
+  assert.equal(promoSlideStepPx(1000, false), 724);
+  assert.equal(promoTrackOffsetPx(1, 1000, false, 10), -714);
 });
