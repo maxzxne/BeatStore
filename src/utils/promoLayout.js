@@ -2,6 +2,9 @@
 export const PROMO_PEEK_RATIO = 0.7;
 export const PROMO_PEEK_GAP_PX = 24;
 
+/** Fullscreen featured card: CSS `min(100%, 58rem)` — keep JS docs in sync with v2.css. */
+export const PROMO_FULLSCREEN_MAX_WIDTH_REM = 58;
+
 export function promoSlideWidthPx(viewportWidth, fullscreen = true) {
   const w = Math.max(0, Number(viewportWidth) || 0);
   if (fullscreen || w <= 0) return w;

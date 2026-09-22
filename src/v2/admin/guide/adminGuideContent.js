@@ -4,7 +4,7 @@
  * Personal notes live in SQLite (API), not here.
  */
 
-export const ADMIN_GUIDE_VERSION = '2026-09-22';
+export const ADMIN_GUIDE_VERSION = '2026-09-22b';
 
 /** @typedef {{ type: 'p'|'h3'|'ul'|'ol'|'steps'|'tip'|'warn'|'link', text?: string, items?: string[], href?: string, label?: string }} GuideBlock */
 /** @typedef {{ id: string, title: string, group: string, adminPath?: string|null, publicPaths?: string[], keywords?: string[], blocks: GuideBlock[] }} GuideSection */
@@ -534,7 +534,7 @@ export const guideSections = [
         type: 'steps',
         items: [
           'Витрина: картинка, заголовок, ссылка (link_url), порядок, даты, enabled.',
-          'Чекбокс «На полный экран»: вкл — слайд на всю ширину, 16:9; выкл — компакт ~70% ширины + peek следующего (gap 24px), тоже 16:9 без жёсткого max-height (картинки не сплющиваются).',
+          'Чекбокс «На полный экран»: вкл — featured-карточка 16:9 (до ~58rem ширины, без peek, стрелки на карточке); выкл — компакт ~70% + peek следующего (gap 24px), тоже 16:9. Креативы лучше готовить под 16:9 — max-height не сплющивает.',
           'Заявки: модерация новой → одобрить (можно изменить итог ₽) → клиент платит → баннер публикуется на N дней с оплаты.',
           'После «одобрена» поля заявки заморожены. Статусы: новая / одобрена / опубликована / отклонена / отменена.',
         ],

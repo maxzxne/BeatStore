@@ -374,6 +374,7 @@ html.ui-v2 .min-h-screen.bg-white {
   cursor: grab;
   touch-action: pan-y;
   user-select: none;
+  border-radius: 1.25rem;
 }
 
 .v2-promo.has-link .v2-promo-viewport {
@@ -417,23 +418,34 @@ html.ui-v2 .min-h-screen.bg-white {
   overflow: hidden;
 }
 
+/* Shared creative frame: design banners as 16:9 — height follows width, no max-height squash. */
 .v2-promo-img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
+  height: auto;
   object-fit: cover;
   object-position: center;
   background: transparent;
 }
 
-.v2-promo.is-peek .v2-promo-viewport {
-  overflow: hidden;
+/*
+ * Fullscreen: featured card, wider than peek.
+ * Cap the whole control (not only viewport) so nav/dots align to the card.
+ * Mobile / narrow catalog: still 100% of the column.
+ */
+.v2-promo.is-fullscreen {
+  width: min(100%, 58rem);
+  margin-inline: auto;
 }
 
-/* Compact mode: same 16:9 creatives as fullscreen — width shrinks via peek ratio,
-   height follows aspect (no max-height squash that crops titles). */
-.v2-promo.is-peek .v2-promo-img {
-  aspect-ratio: 16 / 9;
+.v2-promo.is-fullscreen .v2-promo-viewport {
+  width: 100%;
+}
+
+/* Compact: width shrinks via JS peek ratio; same 16:9 frame as fullscreen. */
+.v2-promo.is-peek .v2-promo-viewport {
+  overflow: hidden;
 }
 
 .v2-promo-caption {
@@ -473,29 +485,33 @@ html.ui-v2 .min-h-screen.bg-white {
   opacity: 1;
 }
 
-/* Sit past content edge toward page gutters */
-.v2-promo-prev { left: -0.35rem; }
-.v2-promo-next { right: -0.35rem; }
+/* Peek: arrows sit in page gutters past the track */
+.v2-promo.is-peek .v2-promo-prev { left: -0.35rem; }
+.v2-promo.is-peek .v2-promo-next { right: -0.35rem; }
 
 @media (min-width: 640px) {
-  .v2-promo-prev { left: -1.1rem; }
-  .v2-promo-next { right: -1.1rem; }
+  .v2-promo.is-peek .v2-promo-prev { left: -1.1rem; }
+  .v2-promo.is-peek .v2-promo-next { right: -1.1rem; }
 }
 
 @media (min-width: 768px) {
-  .v2-promo-prev { left: -1.75rem; }
-  .v2-promo-next { right: -1.75rem; }
+  .v2-promo.is-peek .v2-promo-prev { left: -1.75rem; }
+  .v2-promo.is-peek .v2-promo-next { right: -1.75rem; }
 }
 
 @media (min-width: 1024px) {
-  .v2-promo-prev { left: -2.35rem; }
-  .v2-promo-next { right: -2.35rem; }
+  .v2-promo.is-peek .v2-promo-prev { left: -2.35rem; }
+  .v2-promo.is-peek .v2-promo-next { right: -2.35rem; }
 }
 
 @media (min-width: 1280px) {
-  .v2-promo-prev { left: -2.85rem; }
-  .v2-promo-next { right: -2.85rem; }
+  .v2-promo.is-peek .v2-promo-prev { left: -2.85rem; }
+  .v2-promo.is-peek .v2-promo-next { right: -2.85rem; }
 }
+
+/* Fullscreen: arrows on the card itself (44px touch-friendly inset) */
+.v2-promo.is-fullscreen .v2-promo-prev { left: 0.75rem; }
+.v2-promo.is-fullscreen .v2-promo-next { right: 0.75rem; }
 
 .v2-promo-nav:hover {
   background: rgba(34, 197, 94, 0.25);
