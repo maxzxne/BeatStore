@@ -365,7 +365,7 @@ const AdminBannersPage = () => {
         <div>
           <div className="text-sm font-medium text-white">На полный экран</div>
           <div className="mt-0.5 text-xs text-white/40">
-            Выкл — ниже и уже, второй слайд всегда выглядывает справа
+            Выкл — уже (~70% ширины), 16:9, справа peek следующего слайда
           </div>
         </div>
         <AdminToggle
