@@ -1328,7 +1328,6 @@ class ApiTestCase(unittest.TestCase):
 
     def test_migrate_relocates_test_files_urls_to_audio(self):
         import media_access
-        import shutil
 
         filename = "move-me.wav"
         payload = b"move-bytes"
@@ -1346,11 +1345,15 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(beat.exclusive_url, f"/static/audio/{filename}.zip")
         self.assertTrue(os.path.isfile(f"static/audio/{filename}"))
         self.assertFalse(os.path.isfile(f"static/test_files/{filename}"))
-        # cleanup audio copies so other tests stay isolated
-        for path in (f"static/audio/{filename}", f"static/audio/{filename}.zip"):
+        # cleanup only files this test created
+        for path in (
+            f"static/audio/{filename}",
+            f"static/audio/{filename}.zip",
+            f"static/test_files/{filename}",
+            f"static/test_files/{filename}.zip",
+        ):
             if os.path.isfile(path):
                 os.remove(path)
-        shutil.rmtree("static/test_files", ignore_errors=True)
 
     def test_course_legacy_purchase_payment_success_rejected(self):
         course = add_course(self.db, price=5000)
