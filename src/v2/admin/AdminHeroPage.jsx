@@ -183,7 +183,7 @@ const AdminHeroPage = () => {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-[Syne] text-2xl font-bold text-white sm:text-3xl">Главный экран</h1>
-          <p className="mt-1 text-sm text-white/45">Hero на главной: тексты, картинка, поиск/фильтры, вкл/выкл</p>
+          <p className="mt-1 text-sm text-white/45">Каталог сверху: фильтры, поиск. Ниже — hero, если включён</p>
         </div>
         <button
           type="button"
@@ -207,257 +207,275 @@ const AdminHeroPage = () => {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
-        <div className="border-b border-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
-          Превью
+      <div className="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
+        <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <div>
+            <div className="text-sm font-medium text-white">Показывать фильтры</div>
+            <div className="text-xs text-white/40">Кнопка и панель фильтров каталога</div>
+          </div>
+          <input
+            type="checkbox"
+            checked={Boolean(form.show_filters)}
+            onChange={(e) => setField('show_filters', e.target.checked)}
+            className="h-5 w-5 accent-[#22c55e]"
+          />
+        </label>
+
+        <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <div>
+            <div className="text-sm font-medium text-white">Показывать поиск</div>
+            <div className="text-xs text-white/40">Строка поиска над каталогом битов</div>
+          </div>
+          <input
+            type="checkbox"
+            checked={Boolean(form.show_search)}
+            onChange={(e) => setField('show_search', e.target.checked)}
+            className="h-5 w-5 accent-[#22c55e]"
+          />
+        </label>
+
+        <div>
+          <label className={labelClass} htmlFor="hero-search-placeholder">
+            Плейсхолдер поиска
+          </label>
+          <input
+            id="hero-search-placeholder"
+            className={fieldClass}
+            value={form.search_placeholder}
+            onChange={(e) => setField('search_placeholder', e.target.value)}
+            placeholder={DEFAULT_SEARCH_PLACEHOLDER}
+            maxLength={120}
+            disabled={!form.show_search}
+          />
+          <p className="mt-1.5 text-xs text-white/35">
+            {form.show_search
+              ? 'Пустое значение вернёт дефолт при сохранении'
+              : 'Включи поиск выше, чтобы плейсхолдер работал на витрине'}
+          </p>
         </div>
-        <section className="relative overflow-hidden px-4 pb-6 pt-8 sm:pt-10">
-          {!form.enabled ? (
-            <p className="text-sm text-white/40">Секция выключена — на сайте не показывается.</p>
-          ) : (
-            <div className={`mx-auto max-w-6xl${previewImage ? ` v2-hero-grid is-${previewPosition}` : ''}`}>
-              {previewImage && (
-                <div className="v2-hero-media">
-                  <img src={previewImage} alt="" className="v2-hero-img" />
-                </div>
-              )}
-              <div className={previewImage ? 'v2-hero-copy' : undefined}>
-                <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">
-                  {form.eyebrow || '—'}
-                </p>
-                <h2 className="mt-3 max-w-3xl font-[Syne] text-3xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl">
-                  {lines.length > 0
-                    ? lines.map((line, i) => (
-                        <React.Fragment key={i}>
-                          {i > 0 && <br />}
-                          {line || '\u00A0'}
-                        </React.Fragment>
-                      ))
-                    : 'Заголовок'}
-                </h2>
-                <p className="mt-4 max-w-xl text-sm text-white/50 sm:text-base">
-                  {form.subtitle || 'Подзаголовок'}
-                </p>
-                {form.cta_label && (
-                  <a
-                    href={form.cta_href || '#'}
-                    className="mt-5 inline-flex rounded-xl bg-[#22c55e] px-4 py-2 text-sm font-semibold text-[#052e16]"
-                    onClick={(e) => e.preventDefault()}
+
+        <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <div>
+            <div className="text-sm font-medium text-white">Показывать hero</div>
+            <div className="text-xs text-white/40">Если выкл — секция скрыта на главной</div>
+          </div>
+          <input
+            type="checkbox"
+            checked={Boolean(form.enabled)}
+            onChange={(e) => setField('enabled', e.target.checked)}
+            className="h-5 w-5 accent-[#22c55e]"
+          />
+        </label>
+      </div>
+
+      {form.enabled ? (
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
+            <div className="border-b border-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
+              Превью Hero
+            </div>
+            <section className="relative overflow-hidden px-4 pb-6 pt-8 sm:pt-10">
+              <div className={`mx-auto max-w-6xl${previewImage ? ` v2-hero-grid is-${previewPosition}` : ''}`}>
+                {previewImage && (
+                  <div className="v2-hero-media">
+                    <img src={previewImage} alt="" className="v2-hero-img" />
+                  </div>
+                )}
+                <div className={previewImage ? 'v2-hero-copy' : undefined}>
+                  {String(form.eyebrow || '').trim() ? (
+                    <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">
+                      {form.eyebrow}
+                    </p>
+                  ) : null}
+                  <h2
+                    className={`max-w-3xl font-[Syne] text-3xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl${
+                      String(form.eyebrow || '').trim() ? ' mt-3' : ''
+                    }`}
                   >
-                    {form.cta_label}
-                  </a>
+                    {lines.length > 0
+                      ? lines.map((line, i) => (
+                          <React.Fragment key={i}>
+                            {i > 0 && <br />}
+                            {line || '\u00A0'}
+                          </React.Fragment>
+                        ))
+                      : <span className="text-white/25">Заголовок</span>}
+                  </h2>
+                  <p className="mt-4 max-w-xl text-sm text-white/50 sm:text-base">
+                    {form.subtitle || <span className="text-white/25">Подзаголовок</span>}
+                  </p>
+                  {form.cta_label && (
+                    <a
+                      href={form.cta_href || '#'}
+                      className="mt-5 inline-flex rounded-xl bg-[#22c55e] px-4 py-2 text-sm font-semibold text-[#052e16]"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      {form.cta_label}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
+                Настройки Hero
+              </p>
+
+              <div>
+                <label className={labelClass} htmlFor="hero-eyebrow">Eyebrow</label>
+                <input
+                  id="hero-eyebrow"
+                  className={fieldClass}
+                  value={form.eyebrow}
+                  onChange={(e) => setField('eyebrow', e.target.value)}
+                  placeholder="XWinner"
+                />
+                <p className="mt-1.5 text-xs text-white/35">Пустое поле не показывается на витрине</p>
+              </div>
+
+              <div>
+                <label className={labelClass} htmlFor="hero-title">Заголовок</label>
+                <textarea
+                  id="hero-title"
+                  rows={4}
+                  className={`${fieldClass} resize-y font-[Syne]`}
+                  value={form.title}
+                  onChange={(e) => setField('title', e.target.value)}
+                  placeholder={'Инструменталы.\nЧёрный экран.\nЗелёный удар.'}
+                />
+                <p className="mt-1 text-xs text-white/30">Перенос строки = новая строка в заголовке</p>
+              </div>
+
+              <div>
+                <label className={labelClass} htmlFor="hero-subtitle">Подзаголовок</label>
+                <textarea
+                  id="hero-subtitle"
+                  rows={3}
+                  className={`${fieldClass} resize-y`}
+                  value={form.subtitle}
+                  onChange={(e) => setField('subtitle', e.target.value)}
+                  placeholder="Каталог битов…"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={labelClass} htmlFor="hero-cta-label">CTA — текст</label>
+                  <input
+                    id="hero-cta-label"
+                    className={fieldClass}
+                    value={form.cta_label}
+                    onChange={(e) => setField('cta_label', e.target.value)}
+                    placeholder="Слушать каталог"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="hero-cta-href">CTA — ссылка</label>
+                  <input
+                    id="hero-cta-href"
+                    className={fieldClass}
+                    value={form.cta_href}
+                    onChange={(e) => setField('cta_href', e.target.value)}
+                    placeholder="/#catalog"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
+              <div>
+                <p className={labelClass}>Картинка</p>
+                {previewImage ? (
+                  <div className="overflow-hidden rounded-xl border border-white/10">
+                    <img src={previewImage} alt="Hero preview" className="aspect-square w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] text-sm text-white/35">
+                    Нет изображения
+                  </div>
+                )}
+                <p className="mt-2 text-xs leading-relaxed text-white/35">
+                  Рекомендуемый размер: <span className="text-white/55">1400×1400 или 2000×2000 (1:1)</span>
+                  {' · '}JPEG / PNG / WebP, до ~400 КБ (макс. 10 МБ).
+                  Лицо / логотип — ближе к левой трети кадра.
+                </p>
+              </div>
+
+              <fieldset>
+                <legend className={labelClass}>Расположение</legend>
+                <div
+                  role="radiogroup"
+                  aria-label="Расположение картинки"
+                  className="grid grid-cols-3 gap-2"
+                >
+                  <span aria-hidden="true" />
+                  <PositionChoice
+                    option={IMAGE_POSITIONS[0]}
+                    selected={previewPosition}
+                    onSelect={(id) => setField('image_position', id)}
+                  />
+                  <span aria-hidden="true" />
+                  <PositionChoice
+                    option={IMAGE_POSITIONS[1]}
+                    selected={previewPosition}
+                    onSelect={(id) => setField('image_position', id)}
+                  />
+                  <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03]" aria-hidden="true" />
+                  <PositionChoice
+                    option={IMAGE_POSITIONS[2]}
+                    selected={previewPosition}
+                    onSelect={(id) => setField('image_position', id)}
+                  />
+                  <span aria-hidden="true" />
+                  <PositionChoice
+                    option={IMAGE_POSITIONS[3]}
+                    selected={previewPosition}
+                    onSelect={(id) => setField('image_position', id)}
+                  />
+                  <span aria-hidden="true" />
+                </div>
+              </fieldset>
+
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleUpload}
+              />
+
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/5 disabled:opacity-60"
+                >
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                  {previewImage ? 'Заменить' : 'Загрузить'}
+                </button>
+                {form.image_url && (
+                  <button
+                    type="button"
+                    onClick={() => setField('image_url', null)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 px-3 py-2.5 text-sm text-red-300 transition hover:bg-red-500/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Убрать
+                  </button>
                 )}
               </div>
             </div>
-          )}
-        </section>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
-          <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <div>
-              <div className="text-sm font-medium text-white">Показывать hero</div>
-              <div className="text-xs text-white/40">Если выкл — секция скрыта на главной</div>
-            </div>
-            <input
-              type="checkbox"
-              checked={Boolean(form.enabled)}
-              onChange={(e) => setField('enabled', e.target.checked)}
-              className="h-5 w-5 accent-[#22c55e]"
-            />
-          </label>
-
-          <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <div>
-              <div className="text-sm font-medium text-white">Показывать поиск</div>
-              <div className="text-xs text-white/40">Строка поиска над каталогом битов</div>
-            </div>
-            <input
-              type="checkbox"
-              checked={Boolean(form.show_search)}
-              onChange={(e) => setField('show_search', e.target.checked)}
-              className="h-5 w-5 accent-[#22c55e]"
-            />
-          </label>
-
-          {form.show_search ? (
-            <div>
-              <label className={labelClass} htmlFor="hero-search-placeholder">
-                Плейсхолдер поиска
-              </label>
-              <input
-                id="hero-search-placeholder"
-                className={fieldClass}
-                value={form.search_placeholder}
-                onChange={(e) => setField('search_placeholder', e.target.value)}
-                placeholder={DEFAULT_SEARCH_PLACEHOLDER}
-                maxLength={120}
-              />
-              <p className="mt-1.5 text-xs text-white/35">
-                Пустое значение вернёт дефолт при сохранении
-              </p>
-            </div>
-          ) : null}
-
-          <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-            <div>
-              <div className="text-sm font-medium text-white">Показывать фильтры</div>
-              <div className="text-xs text-white/40">Кнопка и панель фильтров каталога</div>
-            </div>
-            <input
-              type="checkbox"
-              checked={Boolean(form.show_filters)}
-              onChange={(e) => setField('show_filters', e.target.checked)}
-              className="h-5 w-5 accent-[#22c55e]"
-            />
-          </label>
-
-          <div>
-            <label className={labelClass} htmlFor="hero-eyebrow">Eyebrow</label>
-            <input
-              id="hero-eyebrow"
-              className={fieldClass}
-              value={form.eyebrow}
-              onChange={(e) => setField('eyebrow', e.target.value)}
-              placeholder="XWinner"
-            />
-          </div>
-
-          <div>
-            <label className={labelClass} htmlFor="hero-title">Заголовок</label>
-            <textarea
-              id="hero-title"
-              rows={4}
-              className={`${fieldClass} resize-y font-[Syne]`}
-              value={form.title}
-              onChange={(e) => setField('title', e.target.value)}
-              placeholder={'Инструменталы.\nЧёрный экран.\nЗелёный удар.'}
-            />
-            <p className="mt-1 text-xs text-white/30">Перенос строки = новая строка в заголовке</p>
-          </div>
-
-          <div>
-            <label className={labelClass} htmlFor="hero-subtitle">Подзаголовок</label>
-            <textarea
-              id="hero-subtitle"
-              rows={3}
-              className={`${fieldClass} resize-y`}
-              value={form.subtitle}
-              onChange={(e) => setField('subtitle', e.target.value)}
-              placeholder="Каталог битов…"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelClass} htmlFor="hero-cta-label">CTA — текст</label>
-              <input
-                id="hero-cta-label"
-                className={fieldClass}
-                value={form.cta_label}
-                onChange={(e) => setField('cta_label', e.target.value)}
-                placeholder="Слушать каталог"
-              />
-            </div>
-            <div>
-              <label className={labelClass} htmlFor="hero-cta-href">CTA — ссылка</label>
-              <input
-                id="hero-cta-href"
-                className={fieldClass}
-                value={form.cta_href}
-                onChange={(e) => setField('cta_href', e.target.value)}
-                placeholder="/#catalog"
-              />
-            </div>
           </div>
         </div>
-
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
-          <div>
-            <p className={labelClass}>Картинка</p>
-            {previewImage ? (
-              <div className="overflow-hidden rounded-xl border border-white/10">
-                <img src={previewImage} alt="Hero preview" className="aspect-square w-full object-cover" />
-              </div>
-            ) : (
-              <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] text-sm text-white/35">
-                Нет изображения
-              </div>
-            )}
-            <p className="mt-2 text-xs leading-relaxed text-white/35">
-              Рекомендуемый размер: <span className="text-white/55">1400×1400 или 2000×2000 (1:1)</span>
-              {' · '}JPEG / PNG / WebP, до ~400 КБ (макс. 10 МБ).
-              Лицо / логотип — ближе к левой трети кадра.
-            </p>
-          </div>
-
-          <fieldset>
-            <legend className={labelClass}>Расположение</legend>
-            <div
-              role="radiogroup"
-              aria-label="Расположение картинки"
-              className="grid grid-cols-3 gap-2"
-            >
-              <span aria-hidden="true" />
-              <PositionChoice
-                option={IMAGE_POSITIONS[0]}
-                selected={previewPosition}
-                onSelect={(id) => setField('image_position', id)}
-              />
-              <span aria-hidden="true" />
-              <PositionChoice
-                option={IMAGE_POSITIONS[1]}
-                selected={previewPosition}
-                onSelect={(id) => setField('image_position', id)}
-              />
-              <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03]" aria-hidden="true" />
-              <PositionChoice
-                option={IMAGE_POSITIONS[2]}
-                selected={previewPosition}
-                onSelect={(id) => setField('image_position', id)}
-              />
-              <span aria-hidden="true" />
-              <PositionChoice
-                option={IMAGE_POSITIONS[3]}
-                selected={previewPosition}
-                onSelect={(id) => setField('image_position', id)}
-              />
-              <span aria-hidden="true" />
-            </div>
-          </fieldset>
-
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={handleUpload}
-          />
-
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/5 disabled:opacity-60"
-            >
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-              {previewImage ? 'Заменить' : 'Загрузить'}
-            </button>
-            {form.image_url && (
-              <button
-                type="button"
-                onClick={() => setField('image_url', null)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 px-3 py-2.5 text-sm text-red-300 transition hover:bg-red-500/10"
-              >
-                <Trash2 className="h-4 w-4" />
-                Убрать
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      ) : (
+        <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">
+          Hero выключен — на главной останутся каталог и (если включены) поиск/фильтры.
+        </p>
+      )}
     </div>
   );
 };

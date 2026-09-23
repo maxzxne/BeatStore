@@ -4,7 +4,7 @@
  * Personal notes live in SQLite (API), not here.
  */
 
-export const ADMIN_GUIDE_VERSION = '2026-09-24';
+export const ADMIN_GUIDE_VERSION = '2026-09-24b';
 
 /** @typedef {{ type: 'p'|'h3'|'ul'|'ol'|'steps'|'tip'|'warn'|'link', text?: string, items?: string[], href?: string, label?: string }} GuideBlock */
 /** @typedef {{ id: string, title: string, group: string, adminPath?: string|null, publicPaths?: string[], keywords?: string[], blocks: GuideBlock[] }} GuideSection */
@@ -506,16 +506,15 @@ export const guideSections = [
     blocks: [
       {
         type: 'p',
-        text: 'CMS первого экрана главной: включение, eyebrow/title/subtitle, картинка и позиция, CTA, показ поиска и фильтров каталога. Пустые поля не подставляют «XWinner» обратно — очистил текст, на витрине его нет.',
+        text: 'CMS первого экрана главной. Сверху — фильтры / поиск / плейсхолдер / «показывать hero». Блок текстов и картинки открывается только если hero включён. Пустые поля не подставляют «XWinner» обратно — очистил текст, на витрине его нет.',
       },
       {
         type: 'ul',
         items: [
-          'enabled — выключить hero, оставив каталог',
+          'show_filters → show_search → search_placeholder → enabled (порядок в форме)',
+          'enabled выкл — hero скрыт, каталог и поиск/фильтры остаются по своим тумблерам',
           'eyebrow / title / subtitle — можно оставить пустыми; пустой eyebrow не рисуется',
           'image_position — top / left / right / bottom',
-          'show_search / show_filters — спрятать поиск или фильтры без правки кода',
-          'search_placeholder — текст в поле поиска битов (пусто → дефолт)',
           'CTA: label + href (внутренняя или внешняя ссылка)',
         ],
       },
