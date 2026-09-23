@@ -4,7 +4,7 @@
  * Personal notes live in SQLite (API), not here.
  */
 
-export const ADMIN_GUIDE_VERSION = '2026-09-23a';
+export const ADMIN_GUIDE_VERSION = '2026-09-23b';
 
 /** @typedef {{ type: 'p'|'h3'|'ul'|'ol'|'steps'|'tip'|'warn'|'link', text?: string, items?: string[], href?: string, label?: string }} GuideBlock */
 /** @typedef {{ id: string, title: string, group: string, adminPath?: string|null, publicPaths?: string[], keywords?: string[], blocks: GuideBlock[] }} GuideSection */
@@ -801,8 +801,8 @@ export const guideSections = [
       {
         type: 'ul',
         items: [
-          '«Знаю что нужно» — wizard; блок «Как считается цена» (таблица сроков, клик = выбрать срок)',
-          '«Пока не уверен» — короткая заявка',
+          '«Знаю что нужно» — wizard; блок «Как считается цена» (таблица сроков, клик = выбрать срок); доп. связь — несколько каналов (как в профиле)',
+          '«Пока не уверен» — короткая заявка; те же мульти-контакты',
           'Реклама — отдельный флоу, если ads_orders_enabled',
           'Прайс правится в админке: Сайт → Прайс услуг',
         ],

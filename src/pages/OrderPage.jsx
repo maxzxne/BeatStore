@@ -464,7 +464,7 @@ const OrderPage = ({ initialType = null }) => {
         description: formData.description,
         deadline_days: parseInt(formData.deadline_days),
         prepayment_percent: formData.prepayment_percent,
-        contact_info: formData.contact_info || null,
+        contact_info: formatContacts(contactRows) || null,
         customer_name: !isAuthenticated ? formData.customer_name : null,
         customer_email: !isAuthenticated ? formData.customer_email : null
       };
@@ -1368,17 +1368,72 @@ const OrderPage = ({ initialType = null }) => {
                 />
               </div>
               <div>
-                <label htmlFor="contact_info_detailed" className={labelClass}>Дополнительная связь (Telegram, WhatsApp и т.д.)</label>
-                <input
-                  type="text"
-                  id="contact_info_detailed"
-                  name="contact_info"
-                  value={formData.contact_info}
-                  onChange={handleInputChange}
-                  placeholder="Например: @mytelegram, +79991234567"
-                  className={fieldClass}
-                />
-                <p className={hintClass}>Укажите удобный способ связи</p>
+                <div className="mb-2 flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-[#22c55e]" />
+                  <span className={labelClass + ' mb-0'}>Дополнительная связь</span>
+                </div>
+                <p className="mb-3 text-xs text-white/40">
+                  Telegram, WhatsApp — необязательно, но так быстрее ответим.
+                </p>
+                <div className="space-y-3">
+                  {contactRows.length === 0 && (
+                    <p className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">
+                      Пока пусто. Добавь удобный канал.
+                    </p>
+                  )}
+                  {contactRows.map((row) => {
+                    const meta = CONTACT_TYPES.find((t) => t.value === row.type) || CONTACT_TYPES[5];
+                    return (
+                      <div
+                        key={row.key}
+                        className="grid gap-2 rounded-2xl border border-white/10 bg-black/20 p-3 sm:grid-cols-[140px_1fr_auto] sm:items-center"
+                      >
+                        <label className="sr-only" htmlFor={`know-contact-type-${row.key}`}>
+                          Тип связи
+                        </label>
+                        <select
+                          id={`know-contact-type-${row.key}`}
+                          value={row.type}
+                          onChange={(e) => updateContactRow(row.key, { type: e.target.value })}
+                          className={`${fieldClass} cursor-pointer`}
+                        >
+                          {CONTACT_TYPES.map((t) => (
+                            <option key={t.value} value={t.value} className="bg-[#0a0a0a]">
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          value={row.value}
+                          onChange={(e) => updateContactRow(row.key, { value: e.target.value })}
+                          placeholder={meta.placeholder}
+                          className={fieldClass}
+                          aria-label={`Значение ${meta.label}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeContactRow(row.key)}
+                          className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-white/10 text-white/50 transition hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-400 sm:w-11"
+                          aria-label="Удалить контакт"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={addContactRow}
+                  className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-white/15 text-sm font-medium text-white transition hover:bg-white/5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Добавить связь
+                </button>
+                {formatContacts(contactRows) ? (
+                  <p className="mt-3 text-xs text-white/35">В заявке: {formatContacts(contactRows)}</p>
+                ) : null}
               </div>
             </div>
           )}
