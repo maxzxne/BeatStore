@@ -3199,42 +3199,44 @@ def create_service_order(order: ServiceOrderCreate,
         # Отправляем уведомление админу в Telegram
         if TELEGRAM_BOT_AVAILABLE:
             try:
-                admin_chat_id = os.getenv("ADMIN_TELEGRAM_CHAT_ID")
-                if admin_chat_id:
+                from telegram_ux import build_admin_order_notify, parse_admin_chat_ids, public_base_url
+
+                admin_ids = parse_admin_chat_ids(
+                    os.getenv("ADMIN_TELEGRAM_CHAT_ID"),
+                    os.getenv("ADMIN_TELEGRAM_CHAT_IDS"),
+                )
+                if admin_ids:
                     import json
                     categories = json.loads(service_categories_json) if service_categories_json else []
                     categories_text = ", ".join(categories) if categories else "Не указано"
-                    
+
                     customer_info = ""
                     if current_user:
                         customer_info = f"👤 Пользователь: {current_user.username} ({current_user.email or 'без email'})"
                     else:
                         customer_info = f"👤 Гость: {order.customer_name or 'не указано'} ({order.customer_email or 'не указано'})"
-                    
-                    # Парсим материалы для отправки файлов
+
                     materials_list = []
                     if order.materials_url:
                         try:
                             materials_list = json.loads(order.materials_url) if order.materials_url.startswith("[") else [order.materials_url]
-                        except:
+                        except Exception:
                             materials_list = [order.materials_url] if order.materials_url else []
-                    
-                    # Референсы (ссылки) - оставляем как ссылки
+
                     reference_links_text = "Не указаны"
                     if order.reference_links:
                         links = [link.strip() for link in order.reference_links.split("\n") if link.strip()][:5]
                         reference_links_text = "\n".join([f"  • {link[:80]}" for link in links])
                         if len(order.reference_links.split("\n")) > 5:
                             reference_links_text += f"\n  ... и еще ссылок"
-                    
-                    # Референсы (файлы) - для отправки файлов
+
                     reference_files_list = []
                     if order.reference_files_url:
                         try:
                             reference_files_list = json.loads(order.reference_files_url) if order.reference_files_url.startswith("[") else [order.reference_files_url]
-                        except:
+                        except Exception:
                             reference_files_list = [order.reference_files_url] if order.reference_files_url else []
-                    
+
                     materials_info = f"Загружено файлов: {len(materials_list)}" if materials_list else "Не загружены"
                     ref_files_info = f"Загружено файлов: {len(reference_files_list)}" if reference_files_list else "Не загружены"
                     contact_info_text = order.contact_info if order.contact_info else "Не указана"
@@ -3242,9 +3244,10 @@ def create_service_order(order: ServiceOrderCreate,
                     if len(description_text) > 500:
                         description_text = description_text[:500] + "..."
 
-                    from telegram_ux import build_admin_order_notify
-
-                    frontend = os.getenv("FRONTEND_URL", "") or os.getenv("MINI_APP_URL", "")
+                    frontend = public_base_url(
+                        os.getenv("FRONTEND_URL", ""),
+                        os.getenv("MINI_APP_URL", ""),
+                    )
                     message, order_markup = build_admin_order_notify(
                         order_id=service_order.id,
                         customer_line=customer_info,
@@ -3259,58 +3262,51 @@ def create_service_order(order: ServiceOrderCreate,
                         frontend_url=frontend,
                     )
 
-                    try:
-                        send_message(int(admin_chat_id), message, order_markup)
-                        print(f"Telegram notification sent to admin (chat_id={admin_chat_id})")
-                    except Exception as msg_error:
-                        print(f"Error sending Telegram message: {msg_error}")
-                    
-                    # Отправляем материалы (файлы) - в фоне, не блокируя ответ
-                    if materials_list:
+                    for admin_chat_id in admin_ids:
+                        try:
+                            send_message(admin_chat_id, message, order_markup)
+                            print(f"Telegram notification sent to admin (chat_id={admin_chat_id})")
+                        except Exception as msg_error:
+                            print(f"Error sending Telegram message: {msg_error}")
+
+                    if materials_list and frontend:
                         import threading
                         def send_materials():
                             import time
                             for i, mat_url in enumerate(materials_list, 1):
                                 try:
-                                    # Формируем полный URL
                                     full_url = mat_url
                                     if mat_url.startswith("/"):
-                                        frontend_url = os.getenv("FRONTEND_URL", "https://XWinner.beats.please-dpym.onrender.com")
-                                        full_url = f"{frontend_url.rstrip('/')}{mat_url}"
-                                    
-                                    # Определяем тип файла по расширению
-                                    if mat_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
-                                        send_audio(int(admin_chat_id), full_url, caption=f"📎 Материал {i}/{len(materials_list)}")
-                                    else:
-                                        send_document(int(admin_chat_id), full_url, caption=f"📎 Материал {i}/{len(materials_list)}")
-                                    time.sleep(0.5)  # Небольшая задержка между отправками
+                                        full_url = f"{frontend}{mat_url}"
+                                    for admin_chat_id in admin_ids:
+                                        if mat_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
+                                            send_audio(admin_chat_id, full_url, caption=f"📎 Материал {i}/{len(materials_list)}")
+                                        else:
+                                            send_document(admin_chat_id, full_url, caption=f"📎 Материал {i}/{len(materials_list)}")
+                                    time.sleep(0.5)
                                 except Exception as e:
                                     print(f"Error sending material file {i}: {e}")
-                        
+
                         threading.Thread(target=send_materials, daemon=True).start()
-                    
-                    # Отправляем референсы-файлы - в фоне
-                    if reference_files_list:
+
+                    if reference_files_list and frontend:
                         import threading
                         def send_references():
                             import time
                             for i, ref_url in enumerate(reference_files_list, 1):
                                 try:
-                                    # Формируем полный URL
                                     full_url = ref_url
                                     if ref_url.startswith("/"):
-                                        frontend_url = os.getenv("FRONTEND_URL", "https://XWinner.beats.please-dpym.onrender.com")
-                                        full_url = f"{frontend_url.rstrip('/')}{ref_url}"
-                                    
-                                    # Определяем тип файла по расширению
-                                    if ref_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
-                                        send_audio(int(admin_chat_id), full_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
-                                    else:
-                                        send_document(int(admin_chat_id), full_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
-                                    time.sleep(0.5)  # Небольшая задержка между отправками
+                                        full_url = f"{frontend}{ref_url}"
+                                    for admin_chat_id in admin_ids:
+                                        if ref_url.lower().endswith(('.mp3', '.wav', '.m4a', '.ogg', '.flac')):
+                                            send_audio(admin_chat_id, full_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
+                                        else:
+                                            send_document(admin_chat_id, full_url, caption=f"📁 Референс {i}/{len(reference_files_list)}")
+                                    time.sleep(0.5)
                                 except Exception as e:
                                     print(f"Error sending reference file {i}: {e}")
-                        
+
                         threading.Thread(target=send_references, daemon=True).start()
             except Exception as e:
                 print(f"Error sending Telegram notification: {e}")
@@ -3639,21 +3635,28 @@ def _thread_messages(db: Session, thread_id: int, after_id: Optional[int] = None
 def _notify_admin_support_message(username: str, body: str, thread_id: int) -> None:
     if not TELEGRAM_BOT_AVAILABLE:
         return
-    chat_id = os.getenv("ADMIN_TELEGRAM_CHAT_ID")
-    if not chat_id:
-        return
     preview = _support_preview(body, 200)
     try:
-        from telegram_ux import build_admin_support_notify
+        from telegram_ux import build_admin_support_notify, parse_admin_chat_ids, public_base_url
 
-        frontend = os.getenv("FRONTEND_URL", "") or os.getenv("MINI_APP_URL", "")
+        admin_ids = parse_admin_chat_ids(
+            os.getenv("ADMIN_TELEGRAM_CHAT_ID"),
+            os.getenv("ADMIN_TELEGRAM_CHAT_IDS"),
+        )
+        if not admin_ids:
+            return
+        frontend = public_base_url(
+            os.getenv("FRONTEND_URL", ""),
+            os.getenv("MINI_APP_URL", ""),
+        )
         text, markup = build_admin_support_notify(
             username=username,
             body=preview,
             thread_id=thread_id,
             frontend_url=frontend,
         )
-        send_message(int(chat_id), text, markup)
+        for chat_id in admin_ids:
+            send_message(chat_id, text, markup)
     except Exception:
         pass
 
@@ -6068,33 +6071,34 @@ async def startup_event():
         import threading
         import os
         
-        # Проверяем наличие токена
         bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        if bot_token:
+        enabled = (os.getenv("TELEGRAM_BOT_ENABLED") or "true").strip().lower()
+        if enabled in ("0", "false", "no", "off"):
+            print("Telegram бот отключён (TELEGRAM_BOT_ENABLED=false)")
+        elif bot_token:
             try:
                 from telegram_bot import main as telegram_bot_main
-                
+
                 def run_telegram_bot():
                     try:
-                        print("🤖 Запуск Telegram бота в фоновом потоке...")
+                        print("Запуск Telegram бота в фоновом потоке...")
                         telegram_bot_main()
                     except Exception as e:
-                        print(f"❌ Ошибка в Telegram боте: {e}")
+                        print(f"Ошибка в Telegram боте: {e}")
                         import traceback
                         traceback.print_exc()
-                
-                # Запускаем бота в отдельном потоке
+
                 bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
                 bot_thread.start()
-                print("✅ Telegram бот запущен в фоновом потоке")
+                print("Telegram бот запущен в фоновом потоке")
             except ImportError as e:
-                print(f"⚠️  Не удалось импортировать telegram_bot: {e}")
+                print(f"Не удалось импортировать telegram_bot: {e}")
             except Exception as e:
-                print(f"⚠️  Не удалось запустить Telegram бота: {e}")
+                print(f"Не удалось запустить Telegram бота: {e}")
                 import traceback
                 traceback.print_exc()
         else:
-            print("⚠️  TELEGRAM_BOT_TOKEN не установлен, бот не запущен")
+            print("TELEGRAM_BOT_TOKEN не установлен, бот не запущен")
     except Exception as e:
         print(f"⚠️  Ошибка при попытке запуска Telegram бота: {e}")
         import traceback

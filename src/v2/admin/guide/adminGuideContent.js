@@ -464,7 +464,7 @@ export const guideSections = [
     blocks: [
       {
         type: 'p',
-        text: 'Один бот на витрину и оператора. Токен: TELEGRAM_BOT_TOKEN. Операторам шлётся в ADMIN_TELEGRAM_CHAT_ID. Mini App / сайт: MINI_APP_URL и FRONTEND_URL.',
+        text: 'Один бот на витрину и операторов. Токен: TELEGRAM_BOT_TOKEN. Операторам — ADMIN_TELEGRAM_CHAT_ID или список ADMIN_TELEGRAM_CHAT_IDS (через запятую). Mini App / сайт: MINI_APP_URL и FRONTEND_URL (без них ссылки и файлы не уйдут). Локально при конфликте с Render: TELEGRAM_BOT_ENABLED=false.',
       },
       {
         type: 'h3',
@@ -486,13 +486,13 @@ export const guideSections = [
         type: 'ul',
         items: [
           '/admin — сводка: pending-заявки и непрочитанная поддержка + ссылки',
-          'Пуш заявки: Открыть / В работу / Готово',
-          'Пуш поддержки: Открыть тред; reply на сообщение = ответ клиенту',
+          'Пуш заявки: Открыть / В работу / Готово (уходит всем chat_id из allowlist)',
+          'Пуш поддержки: Открыть тред; reply на сообщение = ответ в тред (автор — админ с тем же Telegram id, иначе первый admin в БД)',
         ],
       },
       {
         type: 'warn',
-        text: 'Кнопки статуса из бота не ставят confirmed и не выставляют цену — для этого админка. Не держите второй polling-инстанс бота локально на том же токене (409 Conflict). Каталог битов отдаёт is_favorite/is_in_cart в GET /beats — карточки не должны N+1 долбить /favorites+/cart.',
+        text: 'Кнопки статуса из бота не ставят confirmed и не выставляют цену — для этого админка. Не держите второй polling-инстанс бота локально на том же токене (409 Conflict) — отключите локально TELEGRAM_BOT_ENABLED=false. Каталог битов отдаёт is_favorite/is_in_cart в GET /beats — карточки не должны N+1 долбить /favorites+/cart.',
       },
     ],
   },

@@ -126,6 +126,53 @@ class TelegramBotHandlersTests(unittest.TestCase):
         # Confirmation to admin + push to telegram user
         self.assertGreaterEqual(send.call_count, 1)
 
+    def test_support_reply_author_matches_telegram_admin(self):
+        other = add_user(self.db, "other_admin", admin=True)
+        self.admin.oauth_provider = "telegram"
+        self.admin.oauth_provider_id = "55001"
+        other.oauth_provider = "telegram"
+        other.oauth_provider_id = "55002"
+        thread = SupportThread(user_id=self.buyer.id, unread_for_admin=1)
+        self.db.add(thread)
+        self.db.commit()
+        self.db.refresh(thread)
+
+        message = {
+            "chat": {"id": 42},
+            "text": "Отвечаю я",
+            "from": {"id": 55002, "username": "other_admin"},
+            "reply_to_message": {
+                "text": f"Поддержка · тред #{thread.id}\n👤 buyer\nHi",
+            },
+        }
+        with patch.dict(
+            os.environ,
+            {
+                "ADMIN_TELEGRAM_CHAT_ID": "",
+                "ADMIN_TELEGRAM_CHAT_IDS": "42,99",
+                "FRONTEND_URL": "https://s.example",
+            },
+        ):
+            with patch.object(bot, "send_message"):
+                bot.handle_message(message)
+
+        msgs = self.db.query(SupportMessage).filter(SupportMessage.thread_id == thread.id).all()
+        self.assertEqual(len(msgs), 1)
+        self.assertEqual(msgs[0].author_id, other.id)
+
+    def test_admin_allowlist_accepts_second_chat(self):
+        with patch.dict(
+            os.environ,
+            {
+                "ADMIN_TELEGRAM_CHAT_ID": "",
+                "ADMIN_TELEGRAM_CHAT_IDS": "10,20",
+                "FRONTEND_URL": "https://s.example",
+            },
+        ):
+            with patch.object(bot, "send_message") as send:
+                bot.handle_admin_command(20)
+        self.assertIn("сводка", send.call_args[0][1].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

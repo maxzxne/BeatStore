@@ -15,8 +15,10 @@ from telegram_ux import (
     build_user_menu_markup,
     build_user_start_text,
     is_admin_chat,
+    parse_admin_chat_ids,
     parse_callback_data,
     parse_support_thread_id,
+    public_base_url,
     site_url,
 )
 
@@ -112,6 +114,21 @@ class TelegramUxTests(unittest.TestCase):
         self.assertFalse(is_admin_chat(1, "99"))
         self.assertFalse(is_admin_chat(1, ""))
         self.assertFalse(is_admin_chat(1, None))
+
+    def test_parse_admin_chat_ids_allowlist(self):
+        self.assertEqual(parse_admin_chat_ids("42"), {42})
+        self.assertEqual(parse_admin_chat_ids("42, 99; 7"), {42, 99, 7})
+        self.assertEqual(parse_admin_chat_ids("42", "99,100"), {42, 99, 100})
+        self.assertEqual(parse_admin_chat_ids("", None, "  "), set())
+        self.assertTrue(is_admin_chat(99, "42,99"))
+        self.assertFalse(is_admin_chat(1, "42,99"))
+
+    def test_public_base_url_no_hardcoded_fallback(self):
+        self.assertEqual(public_base_url("https://a.com/", ""), "https://a.com")
+        self.assertEqual(public_base_url("", "https://mini.example/"), "https://mini.example")
+        self.assertEqual(public_base_url("", ""), "")
+        self.assertNotIn("ngrok", public_base_url("", ""))
+        self.assertNotIn("onrender", public_base_url("", ""))
 
     def test_site_url_strips_slash(self):
         self.assertEqual(site_url("https://a.com/"), "https://a.com")

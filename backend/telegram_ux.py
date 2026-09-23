@@ -11,11 +11,34 @@ def site_url(frontend_url: str) -> str:
     return (frontend_url or "").rstrip("/")
 
 
+def public_base_url(frontend_url: str = "", mini_app_url: str = "") -> str:
+    """Public site origin — never invent ngrok/Render fallbacks."""
+    return site_url(frontend_url) or site_url(mini_app_url) or ""
+
+
+def parse_admin_chat_ids(*raw_parts: Optional[str]) -> set[int]:
+    """Parse ADMIN_TELEGRAM_CHAT_ID / ADMIN_TELEGRAM_CHAT_IDS (comma or semicolon)."""
+    ids: set[int] = set()
+    for raw in raw_parts:
+        if not raw:
+            continue
+        for part in str(raw).replace(";", ",").split(","):
+            token = part.strip()
+            if not token:
+                continue
+            try:
+                ids.add(int(token))
+            except (TypeError, ValueError):
+                continue
+    return ids
+
+
 def is_admin_chat(chat_id: int, admin_chat_id: Optional[str]) -> bool:
-    if not admin_chat_id:
+    ids = parse_admin_chat_ids(admin_chat_id)
+    if not ids:
         return False
     try:
-        return int(chat_id) == int(str(admin_chat_id).strip())
+        return int(chat_id) in ids
     except (TypeError, ValueError):
         return False
 
@@ -74,7 +97,7 @@ def build_auth_return_markup(
 ) -> tuple[str, dict[str, Any]]:
     """Secure auth: open Mini App (initData HMAC), never spoofable chat_id query."""
     _ = (chat_id, first_name, last_name)  # kept for call-site compat
-    base = site_url(frontend_url) or site_url(mini_app_url) or "https://XWinner.beats.please"
+    base = public_base_url(frontend_url, mini_app_url)
     store = site_url(mini_app_url) or base
     name = f"@{username}" if username else "друг"
     text = (
@@ -82,6 +105,10 @@ def build_auth_return_markup(
         f"Привет, {name}.\n"
         f"Открой магазин в Telegram — вход подтвердится подписью Mini App."
     )
+    if not base and not store:
+        return text + "\n\nURL магазина не настроен (FRONTEND_URL / MINI_APP_URL).", {
+            "inline_keyboard": []
+        }
     if mini_app_url:
         btn: dict[str, Any] = {"text": "Открыть магазин", "web_app": {"url": store}}
     else:

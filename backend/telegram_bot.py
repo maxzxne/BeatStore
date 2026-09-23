@@ -19,8 +19,10 @@ from telegram_ux import (
     build_user_start_text,
     build_user_support_reply_text,
     is_admin_chat,
+    parse_admin_chat_ids,
     parse_callback_data,
     parse_support_thread_id,
+    public_base_url,
     site_url,
 )
 
@@ -34,8 +36,17 @@ def _frontend_url() -> str:
     return os.getenv("FRONTEND_URL", "") or MINI_APP_URL or ""
 
 
-def _admin_chat_id() -> Optional[str]:
-    return os.getenv("ADMIN_TELEGRAM_CHAT_ID")
+def _admin_chat_ids_raw() -> Optional[str]:
+    parts = []
+    for key in ("ADMIN_TELEGRAM_CHAT_ID", "ADMIN_TELEGRAM_CHAT_IDS"):
+        value = os.getenv(key)
+        if value and value.strip():
+            parts.append(value.strip())
+    return ",".join(parts) if parts else None
+
+
+def _admin_chat_ids() -> set[int]:
+    return parse_admin_chat_ids(_admin_chat_ids_raw())
 
 
 def get_updates(offset: Optional[int] = None):
@@ -46,12 +57,12 @@ def get_updates(offset: Optional[int] = None):
     try:
         response = requests.get(url, params=params, timeout=15)
         if response.status_code == 409:
-            return {"ok": True, "result": []}
+            return {"ok": False, "conflict": True, "result": []}
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
         if e.response is not None and e.response.status_code == 409:
-            return {"ok": True, "result": []}
+            return {"ok": False, "conflict": True, "result": []}
         print(f"HTTP ошибка при получении обновлений: {e}")
         return None
     except Exception as e:
@@ -111,14 +122,25 @@ def answer_callback_query(callback_query_id: str, text: Optional[str] = None):
         print(f"Ошибка answerCallbackQuery: {e}")
 
 
-def send_document(chat_id: int, file_url: str, caption: Optional[str] = None):
+def _absolute_media_url(file_url: str) -> Optional[str]:
+    if not file_url:
+        return None
+    if file_url.startswith("http://") or file_url.startswith("https://"):
+        return file_url
     if file_url.startswith("/"):
-        frontend = _frontend_url()
-        if frontend:
-            file_url = f"{site_url(frontend)}{file_url}"
-        else:
-            file_url = f"https://XWinner.beats.please-dpym.onrender.com{file_url}"
-    data: dict[str, Any] = {"chat_id": chat_id, "document": file_url}
+        base = public_base_url(_frontend_url(), MINI_APP_URL)
+        if not base:
+            print("Пропуск файла: FRONTEND_URL / MINI_APP_URL не заданы")
+            return None
+        return f"{base}{file_url}"
+    return file_url
+
+
+def send_document(chat_id: int, file_url: str, caption: Optional[str] = None):
+    resolved = _absolute_media_url(file_url)
+    if not resolved:
+        return None
+    data: dict[str, Any] = {"chat_id": chat_id, "document": resolved}
     if caption:
         data["caption"] = caption
     try:
@@ -131,13 +153,10 @@ def send_document(chat_id: int, file_url: str, caption: Optional[str] = None):
 
 
 def send_audio(chat_id: int, audio_url: str, caption: Optional[str] = None):
-    if audio_url.startswith("/"):
-        frontend = _frontend_url()
-        if frontend:
-            audio_url = f"{site_url(frontend)}{audio_url}"
-        else:
-            audio_url = f"https://XWinner.beats.please-dpym.onrender.com{audio_url}"
-    data: dict[str, Any] = {"chat_id": chat_id, "audio": audio_url}
+    resolved = _absolute_media_url(audio_url)
+    if not resolved:
+        return None
+    data: dict[str, Any] = {"chat_id": chat_id, "audio": resolved}
     if caption:
         data["caption"] = caption
     try:
@@ -167,14 +186,14 @@ def handle_start_command(
         first_name = from_user.get("first_name", "") if from_user else ""
         last_name = from_user.get("last_name", "") if from_user else ""
         text, markup = build_auth_return_markup(
-            frontend_url=_frontend_url() or "https://unvisited-eve-unadjusted.ngrok-free.dev",
+            frontend_url=_frontend_url(),
             chat_id=chat_id,
             username=username,
             first_name=first_name,
             last_name=last_name,
             mini_app_url=MINI_APP_URL,
         )
-        send_message(chat_id, text, markup)
+        send_message(chat_id, text, markup or None)
         return
 
     text = build_user_start_text(username)
@@ -217,7 +236,7 @@ def _admin_summary_payload() -> tuple[str, dict]:
 
 
 def handle_admin_command(chat_id: int):
-    if not is_admin_chat(chat_id, _admin_chat_id()):
+    if not is_admin_chat(chat_id, _admin_chat_ids_raw()):
         send_message(chat_id, "Команда только для оператора.")
         return
     text, markup = _admin_summary_payload()
@@ -228,7 +247,7 @@ def apply_order_status(order_id: int, status: str) -> tuple[bool, str]:
     """Set service order status from bot. Returns (ok, message)."""
     try:
         from database import SessionLocal
-        from models import ServiceOrder, User
+        from models import ServiceOrder
         from datetime import datetime
 
         db = SessionLocal()
@@ -278,7 +297,7 @@ def handle_callback_query(callback_query: dict) -> None:
             answer_callback_query(cq_id, "Нет chat_id")
         return
 
-    if not is_admin_chat(chat_id, _admin_chat_id()):
+    if not is_admin_chat(chat_id, _admin_chat_ids_raw()):
         answer_callback_query(cq_id, "Только для админа")
         return
 
@@ -291,9 +310,7 @@ def handle_callback_query(callback_query: dict) -> None:
     answer_callback_query(cq_id, note[:180])
     if ok and message_id:
         old = message.get("text") or message.get("caption") or ""
-        # Telegram HTML may strip; append status line
         updated = f"{old}\n\n✅ {note}" if old else f"✅ {note}"
-        # Prefer keeping open button only
         base = site_url(_frontend_url())
         markup = {
             "inline_keyboard": [
@@ -305,17 +322,44 @@ def handle_callback_query(callback_query: dict) -> None:
                 ]
             ]
         }
-        # editMessageText with plain may fail if old had entities — send follow-up instead on failure
         result = edit_message_text(chat_id, message_id, updated[:4000], markup)
         if not result:
             send_message(chat_id, f"✅ {note}", markup)
     _ = from_user  # reserved
 
 
-def post_admin_support_reply(thread_id: int, body: str) -> tuple[bool, str]:
+def _resolve_admin_author(db, telegram_user_id: Optional[int]):
+    """Prefer admin whose Telegram oauth id matches the operator who replied."""
+    from models import User
+
+    if telegram_user_id is not None:
+        match = (
+            db.query(User)
+            .filter(
+                User.is_admin == True,  # noqa: E712
+                User.oauth_provider == "telegram",
+                User.oauth_provider_id == str(telegram_user_id),
+            )
+            .first()
+        )
+        if match:
+            return match
+    return (
+        db.query(User)
+        .filter(User.is_admin == True)  # noqa: E712
+        .order_by(User.id.asc())
+        .first()
+    )
+
+
+def post_admin_support_reply(
+    thread_id: int,
+    body: str,
+    telegram_user_id: Optional[int] = None,
+) -> tuple[bool, str]:
     try:
         from database import SessionLocal
-        from models import SupportThread, SupportMessage, User
+        from models import SupportThread, SupportMessage
         from datetime import datetime
 
         db = SessionLocal()
@@ -323,16 +367,10 @@ def post_admin_support_reply(thread_id: int, body: str) -> tuple[bool, str]:
             thread = db.query(SupportThread).filter(SupportThread.id == thread_id).first()
             if not thread:
                 return False, "Тред не найден"
-            admin = (
-                db.query(User)
-                .filter(User.is_admin == True)  # noqa: E712
-                .order_by(User.id.asc())
-                .first()
-            )
+            admin = _resolve_admin_author(db, telegram_user_id)
             if not admin:
                 return False, "Нет admin-пользователя в БД"
 
-            # Inline minimal append to avoid circular import with main
             text = (body or "").strip()
             if not text:
                 return False, "Пустой ответ"
@@ -381,16 +419,16 @@ def handle_message(message: dict):
     chat_id = message.get("chat", {}).get("id")
     text = (message.get("text") or "").strip()
     username = (message.get("from") or {}).get("username")
+    from_id = (message.get("from") or {}).get("id")
     if not chat_id:
         return
 
-    # Admin reply to support push
     reply = message.get("reply_to_message")
-    if reply and is_admin_chat(chat_id, _admin_chat_id()) and text and not text.startswith("/"):
+    if reply and is_admin_chat(chat_id, _admin_chat_ids_raw()) and text and not text.startswith("/"):
         reply_text = reply.get("text") or reply.get("caption") or ""
         thread_id = parse_support_thread_id(reply_text)
         if thread_id:
-            ok, note = post_admin_support_reply(thread_id, text)
+            ok, note = post_admin_support_reply(thread_id, text, telegram_user_id=from_id)
             send_message(chat_id, ("✅ " if ok else "❌ ") + note)
             return
 
@@ -416,8 +454,7 @@ def handle_message(message: dict):
         handle_admin_command(chat_id)
         return
 
-    # Unknown — gentle redirect
-    if is_admin_chat(chat_id, _admin_chat_id()):
+    if is_admin_chat(chat_id, _admin_chat_ids_raw()):
         send_message(
             chat_id,
             "Команды: /admin · /start\n"
@@ -435,8 +472,9 @@ def handle_message(message: dict):
 
 
 def main():
-    global TELEGRAM_BOT_TOKEN, TELEGRAM_API_URL
+    global TELEGRAM_BOT_TOKEN, TELEGRAM_API_URL, MINI_APP_URL
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    MINI_APP_URL = os.getenv("MINI_APP_URL", "")
     TELEGRAM_API_URL = (
         f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}" if TELEGRAM_BOT_TOKEN else ""
     )
@@ -444,19 +482,40 @@ def main():
         print("❌ Ошибка: TELEGRAM_BOT_TOKEN не установлен!")
         return
 
+    enabled = (os.getenv("TELEGRAM_BOT_ENABLED") or "true").strip().lower()
+    if enabled in ("0", "false", "no", "off"):
+        print("Telegram бот отключён (TELEGRAM_BOT_ENABLED=false)")
+        return
+
     print("=" * 50)
     print("Telegram бот запущен (user hub + admin ops)")
     print(f"Username: @{TELEGRAM_BOT_USERNAME}")
-    if MINI_APP_URL:
-        print(f"Mini App URL: {MINI_APP_URL}")
+    admin_ids = _admin_chat_ids()
+    if admin_ids:
+        print(f"Admin chat ids: {sorted(admin_ids)}")
     else:
-        print("Mini App URL не установлен (MINI_APP_URL)")
+        print("Admin chat ids: не заданы (ADMIN_TELEGRAM_CHAT_ID)")
+    if MINI_APP_URL or _frontend_url():
+        print(f"Public URL: {public_base_url(_frontend_url(), MINI_APP_URL)}")
+    else:
+        print("WARNING: FRONTEND_URL / MINI_APP_URL не заданы — ссылки и файлы не уйдут")
     print("=" * 50)
 
     last_update_id = None
+    conflict_backoff = 5
     while True:
         try:
             updates = get_updates(last_update_id)
+            if updates and updates.get("conflict"):
+                print(
+                    "Telegram 409 Conflict: другой процесс уже polling на этом токене. "
+                    "Останови локальный бот или поставь TELEGRAM_BOT_ENABLED=false. "
+                    f"Повтор через {conflict_backoff}s."
+                )
+                time.sleep(conflict_backoff)
+                conflict_backoff = min(conflict_backoff * 2, 120)
+                continue
+            conflict_backoff = 5
             if not updates or not updates.get("ok"):
                 time.sleep(2)
                 continue
