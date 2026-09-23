@@ -272,7 +272,7 @@ const AdminHeroPage = () => {
         <div className="space-y-6">
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
             <div className="border-b border-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
-              Превью Hero
+              Превью главного экрана
             </div>
             <section className="relative overflow-hidden px-4 pb-6 pt-8 sm:pt-10">
               <div className={`mx-auto max-w-6xl${previewImage ? ` v2-hero-grid is-${previewPosition}` : ''}`}>
@@ -321,7 +321,7 @@ const AdminHeroPage = () => {
           <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
             <div className="space-y-4 rounded-2xl border border-white/10 bg-black/30 p-5">
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">
-                Настройки Hero
+                Настройки секции
               </p>
 
               <div>
