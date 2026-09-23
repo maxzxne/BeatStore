@@ -628,7 +628,7 @@ const OrderPage = ({ initialType = null }) => {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
         <div className="mb-8">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Услуги</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Заказать услугу</h1>
           <p className="mt-2 text-sm text-white/50">Подробный расчёт, короткая заявка или реклама на витрине</p>
         </div>
@@ -1080,7 +1080,7 @@ const OrderPage = ({ initialType = null }) => {
           >
             ← Назад к выбору
           </button>
-          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Услуги</p>
           <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Простая заявка</h1>
           <p className="mt-2 text-sm text-white/50">Контакты и коротко — что нужно. Остальное обсудим.</p>
         </div>
@@ -1293,7 +1293,7 @@ const OrderPage = ({ initialType = null }) => {
         >
           ← Назад к выбору типа заказа
         </button>
-        <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Services</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-[#22c55e]">Услуги</p>
         <h1 className="mt-2 font-[Syne] text-4xl font-extrabold text-white">Подробная форма заказа</h1>
         <p className="mt-2 text-sm text-white/50">Заполните форму для расчета стоимости и оформления заказа</p>
         <div className="mt-5 flex gap-2" role="tablist" aria-label="Шаги заказа">

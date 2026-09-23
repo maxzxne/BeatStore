@@ -92,7 +92,7 @@ const AdminHeroPage = () => {
       setForm(formFromHero(data));
     } catch (err) {
       console.error('Error fetching hero:', err);
-      setError(err.response?.data?.detail || 'Не удалось загрузить hero');
+      setError(err.response?.data?.detail || 'Не удалось загрузить главный экран');
     } finally {
       setLoading(false);
     }
@@ -325,7 +325,7 @@ const AdminHeroPage = () => {
               </p>
 
               <div>
-                <label className={labelClass} htmlFor="hero-eyebrow">Eyebrow</label>
+                <label className={labelClass} htmlFor="hero-eyebrow">Надзаголовок</label>
                 <input
                   id="hero-eyebrow"
                   className={fieldClass}
@@ -363,7 +363,7 @@ const AdminHeroPage = () => {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className={labelClass} htmlFor="hero-cta-label">CTA — текст</label>
+                  <label className={labelClass} htmlFor="hero-cta-label">Кнопка — текст</label>
                   <input
                     id="hero-cta-label"
                     className={fieldClass}
@@ -373,7 +373,7 @@ const AdminHeroPage = () => {
                   />
                 </div>
                 <div>
-                  <label className={labelClass} htmlFor="hero-cta-href">CTA — ссылка</label>
+                  <label className={labelClass} htmlFor="hero-cta-href">Кнопка — ссылка</label>
                   <input
                     id="hero-cta-href"
                     className={fieldClass}

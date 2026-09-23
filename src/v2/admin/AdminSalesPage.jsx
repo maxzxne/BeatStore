@@ -158,7 +158,7 @@ const AdminSalesPage = ({ embedded = false }) => {
           <div>
             <h2 className="font-[Syne] text-xl font-bold text-white">Акции</h2>
             <p className="mt-1 max-w-xl text-sm text-white/50">
-              Одна лучшая акция на позицию. Scope «Реклама» — только /order/ads.
+              Одна лучшая акция на позицию. Область «Реклама» — только /order/ads.
             </p>
           </div>
         ) : (
@@ -166,7 +166,7 @@ const AdminSalesPage = ({ embedded = false }) => {
             <p className="text-xs uppercase tracking-[0.25em] text-[#22c55e]">Маркетинг</p>
             <h1 className="mt-1 font-[Syne] text-3xl font-extrabold">Скидки на витрине</h1>
             <p className="mt-2 max-w-xl text-sm text-white/50">
-              Одна лучшая акция на позицию. Scope «Реклама» — только /order/ads, без «Все товары».
+              Одна лучшая акция на позицию. Область «Реклама» — только /order/ads, без «Все товары».
               Промокод сверху не стакается с другой акцией — он режет уже сниженную сумму.
             </p>
           </div>

@@ -165,7 +165,7 @@ const AdminBannersPage = () => {
       setFullscreen(enabled);
       await api.put('/api/admin/site-settings', { promo_banners_fullscreen: enabled });
       window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
-      showSuccess(enabled ? 'Баннеры: полный экран' : 'Баннеры: компакт + peek');
+      showSuccess(enabled ? 'Баннеры: полный экран' : 'Баннеры: компактный ряд');
     } catch (err) {
       setFullscreen(previous);
       showError(err.response?.data?.detail || 'Не удалось сохранить раскладку');
@@ -400,7 +400,7 @@ const AdminBannersPage = () => {
         <div>
           <div className="text-sm font-medium text-white">На полный экран</div>
           <div className="mt-0.5 text-xs text-white/40">
-            Вкл — featured 16:9 до ~58rem; выкл — уже (~70%) + peek следующего
+            Вкл — крупная карточка 16:9 (до ~930&nbsp;px). Выкл — уже (~70%) с краешком следующего слайда
           </div>
         </div>
         <AdminToggle
