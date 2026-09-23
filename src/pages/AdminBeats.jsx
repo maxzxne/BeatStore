@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { Pencil, Trash2, Music, Loader2, X, Upload, Image as ImageIcon } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 const fieldClass =
   'w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40';
@@ -298,16 +299,22 @@ const AdminBeats = () => {
               </div>
               <div>
                 <label className={labelClass}>Считать продажи на</label>
-                <select
-                  value={editForm.beneficiary_id ?? ''}
-                  onChange={(e) => setEditForm({ ...editForm, beneficiary_id: e.target.value ? Number(e.target.value) : null })}
-                  className={fieldClass}
-                >
-                  <option value="">Магазин</option>
-                  {people.map((person) => (
-                    <option key={person.id} value={person.id}>{person.name}</option>
-                  ))}
-                </select>
+                <CustomSelect
+                  options={[
+                    { value: '', label: 'Магазин' },
+                    ...people.map((person) => ({
+                      value: String(person.id),
+                      label: person.name,
+                    })),
+                  ]}
+                  value={editForm.beneficiary_id != null ? String(editForm.beneficiary_id) : ''}
+                  onChange={(next) =>
+                    setEditForm({
+                      ...editForm,
+                      beneficiary_id: next ? Number(next) : null,
+                    })
+                  }
+                />
               </div>
               <div>
                 <label className={labelClass}>Жанр</label>

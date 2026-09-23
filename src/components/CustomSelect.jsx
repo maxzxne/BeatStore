@@ -13,6 +13,7 @@ const CustomSelect = ({
   name,
   placeholder,
   required = false,
+  'aria-label': ariaLabel,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -46,6 +47,7 @@ const CustomSelect = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-required={required}
+        aria-label={ariaLabel}
       >
         <span className={!selectedOption ? 'text-white/40' : ''}>{displayLabel}</span>
         <ChevronDown className={`h-4 w-4 shrink-0 text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />

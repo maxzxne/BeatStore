@@ -1,12 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Search, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../utils/api';
 import { formatMoscowDate } from '../../utils/dateUtils';
+import CustomSelect from '../../components/CustomSelect';
 
 const formatMoney = (value) =>
   `${Number(value || 0).toLocaleString('ru-RU', { maximumFractionDigits: 0 })} ₽`;
+
+const SORT_OPTIONS = [
+  { value: 'ltv', label: 'По LTV' },
+  { value: 'created_at', label: 'По регистрации' },
+  { value: 'last_purchase', label: 'По последней покупке' },
+];
 
 const AdminUsersPage = () => {
   const { isAdminAuthenticated } = useAuth();
@@ -61,22 +68,27 @@ const AdminUsersPage = () => {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Поиск: username, email, telegram…"
-          className="w-full flex-1 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[#22c55e]/50 focus:outline-none"
-        />
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-          className="rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white focus:border-[#22c55e]/50 focus:outline-none"
-        >
-          <option value="ltv">По LTV</option>
-          <option value="created_at">По регистрации</option>
-          <option value="last_purchase">По последней покупке</option>
-        </select>
+        <label className="admin-inline-search min-w-0 flex-1">
+          <Search className="h-4 w-4 shrink-0 text-white/35" aria-hidden />
+          <span className="sr-only">Поиск пользователей</span>
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Поиск: логин, почта, telegram…"
+            className="admin-inline-search-input"
+            autoComplete="off"
+          />
+        </label>
+        <div className="w-full shrink-0 sm:w-56">
+          <CustomSelect
+            id="admin-users-sort"
+            options={SORT_OPTIONS}
+            value={sort}
+            onChange={setSort}
+            aria-label="Сортировка"
+          />
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-300">{error}</p>}
@@ -97,7 +109,7 @@ const AdminUsersPage = () => {
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr>
-                  <th>Username</th>
+                  <th>Логин</th>
                   <th>Email</th>
                   <th>Регистрация</th>
                   <th>Покупок</th>
@@ -116,7 +128,7 @@ const AdminUsersPage = () => {
                         {row.username}
                         {row.is_admin ? (
                           <span className="ml-2 rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white/50">
-                            Admin
+                            Админ
                           </span>
                         ) : null}
                       </Link>

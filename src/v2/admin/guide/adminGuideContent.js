@@ -4,7 +4,7 @@
  * Personal notes live in SQLite (API), not here.
  */
 
-export const ADMIN_GUIDE_VERSION = '2026-09-24c';
+export const ADMIN_GUIDE_VERSION = '2026-09-24d';
 
 /** @typedef {{ type: 'p'|'h3'|'ul'|'ol'|'steps'|'tip'|'warn'|'link', text?: string, items?: string[], href?: string, label?: string }} GuideBlock */
 /** @typedef {{ id: string, title: string, group: string, adminPath?: string|null, publicPaths?: string[], keywords?: string[], blocks: GuideBlock[] }} GuideSection */
@@ -357,7 +357,7 @@ export const guideSections = [
     blocks: [
       {
         type: 'p',
-        text: 'CRM покупателей: поиск, сортировка (в т.ч. по LTV), карточка /admin/users/:id.',
+        text: 'CRM покупателей: поиск по логину/почте/telegram, сортировка V2-селектом (LTV / регистрация / последняя покупка), карточка /admin/users/:id.',
       },
       {
         type: 'h3',

@@ -15,6 +15,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import { api, buildMediaUrl } from '../utils/api';
 import { formatMoscowDate } from '../utils/dateUtils';
 import { ruCount } from '../utils/ruPlural';
+import CustomSelect from '../components/CustomSelect';
 
 const QUEUES = [
   { id: 'action', label: 'Нужно действие' },
@@ -677,10 +678,14 @@ function OrderDrawer({
               </label>
               <label>
                 <span className="mb-1 block text-xs text-white/40">Предоплата</span>
-                <select value={prepayDraft} onChange={(event) => onPrepay(event.target.value)} className={fieldClass}>
-                  <option value="50">50%</option>
-                  <option value="100">100%</option>
-                </select>
+                <CustomSelect
+                  options={[
+                    { value: '50', label: '50%' },
+                    { value: '100', label: '100%' },
+                  ]}
+                  value={String(prepayDraft)}
+                  onChange={onPrepay}
+                />
               </label>
             </div>
             <p className="text-xs text-white/40">

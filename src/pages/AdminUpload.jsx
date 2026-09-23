@@ -323,17 +323,18 @@ const AdminUpload = () => {
                   <label htmlFor="beat_beneficiary" className="admin-field-label">
                     Считать продажи на
                   </label>
-                  <select
+                  <CustomSelect
                     id="beat_beneficiary"
-                    value={beneficiaryId}
-                    onChange={(event) => setBeneficiaryId(event.target.value)}
-                    className="input w-full"
-                  >
-                    <option value="">Магазин</option>
-                    {people.map((person) => (
-                      <option key={person.id} value={person.id}>{person.name}</option>
-                    ))}
-                  </select>
+                    options={[
+                      { value: '', label: 'Магазин' },
+                      ...people.map((person) => ({
+                        value: String(person.id),
+                        label: person.name,
+                      })),
+                    ]}
+                    value={String(beneficiaryId || '')}
+                    onChange={setBeneficiaryId}
+                  />
                 </div>
               )}
               
