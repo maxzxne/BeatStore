@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { CircleHelp } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import {
   formatServiceRub,
   normalizeServiceOrderPricing,
@@ -46,7 +46,7 @@ export default function OrderPriceHelp({ pricing: pricingProp, className = '' })
         onFocus={() => setOpen(true)}
         className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 text-white/55 transition hover:border-[#22c55e]/40 hover:bg-[#22c55e]/10 hover:text-[#86efac] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/45"
       >
-        <CircleHelp className="h-4 w-4" aria-hidden />
+        <HelpCircle className="h-4 w-4" aria-hidden />
       </button>
 
       {open ? (
