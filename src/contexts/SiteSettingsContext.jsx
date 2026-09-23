@@ -43,9 +43,10 @@ function normalizeHomeHero(raw) {
     ...DEFAULT_HOME_HERO,
     ...raw,
     enabled: raw.enabled !== false,
-    eyebrow: raw.eyebrow ?? DEFAULT_HOME_HERO.eyebrow,
-    title: raw.title ?? DEFAULT_HOME_HERO.title,
-    subtitle: raw.subtitle ?? DEFAULT_HOME_HERO.subtitle,
+    // Empty string is intentional (admin cleared the field) — do not revive defaults.
+    eyebrow: raw.eyebrow != null ? String(raw.eyebrow) : DEFAULT_HOME_HERO.eyebrow,
+    title: raw.title != null ? String(raw.title) : DEFAULT_HOME_HERO.title,
+    subtitle: raw.subtitle != null ? String(raw.subtitle) : DEFAULT_HOME_HERO.subtitle,
     image_url: raw.image_url || null,
     image_position: normalizeHeroImagePosition(raw.image_position),
     cta_label: raw.cta_label || null,

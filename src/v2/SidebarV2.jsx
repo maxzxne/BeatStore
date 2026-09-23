@@ -20,7 +20,6 @@ import {
   Inbox,
   Link2,
   Percent,
-  Ticket,
   BookOpen,
   ClipboardList,
 } from 'lucide-react';
@@ -68,8 +67,7 @@ const navGroups = [
       { path: '/admin/hero', label: 'Главный экран', icon: LayoutTemplate },
       { path: '/admin/banners', label: 'Баннеры', icon: Image },
       { path: '/admin/pricing', label: 'Прайс услуг', icon: ClipboardList },
-      { path: '/admin/sales', label: 'Скидки', icon: Percent },
-      { path: '/admin/promo-codes', label: 'Промокоды', icon: Ticket },
+      { path: '/admin/promo', label: 'Промо', icon: Percent },
       { path: '/admin/footer', label: 'Футер', icon: Link2 },
       { path: '/admin/oauth-settings', label: 'Настройки сайта', icon: Settings },
     ],

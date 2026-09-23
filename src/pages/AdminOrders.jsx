@@ -367,15 +367,17 @@ const AdminOrders = () => {
             </button>
           ))}
         </div>
-        <label className="relative block w-full lg:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+        <label className="admin-inline-search w-full lg:max-w-xs">
+          <Search className="h-4 w-4 shrink-0 text-white/35" aria-hidden />
+          <span className="sr-only">Поиск заявок</span>
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Поиск: имя, почта, #id, услуга"
             aria-label="Поиск заявок"
-            className={`${fieldClass} pl-9`}
+            className="admin-inline-search-input"
+            autoComplete="off"
           />
         </label>
       </div>

@@ -11,17 +11,17 @@ import {
 } from '../utils/serviceOrderPricing';
 
 const TABS = [
-  { id: 'prices', label: 'Цены' },
-  { id: 'copy', label: 'Тексты' },
+  { id: 'prices', label: '1. Цены' },
+  { id: 'copy', label: '2. Тексты' },
 ];
 
 const COPY_FIELDS = [
-  { key: 'guide_title', label: 'Заголовок плашки', rows: 1, hint: 'Например: «Прайс услуг»' },
+  { key: 'guide_title', label: 'Заголовок справки у клиента', rows: 1, hint: 'Например: «Прайс услуг»' },
   {
     key: 'guide_subtitle',
-    label: 'Подзаголовок',
+    label: 'Коротко под заголовком',
     rows: 2,
-    hint: 'Кратко: от какой суммы и что влияет на цену',
+    hint: 'Одной фразой: от какой суммы и что влияет на цену',
   },
   { key: 'col_50_title', label: 'Колонка предоплаты 50%', rows: 1 },
   { key: 'col_100_title', label: 'Колонка оплаты 100%', rows: 1 },
@@ -119,7 +119,8 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
         <div className="min-w-0 flex-1">
           <h2 className="font-[Syne] text-lg font-semibold text-white">Прайс услуг</h2>
           <p className="mt-1 text-xs leading-relaxed text-white/45">
-            Таблица — источник правды для /order. Тексты — подписи; суммы подставляются сами.
+            <span className="text-white/70">Шаг 1 — цены:</span> таблица сроков = то, что видит клиент на /order.
+            <span className="text-white/70"> Шаг 2 — тексты:</span> только подписи, суммы подставляются сами.
             Сейчас от <span className="font-semibold tabular-nums text-[#86efac]">{vars.from}</span>.
           </p>
         </div>
@@ -149,7 +150,9 @@ export default function AdminServicePricingPanel({ initialPricing, onSaved }) {
           <div>
             <h3 className="text-sm font-semibold text-white">Сроки и суммы</h3>
             <p className="mt-1 text-xs text-white/40">
-              Дни — расчёт на витрине. Подпись — то, что видит клиент. Обычно 50% ≥ 100% (предоплата дороже).
+              Каждая строка — срок сдачи. Колонки 50% / 100% — сколько платит клиент при предоплате и при полной
+              оплате. Дни — для расчёта, подпись — то, что видит клиент. Обычно 50% ≥ 100% (предоплата дороже).
+              Трэп-бит ниже — фикс, срок на него не влияет.
             </p>
             {oddRows.length > 0 ? (
               <p className="mt-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/90">

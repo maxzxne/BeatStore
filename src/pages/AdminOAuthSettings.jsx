@@ -5,7 +5,6 @@ import { api } from '../utils/api';
 import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Shield, KeyRound } from 'lucide-react';
 import AdminSiteGatePanel from '../components/AdminSiteGatePanel';
 import AdminToggle from '../components/AdminToggle';
-import { Link } from 'react-router-dom';
 
 const COURSES_VISIBILITY_OPTIONS = [
   {
@@ -226,18 +225,6 @@ const AdminOAuthSettings = () => {
       <div>
         <h1 className="admin-page-title">Настройки сайта</h1>
         <p className="admin-page-sub">Видимость разделов, безопасность и OAuth-входы</p>
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 text-sm text-white/55">
-        Прайс услуг —{' '}
-        <Link to="/admin/pricing" className="font-medium text-[#22c55e] hover:underline">
-          Сайт → Прайс услуг
-        </Link>
-        . Реклама и ставка ₽/день —{' '}
-        <Link to="/admin/banners" className="font-medium text-[#22c55e] hover:underline">
-          Сайт → Баннеры → Заявки
-        </Link>
-        .
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-black/30 p-5">

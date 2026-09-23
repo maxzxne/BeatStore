@@ -26,7 +26,7 @@ function statusLabel(row) {
   return { label: 'Свободен', className: 'bg-[#22c55e]/15 text-[#22c55e]' };
 }
 
-const AdminPromoCodesPage = () => {
+const AdminPromoCodesPage = ({ embedded = false }) => {
   const { isAdminAuthenticated } = useAuth();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,15 +95,24 @@ const AdminPromoCodesPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className={embedded ? 'space-y-6' : 'mx-auto max-w-5xl space-y-6 p-6'}>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-[#22c55e]">Маркетинг</p>
-          <h1 className="mt-1 font-[Syne] text-3xl font-extrabold">Промокоды</h1>
-          <p className="mt-2 max-w-xl text-sm text-white/50">
-            Одноразовый код на конкретного пользователя. Сумма считается на сервере, с клиента её не подставить.
-          </p>
-        </div>
+        {embedded ? (
+          <div>
+            <h2 className="font-[Syne] text-xl font-bold text-white">Промокоды</h2>
+            <p className="mt-1 max-w-xl text-sm text-white/50">
+              Одноразовый код на конкретного пользователя. Сумма считается на сервере.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-[#22c55e]">Маркетинг</p>
+            <h1 className="mt-1 font-[Syne] text-3xl font-extrabold">Промокоды</h1>
+            <p className="mt-2 max-w-xl text-sm text-white/50">
+              Одноразовый код на конкретного пользователя. Сумма считается на сервере, с клиента её не подставить.
+            </p>
+          </div>
+        )}
         <button
           type="button"
           onClick={() => { setPanelOpen(true); setError(''); }}

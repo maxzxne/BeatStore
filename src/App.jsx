@@ -41,8 +41,7 @@ import AdminRevenue from './pages/AdminRevenue';
 import AdminHeroPage from './v2/admin/AdminHeroPage';
 import AdminBannersPage from './v2/admin/AdminBannersPage';
 import AdminPricingPage from './v2/admin/AdminPricingPage';
-import AdminSalesPage from './v2/admin/AdminSalesPage';
-import AdminPromoCodesPage from './v2/admin/AdminPromoCodesPage';
+import AdminPromoPage from './v2/admin/AdminPromoPage';
 import AdminFooterPagesPage from './v2/admin/AdminFooterPagesPage';
 import AdminSupportPage from './v2/admin/AdminSupportPage';
 import SupportPageV2 from './v2/SupportPageV2';
@@ -124,8 +123,9 @@ function App() {
                     <Route path="hero" element={<AdminHeroPage />} />
                     <Route path="banners" element={<AdminBannersPage />} />
                     <Route path="pricing" element={<AdminPricingPage />} />
-                    <Route path="sales" element={<AdminSalesPage />} />
-                    <Route path="promo-codes" element={<AdminPromoCodesPage />} />
+                    <Route path="promo" element={<AdminPromoPage />} />
+                    <Route path="sales" element={<Navigate to="/admin/promo" replace />} />
+                    <Route path="promo-codes" element={<Navigate to="/admin/promo?tab=codes" replace />} />
                     <Route path="footer" element={<AdminFooterPagesPage />} />
                     <Route path="guide" element={<AdminGuidePage />} />
                   </Route>

@@ -606,6 +606,42 @@
   padding: 0 0.85rem;
 }
 
+/* Orders (and similar): icon beside input — admin input padding !important would crush absolute icons */
+.v2-admin .admin-inline-search {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--admin-border);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0 0.85rem;
+  box-sizing: border-box;
+}
+
+.v2-admin .admin-inline-search:focus-within {
+  border-color: rgba(34, 197, 94, 0.45);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35);
+}
+
+.v2-admin .admin-inline-search-input,
+.v2-admin .admin-inline-search-input:focus {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0.55rem 0 !important;
+  color: #fff !important;
+  font-size: 0.875rem;
+  outline: none !important;
+}
+
+.v2-admin .admin-inline-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
 .v2-admin .admin-guide-search-input {
   width: 100%;
   border: 0;

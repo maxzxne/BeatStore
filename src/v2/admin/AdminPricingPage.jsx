@@ -60,8 +60,9 @@ export default function AdminPricingPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-[Syne] text-2xl font-bold text-white sm:text-3xl">Прайс услуг</h1>
-        <p className="mt-1 text-sm text-white/45">
-          Сроки и суммы для «Я знаю, что хочу» на /order. Реклама витрины — в Баннерах.
+        <p className="mt-1 max-w-2xl text-sm text-white/45">
+          Цены для формы «Я знаю, что хочу» на /order. Сначала задай сроки и суммы, потом подписи.
+          Реклама на витрине — отдельно: Баннеры → Заявки.
         </p>
       </div>
 

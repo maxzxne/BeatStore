@@ -24,6 +24,7 @@ import {
   normalizeServiceOrderPricing,
 } from '../utils/serviceOrderPricing';
 import OrderPricePolicy from '../components/OrderPricePolicy';
+import OrderPriceHelp from '../components/OrderPriceHelp';
 import {
   Upload,
   Link as LinkIcon,
@@ -1457,6 +1458,7 @@ const OrderPage = ({ initialType = null }) => {
             <h2 className="flex items-center gap-2 font-[Syne] text-lg font-semibold text-white">
               <FileText className="h-5 w-5" />
               Информация о заказе
+              <OrderPriceHelp pricing={servicePricing} />
             </h2>
             {orderInfoBlockOpen ? <ChevronUp className="h-5 w-5 text-white/50" /> : <ChevronDown className="h-5 w-5 text-white/50" />}
           </button>
@@ -1720,13 +1722,16 @@ const OrderPage = ({ initialType = null }) => {
                 <p className="mt-1 font-[Syne] text-xl font-bold text-[#22c55e]">{rub(totalPrice)}</p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => goToWizardStep(2)}
-              className="shrink-0 text-sm text-[#22c55e] hover:underline"
-            >
-              Изменить
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              <OrderPriceHelp pricing={servicePricing} />
+              <button
+                type="button"
+                onClick={() => goToWizardStep(2)}
+                className="text-sm text-[#22c55e] hover:underline"
+              >
+                Изменить
+              </button>
+            </div>
           </div>
         </div>
         <div className="rounded-3xl border border-white/10 bg-white/[0.03]">

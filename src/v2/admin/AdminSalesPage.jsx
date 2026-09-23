@@ -64,7 +64,7 @@ function saleStatus(sale, now = new Date()) {
   return { label: 'Активна', className: 'bg-[#22c55e]/15 text-[#22c55e]' };
 }
 
-const AdminSalesPage = () => {
+const AdminSalesPage = ({ embedded = false }) => {
   const { isAdminAuthenticated } = useAuth();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -152,16 +152,25 @@ const AdminSalesPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className={embedded ? 'space-y-6' : 'mx-auto max-w-5xl space-y-6 p-6'}>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-[#22c55e]">Маркетинг</p>
-          <h1 className="mt-1 font-[Syne] text-3xl font-extrabold">Скидки на витрине</h1>
-          <p className="mt-2 max-w-xl text-sm text-white/50">
-            Одна лучшая акция на позицию. Scope «Реклама» — только /order/ads, без «Все товары».
-            Промокод сверху не стакается с другой акцией — он режет уже сниженную сумму.
-          </p>
-        </div>
+        {embedded ? (
+          <div>
+            <h2 className="font-[Syne] text-xl font-bold text-white">Акции</h2>
+            <p className="mt-1 max-w-xl text-sm text-white/50">
+              Одна лучшая акция на позицию. Scope «Реклама» — только /order/ads.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-[#22c55e]">Маркетинг</p>
+            <h1 className="mt-1 font-[Syne] text-3xl font-extrabold">Скидки на витрине</h1>
+            <p className="mt-2 max-w-xl text-sm text-white/50">
+              Одна лучшая акция на позицию. Scope «Реклама» — только /order/ads, без «Все товары».
+              Промокод сверху не стакается с другой акцией — он режет уже сниженную сумму.
+            </p>
+          </div>
+        )}
         <button
           type="button"
           onClick={openCreate}

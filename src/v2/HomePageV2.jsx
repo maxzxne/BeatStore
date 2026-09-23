@@ -160,20 +160,28 @@ const HomePageV2 = () => {
   const heroImage = homeHero?.image_url ? buildMediaUrl(homeHero.image_url) : null;
   const heroPosition = normalizeHeroImagePosition(homeHero?.image_position);
 
+  const eyebrow = String(homeHero?.eyebrow || '').trim();
+  const title = String(homeHero?.title || '').trim();
+  const subtitle = String(homeHero?.subtitle || '').trim();
+
   const heroCopy = (
     <div className={heroImage ? 'v2-hero-copy' : undefined}>
-      <p className="v2-reveal text-xs uppercase tracking-[0.3em] text-[#22c55e]">
-        {homeHero.eyebrow || 'XWinner'}
-      </p>
-      <h1
-        className="v2-reveal mt-3 max-w-3xl font-[Syne] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl"
-        style={{ animationDelay: '80ms' }}
-      >
-        <HeroTitle title={homeHero.title} />
-      </h1>
-      {homeHero.subtitle ? (
+      {eyebrow ? (
+        <p className="v2-reveal text-xs uppercase tracking-[0.3em] text-[#22c55e]">
+          {eyebrow}
+        </p>
+      ) : null}
+      {title ? (
+        <h1
+          className={`v2-reveal max-w-3xl font-[Syne] text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl${eyebrow ? ' mt-3' : ''}`}
+          style={{ animationDelay: '80ms' }}
+        >
+          <HeroTitle title={homeHero.title} />
+        </h1>
+      ) : null}
+      {subtitle ? (
         <p
-          className="v2-reveal mt-5 max-w-xl text-sm text-white/50 sm:text-base"
+          className={`v2-reveal max-w-xl text-sm text-white/50 sm:text-base${title || eyebrow ? ' mt-5' : ''}`}
           style={{ animationDelay: '140ms' }}
         >
           {homeHero.subtitle}

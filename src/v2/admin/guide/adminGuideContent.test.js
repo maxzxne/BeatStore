@@ -18,7 +18,7 @@ describe('adminGuideContent', () => {
       'upload',
       'orders',
       'hero',
-      'promo-codes',
+      'promo',
       'site-settings',
       'notes-info',
     ]) {
@@ -26,9 +26,9 @@ describe('adminGuideContent', () => {
     }
   });
 
-  test('filter finds promo codes by keyword', () => {
+  test('filter finds promo by keyword', () => {
     const hits = filterGuideSections(guideSections, 'промокод');
-    assert.equal(hits.some((s) => s.id === 'promo-codes'), true);
+    assert.equal(hits.some((s) => s.id === 'promo'), true);
   });
 
   test('empty query returns all', () => {
