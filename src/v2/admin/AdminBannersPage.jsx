@@ -89,6 +89,8 @@ const AdminBannersPage = () => {
   const [dayRate, setDayRate] = useState(DEFAULT_ADS_PRICE_PER_DAY);
   const [dayRateDraft, setDayRateDraft] = useState(DEFAULT_ADS_PRICE_PER_DAY);
   const [savingRate, setSavingRate] = useState(false);
+  const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
+  const [savingAdsOrders, setSavingAdsOrders] = useState(false);
 
   useEffect(() => {
     if (isAdminAuthenticated) {
@@ -114,6 +116,7 @@ const AdminBannersPage = () => {
       const rate = normalizeAdsPricePerDay(data?.ads_price_per_day);
       setDayRate(rate);
       setDayRateDraft(rate);
+      setAdsOrdersEnabled(data?.ads_orders_enabled !== false);
     } catch (err) {
       console.error('Error fetching banner layout:', err);
     }
@@ -136,6 +139,22 @@ const AdminBannersPage = () => {
       showError(err.response?.data?.detail || 'Не удалось сохранить ставку');
     } finally {
       setSavingRate(false);
+    }
+  };
+
+  const updateAdsOrdersEnabled = async (enabled) => {
+    const previous = adsOrdersEnabled;
+    try {
+      setSavingAdsOrders(true);
+      setAdsOrdersEnabled(enabled);
+      await api.put('/api/admin/site-settings', { ads_orders_enabled: enabled });
+      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
+      showSuccess(enabled ? 'Заказ рекламы включён' : 'Заказ рекламы выключен');
+    } catch (err) {
+      setAdsOrdersEnabled(previous);
+      showError(err.response?.data?.detail || 'Не удалось сохранить настройку');
+    } finally {
+      setSavingAdsOrders(false);
     }
   };
 
@@ -327,6 +346,22 @@ const AdminBannersPage = () => {
 
       {tab === 'zayavki' ? (
         <>
+          <div className="flex min-h-[44px] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
+            <div>
+              <div className="text-sm font-medium text-white">
+                {adsOrdersEnabled ? 'Заказ рекламы включён' : 'Заказ рекламы выключен'}
+              </div>
+              <div className="mt-0.5 text-xs text-white/40">
+                Карточка на /order и форма /order/ads. Выкл — страница закрыта даже по ссылке.
+              </div>
+            </div>
+            <AdminToggle
+              checked={adsOrdersEnabled}
+              onChange={updateAdsOrdersEnabled}
+              disabled={savingAdsOrders}
+              aria-label="Включить заказ рекламы"
+            />
+          </div>
           <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-white/10 bg-black/30 p-4">
             <label className="block min-w-[10rem] flex-1">
               <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">

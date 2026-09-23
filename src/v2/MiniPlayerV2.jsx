@@ -41,7 +41,11 @@ const MiniPlayerV2 = () => {
           <div className="h-full bg-[#22c55e] transition-[width] duration-150" style={{ width: `${progress}%` }} />
         </div>
         <div className="flex items-center gap-3 px-3 py-2.5 md:px-4">
-          <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-white/10">
+          <div
+            className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-white/10 ring-1 ring-white/10 ${
+              isPlaying ? 'v2-spin' : ''
+            }`}
+          >
             {currentTrackCover ? (
               <img src={currentTrackCover} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -49,6 +53,10 @@ const MiniPlayerV2 = () => {
                 <Play className="h-4 w-4" />
               </div>
             )}
+            <span
+              className="pointer-events-none absolute inset-[42%] rounded-full bg-[#0a0a0a] ring-1 ring-white/20"
+              aria-hidden
+            />
           </div>
 
           <div className="min-w-0 flex-1">

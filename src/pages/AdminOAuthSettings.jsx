@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { api } from '../utils/api';
-import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Megaphone, Shield, KeyRound } from 'lucide-react';
-import { DEFAULT_ADS_PRICE_PER_DAY, normalizeAdsPricePerDay } from '../utils/adsPricing';
-import {
-  DEFAULT_SERVICE_ORDER_PRICING,
-  normalizeServiceOrderPricing,
-} from '../utils/serviceOrderPricing';
-import AdminServicePricingPanel from '../components/AdminServicePricingPanel';
+import { Eye, EyeOff, Lock, Unlock, GraduationCap, Loader2, Shield, KeyRound } from 'lucide-react';
 import AdminSiteGatePanel from '../components/AdminSiteGatePanel';
 import AdminToggle from '../components/AdminToggle';
 import { Link } from 'react-router-dom';
@@ -36,20 +30,11 @@ const AdminOAuthSettings = () => {
   const { showSuccess, showError } = useNotification();
   const [settings, setSettings] = useState([]);
   const [coursesVisibility, setCoursesVisibility] = useState('all');
-  const [adsOrdersEnabled, setAdsOrdersEnabled] = useState(true);
-  const [adsPricePerDay, setAdsPricePerDay] = useState(DEFAULT_ADS_PRICE_PER_DAY);
-  const [adsPriceDraft, setAdsPriceDraft] = useState(DEFAULT_ADS_PRICE_PER_DAY);
-  const [serviceOrderPricing, setServiceOrderPricing] = useState(() =>
-    normalizeServiceOrderPricing(DEFAULT_SERVICE_ORDER_PRICING)
-  );
-  const [servicePricingReady, setServicePricingReady] = useState(false);
   const [totpEnabled, setTotpEnabled] = useState(false);
   const [captchaEnabled, setCaptchaEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState({});
   const [savingCourses, setSavingCourses] = useState(false);
-  const [savingAds, setSavingAds] = useState(false);
-  const [savingAdsPrice, setSavingAdsPrice] = useState(false);
   const [savingTotp, setSavingTotp] = useState(false);
   const [savingCaptcha, setSavingCaptcha] = useState(false);
 
@@ -79,12 +64,6 @@ const AdminOAuthSettings = () => {
       if (value === 'all' || value === 'admins_only' || value === 'hidden') {
         setCoursesVisibility(value);
       }
-      setAdsOrdersEnabled(response.data?.ads_orders_enabled !== false);
-      const rate = normalizeAdsPricePerDay(response.data?.ads_price_per_day);
-      setAdsPricePerDay(rate);
-      setAdsPriceDraft(rate);
-      setServiceOrderPricing(normalizeServiceOrderPricing(response.data?.service_order_pricing));
-      setServicePricingReady(true);
       setTotpEnabled(!!response.data?.totp_enabled);
       setCaptchaEnabled(!!response.data?.captcha_enabled);
     } catch (error) {
@@ -106,44 +85,6 @@ const AdminOAuthSettings = () => {
       showError(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
     } finally {
       setSavingCourses(false);
-    }
-  };
-
-  const updateAdsOrdersEnabled = async (enabled) => {
-    const previous = adsOrdersEnabled;
-    try {
-      setSavingAds(true);
-      setAdsOrdersEnabled(enabled);
-      await api.put('/api/admin/site-settings', { ads_orders_enabled: enabled });
-      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
-      showSuccess(enabled ? 'Заказ рекламы включён' : 'Заказ рекламы выключен');
-    } catch (error) {
-      console.error('Error updating ads orders setting:', error);
-      setAdsOrdersEnabled(previous);
-      showError(error.response?.data?.detail || error.message || 'Ошибка обновления настройки');
-    } finally {
-      setSavingAds(false);
-    }
-  };
-
-  const saveAdsPrice = async () => {
-    const previous = adsPricePerDay;
-    const payload = normalizeAdsPricePerDay(adsPriceDraft);
-    try {
-      setSavingAdsPrice(true);
-      setAdsPriceDraft(payload);
-      const { data } = await api.put('/api/admin/site-settings', { ads_price_per_day: payload });
-      const saved = normalizeAdsPricePerDay(data?.settings?.ads_price_per_day ?? payload);
-      setAdsPricePerDay(saved);
-      setAdsPriceDraft(saved);
-      window.dispatchEvent(new CustomEvent('siteSettingsUpdated'));
-      showSuccess('Цена за день рекламы сохранена');
-    } catch (error) {
-      setAdsPricePerDay(previous);
-      setAdsPriceDraft(previous);
-      showError(error.response?.data?.detail || error.message || 'Не удалось сохранить цену');
-    } finally {
-      setSavingAdsPrice(false);
     }
   };
 
@@ -284,7 +225,19 @@ const AdminOAuthSettings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="admin-page-title">Настройки сайта</h1>
-        <p className="admin-page-sub">Видимость разделов и OAuth-входы</p>
+        <p className="admin-page-sub">Видимость разделов, безопасность и OAuth-входы</p>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-black/30 px-5 py-4 text-sm text-white/55">
+        Прайс услуг —{' '}
+        <Link to="/admin/pricing" className="font-medium text-[#22c55e] hover:underline">
+          Сайт → Прайс услуг
+        </Link>
+        . Реклама и ставка ₽/день —{' '}
+        <Link to="/admin/banners" className="font-medium text-[#22c55e] hover:underline">
+          Сайт → Баннеры → Заявки
+        </Link>
+        .
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
@@ -334,80 +287,6 @@ const AdminOAuthSettings = () => {
           </p>
         )}
       </div>
-
-      <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="admin-stat-icon">
-            <Megaphone className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-[Syne] text-lg font-semibold text-white">Заказ рекламы</h2>
-            <p className="text-xs text-white/40">
-              Карточка на /order и форма /order/ads. Если выключено — страница не открывается даже по ссылке.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex min-h-[44px] items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-          <div>
-            <div className="text-sm font-medium text-white">
-              {adsOrdersEnabled ? 'Раздел включён' : 'Раздел выключен'}
-            </div>
-            <div className="mt-0.5 text-xs text-white/40">
-              {adsOrdersEnabled ? 'Посетители могут отправить заявку на баннер' : 'Форма и URL закрыты для всех'}
-            </div>
-          </div>
-          <AdminToggle
-            checked={adsOrdersEnabled}
-            onChange={updateAdsOrdersEnabled}
-            disabled={savingAds}
-            aria-label="Включить заказ рекламы"
-          />
-        </div>
-
-        <div className="mt-5 border-t border-white/10 pt-5">
-          <h3 className="text-sm font-medium text-white">Цена за день размещения</h3>
-          <p className="mt-1 text-xs text-white/40">
-            Форма считает дни × ставка. Заявки и апрув — во вкладке «Заявки» на странице{' '}
-            <Link to="/admin/banners" className="text-[#22c55e] hover:underline">Баннеры</Link>.
-            Скидку — в «Скидки» (scope «Реклама на витрине»).
-          </p>
-          <label className="mt-3 block max-w-xs">
-            <span className="mb-1.5 block text-xs uppercase tracking-wide text-white/45">₽ / день</span>
-            <input
-              type="number"
-              min="0"
-              step="100"
-              value={adsPriceDraft}
-              onChange={(e) => setAdsPriceDraft(e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
-              aria-label="Цена рекламы за день"
-            />
-          </label>
-          <button
-            type="button"
-            onClick={saveAdsPrice}
-            disabled={savingAdsPrice}
-            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#22c55e] px-5 text-sm font-semibold text-[#052e16] transition hover:bg-[#4ade80] disabled:opacity-60"
-          >
-            {savingAdsPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Сохранить ставку
-          </button>
-        </div>
-        {savingAds && (
-          <p className="mt-3 flex items-center gap-2 text-xs text-white/40">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Сохранение…
-          </p>
-        )}
-      </div>
-
-      {servicePricingReady && (
-        <AdminServicePricingPanel
-          initialPricing={serviceOrderPricing}
-          onSaved={(saved) => setServiceOrderPricing(saved)}
-        />
-      )}
 
       <div className="rounded-2xl border border-white/10 bg-black/30 p-5">
         <div className="mb-5 flex items-center gap-3">

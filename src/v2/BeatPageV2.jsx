@@ -304,7 +304,11 @@ const BeatPageV2 = () => {
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
         <div className="relative aspect-square overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
           {beat.cover_url ? (
-            <img src={buildMediaUrl(beat.cover_url)} alt={beat.title} className="h-full w-full object-cover" />
+            <img
+              src={buildMediaUrl(beat.cover_url)}
+              alt={beat.title}
+              className={`h-full w-full object-cover ${playing ? 'v2-spin' : ''}`}
+            />
           ) : (
             <div className="grid h-full place-items-center bg-gradient-to-br from-neutral-900 to-black">
               <Play className="h-16 w-16 text-white/20" />

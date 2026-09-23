@@ -254,8 +254,16 @@ html.ui-v2 .min-h-screen.bg-white {
   to { transform: rotate(360deg); }
 }
 
+/* Vinyl / cover spin while playing (restored; was removed in b091e93). */
 .v2-spin {
   animation: v2-spin-slow 12s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-spin {
+    animation: none;
+  }
 }
 
 .v2-reveal {

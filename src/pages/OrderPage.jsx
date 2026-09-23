@@ -23,6 +23,7 @@ import {
   getServicePrice,
   normalizeServiceOrderPricing,
 } from '../utils/serviceOrderPricing';
+import OrderPricePolicy from '../components/OrderPricePolicy';
 import {
   Upload,
   Link as LinkIcon,
@@ -1406,6 +1407,12 @@ const OrderPage = ({ initialType = null }) => {
           </button>
           {orderInfoBlockOpen && (
             <div className="px-4 pb-4 space-y-4">
+        <OrderPricePolicy
+          pricing={servicePricing}
+          selectedDays={formData.deadline_days}
+          prepaymentPercent={formData.prepayment_percent}
+          onSelectDays={(days) => setFormData((prev) => ({ ...prev, deadline_days: days }))}
+        />
         <div>
           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/40">Пресеты</p>
           <div className="mb-4 flex flex-wrap gap-2">
@@ -1446,7 +1453,9 @@ const OrderPage = ({ initialType = null }) => {
                 >
                   <span>{getCategoryLabel(category)}</span>
                   {category === 'бит в стиле трэп' ? (
-                    <span className="text-xs font-semibold opacity-70">15 000 ₽</span>
+                    <span className="text-xs font-semibold opacity-70">
+                      {rub(servicePricing.trap_price)}
+                    </span>
                   ) : formData.deadline_days && getPrice(formData.deadline_days, formData.prepayment_percent) ? (
                     <span className="text-xs font-semibold opacity-70">
                       {rub(getPrice(formData.deadline_days, formData.prepayment_percent))}
@@ -1495,10 +1504,10 @@ const OrderPage = ({ initialType = null }) => {
                     <div className="font-medium text-white">{category.label}</div>
                     <div className="shrink-0 text-sm text-[#22c55e]">
                       {category.value === 'бит в стиле трэп'
-                        ? '15 000 ₽'
+                        ? rub(servicePricing.trap_price)
                         : formData.deadline_days
                           ? rub(getPrice(formData.deadline_days, formData.prepayment_percent))
-                          : 'от 20 000 ₽'}
+                          : `от ${rub(Math.min(servicePricing.trap_price, ...servicePricing.deadlines.flatMap((r) => [r.price_50, r.price_100])))}`}
                     </div>
                   </div>
                   {category.description && (
@@ -1554,7 +1563,9 @@ const OrderPage = ({ initialType = null }) => {
             <p className="mt-2 text-xs text-[#22c55e]">Выбери срок — цена появится сразу на кнопках.</p>
           )}
           {formData.service_categories.length > 0 && !needsDeadlineForPrice && (
-            <p className="mt-2 text-xs text-white/40">Трэп-бит всегда 15 000 ₽, срок на цену не влияет.</p>
+            <p className="mt-2 text-xs text-white/40">
+              Трэп-бит всегда {rub(servicePricing.trap_price)}, срок на цену не влияет.
+            </p>
           )}
         </div>
 

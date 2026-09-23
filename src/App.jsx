@@ -40,6 +40,7 @@ import AdminOAuthSettings from './pages/AdminOAuthSettings';
 import AdminRevenue from './pages/AdminRevenue';
 import AdminHeroPage from './v2/admin/AdminHeroPage';
 import AdminBannersPage from './v2/admin/AdminBannersPage';
+import AdminPricingPage from './v2/admin/AdminPricingPage';
 import AdminSalesPage from './v2/admin/AdminSalesPage';
 import AdminPromoCodesPage from './v2/admin/AdminPromoCodesPage';
 import AdminFooterPagesPage from './v2/admin/AdminFooterPagesPage';
@@ -122,6 +123,7 @@ function App() {
                     <Route path="oauth-settings" element={<AdminOAuthSettings />} />
                     <Route path="hero" element={<AdminHeroPage />} />
                     <Route path="banners" element={<AdminBannersPage />} />
+                    <Route path="pricing" element={<AdminPricingPage />} />
                     <Route path="sales" element={<AdminSalesPage />} />
                     <Route path="promo-codes" element={<AdminPromoCodesPage />} />
                     <Route path="footer" element={<AdminFooterPagesPage />} />
